@@ -3,6 +3,7 @@ package testutil
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -81,12 +82,20 @@ type TestEmployeeParams struct {
 
 // CreateTestSession creates a test session for an employee
 func CreateTestSession(t *testing.T, queries *db.Queries, ctx context.Context, employeeID uuid.UUID, tokenHash string) db.Session {
-	session, err := queries.CreateSession(ctx, db.CreateSessionParams{
-		EmployeeID: employeeID,
-		TokenHash:  tokenHash,
-	})
+	session, err := queries.CreateSession(ctx, CreateSessionParams(employeeID, tokenHash))
 	require.NoError(t, err)
 	return session
+}
+
+// CreateSessionParams creates session parameters with defaults
+func CreateSessionParams(employeeID uuid.UUID, tokenHash string) db.CreateSessionParams {
+	return db.CreateSessionParams{
+		EmployeeID: employeeID,
+		TokenHash:  tokenHash,
+		IpAddress:  nil,
+		UserAgent:  nil,
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	}
 }
 
 // CreateTestTeam creates a test team in the organization

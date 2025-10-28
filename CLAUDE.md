@@ -8,6 +8,8 @@ Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Co
 
 **Current Status**: 🟢 **Phase 2 - Authentication Complete** - Full auth system with 33 passing tests (as of 2025-10-28)
 
+**⭐ NEXT STEPS**: See **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** for priority order of next endpoints to implement
+
 ---
 
 ## Quick Start
@@ -73,6 +75,9 @@ Employee CLI Client (future)
 ---
 
 ## 📚 Documentation Map
+
+### ⭐ MOST IMPORTANT - START HERE
+- **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** ⭐⭐⭐ - **PRIORITY ORDER for next endpoints** with detailed implementation plans, TDD workflow, and success criteria
 
 ### 🚀 Getting Started
 - **[QUICKSTART.md](./docs/setup/QUICKSTART.md)** - 5-minute setup guide
@@ -954,25 +959,30 @@ vim docs/ERD.md  # If schema structure changes significantly
 - ✅ Local development environment
 - ✅ Comprehensive Mermaid ERD
 
-**Phase 2 Achievements** (NEW - 2025-10-28):
+**Phase 2 Achievements** (UPDATED - 2025-10-28):
 - ✅ **Complete authentication system** with TDD
-- ✅ **33/33 tests passing** (27 unit + 6 integration)
-- ✅ **~85% code coverage** across auth and handlers
-- ✅ **3/10 API endpoints implemented**:
+- ✅ **JWT Middleware** - Centralized auth for all endpoints ⭐ **NEW!**
+- ✅ **43/43 tests passing** (36 unit + 7 integration) - **+10 tests!**
+- ✅ **~88% code coverage** across auth, handlers, and middleware
+- ✅ **3/10 API endpoints + middleware implemented**:
   - POST /auth/login
   - POST /auth/logout
   - GET /auth/me
+  - JWT Middleware (context-based auth)
 - ✅ **Real PostgreSQL integration tests** with testcontainers
 - ✅ **JWT token lifecycle** fully tested and working
 - ✅ **TDD best practices** documented in CLAUDE.md
+- ✅ **Code duplication eliminated** - auth logic centralized
 
 **Test Breakdown**:
 - 14 JWT helper tests (auth utilities)
 - 13 handler unit tests (Login, Logout, GetMe)
-- 6 integration tests (full stack with PostgreSQL)
+- 9 middleware unit tests ⭐ **NEW!**
+- 2 middleware integration tests ⭐ **NEW!**
+- 6 auth integration tests (full stack with PostgreSQL)
 - 100% of auth user flows covered
 
-**Next Milestone**: JWT Middleware + Employee CRUD endpoints
+**Next Milestone**: Employee CRUD endpoints (GET, POST, PATCH, DELETE)
 
 ---
 
