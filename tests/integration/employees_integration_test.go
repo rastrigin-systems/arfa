@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -485,4 +486,194 @@ func TestGetEmployee_Integration_NotFound(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Contains(t, response.Error, "not found")
+}
+
+// ============================================================================
+// Create Employee Integration Tests
+// ============================================================================
+
+// TDD Lesson: Integration test for POST /employees
+func TestCreateEmployee_Integration_Success(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create test organization and role
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create admin employee for authentication
+	admin := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "admin@example.com",
+		FullName: "Admin User",
+		Status:   "active",
+	})
+
+	// Create session for authentication
+	token, _ := auth.GenerateJWT(admin.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(admin.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler with middleware
+	handler := handlers.NewEmployeesHandler(queries)
+
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Post("/employees", handler.CreateEmployee)
+
+	// Request payload
+	reqBody := `{
+		"email": "newuser@example.com",
+		"full_name": "New Employee",
+		"role_id": "` + role.ID.String() + `"
+	}`
+
+	// Create employee
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var response api.Employee
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Verify employee data
+	assert.NotNil(t, response.Id)
+	assert.Equal(t, "newuser@example.com", string(response.Email))
+	assert.Equal(t, "New Employee", response.FullName)
+	assert.Equal(t, role.ID, response.RoleId)
+	assert.Equal(t, api.EmployeeStatusActive, response.Status)
+	assert.Equal(t, org.ID, response.OrgId)
+
+	// Verify employee was created in database
+	createdEmployee, err := queries.GetEmployee(ctx, *response.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "newuser@example.com", createdEmployee.Email)
+	assert.Equal(t, org.ID, createdEmployee.OrgID)
+}
+
+// TDD Lesson: Test creating employee with team_id
+func TestCreateEmployee_Integration_WithTeam(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create a team
+	team := testutil.CreateTestTeam(t, queries, ctx, org.ID, "Engineering")
+
+	// Create admin for authentication
+	admin := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "admin@example.com",
+		FullName: "Admin User",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(admin.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(admin.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Post("/employees", handler.CreateEmployee)
+
+	// Request with team_id
+	reqBody := `{
+		"email": "teamuser@example.com",
+		"full_name": "Team Member",
+		"role_id": "` + role.ID.String() + `",
+		"team_id": "` + team.ID.String() + `"
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var response api.Employee
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Verify team_id is set
+	assert.NotNil(t, response.TeamId)
+	assert.Equal(t, team.ID, uuid.UUID(*response.TeamId))
+
+	// Verify in database
+	createdEmployee, err := queries.GetEmployee(ctx, *response.Id)
+	require.NoError(t, err)
+	assert.True(t, createdEmployee.TeamID.Valid)
+	assert.Equal(t, team.ID[:], createdEmployee.TeamID.Bytes[:])
+}
+
+// TDD Lesson: Test duplicate email returns 409 Conflict
+func TestCreateEmployee_Integration_DuplicateEmail(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create existing employee
+	existing := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "existing@example.com",
+		FullName: "Existing User",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(existing.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(existing.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Post("/employees", handler.CreateEmployee)
+
+	// Try to create employee with duplicate email
+	reqBody := `{
+		"email": "existing@example.com",
+		"full_name": "Duplicate User",
+		"role_id": "` + role.ID.String() + `"
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var errorResponse api.Error
+	err = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	require.NoError(t, err)
+	assert.Contains(t, errorResponse.Error, "already exists")
 }

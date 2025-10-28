@@ -1,17 +1,23 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"errors"
+	"math/big"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/sergeirastrigin/ubik-enterprise/internal/auth"
 )
 
 // EmployeesHandler handles employee-related requests
@@ -162,6 +168,125 @@ func (h *EmployeesHandler) GetEmployee(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(apiEmployee)
+}
+
+// CreateEmployee handles POST /employees
+// Creates a new employee with auto-generated temporary password
+func (h *EmployeesHandler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get org_id from context (set by JWT middleware)
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Organization ID not found in context")
+		return
+	}
+
+	// Parse and validate request body
+	var req api.CreateEmployeeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Validate required fields
+	if req.Email == "" {
+		writeError(w, http.StatusUnprocessableEntity, "Email is required")
+		return
+	}
+	if req.FullName == "" {
+		writeError(w, http.StatusUnprocessableEntity, "Full name is required")
+		return
+	}
+	if strings.TrimSpace(req.FullName) == "" {
+		writeError(w, http.StatusUnprocessableEntity, "Full name cannot be empty")
+		return
+	}
+	// Check if role_id is a valid (non-zero) UUID
+	if uuid.UUID(req.RoleId) == uuid.Nil {
+		writeError(w, http.StatusUnprocessableEntity, "Role ID is required")
+		return
+	}
+
+	// Generate temporary password
+	tempPassword, err := generateTempPassword(16)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to generate password")
+		return
+	}
+
+	// Hash the password
+	passwordHash, err := auth.HashPassword(tempPassword)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to hash password")
+		return
+	}
+
+	// Convert team_id to pgtype.UUID
+	var teamID pgtype.UUID
+	if req.TeamId != nil {
+		teamUUID := uuid.UUID(*req.TeamId)
+		teamID = pgtype.UUID{
+			Bytes: teamUUID,
+			Valid: true,
+		}
+	}
+
+	// Handle preferences
+	preferences := []byte("{}")
+	if req.Preferences != nil {
+		prefsJSON, err := json.Marshal(req.Preferences)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "Invalid preferences format")
+			return
+		}
+		preferences = prefsJSON
+	}
+
+	// Create employee in database
+	employee, err := h.db.CreateEmployee(ctx, db.CreateEmployeeParams{
+		OrgID:        orgID,
+		TeamID:       teamID,
+		RoleID:       uuid.UUID(req.RoleId),
+		Email:        string(req.Email),
+		FullName:     req.FullName,
+		PasswordHash: passwordHash,
+		Status:       "active", // New employees are active by default
+		Preferences:  preferences,
+	})
+
+	if err != nil {
+		// Check for unique constraint violation (duplicate email)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			writeError(w, http.StatusConflict, "Employee with this email already exists")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Failed to create employee")
+		return
+	}
+
+	// Convert to API type and return
+	apiEmployee := dbEmployeeToAPI(employee)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(apiEmployee)
+}
+
+// generateTempPassword generates a cryptographically secure random password
+func generateTempPassword(length int) (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+	password := make([]byte, length)
+
+	for i := range password {
+		randomInt, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		password[i] = charset[randomInt.Int64()]
+	}
+
+	return string(password), nil
 }
 
 // dbEmployeeToAPI converts db.Employee to api.Employee

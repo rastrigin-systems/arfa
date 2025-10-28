@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -437,4 +439,277 @@ func TestGetEmployee_InvalidUUID(t *testing.T) {
 
 	// Should return 400 for invalid UUID
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+// ============================================================================
+// CreateEmployee Tests
+// ============================================================================
+
+// TDD Lesson: Testing employee creation with required fields only
+func TestCreateEmployee_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	roleID := uuid.New()
+
+	// Request payload with required fields only
+	reqBody := `{
+		"email": "newuser@example.com",
+		"full_name": "New User",
+		"role_id": "` + roleID.String() + `"
+	}`
+
+	// Expect CreateEmployee to be called
+	// Note: password_hash will be generated, so we use gomock.Any()
+	mockDB.EXPECT().
+		CreateEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateEmployeeParams) (db.Employee, error) {
+			// Verify params are correct
+			assert.Equal(t, orgID, params.OrgID)
+			assert.Equal(t, roleID, params.RoleID)
+			assert.Equal(t, "newuser@example.com", params.Email)
+			assert.Equal(t, "New User", params.FullName)
+			assert.Equal(t, "active", params.Status)
+			assert.False(t, params.TeamID.Valid) // No team
+			assert.NotEmpty(t, params.PasswordHash)
+
+			// Return created employee
+			return db.Employee{
+				ID:           uuid.New(),
+				OrgID:        params.OrgID,
+				Email:        params.Email,
+				FullName:     params.FullName,
+				RoleID:       params.RoleID,
+				Status:       params.Status,
+				TeamID:       params.TeamID,
+				PasswordHash: params.PasswordHash,
+				Preferences:  []byte("{}"),
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
+			}, nil
+		})
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	handler.CreateEmployee(rec, req)
+
+	// Verify response
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var response api.Employee
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	assert.Equal(t, "newuser@example.com", string(response.Email))
+	assert.Equal(t, "New User", response.FullName)
+	assert.Equal(t, roleID, response.RoleId)
+	assert.Equal(t, api.EmployeeStatusActive, response.Status)
+}
+
+// TDD Lesson: Test creating employee with team_id
+func TestCreateEmployee_WithTeam(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	roleID := uuid.New()
+	teamID := uuid.New()
+
+	// Request with team_id
+	reqBody := `{
+		"email": "teamuser@example.com",
+		"full_name": "Team User",
+		"role_id": "` + roleID.String() + `",
+		"team_id": "` + teamID.String() + `"
+	}`
+
+	mockDB.EXPECT().
+		CreateEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateEmployeeParams) (db.Employee, error) {
+			// Verify team_id is set
+			assert.True(t, params.TeamID.Valid)
+			assert.Equal(t, teamID[:], params.TeamID.Bytes[:])
+
+			return db.Employee{
+				ID:           uuid.New(),
+				OrgID:        params.OrgID,
+				Email:        params.Email,
+				FullName:     params.FullName,
+				RoleID:       params.RoleID,
+				Status:       params.Status,
+				TeamID:       params.TeamID,
+				PasswordHash: params.PasswordHash,
+				Preferences:  []byte("{}"),
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
+			}, nil
+		})
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	handler.CreateEmployee(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+}
+
+// TDD Lesson: Test duplicate email returns 409 Conflict
+func TestCreateEmployee_DuplicateEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	roleID := uuid.New()
+
+	reqBody := `{
+		"email": "existing@example.com",
+		"full_name": "Duplicate User",
+		"role_id": "` + roleID.String() + `"
+	}`
+
+	// Mock database returning unique constraint violation
+	mockDB.EXPECT().
+		CreateEmployee(gomock.Any(), gomock.Any()).
+		Return(db.Employee{}, &pgconn.PgError{
+			Code:           "23505", // unique_violation
+			ConstraintName: "employees_email_key",
+		})
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	handler.CreateEmployee(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var response api.Error
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Contains(t, response.Error, "already exists")
+}
+
+// TDD Lesson: Test invalid JSON returns 400
+func TestCreateEmployee_InvalidJSON(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	// Invalid JSON
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader("{invalid json"))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	handler.CreateEmployee(rec, req)
+
+	// Should return 400 Bad Request
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+// TDD Lesson: Test missing required fields returns 400
+func TestCreateEmployee_MissingRequiredFields(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+
+	testCases := []struct {
+		name    string
+		reqBody string
+	}{
+		{
+			name:    "missing email",
+			reqBody: `{"full_name": "User", "role_id": "` + uuid.New().String() + `"}`,
+		},
+		{
+			name:    "missing full_name",
+			reqBody: `{"email": "user@example.com", "role_id": "` + uuid.New().String() + `"}`,
+		},
+		{
+			name:    "missing role_id",
+			reqBody: `{"email": "user@example.com", "full_name": "User"}`,
+		},
+		{
+			name:    "empty email",
+			reqBody: `{"email": "", "full_name": "User", "role_id": "` + uuid.New().String() + `"}`,
+		},
+		{
+			name:    "empty full_name",
+			reqBody: `{"email": "user@example.com", "full_name": "", "role_id": "` + uuid.New().String() + `"}`,
+		},
+	}
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(tc.reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+			rec := httptest.NewRecorder()
+
+			handler.CreateEmployee(rec, req)
+
+			// Should return 400 or 422
+			assert.True(t, rec.Code == http.StatusBadRequest || rec.Code == http.StatusUnprocessableEntity,
+				"Expected 400 or 422, got %d for %s", rec.Code, tc.name)
+		})
+	}
+}
+
+// TDD Lesson: Test invalid email format returns 400
+func TestCreateEmployee_InvalidEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	roleID := uuid.New()
+
+	reqBody := `{
+		"email": "not-an-email",
+		"full_name": "Invalid Email User",
+		"role_id": "` + roleID.String() + `"
+	}`
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	handler.CreateEmployee(rec, req)
+
+	// Should return 400 or 422 for invalid email format
+	assert.True(t, rec.Code == http.StatusBadRequest || rec.Code == http.StatusUnprocessableEntity)
 }
