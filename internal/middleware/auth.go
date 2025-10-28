@@ -143,3 +143,16 @@ func writeError(w http.ResponseWriter, statusCode int, message string) {
 		Error: message,
 	})
 }
+
+// Test helpers for setting context values in tests
+// These should only be used in test code to simulate middleware behavior
+
+// SetOrgIDForTest sets org_id in context (for testing only)
+func SetOrgIDForTest(ctx context.Context, orgID uuid.UUID) context.Context {
+	return context.WithValue(ctx, orgIDKey, orgID)
+}
+
+// SetEmployeeIDForTest sets employee_id in context (for testing only)
+func SetEmployeeIDForTest(ctx context.Context, employeeID uuid.UUID) context.Context {
+	return context.WithValue(ctx, employeeIDKey, employeeID)
+}

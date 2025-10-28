@@ -1,0 +1,156 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
+	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+)
+
+// EmployeesHandler handles employee-related requests
+type EmployeesHandler struct {
+	db db.Querier
+}
+
+// NewEmployeesHandler creates a new employees handler
+func NewEmployeesHandler(database db.Querier) *EmployeesHandler {
+	return &EmployeesHandler{
+		db: database,
+	}
+}
+
+// ListEmployees handles GET /employees
+// Returns paginated list of employees for the authenticated user's organization
+func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get org_id from context (set by JWT middleware)
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Organization ID not found in context")
+		return
+	}
+
+	// Parse query parameters
+	query := r.URL.Query()
+
+	// Status filter (optional)
+	var status interface{}
+	if statusParam := query.Get("status"); statusParam != "" {
+		status = pgtype.Text{String: statusParam, Valid: true}
+	} else {
+		status = pgtype.Text{Valid: false}
+	}
+
+	// Team filter (optional) - not currently used but supported by SQL
+	var teamID interface{}
+	teamID = pgtype.UUID{Valid: false}
+	// Future: add team_id query parameter support
+
+	// Pagination: limit (default 50, max 100)
+	limit := 50
+	if limitParam := query.Get("limit"); limitParam != "" {
+		if parsedLimit, err := strconv.Atoi(limitParam); err == nil {
+			if parsedLimit > 0 && parsedLimit <= 100 {
+				limit = parsedLimit
+			}
+		}
+	}
+
+	// Pagination: offset (default 0)
+	offset := 0
+	if offsetParam := query.Get("offset"); offsetParam != "" {
+		if parsedOffset, err := strconv.Atoi(offsetParam); err == nil {
+			if parsedOffset >= 0 {
+				offset = parsedOffset
+			}
+		}
+	}
+
+	// Query database for employees
+	employees, err := h.db.ListEmployees(ctx, db.ListEmployeesParams{
+		OrgID:       orgID,
+		Status:      status,
+		TeamID:      teamID,
+		QueryLimit:  int32(limit),
+		QueryOffset: int32(offset),
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch employees")
+		return
+	}
+
+	// Query total count
+	total, err := h.db.CountEmployees(ctx, db.CountEmployeesParams{
+		OrgID:  orgID,
+		Status: status,
+		TeamID: teamID,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to count employees")
+		return
+	}
+
+	// Convert db.Employee to api.Employee
+	apiEmployees := make([]api.Employee, len(employees))
+	for i, emp := range employees {
+		apiEmployees[i] = dbEmployeeToAPI(emp)
+	}
+
+	// Build response
+	response := api.ListEmployeesResponse{
+		Employees: apiEmployees,
+		Total:     total,
+		Limit:     limit,
+		Offset:    offset,
+	}
+
+	// Write JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// dbEmployeeToAPI converts db.Employee to api.Employee
+func dbEmployeeToAPI(emp db.Employee) api.Employee {
+	apiEmp := api.Employee{
+		Id:       &emp.ID,
+		OrgId:    emp.OrgID,
+		Email:    openapi_types.Email(emp.Email),
+		FullName: emp.FullName,
+		RoleId:   emp.RoleID,
+		Status:   api.EmployeeStatus(emp.Status),
+	}
+
+	// Handle nullable fields
+	if emp.TeamID.Valid {
+		teamUUID := emp.TeamID.Bytes
+		apiEmp.TeamId = (*openapi_types.UUID)(&teamUUID)
+	}
+
+	if emp.CreatedAt.Valid {
+		apiEmp.CreatedAt = &emp.CreatedAt.Time
+	}
+
+	if emp.UpdatedAt.Valid {
+		apiEmp.UpdatedAt = &emp.UpdatedAt.Time
+	}
+
+	if emp.LastLoginAt.Valid {
+		apiEmp.LastLoginAt = &emp.LastLoginAt.Time
+	}
+
+	// Handle preferences JSON
+	if len(emp.Preferences) > 0 && string(emp.Preferences) != "null" {
+		var prefs map[string]interface{}
+		if err := json.Unmarshal(emp.Preferences, &prefs); err == nil {
+			apiEmp.Preferences = &prefs
+		}
+	}
+
+	return apiEmp
+}

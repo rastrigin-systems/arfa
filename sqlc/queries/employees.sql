@@ -10,17 +10,19 @@ WHERE email = $1 AND deleted_at IS NULL;
 
 -- name: ListEmployees :many
 SELECT * FROM employees
-WHERE org_id = $1 
+WHERE org_id = sqlc.arg(org_id)
   AND deleted_at IS NULL
-  AND ($2::text IS NULL OR status = $2)
+  AND (sqlc.narg(status) IS NULL OR status = sqlc.narg(status))
+  AND (sqlc.narg(team_id) IS NULL OR team_id = sqlc.narg(team_id))
 ORDER BY created_at DESC
-LIMIT $3 OFFSET $4;
+LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 
 -- name: CountEmployees :one
 SELECT COUNT(*) FROM employees
-WHERE org_id = $1 
+WHERE org_id = sqlc.arg(org_id)
   AND deleted_at IS NULL
-  AND ($2::text IS NULL OR status = $2);
+  AND (sqlc.narg(status) IS NULL OR status = sqlc.narg(status))
+  AND (sqlc.narg(team_id) IS NULL OR team_id = sqlc.narg(team_id));
 
 -- name: CreateEmployee :one
 INSERT INTO employees (
