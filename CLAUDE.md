@@ -91,6 +91,12 @@ Employee CLI Client (future)
 - **[docs/README.md](./docs/README.md)** - Auto-generated table index
 - **[docs/schema.json](./docs/schema.json)** - Machine-readable schema
 
+### 🧪 Testing & Development
+- **[docs/DEVELOPMENT_APPROACH.md](./docs/DEVELOPMENT_APPROACH.md)** ⭐ - TDD vs Implementation-First strategy + Week 1 schedule
+- **[docs/TESTING_QUICKSTART.md](./docs/TESTING_QUICKSTART.md)** ⭐ - 5-minute testing setup guide
+- **[docs/TESTING_STRATEGY.md](./docs/TESTING_STRATEGY.md)** - Complete testing guide with mock generation
+- **[docs/TESTING_ANALYSIS.md](./docs/TESTING_ANALYSIS.md)** - Codebase testing analysis
+
 ### 🔧 Configuration Files
 - **[openapi/spec.yaml](./openapi/spec.yaml)** - OpenAPI 3.0 specification
 - **[sqlc/sqlc.yaml](./sqlc/sqlc.yaml)** - sqlc configuration
@@ -509,3 +515,4 @@ vim docs/ERD.md  # If schema structure changes significantly
 ---
 
 **For detailed information, see the [Documentation Map](#-documentation-map) above.**
+- save .md files inside /docs. Update cloud.md if .md files were updated or created

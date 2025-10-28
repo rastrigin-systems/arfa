@@ -49,7 +49,7 @@ CREATE VIEW v_employee_agents AS (
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [public.employee_agent_configs](public.employee_agent_configs.md) | 10 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 11 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 12 |  | BASE TABLE |
 | [public.agent_catalog](public.agent_catalog.md) | 12 |  | BASE TABLE |
 
 ## Relations

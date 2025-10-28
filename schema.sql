@@ -58,11 +58,13 @@ CREATE TABLE employees (
     role_id UUID NOT NULL REFERENCES roles(id),
     email VARCHAR(255) NOT NULL UNIQUE,
     full_name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- bcrypt hash
     status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, suspended, inactive
     preferences JSONB NOT NULL DEFAULT '{}',
     last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP -- Soft delete timestamp
 );
 
 CREATE TABLE sessions (

@@ -12,6 +12,7 @@
 | role_id | uuid |  | false |  | [public.roles](public.roles.md) |  |
 | email | varchar(255) |  | false |  |  |  |
 | full_name | varchar(255) |  | false |  |  |  |
+| password_hash | varchar(255) |  | false |  |  |  |
 | status | varchar(50) | 'active'::character varying | false |  |  |  |
 | preferences | jsonb | '{}'::jsonb | false |  |  |  |
 | last_login_at | timestamp without time zone |  | true |  |  |  |

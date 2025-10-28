@@ -434,6 +434,11 @@
           "nullable": false
         },
         {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
           "name": "status",
           "type": "varchar(50)",
           "nullable": false,

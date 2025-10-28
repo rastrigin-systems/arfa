@@ -1,11 +1,11 @@
-.PHONY: help install-tools db-up db-down db-reset generate-erd generate-api generate-db generate check-drift test dev build clean
+.PHONY: help install-tools db-up db-down db-reset generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage dev build clean
 
 # Default target
 help:
 	@echo "Pivot - Enterprise AI Agent Management Platform"
 	@echo ""
 	@echo "Setup Commands:"
-	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc)"
+	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc, mockgen)"
 	@echo "  make db-up           Start PostgreSQL with Docker Compose"
 	@echo "  make db-down         Stop PostgreSQL"
 	@echo "  make db-reset        Reset database (drop and recreate)"
@@ -14,11 +14,17 @@ help:
 	@echo "  make generate-erd    Generate ERD from PostgreSQL schema"
 	@echo "  make generate-api    Generate Go code from OpenAPI spec"
 	@echo "  make generate-db     Generate Go code from SQL queries"
-	@echo "  make generate        Generate everything (ERD + API + DB)"
+	@echo "  make generate-mocks  Generate mocks from database interfaces"
+	@echo "  make generate        Generate everything (ERD + API + DB + Mocks)"
+	@echo ""
+	@echo "Testing Commands:"
+	@echo "  make test            Run all tests with coverage"
+	@echo "  make test-unit       Run unit tests only (fast)"
+	@echo "  make test-integration Run integration tests (requires Docker)"
+	@echo "  make test-coverage   Generate HTML coverage report"
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make check-drift     Check for OpenAPI ↔ DB schema drift"
-	@echo "  make test            Run all tests"
 	@echo "  make dev             Start development server with live reload"
 	@echo "  make build           Build production binaries"
 	@echo "  make clean           Clean generated files and build artifacts"
@@ -34,12 +40,14 @@ install-tools:
 	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/k1LoW/tbls@latest
+	go install go.uber.org/mock/mockgen@latest
 	@echo "✅ Tools installed successfully"
 	@echo ""
 	@echo "Verify installation:"
 	@which oapi-codegen
 	@which sqlc
 	@which tbls
+	@which mockgen
 
 # Database management
 db-up:
@@ -86,14 +94,24 @@ generate-db:
 	cd sqlc && sqlc generate
 	@echo "✅ Database code generated at $(GENERATED_DIR)/db/"
 
-generate: generate-erd generate-api generate-db
+generate-mocks:
+	@echo "🎭 Generating mocks from database interfaces..."
+	@mkdir -p $(GENERATED_DIR)/mocks
+	mockgen -source=$(GENERATED_DIR)/db/querier.go \
+		-destination=$(GENERATED_DIR)/mocks/db_mock.go \
+		-package=mocks \
+		-mock_names=Querier=MockQuerier
+	@echo "✅ Mocks generated at $(GENERATED_DIR)/mocks/"
+
+generate: generate-erd generate-api generate-db generate-mocks
 	@echo ""
 	@echo "✅ All code generation complete!"
 	@echo ""
 	@echo "Generated files:"
-	@echo "  - ERD: $(DOCS_DIR)/schema.md"
-	@echo "  - API: $(GENERATED_DIR)/api/"
-	@echo "  - DB:  $(GENERATED_DIR)/db/"
+	@echo "  - ERD:   $(DOCS_DIR)/schema.md"
+	@echo "  - API:   $(GENERATED_DIR)/api/"
+	@echo "  - DB:    $(GENERATED_DIR)/db/"
+	@echo "  - Mocks: $(GENERATED_DIR)/mocks/"
 
 # Drift detection
 check-drift:
@@ -102,17 +120,26 @@ check-drift:
 
 # Testing
 test:
-	@echo "🧪 Running tests..."
+	@echo "🧪 Running all tests with coverage..."
 	go test -v -race -coverprofile=coverage.out ./...
 	@echo ""
-	@echo "Coverage report:"
-	go tool cover -func=coverage.out | tail -1
+	@echo "Coverage summary:"
+	@go tool cover -func=coverage.out | tail -1
+
+test-unit:
+	@echo "⚡ Running unit tests (fast)..."
+	go test -v -short -race ./internal/...
+
+test-integration:
+	@echo "🔄 Running integration tests (requires Docker)..."
+	go test -v -run Integration ./tests/integration/...
 
 test-coverage:
-	@echo "📊 Generating coverage report..."
+	@echo "📊 Generating HTML coverage report..."
 	go test -v -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
-	@echo "✅ Coverage report: coverage.html"
+	@echo "✅ Coverage report generated: coverage.html"
+	@open coverage.html || true
 
 # Development
 dev:
