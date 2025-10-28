@@ -53,9 +53,14 @@ OpenAPI Spec (source of truth)
 
 ```
 pivot/
-├── schema.sql                 # PostgreSQL schema (17 tables)
-├── openapi/spec.yaml          # OpenAPI 3.1 spec
+├── schema.sql                 # PostgreSQL schema (20 tables + 3 views)
+├── openapi/spec.yaml          # OpenAPI 3.0.3 spec
 ├── sqlc/queries/              # SQL queries
+├── docs/                      # Documentation
+│   ├── planning/              # Planning documents
+│   ├── setup/                 # Setup guides
+│   ├── ERD.md                 # Mermaid ERD diagram
+│   └── public.*.md            # Table documentation (24 files)
 ├── generated/                 # ⚠️ Auto-generated code
 │   ├── api/                   # From OpenAPI
 │   └── db/                    # From SQL
@@ -63,17 +68,19 @@ pivot/
 │   ├── handlers/              # HTTP request handlers
 │   ├── service/               # Business logic
 │   └── middleware/            # Auth, RLS, logging
-├── cmd/
-│   ├── server/                # API server
-│   └── cli/                   # Employee CLI client
-└── docs/                      # Auto-generated documentation
+└── cmd/
+    ├── server/                # API server
+    └── cli/                   # Employee CLI client
 ```
 
 ## Documentation
 
-- **[Migration Plan](./MIGRATION_PLAN.md)** - Complete implementation roadmap
-- **[Database Schema](./DATABASE_SCHEMA.md)** - ERD and table definitions
-- **[OpenAPI Spec](./openapi/spec.yaml)** - API contract (to be created)
+- **[CLAUDE.md](./CLAUDE.md)** ⭐ - Main documentation hub (start here!)
+- **[Migration Plan](./docs/planning/MIGRATION_PLAN.md)** - Complete implementation roadmap
+- **[Database Schema](./docs/planning/DATABASE_SCHEMA.md)** - ERD and table definitions
+- **[Quickstart](./docs/setup/QUICKSTART.md)** - 5-minute setup guide
+- **[ERD Diagram](./docs/ERD.md)** - Visual schema with Mermaid
+- **[OpenAPI Spec](./openapi/spec.yaml)** - API contract (OpenAPI 3.0.3)
 
 ## Development Workflow
 
@@ -128,16 +135,14 @@ PORT=3001
 ## Current Status
 
 ### ✅ Completed (Phase 1)
-- [x] Database schema design (17 tables)
+- [x] Database schema design (20 tables + 3 views)
 - [x] Project structure setup
 - [x] Docker Compose configuration
 - [x] Makefile automation
 - [x] Migration plan documentation
-
-### 🚧 In Progress
-- [ ] ERD generation with tbls
-- [ ] OpenAPI spec creation
-- [ ] Code generation setup
+- [x] ERD generation with tbls (50+ docs generated)
+- [x] OpenAPI spec creation (OpenAPI 3.0.3)
+- [x] Code generation setup (oapi-codegen, sqlc, tbls)
 
 ### 📋 Upcoming
 - [ ] Authentication & authorization
@@ -148,7 +153,7 @@ PORT=3001
 - [ ] Employee CLI client
 - [ ] Admin web UI
 
-See [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) for complete roadmap.
+See [MIGRATION_PLAN.md](./docs/planning/MIGRATION_PLAN.md) for complete roadmap.
 
 ## Contributing
 
