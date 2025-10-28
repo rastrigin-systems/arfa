@@ -80,12 +80,6 @@ func TestListEmployees_Integration_Success(t *testing.T) {
 
 	router.ServeHTTP(rec, req)
 
-	// Debug: print response body if not OK
-	if rec.Code != http.StatusOK {
-		t.Logf("Response status: %d", rec.Code)
-		t.Logf("Response body: %s", rec.Body.String())
-	}
-
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response api.ListEmployeesResponse

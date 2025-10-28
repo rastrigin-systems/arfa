@@ -39,16 +39,15 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 	query := r.URL.Query()
 
 	// Status filter (optional)
-	var status interface{}
+	// Use pointer to string: nil = no filter, &value = filter by value
+	var status *string
 	if statusParam := query.Get("status"); statusParam != "" {
-		status = pgtype.Text{String: statusParam, Valid: true}
-	} else {
-		status = pgtype.Text{Valid: false}
+		status = &statusParam
 	}
 
 	// Team filter (optional) - not currently used but supported by SQL
-	var teamID interface{}
-	teamID = pgtype.UUID{Valid: false}
+	// Use pgtype.UUID with Valid=false for no filter
+	teamID := pgtype.UUID{Valid: false}
 	// Future: add team_id query parameter support
 
 	// Pagination: limit (default 50, max 100)

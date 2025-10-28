@@ -12,8 +12,8 @@ WHERE email = $1 AND deleted_at IS NULL;
 SELECT * FROM employees
 WHERE org_id = sqlc.arg(org_id)
   AND deleted_at IS NULL
-  AND (sqlc.narg(status) IS NULL OR status = sqlc.narg(status))
-  AND (sqlc.narg(team_id) IS NULL OR team_id = sqlc.narg(team_id))
+  AND (sqlc.narg(status)::text IS NULL OR status = sqlc.narg(status)::text)
+  AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid)
 ORDER BY created_at DESC
 LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 
@@ -21,8 +21,8 @@ LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 SELECT COUNT(*) FROM employees
 WHERE org_id = sqlc.arg(org_id)
   AND deleted_at IS NULL
-  AND (sqlc.narg(status) IS NULL OR status = sqlc.narg(status))
-  AND (sqlc.narg(team_id) IS NULL OR team_id = sqlc.narg(team_id));
+  AND (sqlc.narg(status)::text IS NULL OR status = sqlc.narg(status)::text)
+  AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid);
 
 -- name: CreateEmployee :one
 INSERT INTO employees (

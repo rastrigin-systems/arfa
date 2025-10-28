@@ -68,7 +68,7 @@ func TestListEmployees_Success(t *testing.T) {
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), db.ListEmployeesParams{
 			OrgID:       orgID,
-			Status:      pgtype.Text{Valid: false},                  // No status filter
+			Status:      nil,                                        // No status filter (*string = nil)
 			TeamID:      pgtype.UUID{Valid: false},                  // No team filter
 			QueryLimit:  50,                                         // Default limit
 			QueryOffset: 0,                                          // Default offset
@@ -79,7 +79,7 @@ func TestListEmployees_Success(t *testing.T) {
 	mockDB.EXPECT().
 		CountEmployees(gomock.Any(), db.CountEmployeesParams{
 			OrgID:  orgID,
-			Status: pgtype.Text{Valid: false},
+			Status: nil,
 			TeamID: pgtype.UUID{Valid: false},
 		}).
 		Return(int64(2), nil)
@@ -139,11 +139,14 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 		},
 	}
 
+	// Status filter value
+	activeStatus := "active"
+
 	// Expect database query WITH status filter
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), db.ListEmployeesParams{
 			OrgID:       orgID,
-			Status:      pgtype.Text{String: "active", Valid: true}, // Status filter applied
+			Status:      &activeStatus,                              // Status filter applied (*string)
 			TeamID:      pgtype.UUID{Valid: false},
 			QueryLimit:  50,
 			QueryOffset: 0,
@@ -153,7 +156,7 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 	mockDB.EXPECT().
 		CountEmployees(gomock.Any(), db.CountEmployeesParams{
 			OrgID:  orgID,
-			Status: pgtype.Text{String: "active", Valid: true},
+			Status: &activeStatus,
 			TeamID: pgtype.UUID{Valid: false},
 		}).
 		Return(int64(1), nil)
@@ -189,7 +192,7 @@ func TestListEmployees_Pagination(t *testing.T) {
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), db.ListEmployeesParams{
 			OrgID:       orgID,
-			Status:      pgtype.Text{Valid: false},
+			Status:      nil,
 			TeamID:      pgtype.UUID{Valid: false},
 			QueryLimit:  10,  // Custom limit
 			QueryOffset: 20,  // Custom offset
