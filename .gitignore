@@ -1,0 +1,39 @@
+# Generated code - never commit
+generated/
+
+# Binary outputs
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+*.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Documentation artifacts (keep source, ignore generated HTML)
+docs/*.html
+docs/schema/
+
+# Temporary files
+tmp/
+temp/

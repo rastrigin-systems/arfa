@@ -1,0 +1,22 @@
+# oapi-codegen configuration
+# Generates Go types, server stubs, and validators from OpenAPI spec
+
+package: api
+generate:
+  models: true
+  chi-server: true
+  embedded-spec: true
+output: ../generated/api/server.gen.go
+
+# Additional type generation
+output-options:
+  skip-prune: true
+  user-templates:
+
+# Import mapping (if needed)
+import-mapping:
+
+# Additional configuration
+compatibility:
+  always-prefix-enum-values: true
+  apply-chi-middleware-first-to-last: true
