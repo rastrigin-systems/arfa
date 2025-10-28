@@ -247,3 +247,237 @@ func TestLogin_InactiveUser(t *testing.T) {
 	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "Account is suspended")
 }
+
+// ============================================================================
+// Logout Tests
+// ============================================================================
+
+// TDD Lesson: Testing logout - invalidate the session
+func TestLogout_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	// Create a valid token
+	employeeID := uuid.New()
+	orgID := uuid.New()
+	token, _ := auth.GenerateJWT(employeeID, orgID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+
+	// Expect session deletion
+	mockDB.EXPECT().
+		DeleteSession(gomock.Any(), tokenHash).
+		Return(nil)
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.Logout(rec, req)
+
+	// Should return 200 OK
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response map[string]string
+	json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.Equal(t, "Logged out successfully", response["message"])
+}
+
+// TDD Lesson: Test missing/invalid token
+func TestLogout_InvalidToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	// No database calls expected (token validation fails first)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	rec := httptest.NewRecorder()
+
+	handler.Logout(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+// TDD Lesson: Test missing Authorization header
+func TestLogout_MissingToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	// No database calls expected
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	// No Authorization header
+	rec := httptest.NewRecorder()
+
+	handler.Logout(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+// ============================================================================
+// GetMe Tests
+// ============================================================================
+
+// TDD Lesson: GetMe returns the current employee from JWT token
+func TestGetMe_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	// Create test data
+	employeeID := uuid.New()
+	orgID := uuid.New()
+	roleID := uuid.New()
+	email := "alice@acme.com"
+
+	// Generate a valid token
+	token, _ := auth.GenerateJWT(employeeID, orgID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+
+	// Expect database to return employee data
+	mockDB.EXPECT().
+		GetSessionWithEmployee(gomock.Any(), tokenHash).
+		Return(db.GetSessionWithEmployeeRow{
+			ID:                uuid.New(),
+			EmployeeID:        employeeID,
+			TokenHash:         tokenHash,
+			ExpiresAt:         pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+			CreatedAt:         pgtype.Timestamp{Time: time.Now(), Valid: true},
+			OrgID:             orgID,
+			TeamID:            pgtype.UUID{},
+			RoleID:            roleID,
+			Email:             email,
+			FullName:          "Alice Smith",
+			Status:            "active",
+			Preferences:       []byte("{}"),
+			LastLoginAt:       pgtype.Timestamp{},
+			EmployeeCreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+			EmployeeUpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+		}, nil)
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.GetMe(rec, req)
+
+	// Should return 200 OK
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Employee
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	assert.Equal(t, employeeID.String(), response.Id.String())
+	assert.Equal(t, email, string(response.Email))
+	assert.Equal(t, "Alice Smith", response.FullName)
+	assert.Equal(t, "active", string(response.Status))
+}
+
+// TDD Lesson: Test invalid token
+func TestGetMe_InvalidToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	// No database calls expected (token validation fails first)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	rec := httptest.NewRecorder()
+
+	handler.GetMe(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+// TDD Lesson: Test missing token
+func TestGetMe_MissingToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	// No Authorization header
+	rec := httptest.NewRecorder()
+
+	handler.GetMe(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+// TDD Lesson: Test expired token
+func TestGetMe_ExpiredToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	employeeID := uuid.New()
+	orgID := uuid.New()
+
+	// Generate an expired token (1 nanosecond duration)
+	token, _ := auth.GenerateJWT(employeeID, orgID, 1*time.Nanosecond)
+	time.Sleep(2 * time.Millisecond) // Ensure it's expired
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.GetMe(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+// TDD Lesson: Test session not found (logged out)
+func TestGetMe_SessionNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	employeeID := uuid.New()
+	orgID := uuid.New()
+	token, _ := auth.GenerateJWT(employeeID, orgID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+
+	// Expect database to return "not found" error
+	mockDB.EXPECT().
+		GetSessionWithEmployee(gomock.Any(), tokenHash).
+		Return(db.GetSessionWithEmployeeRow{}, assert.AnError)
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.GetMe(rec, req)
+
+	// Should return 401 Unauthorized
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}

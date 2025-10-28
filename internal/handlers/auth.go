@@ -124,6 +124,159 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// Logout handles employee logout requests
+//
+// TDD Lesson: Logout is simpler than login - just invalidate the session
+//
+// Implementation Steps (derived from tests):
+// 1. Extract token from Authorization header
+// 2. Verify JWT token is valid
+// 3. Hash the token
+// 4. Delete session from database
+// 5. Return success message
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Extract token from Authorization header (TestLogout_MissingToken requires this)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		writeError(w, http.StatusUnauthorized, "Missing authorization header")
+		return
+	}
+
+	// Extract "Bearer <token>" format
+	const bearerPrefix = "Bearer "
+	if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
+		writeError(w, http.StatusUnauthorized, "Invalid authorization header format")
+		return
+	}
+	token := authHeader[len(bearerPrefix):]
+
+	// Step 2: Verify JWT token (TestLogout_InvalidToken requires this)
+	_, err := auth.VerifyJWT(token)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Invalid token")
+		return
+	}
+
+	// Step 3: Hash the token
+	tokenHash := auth.HashToken(token)
+
+	// Step 4: Delete session (TestLogout_Success expects this)
+	if err := h.db.DeleteSession(ctx, tokenHash); err != nil {
+		// Log error but don't expose details to client
+		fmt.Printf("Warning: Failed to delete session: %v\n", err)
+		writeError(w, http.StatusInternalServerError, "Failed to logout")
+		return
+	}
+
+	// Step 5: Return success (TestLogout_Success validates this)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Logged out successfully",
+	})
+}
+
+// GetMe handles fetching the current logged-in employee's information
+//
+// TDD Lesson: GetMe verifies the token and returns employee data
+//
+// Implementation Steps (derived from tests):
+// 1. Extract token from Authorization header
+// 2. Verify JWT token is valid and not expired
+// 3. Hash the token
+// 4. Fetch session and employee from database
+// 5. Return employee data
+func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Extract token from Authorization header (TestGetMe_MissingToken requires this)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		writeError(w, http.StatusUnauthorized, "Missing authorization header")
+		return
+	}
+
+	// Extract "Bearer <token>" format
+	const bearerPrefix = "Bearer "
+	if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
+		writeError(w, http.StatusUnauthorized, "Invalid authorization header format")
+		return
+	}
+	token := authHeader[len(bearerPrefix):]
+
+	// Step 2: Verify JWT token (TestGetMe_InvalidToken and TestGetMe_ExpiredToken require this)
+	_, err := auth.VerifyJWT(token)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return
+	}
+
+	// Step 3: Hash the token
+	tokenHash := auth.HashToken(token)
+
+	// Step 4: Fetch session and employee (TestGetMe_Success expects this)
+	// This also validates:
+	// - Session exists and is not expired
+	// - Employee exists and is not deleted
+	// - Employee status is active
+	sessionData, err := h.db.GetSessionWithEmployee(ctx, tokenHash)
+	if err != nil {
+		// Session not found (user logged out or session expired)
+		writeError(w, http.StatusUnauthorized, "Session not found")
+		return
+	}
+
+	// Step 5: Convert to API employee format and return
+	employee := mapSessionDataToAPIEmployee(sessionData)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(employee)
+}
+
+// mapSessionDataToAPIEmployee converts GetSessionWithEmployeeRow to API Employee
+//
+// TDD Lesson: Separate conversion logic for cleaner code and easier testing
+func mapSessionDataToAPIEmployee(data db.GetSessionWithEmployeeRow) api.Employee {
+	// Convert UUIDs to OpenAPI UUID type
+	empID := openapi_types.UUID(data.EmployeeID)
+	orgID := openapi_types.UUID(data.OrgID)
+	roleID := openapi_types.UUID(data.RoleID)
+
+	// Convert email to OpenAPI Email type
+	email := openapi_types.Email(data.Email)
+
+	// Convert timestamps
+	createdAt := data.EmployeeCreatedAt.Time
+	updatedAt := data.EmployeeUpdatedAt.Time
+
+	employee := api.Employee{
+		Id:        &empID,
+		OrgId:     orgID,
+		Email:     email,
+		FullName:  data.FullName,
+		RoleId:    roleID,
+		Status:    api.EmployeeStatus(data.Status),
+		CreatedAt: &createdAt,
+		UpdatedAt: &updatedAt,
+	}
+
+	// Handle nullable team_id
+	if data.TeamID.Valid {
+		teamID := openapi_types.UUID(data.TeamID.Bytes)
+		employee.TeamId = &teamID
+	}
+
+	// Handle nullable last_login_at
+	if data.LastLoginAt.Valid {
+		employee.LastLoginAt = &data.LastLoginAt.Time
+	}
+
+	return employee
+}
+
 // mapEmployeeToAPI converts database employee to API employee
 //
 // TDD Lesson: We create helper functions as needed during implementation.

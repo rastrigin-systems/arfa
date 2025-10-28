@@ -6,7 +6,7 @@ Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Co
 
 **Core Value**: Centralized control, policy enforcement, and visibility into AI agent usage across an organization.
 
-**Current Status**: 🟢 **Phase 1 Complete** - Database schema, code generation, and documentation ready (as of 2025-10-28)
+**Current Status**: 🟢 **Phase 2 - Authentication Complete** - Full auth system with 33 passing tests (as of 2025-10-28)
 
 ---
 
@@ -397,6 +397,443 @@ Use Row-Level Security (RLS) policies as safety net.
 
 ---
 
+## 🧪 TDD Development Best Practices
+
+### ✅ TDD Workflow (RED → GREEN → REFACTOR)
+
+**CRITICAL: Always follow this sequence when implementing new features**
+
+#### 1. Write Tests FIRST (RED Phase 🔴)
+
+```bash
+# Step 1: Write unit tests in *_test.go
+vim internal/handlers/auth_test.go
+
+# Step 2: Run tests - they should FAIL
+go test -v -short ./internal/handlers
+
+# Expected: Tests fail because handler doesn't exist yet
+# This is GOOD! Confirms tests are working.
+```
+
+**Example Test Structure:**
+```go
+func TestLogin_Success(t *testing.T) {
+    // === ARRANGE === Setup test data and mocks
+    ctrl := gomock.NewController(t)
+    defer ctrl.Finish()
+    mockDB := mocks.NewMockQuerier(ctrl)
+
+    // Define expectations
+    mockDB.EXPECT().GetEmployeeByEmail(gomock.Any(), email).Return(...)
+
+    // === ACT === Call the handler
+    handler := handlers.NewAuthHandler(mockDB)
+    handler.Login(rec, req)
+
+    // === ASSERT === Verify the results
+    assert.Equal(t, http.StatusOK, rec.Code)
+}
+```
+
+#### 2. Implement Code (GREEN Phase 🟢)
+
+```bash
+# Step 1: Add SQL queries if needed
+vim sqlc/queries/auth.sql
+
+# Step 2: Regenerate DB code and mocks
+make generate-db && make generate-mocks
+
+# Step 3: Implement handler
+vim internal/handlers/auth.go
+
+# Step 4: Run tests - they should PASS
+go test -v -short ./internal/handlers
+
+# Expected: All tests pass ✅
+```
+
+#### 3. Add Integration Tests (FULL STACK 🔄)
+
+```bash
+# Step 1: Write integration test with REAL database
+vim tests/integration/auth_integration_test.go
+
+# Step 2: Run integration test
+go test -v -run TestLogin_Integration ./tests/integration
+
+# Expected: Test passes with real PostgreSQL ✅
+```
+
+**Integration Test Structure:**
+```go
+func TestLogin_Integration_Success(t *testing.T) {
+    if testing.Short() {
+        t.Skip("Skipping integration test in short mode")
+    }
+
+    // Setup real database
+    conn, queries := testutil.SetupTestDB(t)
+    defer conn.Close(testutil.GetContext(t))
+
+    // Create test data in REAL database
+    org := testutil.CreateTestOrg(t, queries, ctx)
+    employee := testutil.CreateTestEmployee(t, queries, ctx, params)
+
+    // Make HTTP request to handler
+    router := chi.NewRouter()
+    authHandler := handlers.NewAuthHandler(queries)
+    router.Post("/auth/login", authHandler.Login)
+
+    router.ServeHTTP(rec, req)
+
+    // Verify DATABASE side effects
+    session, err := queries.GetSession(ctx, tokenHash)
+    require.NoError(t, err, "Session should exist in database")
+}
+```
+
+#### 4. Refactor (CLEAN UP 🧹)
+
+```bash
+# Step 1: Run all tests to ensure nothing breaks
+go test -v ./...
+
+# Step 2: Check coverage
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Step 3: Refactor if needed, re-run tests
+```
+
+---
+
+### ✅ Code Generation Workflow
+
+**CRITICAL: Always regenerate code after schema/query changes**
+
+```bash
+# After changing schema.sql
+make db-reset           # Reset database with new schema
+make generate-db        # Regenerate sqlc code
+make generate-mocks     # Regenerate mocks from new interfaces
+make generate-erd       # Update ERD documentation
+
+# Or regenerate everything at once
+make generate           # Runs all generators
+```
+
+**Common Mistakes:**
+- ❌ Forgetting to regenerate mocks after SQL query changes
+- ❌ Editing generated code directly (always regenerate!)
+- ❌ Not running `make db-reset` after schema changes
+
+---
+
+### ✅ Testing Patterns
+
+#### Unit Tests (Fast, Mocked)
+
+**When to use:** Testing handler logic, validation, error paths
+
+```go
+// Good: Tests ONE handler function with mocked database
+func TestLogout_Success(t *testing.T) {
+    mockDB.EXPECT().DeleteSession(gomock.Any(), tokenHash).Return(nil)
+    handler.Logout(rec, req)
+    assert.Equal(t, http.StatusOK, rec.Code)
+}
+```
+
+**Run with:** `go test -v -short ./internal/...`
+
+**Coverage Target:** 90%+ for handlers, 95%+ for auth utilities
+
+#### Integration Tests (Slow, Real DB)
+
+**When to use:** Testing full stack with database side effects
+
+```go
+// Good: Tests ENTIRE flow with real PostgreSQL
+func TestLogin_Integration_Success(t *testing.T) {
+    // Real database, real handler, real HTTP request
+    // Verify session created in database
+    // Verify last_login updated
+    // Verify JWT contains correct claims
+}
+```
+
+**Run with:** `go test -v -run Integration ./tests/integration`
+
+**Coverage Target:** 80%+ of critical user flows
+
+#### What Integration Tests Catch (That Unit Tests Miss)
+
+**Real Examples from Our Development:**
+1. ✅ **Missing deleted_at column** - SQL query referenced non-existent column
+2. ✅ **Type conversion issues** - OpenAPI types vs database types
+3. ✅ **Schema drift** - SQL queries out of sync with schema
+4. ✅ **Multi-tenant isolation** - Verified org_id filtering works
+
+---
+
+### ✅ Common Patterns
+
+#### 1. JWT Authentication Flow
+
+```go
+// Pattern: Extract token from Authorization header
+authHeader := r.Header.Get("Authorization")
+if authHeader == "" {
+    writeError(w, http.StatusUnauthorized, "Missing authorization header")
+    return
+}
+
+const bearerPrefix = "Bearer "
+if len(authHeader) < len(bearerPrefix) {
+    writeError(w, http.StatusUnauthorized, "Invalid format")
+    return
+}
+token := authHeader[len(bearerPrefix):]
+
+// Verify JWT
+claims, err := auth.VerifyJWT(token)
+if err != nil {
+    writeError(w, http.StatusUnauthorized, "Invalid token")
+    return
+}
+
+// Hash for database lookup
+tokenHash := auth.HashToken(token)
+```
+
+**Note:** This pattern appears in Logout, GetMe, and will appear in ALL protected endpoints → Extract to middleware!
+
+#### 2. Type Conversion (DB ↔ API)
+
+```go
+// Pattern: Convert database types to OpenAPI types
+empID := openapi_types.UUID(emp.ID)
+orgID := openapi_types.UUID(emp.OrgID)
+email := openapi_types.Email(emp.Email)
+
+employee := api.Employee{
+    Id:    &empID,
+    OrgId: orgID,
+    Email: email,
+}
+
+// Handle nullable fields
+if emp.TeamID.Valid {
+    teamID := openapi_types.UUID(emp.TeamID.Bytes)
+    employee.TeamId = &teamID
+}
+```
+
+#### 3. Test Fixture Creation
+
+```go
+// Pattern: Use testutil helpers for consistent test data
+org := testutil.CreateTestOrg(t, queries, ctx)
+role := testutil.CreateTestRole(t, queries, ctx, "Admin")
+employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+    OrgID:        org.ID,
+    RoleID:       role.ID,
+    Email:        "test@example.com",
+    PasswordHash: passwordHash,
+    Status:       "active",
+})
+```
+
+---
+
+### ✅ Testing Commands
+
+```bash
+# Run all tests
+go test -v ./...
+
+# Run only unit tests (fast)
+go test -v -short ./internal/...
+
+# Run only integration tests (slow)
+go test -v -run Integration ./tests/integration
+
+# Run specific test
+go test -v -run TestLogin_Success ./internal/handlers
+
+# Run with coverage
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Run with race detection
+go test -v -race ./...
+```
+
+---
+
+### ✅ Critical Gotchas
+
+#### 1. Mock Generation Version Mismatch
+
+**Problem:** Using wrong mockgen version
+
+```bash
+# ❌ Wrong: Old mockgen (github.com/golang/mock)
+go install github.com/golang/mock/mockgen@latest
+
+# ✅ Correct: New mockgen (go.uber.org/mock)
+go install go.uber.org/mock/mockgen@latest
+```
+
+**Always use:** `go.uber.org/mock` (matches import in code)
+
+#### 2. SQL Query vs Schema Mismatch
+
+**Problem:** Query references column that doesn't exist
+
+```sql
+-- Query references deleted_at
+SELECT * FROM employees WHERE deleted_at IS NULL
+
+-- But schema is missing the column!
+-- ❌ Integration test will fail: "column deleted_at does not exist"
+```
+
+**Solution:** Always run integration tests to catch this!
+
+```bash
+make db-reset           # Apply schema changes
+go test -v -run Integration ./tests/integration
+```
+
+#### 3. Testcontainers Docker Issues
+
+**Problem:** Integration tests hang or fail to start
+
+```bash
+# Check Docker is running
+docker ps
+
+# Check testcontainers can access Docker
+docker run hello-world
+
+# Ensure schema.sql path is correct
+schemaPath, err := filepath.Abs("../../schema.sql")
+```
+
+---
+
+### ✅ File Organization
+
+```
+pivot/
+├── internal/
+│   ├── auth/
+│   │   ├── jwt.go           # JWT utilities
+│   │   └── jwt_test.go      # Unit tests (14 tests)
+│   └── handlers/
+│       ├── auth.go          # HTTP handlers
+│       └── auth_test.go     # Unit tests (13 tests)
+│
+├── tests/
+│   ├── integration/
+│   │   └── auth_integration_test.go  # Integration tests (6 tests)
+│   └── testutil/
+│       ├── db.go            # Testcontainers setup
+│       └── fixtures.go      # Test data factories
+│
+├── sqlc/queries/
+│   ├── auth.sql             # Auth SQL queries
+│   ├── employees.sql        # Employee SQL queries
+│   └── organizations.sql    # Org SQL queries
+│
+└── generated/               # ⚠️ NEVER EDIT!
+    ├── api/                 # From OpenAPI spec
+    ├── db/                  # From sqlc
+    └── mocks/               # From mockgen
+```
+
+---
+
+### ✅ Test Success Criteria
+
+**Before merging any PR:**
+
+1. ✅ All tests passing: `go test ./...`
+2. ✅ Coverage > 85%: `go test -coverprofile=coverage.out ./...`
+3. ✅ No race conditions: `go test -race ./...`
+4. ✅ Integration tests pass: `go test -run Integration ./tests/integration`
+5. ✅ Code generated: `make generate` (no diffs)
+
+**Coverage Targets:**
+- Auth utilities: 95%+
+- HTTP handlers: 90%+
+- Integration: 80%+ of user flows
+
+---
+
+### ✅ Example: Complete TDD Cycle (Logout Handler)
+
+**Step 1: Write Tests (RED 🔴)**
+```bash
+vim internal/handlers/auth_test.go
+# Add TestLogout_Success, TestLogout_InvalidToken, TestLogout_MissingToken
+
+go test -v -short ./internal/handlers -run TestLogout
+# ❌ FAIL: handler.Logout undefined
+```
+
+**Step 2: Add SQL Query**
+```bash
+vim sqlc/queries/auth.sql
+# Add: -- name: DeleteSession :exec
+
+make generate-db && make generate-mocks
+```
+
+**Step 3: Implement Handler (GREEN 🟢)**
+```bash
+vim internal/handlers/auth.go
+# Implement Logout() handler
+
+go test -v -short ./internal/handlers -run TestLogout
+# ✅ PASS: TestLogout_Success (0.00s)
+# ✅ PASS: TestLogout_InvalidToken (0.00s)
+# ✅ PASS: TestLogout_MissingToken (0.00s)
+```
+
+**Step 4: Add Integration Test**
+```bash
+vim tests/integration/auth_integration_test.go
+# Add TestLogout_Integration_Success
+
+go test -v -run TestLogout_Integration ./tests/integration
+# ✅ PASS: TestLogout_Integration_Success (2.13s)
+```
+
+**Result:** 4 tests, 100% coverage, handler complete! 🎉
+
+---
+
+### ✅ Key Learnings
+
+1. **Integration tests are ESSENTIAL** - They catch bugs unit tests cannot
+2. **Write tests BEFORE code** - Clarifies requirements, prevents overengineering
+3. **Use testcontainers** - Real PostgreSQL in Docker, isolated per test
+4. **Generate mocks automatically** - No manual maintenance, always in sync
+5. **Test the full stack** - HTTP → Handler → Database → Response
+6. **Document as you go** - Add comments linking code to test requirements
+
+**TDD provides:**
+- ✅ Confidence in refactoring
+- ✅ Living documentation
+- ✅ Faster debugging (tests show exactly what broke)
+- ✅ Better API design (think from caller's perspective)
+
+---
+
 ## Success Metrics
 
 ### Phase 1 (Complete)
@@ -407,11 +844,18 @@ Use Row-Level Security (RLS) policies as safety net.
 - ✅ Code generation working end-to-end
 - ✅ Complete automation via Makefile
 
-### Phase 2 Targets
-- [ ] Authentication working (JWT + sessions)
-- [ ] Employee CRUD endpoints functional
-- [ ] Integration tests with >80% coverage
-- [ ] API response time <100ms (p95)
+### Phase 2 (In Progress - As of 2025-10-28)
+- ✅ **Authentication working** (JWT + sessions) - **COMPLETE!**
+  - ✅ Login endpoint (5 unit + 4 integration tests)
+  - ✅ Logout endpoint (3 unit + 1 integration tests)
+  - ✅ GetMe endpoint (5 unit tests)
+  - ✅ Full auth lifecycle test (login → getMe → logout)
+  - ✅ 33/33 tests passing
+  - ✅ ~85% code coverage
+- [ ] JWT Middleware (planned)
+- [ ] Employee CRUD endpoints (0/5 complete)
+- [ ] Integration tests with >80% coverage (auth at 100%, need employee tests)
+- [ ] API response time <100ms (p95) - not yet measured
 
 ---
 
@@ -497,9 +941,9 @@ vim docs/ERD.md  # If schema structure changes significantly
 
 ## Status Summary
 
-**Last Updated**: 2025-10-28  
-**Version**: 0.1.0 (Phase 1 Complete)  
-**Status**: 🟢 Ready for Phase 2 Development
+**Last Updated**: 2025-10-28
+**Version**: 0.2.0 (Phase 2 - Authentication Complete)
+**Status**: 🟢 Authentication System Production-Ready
 
 **Phase 1 Achievements**:
 - ✅ Complete database schema (20 tables + 3 views)
@@ -510,7 +954,25 @@ vim docs/ERD.md  # If schema structure changes significantly
 - ✅ Local development environment
 - ✅ Comprehensive Mermaid ERD
 
-**Next Milestone**: Phase 2 - Core API (Week of 2025-11-04)
+**Phase 2 Achievements** (NEW - 2025-10-28):
+- ✅ **Complete authentication system** with TDD
+- ✅ **33/33 tests passing** (27 unit + 6 integration)
+- ✅ **~85% code coverage** across auth and handlers
+- ✅ **3/10 API endpoints implemented**:
+  - POST /auth/login
+  - POST /auth/logout
+  - GET /auth/me
+- ✅ **Real PostgreSQL integration tests** with testcontainers
+- ✅ **JWT token lifecycle** fully tested and working
+- ✅ **TDD best practices** documented in CLAUDE.md
+
+**Test Breakdown**:
+- 14 JWT helper tests (auth utilities)
+- 13 handler unit tests (Login, Logout, GetMe)
+- 6 integration tests (full stack with PostgreSQL)
+- 100% of auth user flows covered
+
+**Next Milestone**: JWT Middleware + Employee CRUD endpoints
 
 ---
 

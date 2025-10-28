@@ -29,17 +29,27 @@ DELETE FROM sessions
 WHERE employee_id = $1;
 
 -- name: GetSessionWithEmployee :one
-SELECT 
-    s.*,
-    e.id as employee_id,
+SELECT
+    s.id,
+    s.employee_id,
+    s.token_hash,
+    s.ip_address,
+    s.user_agent,
+    s.expires_at,
+    s.created_at,
     e.org_id,
+    e.team_id,
+    e.role_id,
     e.email,
     e.full_name,
-    e.status as employee_status,
-    e.role_id
+    e.status,
+    e.preferences,
+    e.last_login_at,
+    e.created_at as employee_created_at,
+    e.updated_at as employee_updated_at
 FROM sessions s
 JOIN employees e ON s.employee_id = e.id
-WHERE s.token_hash = $1 
+WHERE s.token_hash = $1
   AND s.expires_at > NOW()
   AND e.deleted_at IS NULL
   AND e.status = 'active';

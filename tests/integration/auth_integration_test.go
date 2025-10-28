@@ -339,3 +339,205 @@ func TestLogin_Integration_MultipleEmployees(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, org1.ID.String(), claims.OrgID, "Token should have org1's ID")
 }
+
+// TestLogout_Integration_Success tests the logout flow with real database
+func TestLogout_Integration_Success(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create test data
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "User")
+
+	password := "Password123"
+	passwordHash, _ := auth.HashPassword(password)
+
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:        org.ID,
+		RoleID:       role.ID,
+		Email:        "logout@acme.com",
+		FullName:     "Logout User",
+		PasswordHash: passwordHash,
+		Status:       "active",
+	})
+
+	// Step 1: Login to get a token
+	router := chi.NewRouter()
+	authHandler := handlers.NewAuthHandler(queries)
+	router.Post("/auth/login", authHandler.Login)
+	router.Post("/auth/logout", authHandler.Logout)
+
+	loginRequest := api.LoginRequest{
+		Email:    openapi_types.Email("logout@acme.com"),
+		Password: password,
+	}
+	bodyBytes, _ := json.Marshal(loginRequest)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var loginResponse api.LoginResponse
+	json.Unmarshal(rec.Body.Bytes(), &loginResponse)
+	token := loginResponse.Token
+	tokenHash := auth.HashToken(token)
+
+	// Verify session exists
+	session, err := queries.GetSession(ctx, tokenHash)
+	require.NoError(t, err, "Session should exist after login")
+	assert.Equal(t, employee.ID, session.EmployeeID)
+
+	// Step 2: Logout
+	logoutReq := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	logoutReq.Header.Set("Authorization", "Bearer "+token)
+	logoutRec := httptest.NewRecorder()
+
+	router.ServeHTTP(logoutRec, logoutReq)
+
+	// Verify logout succeeded
+	assert.Equal(t, http.StatusOK, logoutRec.Code)
+
+	var logoutResponse map[string]string
+	json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
+	assert.Equal(t, "Logged out successfully", logoutResponse["message"])
+
+	// Verify session was deleted from database
+	_, err = queries.GetSession(ctx, tokenHash)
+	assert.Error(t, err, "Session should not exist after logout")
+
+	// Integration Test Lesson: We verified:
+	// ✅ Login creates session
+	// ✅ Logout deletes session
+	// ✅ Session no longer retrievable after logout
+}
+
+// TestFullAuthFlow_Integration tests the complete authentication lifecycle:
+// Login → GetMe → Logout → GetMe (should fail)
+//
+// Integration Test Lesson: This tests the ENTIRE auth system working together
+func TestFullAuthFlow_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Setup test data
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "User")
+
+	password := "SecurePassword123"
+	passwordHash, _ := auth.HashPassword(password)
+
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:        org.ID,
+		RoleID:       role.ID,
+		Email:        "fullflow@acme.com",
+		FullName:     "Full Flow User",
+		PasswordHash: passwordHash,
+		Status:       "active",
+	})
+
+	// Setup router with all endpoints
+	router := chi.NewRouter()
+	authHandler := handlers.NewAuthHandler(queries)
+	router.Post("/auth/login", authHandler.Login)
+	router.Get("/auth/me", authHandler.GetMe)
+	router.Post("/auth/logout", authHandler.Logout)
+
+	// ========================================================================
+	// Step 1: Login
+	// ========================================================================
+
+	loginRequest := api.LoginRequest{
+		Email:    openapi_types.Email("fullflow@acme.com"),
+		Password: password,
+	}
+	bodyBytes, _ := json.Marshal(loginRequest)
+
+	loginReq := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(bodyBytes))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginRec := httptest.NewRecorder()
+
+	router.ServeHTTP(loginRec, loginReq)
+
+	assert.Equal(t, http.StatusOK, loginRec.Code, "Login should succeed")
+
+	var loginResponse api.LoginResponse
+	json.Unmarshal(loginRec.Body.Bytes(), &loginResponse)
+	token := loginResponse.Token
+
+	assert.NotEmpty(t, token, "Should receive token")
+	assert.Equal(t, employee.ID.String(), loginResponse.Employee.Id.String())
+
+	// ========================================================================
+	// Step 2: GetMe (should work with valid token)
+	// ========================================================================
+
+	getMeReq1 := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	getMeReq1.Header.Set("Authorization", "Bearer "+token)
+	getMeRec1 := httptest.NewRecorder()
+
+	router.ServeHTTP(getMeRec1, getMeReq1)
+
+	assert.Equal(t, http.StatusOK, getMeRec1.Code, "GetMe should succeed with valid token")
+
+	var meResponse1 api.Employee
+	json.Unmarshal(getMeRec1.Body.Bytes(), &meResponse1)
+
+	assert.Equal(t, employee.ID.String(), meResponse1.Id.String())
+	assert.Equal(t, "fullflow@acme.com", string(meResponse1.Email))
+	assert.Equal(t, "Full Flow User", meResponse1.FullName)
+	assert.Equal(t, "active", string(meResponse1.Status))
+
+	// ========================================================================
+	// Step 3: Logout
+	// ========================================================================
+
+	logoutReq := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	logoutReq.Header.Set("Authorization", "Bearer "+token)
+	logoutRec := httptest.NewRecorder()
+
+	router.ServeHTTP(logoutRec, logoutReq)
+
+	assert.Equal(t, http.StatusOK, logoutRec.Code, "Logout should succeed")
+
+	var logoutResponse map[string]string
+	json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
+	assert.Equal(t, "Logged out successfully", logoutResponse["message"])
+
+	// ========================================================================
+	// Step 4: GetMe again (should FAIL - session is gone)
+	// ========================================================================
+
+	getMeReq2 := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	getMeReq2.Header.Set("Authorization", "Bearer "+token)
+	getMeRec2 := httptest.NewRecorder()
+
+	router.ServeHTTP(getMeRec2, getMeReq2)
+
+	assert.Equal(t, http.StatusUnauthorized, getMeRec2.Code, "GetMe should fail after logout")
+
+	var errorResponse api.Error
+	json.Unmarshal(getMeRec2.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "Session not found")
+
+	// Integration Test Lesson: Complete auth lifecycle verified!
+	// ✅ Login → creates session and returns token
+	// ✅ GetMe → validates token and returns employee data
+	// ✅ Logout → invalidates session
+	// ✅ GetMe (after logout) → correctly rejects invalidated token
+	//
+	// This is the GOLD STANDARD for integration testing:
+	// We tested the entire system working together with a real database!
+}

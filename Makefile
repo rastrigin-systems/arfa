@@ -116,7 +116,13 @@ generate: generate-erd generate-api generate-db generate-mocks
 # Drift detection
 check-drift:
 	@echo "🔍 Checking for OpenAPI ↔ DB schema drift..."
-	@node scripts/check-drift.js || echo "⚠️  Drift detected - review warnings above"
+	@if [ -f scripts/check-drift.js ]; then \
+		node scripts/check-drift.js || echo "⚠️  Drift detected - review warnings above"; \
+	else \
+		echo "⚠️  Drift check script not yet implemented"; \
+		echo "📝 TODO: Compare openapi/spec.yaml endpoints with database schema"; \
+		echo "✅ Manual verification recommended"; \
+	fi
 
 # Testing
 test:
@@ -146,7 +152,7 @@ dev:
 	@echo "🚀 Starting development server..."
 	@if ! command -v air > /dev/null; then \
 		echo "Installing air for live reload..."; \
-		go install github.com/cosmtrek/air@latest; \
+		go install github.com/air-verse/air@latest; \
 	fi
 	air -c .air.toml
 
