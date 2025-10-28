@@ -289,6 +289,159 @@ func generateTempPassword(length int) (string, error) {
 	return string(password), nil
 }
 
+// UpdateEmployee handles PATCH /employees/{id}
+// Updates employee with provided fields (all fields optional)
+func (h *EmployeesHandler) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract employee_id from URL
+	employeeIDStr := chi.URLParam(r, "employee_id")
+
+	// Parse UUID
+	employeeID, err := uuid.Parse(employeeIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid employee ID format")
+		return
+	}
+
+	// Get org_id from context (set by JWT middleware)
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Organization ID not found in context")
+		return
+	}
+
+	// Fetch employee to verify org isolation
+	existingEmployee, err := h.db.GetEmployee(ctx, employeeID)
+	if err == pgx.ErrNoRows {
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch employee")
+		return
+	}
+
+	// Verify org isolation
+	if existingEmployee.OrgID != orgID {
+		// Return 404 (not 403) for security - don't reveal employee exists
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+
+	// Parse and validate request body
+	var req api.UpdateEmployeeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Build update params, using existing values for fields not provided
+	updateParams := db.UpdateEmployeeParams{
+		ID:          employeeID,
+		FullName:    existingEmployee.FullName,
+		TeamID:      existingEmployee.TeamID,
+		RoleID:      existingEmployee.RoleID,
+		Status:      existingEmployee.Status,
+		Preferences: existingEmployee.Preferences,
+	}
+
+	// Apply updates for provided fields
+	if req.FullName != nil && *req.FullName != "" {
+		updateParams.FullName = *req.FullName
+	}
+
+	if req.RoleId != nil {
+		updateParams.RoleID = uuid.UUID(*req.RoleId)
+	}
+
+	if req.Status != nil {
+		updateParams.Status = string(*req.Status)
+	}
+
+	// Handle team_id (can be set, removed, or left unchanged)
+	if req.TeamId != nil {
+		teamUUID := uuid.UUID(*req.TeamId)
+		updateParams.TeamID = pgtype.UUID{
+			Bytes: teamUUID,
+			Valid: true,
+		}
+	}
+
+	// Handle preferences
+	if req.Preferences != nil {
+		prefsJSON, err := json.Marshal(req.Preferences)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "Invalid preferences format")
+			return
+		}
+		updateParams.Preferences = prefsJSON
+	}
+
+	// Update employee in database
+	updatedEmployee, err := h.db.UpdateEmployee(ctx, updateParams)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to update employee")
+		return
+	}
+
+	// Convert to API type and return
+	apiEmployee := dbEmployeeToAPI(updatedEmployee)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(apiEmployee)
+}
+
+// DeleteEmployee handles DELETE /employees/{id}
+// Soft deletes an employee (sets deleted_at)
+func (h *EmployeesHandler) DeleteEmployee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract employee_id from URL
+	employeeIDStr := chi.URLParam(r, "employee_id")
+
+	// Parse UUID
+	employeeID, err := uuid.Parse(employeeIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid employee ID format")
+		return
+	}
+
+	// Get org_id from context (set by JWT middleware)
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Organization ID not found in context")
+		return
+	}
+
+	// Fetch employee to verify org isolation
+	employee, err := h.db.GetEmployee(ctx, employeeID)
+	if err == pgx.ErrNoRows {
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch employee")
+		return
+	}
+
+	// Verify org isolation
+	if employee.OrgID != orgID {
+		// Return 404 (not 403) for security - don't reveal employee exists
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+
+	// Soft delete employee
+	if err := h.db.SoftDeleteEmployee(ctx, employeeID); err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to delete employee")
+		return
+	}
+
+	// Return 204 No Content
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // dbEmployeeToAPI converts db.Employee to api.Employee
 func dbEmployeeToAPI(emp db.Employee) api.Employee {
 	apiEmp := api.Employee{

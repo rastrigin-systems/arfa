@@ -713,3 +713,398 @@ func TestCreateEmployee_InvalidEmail(t *testing.T) {
 	// Should return 400 or 422 for invalid email format
 	assert.True(t, rec.Code == http.StatusBadRequest || rec.Code == http.StatusUnprocessableEntity)
 }
+
+// ============================================================================
+// UpdateEmployee Tests
+// ============================================================================
+
+// TDD Lesson: Testing employee update with partial fields
+func TestUpdateEmployee_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	// Request to update full_name
+	newName := "Updated Name"
+	reqBody := `{"full_name": "` + newName + `"}`
+
+	// First, expect GetEmployee to verify org isolation
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{
+			ID:       empID,
+			OrgID:    orgID,
+			Email:    "user@example.com",
+			FullName: "Old Name",
+			RoleID:   roleID,
+			Status:   "active",
+		}, nil)
+
+	// Then expect UpdateEmployee
+	mockDB.EXPECT().
+		UpdateEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.UpdateEmployeeParams) (db.Employee, error) {
+			assert.Equal(t, empID, params.ID)
+			assert.Equal(t, newName, params.FullName)
+
+			return db.Employee{
+				ID:           empID,
+				OrgID:        orgID,
+				Email:        "user@example.com",
+				FullName:     newName,
+				RoleID:       roleID,
+				Status:       "active",
+				Preferences:  []byte("{}"),
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
+			}, nil
+		})
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+empID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.UpdateEmployee(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Employee
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Equal(t, newName, response.FullName)
+}
+
+// TDD Lesson: Test updating multiple fields including status
+func TestUpdateEmployee_MultipleFields(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+	oldRoleID := uuid.New()
+	newRoleID := uuid.New()
+	teamID := uuid.New()
+
+	reqBody := `{
+		"full_name": "New Name",
+		"role_id": "` + newRoleID.String() + `",
+		"team_id": "` + teamID.String() + `",
+		"status": "suspended"
+	}`
+
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{
+			ID:       empID,
+			OrgID:    orgID,
+			Email:    "user@example.com",
+			FullName: "Old Name",
+			RoleID:   oldRoleID,
+			Status:   "active",
+		}, nil)
+
+	mockDB.EXPECT().
+		UpdateEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.UpdateEmployeeParams) (db.Employee, error) {
+			assert.Equal(t, empID, params.ID)
+			assert.Equal(t, "New Name", params.FullName)
+			assert.Equal(t, newRoleID, params.RoleID)
+			assert.Equal(t, "suspended", params.Status)
+			assert.True(t, params.TeamID.Valid)
+			assert.Equal(t, teamID[:], params.TeamID.Bytes[:])
+
+			return db.Employee{
+				ID:           empID,
+				OrgID:        orgID,
+				Email:        "user@example.com",
+				FullName:     "New Name",
+				RoleID:       newRoleID,
+				Status:       "suspended",
+				TeamID:       params.TeamID,
+				Preferences:  []byte("{}"),
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
+			}, nil
+		})
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+empID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.UpdateEmployee(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+// TDD Lesson: Test employee not found returns 404
+func TestUpdateEmployee_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+
+	reqBody := `{"full_name": "New Name"}`
+
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{}, pgx.ErrNoRows)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+empID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.UpdateEmployee(rec, req)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+// TDD Lesson: Test org isolation - can't update employee from different org
+func TestUpdateEmployee_WrongOrg(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	otherOrgID := uuid.New()
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	reqBody := `{"full_name": "New Name"}`
+
+	// Employee belongs to different org
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{
+			ID:       empID,
+			OrgID:    otherOrgID, // Different org!
+			Email:    "user@other.com",
+			FullName: "Old Name",
+			RoleID:   roleID,
+			Status:   "active",
+		}, nil)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+empID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.UpdateEmployee(rec, req)
+
+	// Should return 404 for security
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+// TDD Lesson: Test invalid UUID format
+func TestUpdateEmployee_InvalidUUID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+
+	reqBody := `{"full_name": "New Name"}`
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/invalid-uuid", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", "invalid-uuid")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.UpdateEmployee(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+// ============================================================================
+// DeleteEmployee Tests
+// ============================================================================
+
+// TDD Lesson: Testing soft delete (sets deleted_at)
+func TestDeleteEmployee_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	// First, verify org isolation
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{
+			ID:       empID,
+			OrgID:    orgID,
+			Email:    "user@example.com",
+			FullName: "User Name",
+			RoleID:   roleID,
+			Status:   "active",
+		}, nil)
+
+	// Then expect soft delete
+	mockDB.EXPECT().
+		SoftDeleteEmployee(gomock.Any(), empID).
+		Return(nil)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodDelete, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.DeleteEmployee(rec, req)
+
+	// Should return 204 No Content
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+}
+
+// TDD Lesson: Test deleting non-existent employee returns 404
+func TestDeleteEmployee_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{}, pgx.ErrNoRows)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodDelete, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.DeleteEmployee(rec, req)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+// TDD Lesson: Test org isolation for delete
+func TestDeleteEmployee_WrongOrg(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	otherOrgID := uuid.New()
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	// Employee belongs to different org
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{
+			ID:       empID,
+			OrgID:    otherOrgID, // Different org!
+			Email:    "user@other.com",
+			FullName: "User Name",
+			RoleID:   roleID,
+			Status:   "active",
+		}, nil)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodDelete, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.DeleteEmployee(rec, req)
+
+	// Should return 404 for security
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+// TDD Lesson: Test invalid UUID for delete
+func TestDeleteEmployee_InvalidUUID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodDelete, "/employees/invalid-uuid", nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", "invalid-uuid")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.DeleteEmployee(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}

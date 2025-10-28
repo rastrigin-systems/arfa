@@ -677,3 +677,245 @@ func TestCreateEmployee_Integration_DuplicateEmail(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, errorResponse.Error, "already exists")
 }
+
+// ============================================================================
+// Update Employee Integration Tests
+// ============================================================================
+
+// TDD Lesson: Integration test for PATCH /employees/{id}
+func TestUpdateEmployee_Integration_Success(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee to update
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "user@example.com",
+		FullName: "Old Name",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(employee.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(employee.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Patch("/employees/{employee_id}", handler.UpdateEmployee)
+
+	// Update employee's name and status
+	reqBody := `{
+		"full_name": "New Name",
+		"status": "suspended"
+	}`
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+employee.ID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Employee
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Verify updated fields
+	assert.Equal(t, "New Name", response.FullName)
+	assert.Equal(t, api.EmployeeStatusSuspended, response.Status)
+	assert.Equal(t, employee.Email, string(response.Email)) // Email unchanged
+
+	// Verify in database
+	updated, err := queries.GetEmployee(ctx, employee.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "New Name", updated.FullName)
+	assert.Equal(t, "suspended", updated.Status)
+}
+
+// TDD Lesson: Test org isolation for update
+func TestUpdateEmployee_Integration_OrgIsolation(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create two organizations
+	org1 := testutil.CreateTestOrg(t, queries, ctx)
+	org2 := testutil.CreateTestOrg(t, queries, ctx)
+
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee in org1
+	emp1 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org1.ID,
+		RoleID:   role.ID,
+		Email:    "user1@org1.com",
+		FullName: "User 1",
+		Status:   "active",
+	})
+
+	// Create employee in org2
+	emp2 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org2.ID,
+		RoleID:   role.ID,
+		Email:    "user2@org2.com",
+		FullName: "User 2",
+		Status:   "active",
+	})
+
+	// Authenticate as emp1 (org1)
+	token, _ := auth.GenerateJWT(emp1.ID, org1.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(emp1.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Patch("/employees/{employee_id}", handler.UpdateEmployee)
+
+	// Try to update emp2 (different org)
+	reqBody := `{"full_name": "Hacked Name"}`
+
+	req := httptest.NewRequest(http.MethodPatch, "/employees/"+emp2.ID.String(), strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 404 for security
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// Verify emp2 was NOT updated
+	unchanged, err := queries.GetEmployee(ctx, emp2.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "User 2", unchanged.FullName) // Still original name
+}
+
+// ============================================================================
+// Delete Employee Integration Tests
+// ============================================================================
+
+// TDD Lesson: Integration test for DELETE /employees/{id}
+func TestDeleteEmployee_Integration_Success(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee to delete
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "todelete@example.com",
+		FullName: "To Delete",
+		Status:   "active",
+	})
+
+	// Create another employee for auth
+	admin := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "admin@example.com",
+		FullName: "Admin",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(admin.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(admin.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Delete("/employees/{employee_id}", handler.DeleteEmployee)
+
+	// Delete employee
+	req := httptest.NewRequest(http.MethodDelete, "/employees/"+employee.ID.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 204 No Content
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+
+	// Verify employee is soft-deleted (GetEmployee should return error)
+	_, err = queries.GetEmployee(ctx, employee.ID)
+	assert.Error(t, err) // Should not find deleted employee
+}
+
+// TDD Lesson: Test org isolation for delete
+func TestDeleteEmployee_Integration_OrgIsolation(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create two organizations
+	org1 := testutil.CreateTestOrg(t, queries, ctx)
+	org2 := testutil.CreateTestOrg(t, queries, ctx)
+
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee in org1
+	emp1 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org1.ID,
+		RoleID:   role.ID,
+		Email:    "user1@org1.com",
+		FullName: "User 1",
+		Status:   "active",
+	})
+
+	// Create employee in org2
+	emp2 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org2.ID,
+		RoleID:   role.ID,
+		Email:    "user2@org2.com",
+		FullName: "User 2",
+		Status:   "active",
+	})
+
+	// Authenticate as emp1 (org1)
+	token, _ := auth.GenerateJWT(emp1.ID, org1.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(emp1.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Delete("/employees/{employee_id}", handler.DeleteEmployee)
+
+	// Try to delete emp2 (different org)
+	req := httptest.NewRequest(http.MethodDelete, "/employees/"+emp2.ID.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 404 for security
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// Verify emp2 was NOT deleted
+	notDeleted, err := queries.GetEmployee(ctx, emp2.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "User 2", notDeleted.FullName) // Still exists
+}
