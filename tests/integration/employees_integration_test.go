@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -323,4 +324,165 @@ func TestListEmployees_Integration_Pagination(t *testing.T) {
 	for _, email := range page2Emails {
 		assert.NotContains(t, page1Emails, email, "Pages should not overlap")
 	}
+}
+
+// ============================================================================
+// Get Employee Integration Tests
+// ============================================================================
+
+// TDD Lesson: Integration test for GET /employees/{id} with org isolation
+func TestGetEmployee_Integration_Success(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create test organization and role
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "alice@example.com",
+		FullName: "Alice Smith",
+		Status:   "active",
+	})
+
+	// Create session for authentication
+	token, _ := auth.GenerateJWT(employee.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(employee.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler with middleware
+	handler := handlers.NewEmployeesHandler(queries)
+
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Get("/employees/{employee_id}", handler.GetEmployee)
+
+	// Request employee by ID
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+employee.ID.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Employee
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Verify employee data
+	assert.Equal(t, employee.ID, *response.Id)
+	assert.Equal(t, "alice@example.com", string(response.Email))
+	assert.Equal(t, "Alice Smith", response.FullName)
+	assert.Equal(t, api.EmployeeStatusActive, response.Status)
+}
+
+// TDD Lesson: Test org isolation - cannot fetch employee from different org
+func TestGetEmployee_Integration_OrgIsolation(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	// Create two organizations
+	org1 := testutil.CreateTestOrg(t, queries, ctx)
+	org2 := testutil.CreateTestOrg(t, queries, ctx)
+
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee in org1
+	emp1 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org1.ID,
+		RoleID:   role.ID,
+		Email:    "alice@org1.com",
+		FullName: "Alice Org1",
+		Status:   "active",
+	})
+
+	// Create employee in org2
+	emp2 := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org2.ID,
+		RoleID:   role.ID,
+		Email:    "bob@org2.com",
+		FullName: "Bob Org2",
+		Status:   "active",
+	})
+
+	// Authenticate as employee from org1
+	token, _ := auth.GenerateJWT(emp1.ID, org1.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(emp1.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler with middleware
+	handler := handlers.NewEmployeesHandler(queries)
+
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Get("/employees/{employee_id}", handler.GetEmployee)
+
+	// Try to fetch employee from org2
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+emp2.ID.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 404 (not 403) for security - don't reveal employee exists
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	var response api.Error
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Contains(t, response.Error, "not found")
+}
+
+// TDD Lesson: Test 404 when employee doesn't exist
+func TestGetEmployee_Integration_NotFound(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create employee for authentication
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "alice@example.com",
+		FullName: "Alice Smith",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(employee.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(employee.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Get("/employees/{employee_id}", handler.GetEmployee)
+
+	// Try to fetch non-existent employee
+	nonExistentID := uuid.New()
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+nonExistentID.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	var response api.Error
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Contains(t, response.Error, "not found")
 }

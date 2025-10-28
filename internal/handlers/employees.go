@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
@@ -112,6 +115,53 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+// GetEmployee handles GET /employees/{id}
+// Returns a single employee by ID with org isolation
+func (h *EmployeesHandler) GetEmployee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract employee_id from URL
+	employeeIDStr := chi.URLParam(r, "employee_id")
+
+	// Parse UUID
+	employeeID, err := uuid.Parse(employeeIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid employee ID format")
+		return
+	}
+
+	// Get org_id from context (set by JWT middleware)
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Organization ID not found in context")
+		return
+	}
+
+	// Fetch employee from database
+	employee, err := h.db.GetEmployee(ctx, employeeID)
+	if err == pgx.ErrNoRows {
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch employee")
+		return
+	}
+
+	// Verify org isolation - employee must belong to requesting org
+	if employee.OrgID != orgID {
+		// Return 404 (not 403) for security - don't reveal employee exists
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+
+	// Convert to API type and return
+	apiEmployee := dbEmployeeToAPI(employee)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(apiEmployee)
 }
 
 // dbEmployeeToAPI converts db.Employee to api.Employee

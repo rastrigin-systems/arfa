@@ -1,12 +1,15 @@
 package handlers_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -257,4 +260,181 @@ func TestListEmployees_EmptyResult(t *testing.T) {
 	require.NotNil(t, response.Employees)
 	assert.Len(t, response.Employees, 0)
 	assert.Equal(t, int64(0), response.Total)
+}
+
+// ============================================================================
+// GetEmployee Tests
+// ============================================================================
+
+// TDD Lesson: Testing employee retrieval by ID with org isolation
+func TestGetEmployee_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	// Employee to return
+	employee := db.Employee{
+		ID:           empID,
+		OrgID:        orgID,
+		Email:        "alice@example.com",
+		FullName:     "Alice Smith",
+		RoleID:       roleID,
+		Status:       "active",
+		TeamID:       pgtype.UUID{},
+		PasswordHash: "hash1",
+		Preferences:  []byte(`{"theme":"dark"}`),
+		CreatedAt:    pgtype.Timestamp{Valid: true},
+		UpdatedAt:    pgtype.Timestamp{Valid: true},
+		LastLoginAt:  pgtype.Timestamp{Valid: true},
+	}
+
+	// Expect database query for single employee
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(employee, nil)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	// Create request with employee_id in URL and org_id in context
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	// Use chi router to extract URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.GetEmployee(rec, req)
+
+	// Verify response
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Employee
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Verify employee data
+	assert.Equal(t, empID, *response.Id)
+	assert.Equal(t, "alice@example.com", string(response.Email))
+	assert.Equal(t, "Alice Smith", response.FullName)
+	assert.Equal(t, api.EmployeeStatusActive, response.Status)
+}
+
+// TDD Lesson: Test 404 when employee not found
+func TestGetEmployee_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	empID := uuid.New()
+
+	// Expect database query to return error (not found)
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(db.Employee{}, pgx.ErrNoRows)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.GetEmployee(rec, req)
+
+	// Verify 404 response
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	var response api.Error
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Contains(t, response.Error, "not found")
+}
+
+// TDD Lesson: Test org isolation - employee from different org returns 404
+func TestGetEmployee_WrongOrg(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	otherOrgID := uuid.New() // Different org
+	empID := uuid.New()
+	roleID := uuid.New()
+
+	// Employee belongs to different org
+	employee := db.Employee{
+		ID:           empID,
+		OrgID:        otherOrgID, // Wrong org!
+		Email:        "bob@other-org.com",
+		FullName:     "Bob Other",
+		RoleID:       roleID,
+		Status:       "active",
+		TeamID:       pgtype.UUID{},
+		PasswordHash: "hash",
+		Preferences:  []byte("{}"),
+		CreatedAt:    pgtype.Timestamp{Valid: true},
+		UpdatedAt:    pgtype.Timestamp{Valid: true},
+	}
+
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), empID).
+		Return(employee, nil)
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	// Request from orgID, but employee belongs to otherOrgID
+	req := httptest.NewRequest(http.MethodGet, "/employees/"+empID.String(), nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", empID.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.GetEmployee(rec, req)
+
+	// Should return 404 (not 403) for security - don't reveal employee exists
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+// TDD Lesson: Test invalid UUID format
+func TestGetEmployee_InvalidUUID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+
+	handler := handlers.NewEmployeesHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/employees/invalid-uuid", nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("employee_id", "invalid-uuid")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+
+	handler.GetEmployee(rec, req)
+
+	// Should return 400 for invalid UUID
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
