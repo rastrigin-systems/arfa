@@ -95,11 +95,13 @@ erDiagram
         uuid role_id FK
         varchar email UK
         varchar full_name
+        varchar password_hash
         varchar status
         jsonb preferences
         timestamp last_login_at
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
     
     sessions {
