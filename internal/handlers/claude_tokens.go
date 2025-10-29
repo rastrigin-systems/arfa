@@ -196,13 +196,13 @@ func (h *ClaudeTokensHandler) GetClaudeTokenStatus(w http.ResponseWriter, r *htt
 	var activeSource api.ClaudeTokenStatusResponseActiveTokenSource
 	switch status.ActiveTokenSource {
 	case "personal":
-		activeSource = api.Personal
+		activeSource = "personal"
 	case "company":
-		activeSource = api.Company
+		activeSource = "company"
 	case "none":
-		activeSource = api.None
+		activeSource = "none"
 	default:
-		activeSource = api.None
+		activeSource = "none"
 	}
 
 	// Convert interface{} booleans from sqlc
@@ -215,6 +215,61 @@ func (h *ClaudeTokensHandler) GetClaudeTokenStatus(w http.ResponseWriter, r *htt
 		HasPersonalToken:  hasPersonal,
 		HasCompanyToken:   hasCompany,
 		ActiveTokenSource: activeSource,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetEffectiveClaudeToken handles GET /employees/me/claude-token/effective
+// Returns the effective Claude API token (personal or company)
+func (h *ClaudeTokensHandler) GetEffectiveClaudeToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get employee ID from context
+	employeeID, err := GetEmployeeID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Query database for effective token
+	tokenInfo, err := h.db.GetEffectiveClaudeToken(ctx, employeeID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			writeError(w, http.StatusNotFound, "Employee not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Failed to get effective token")
+		return
+	}
+
+	// Check if token exists
+	if tokenInfo.Token == nil || *tokenInfo.Token == "" {
+		writeError(w, http.StatusNotFound, "No Claude API token configured. Please configure a token at organization or personal level")
+		return
+	}
+
+	// Map source string to API enum
+	var source api.EffectiveClaudeTokenResponseSource
+	switch tokenInfo.Source {
+	case "personal":
+		source = api.EffectiveClaudeTokenResponseSourcePersonal
+	case "company":
+		source = api.EffectiveClaudeTokenResponseSourceCompany
+	default:
+		writeError(w, http.StatusNotFound, "No token available")
+		return
+	}
+
+	// Build response
+	response := api.EffectiveClaudeTokenResponse{
+		Token:      *tokenInfo.Token,
+		Source:     source,
+		OrgId:      tokenInfo.OrgID,
+		OrgName:    tokenInfo.OrgName,
+		EmployeeId: &tokenInfo.EmployeeID,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

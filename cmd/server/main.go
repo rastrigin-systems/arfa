@@ -161,6 +161,7 @@ func main() {
 				r.Put("/me/claude-token", claudeTokensHandler.SetEmployeeClaudeToken)
 				r.Delete("/me/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
 				r.Get("/me/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
+				r.Get("/me/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
 			})
 
 			// Roles routes

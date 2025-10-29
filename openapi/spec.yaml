@@ -389,6 +389,34 @@ components:
           type: string
           example: "Claude API token updated successfully"
 
+    EffectiveClaudeTokenResponse:
+      type: object
+      required:
+        - token
+        - source
+        - org_id
+        - org_name
+      properties:
+        token:
+          type: string
+          description: The effective Claude API token (plaintext)
+          example: "sk-ant-api03-abc..."
+        source:
+          type: string
+          enum: [personal, company]
+          description: Source of the token (personal or company)
+        org_id:
+          type: string
+          format: uuid
+          description: Organization ID
+        org_name:
+          type: string
+          description: Organization name
+        employee_id:
+          type: string
+          format: uuid
+          description: Employee ID
+
     # Agent schemas
     Agent:
       type: object
@@ -1491,6 +1519,36 @@ paths:
                 $ref: '#/components/schemas/ClaudeTokenStatusResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees/me/claude-token/effective:
+    get:
+      tags:
+        - employees
+      summary: Get effective Claude token
+      description: |
+        Get the effective Claude API token for the current employee.
+        Returns the personal token if set, otherwise the organization token.
+        ⚠️ Security: Token is returned as plaintext, use HTTPS in production.
+      operationId: getEffectiveClaudeToken
+      responses:
+        '200':
+          description: Effective token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectiveClaudeTokenResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No token configured
           content:
             application/json:
               schema:

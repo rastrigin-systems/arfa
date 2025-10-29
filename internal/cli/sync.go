@@ -197,6 +197,18 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 		return fmt.Errorf("Docker client not configured")
 	}
 
+	// Fetch effective Claude token from platform
+	fmt.Println("\nFetching Claude API token...")
+	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken()
+	if err != nil {
+		fmt.Printf("⚠ Warning: Could not fetch Claude token: %v\n", err)
+		fmt.Printf("  Falling back to provided API key (if any)\n")
+		// Continue anyway - we'll use the legacy apiKey if provided
+		claudeToken = ""
+	} else {
+		fmt.Println("✓ Claude API token retrieved")
+	}
+
 	// Check Docker is running
 	fmt.Println("\nChecking Docker...")
 	if err := ss.dockerClient.Ping(); err != nil {
@@ -264,7 +276,8 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			Image:         fmt.Sprintf("ubik/%s:latest", config.AgentType),
 			Configuration: config.Configuration,
 			MCPServers:    convertMCPServers(config.MCPServers),
-			APIKey:        apiKey,
+			ClaudeToken:   claudeToken, // Use token from hybrid auth
+			APIKey:        apiKey,      // Fallback for backward compatibility
 		}
 
 		_, err := ss.containerManager.StartAgent(agentSpec, workspacePath)

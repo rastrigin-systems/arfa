@@ -64,7 +64,8 @@ type AgentSpec struct {
 	Image         string
 	Configuration map[string]interface{}
 	MCPServers    []MCPServerSpec
-	APIKey        string // Anthropic API key or similar
+	APIKey        string // Deprecated: Use ClaudeToken instead
+	ClaudeToken   string // Claude API token (from hybrid auth)
 }
 
 // StartMCPServer starts an MCP server container
@@ -164,8 +165,11 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		fmt.Sprintf("AGENT_CONFIG=%s", toJSON(spec.Configuration)),
 	}
 
-	// Add API key if provided
-	if spec.APIKey != "" {
+	// Add Claude token (hybrid auth - prioritize ClaudeToken over APIKey)
+	if spec.ClaudeToken != "" {
+		env = append(env, fmt.Sprintf("CLAUDE_API_TOKEN=%s", spec.ClaudeToken))
+	} else if spec.APIKey != "" {
+		// Fallback to legacy APIKey for backward compatibility
 		env = append(env, fmt.Sprintf("ANTHROPIC_API_KEY=%s", spec.APIKey))
 	}
 

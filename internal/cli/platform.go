@@ -167,26 +167,34 @@ func (pc *PlatformClient) GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, er
 	return &resp, nil
 }
 
+// EffectiveClaudeTokenResponse represents the effective token response
+type EffectiveClaudeTokenResponse struct {
+	Token      string `json:"token"`
+	Source     string `json:"source"`      // "personal" or "company"
+	OrgID      string `json:"org_id"`
+	OrgName    string `json:"org_name"`
+	EmployeeID string `json:"employee_id"`
+}
+
 // GetEffectiveClaudeToken fetches the effective Claude token for the current employee
-// This is a convenience wrapper that extracts just the token from the status
+// Returns the actual token value (personal if set, otherwise company token)
 func (pc *PlatformClient) GetEffectiveClaudeToken() (string, error) {
-	status, err := pc.GetClaudeTokenStatus()
-	if err != nil {
-		return "", err
+	var resp EffectiveClaudeTokenResponse
+	endpoint := "/employees/me/claude-token/effective"
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return "", fmt.Errorf("failed to get effective Claude token: %w", err)
 	}
+	return resp.Token, nil
+}
 
-	// Check if any token is available
-	if status.ActiveTokenSource == "none" {
-		return "", fmt.Errorf("no Claude API token configured. Please configure a token at organization or personal level")
+// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata
+func (pc *PlatformClient) GetEffectiveClaudeTokenInfo() (*EffectiveClaudeTokenResponse, error) {
+	var resp EffectiveClaudeTokenResponse
+	endpoint := "/employees/me/claude-token/effective"
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
 	}
-
-	// Token exists but we need to make another API call to get the actual token value
-	// For security reasons, the status endpoint doesn't return the actual token
-	// In a real implementation, you would either:
-	// 1. Have a separate endpoint to get the decrypted token (with proper auth)
-	// 2. Return a reference/ID that can be used to fetch the token securely
-	// For now, we'll return a placeholder indicating where the token comes from
-	return fmt.Sprintf("token-source:%s", status.ActiveTokenSource), nil
+	return &resp, nil
 }
 
 // doRequest is a helper method to perform HTTP requests
