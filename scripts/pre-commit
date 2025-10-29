@@ -15,8 +15,9 @@
 #   - docs/schema.json (machine-readable schema)
 #   - docs/schema.svg (visual diagram)
 #   - docs/public.*.md (per-table docs)
+#   - go.mod, go.sum (updated with generated packages)
 #
-# Note: generated/ (Go code) is NOT committed - run 'make generate' locally
+# Note: generated/ (Go code) is NOT committed but is regenerated automatically
 #
 
 set -e
@@ -47,12 +48,14 @@ fi
 
 echo -e "${YELLOW}📝 Source models changed, regenerating code...${NC}"
 
-# Check if required tools are installed (only tbls for ERD generation)
-if ! command -v tbls &> /dev/null; then
-    echo -e "${RED}❌ Missing required tool: tbls${NC}"
-    echo -e "${YELLOW}Run: make install-tools${NC}"
-    exit 1
-fi
+# Check if required tools are installed
+for tool in tbls oapi-codegen sqlc mockgen; do
+    if ! command -v "$tool" &> /dev/null; then
+        echo -e "${RED}❌ Missing required tool: $tool${NC}"
+        echo -e "${YELLOW}Run: make install-tools${NC}"
+        exit 1
+    fi
+done
 
 # Check if Python is available (for ERD overview generation)
 if ! command -v python3 &> /dev/null; then
@@ -67,28 +70,44 @@ if ! docker ps | grep -q ubik-postgres; then
     sleep 3
 fi
 
-# Run ERD generation only
-echo -e "${BLUE}🔧 Running: make generate-erd${NC}"
-if ! make generate-erd; then
-    echo -e "${RED}❌ ERD generation failed${NC}"
+# Run full code generation (ERD + API + DB + Mocks)
+echo -e "${BLUE}🔧 Running: make generate${NC}"
+if ! make generate; then
+    echo -e "${RED}❌ Code generation failed${NC}"
     echo -e "${YELLOW}Fix the errors and try again${NC}"
     exit 1
 fi
 
-# Check if docs changed
-DOCS_CHANGES=$(git diff --name-only docs/ 2>/dev/null || echo "")
+# Update go.mod with generated packages
+echo -e "${BLUE}🔧 Running: go mod tidy${NC}"
+if ! go mod tidy; then
+    echo -e "${RED}❌ go mod tidy failed${NC}"
+    echo -e "${YELLOW}Fix the errors and try again${NC}"
+    exit 1
+fi
 
-if [ -z "$DOCS_CHANGES" ]; then
-    echo -e "${GREEN}✓ Documentation is already up to date${NC}"
+# Check what changed
+DOCS_CHANGES=$(git diff --name-only docs/ 2>/dev/null || echo "")
+GOMOD_CHANGES=$(git diff --name-only go.mod go.sum 2>/dev/null || echo "")
+
+if [ -z "$DOCS_CHANGES" ] && [ -z "$GOMOD_CHANGES" ]; then
+    echo -e "${GREEN}✓ No changes to commit${NC}"
     exit 0
 fi
 
-# Add docs to staging
-echo -e "${BLUE}📦 Adding documentation to commit...${NC}"
-git add docs/
+# Add changed files to staging
+if [ -n "$DOCS_CHANGES" ]; then
+    echo -e "${BLUE}📦 Adding documentation to commit...${NC}"
+    git add docs/
+    echo "$DOCS_CHANGES" | sed 's/^/  - /'
+fi
 
-echo -e "${GREEN}✓ ERD regeneration complete!${NC}"
-echo -e "${BLUE}Documentation files added to commit:${NC}"
-echo "$DOCS_CHANGES" | sed 's/^/  - /'
+if [ -n "$GOMOD_CHANGES" ]; then
+    echo -e "${BLUE}📦 Adding go.mod/go.sum to commit...${NC}"
+    git add go.mod go.sum
+    echo "$GOMOD_CHANGES" | sed 's/^/  - /'
+fi
+
+echo -e "${GREEN}✓ Code generation complete!${NC}"
 
 exit 0
