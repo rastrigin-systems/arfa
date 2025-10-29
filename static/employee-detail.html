@@ -301,9 +301,9 @@
                 teams: [],
                 roles: [],
                 usage: {
-                    api_calls: 12450,
-                    tokens_used: 2300000,
-                    cost: 45.50
+                    api_calls: 0,
+                    tokens_used: 0,
+                    cost: 0
                 },
                 loading: false,
                 editMode: false,
@@ -323,6 +323,7 @@
                     await this.loadAgentConfigs();
                     await this.loadTeams();
                     await this.loadRoles();
+                    await this.loadUsageStats();
                 },
 
                 async loadEmployee() {
@@ -399,6 +400,28 @@
 
                     } catch (error) {
                         console.error('Error loading roles:', error);
+                    }
+                },
+
+                async loadUsageStats() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/usage-stats`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load usage stats');
+
+                        const data = await response.json();
+                        this.usage = {
+                            api_calls: data.total_api_calls || 0,
+                            tokens_used: data.total_tokens || 0,
+                            cost: data.total_cost_usd || 0
+                        };
+
+                    } catch (error) {
+                        console.error('Error loading usage stats:', error);
                     }
                 },
 

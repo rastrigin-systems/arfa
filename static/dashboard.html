@@ -235,7 +235,13 @@
                         if (employeesRes.ok) {
                             const data = await employeesRes.json();
                             this.stats.employees.active = data.total;
-                            this.stats.employees.pending = 0; // TODO: Add approval count
+                        }
+
+                        // Load pending requests count
+                        const pendingRes = await fetch(`${API_BASE}/agent-requests/pending/count`, { headers });
+                        if (pendingRes.ok) {
+                            const data = await pendingRes.json();
+                            this.stats.employees.pending = data.pending_count;
                         }
 
                         // Load teams
@@ -257,17 +263,26 @@
                             }));
                         }
 
-                        // Mock budget data (TODO: Get from subscriptions API)
-                        this.stats.budget = {
-                            spent: 2450,
-                            total: 5000,
-                            percentage: 49
-                        };
+                        // Load subscription/budget data from API
+                        const subscriptionRes = await fetch(`${API_BASE}/organizations/current/subscription`, { headers });
+                        if (subscriptionRes.ok) {
+                            const data = await subscriptionRes.json();
+                            this.stats.budget = {
+                                spent: data.current_spending_usd,
+                                total: data.monthly_budget_usd,
+                                percentage: Math.round(data.spending_percentage)
+                            };
+                        }
 
-                        this.stats.usage = {
-                            apiCalls: 125430,
-                            tokens: 45.2
-                        };
+                        // Load organization usage stats from API
+                        const usageRes = await fetch(`${API_BASE}/usage-stats/org`, { headers });
+                        if (usageRes.ok) {
+                            const data = await usageRes.json();
+                            this.stats.usage = {
+                                apiCalls: data.total_api_calls || 0,
+                                tokens: ((data.total_tokens || 0) / 1000000).toFixed(1) // Convert to millions
+                            };
+                        }
 
                         // Load activity logs from API
                         const activityRes = await fetch(`${API_BASE}/activity-logs?limit=10`, { headers });

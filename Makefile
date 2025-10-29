@@ -1,4 +1,4 @@
-.PHONY: help install-tools db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev build build-cli build-server clean
+.PHONY: help install-tools install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev run-server build build-cli build-server clean
 
 # Default target
 help:
@@ -28,13 +28,17 @@ help:
 	@echo "Development Commands:"
 	@echo "  make check-drift     Check for OpenAPI ↔ DB schema drift"
 	@echo "  make dev             Start development server with live reload"
+	@echo "  make run-server      Build and run server (no live reload)"
 	@echo "  make build           Build all binaries (server + CLI)"
 	@echo "  make build-server    Build server binary only"
 	@echo "  make build-cli       Build CLI binary only"
+	@echo "  make install-cli     Install ubik CLI to /usr/local/bin (requires sudo)"
+	@echo "  make uninstall-cli   Uninstall ubik CLI from /usr/local/bin (requires sudo)"
 	@echo "  make clean           Clean generated files and build artifacts"
 
 # Configuration
 DATABASE_URL ?= postgres://pivot:pivot_dev_password@localhost:5432/pivot?sslmode=disable
+SERVER_PORT ?= 8080
 GENERATED_DIR = generated
 DOCS_DIR = docs
 
@@ -181,12 +185,23 @@ test-coverage:
 
 # Development
 dev:
-	@echo "🚀 Starting development server..."
+	@echo "🚀 Starting development server with live reload..."
+	@echo "Server will run on http://localhost:$(SERVER_PORT)"
+	@echo ""
 	@if ! command -v air > /dev/null; then \
 		echo "Installing air for live reload..."; \
 		go install github.com/air-verse/air@latest; \
 	fi
-	air -c .air.toml
+	PORT=$(SERVER_PORT) air -c .air.toml
+
+run-server: build-server
+	@echo "🚀 Starting server..."
+	@echo "Server will run on http://localhost:$(SERVER_PORT)"
+	@echo "Press Ctrl+C to stop"
+	@echo ""
+	@echo "To use a different port: PORT=3002 make run-server"
+	@echo ""
+	PORT=$(SERVER_PORT) ./bin/pivot-server
 
 # Build
 build: build-server build-cli
@@ -209,6 +224,34 @@ build-cli:
 	@echo "Try it out:"
 	@echo "  ./bin/ubik-cli --help"
 	@echo "  ./bin/ubik-cli --version"
+	@echo ""
+	@echo "To install system-wide:"
+	@echo "  make install-cli"
+
+install-cli: build-cli
+	@echo "📦 Installing ubik CLI to /usr/local/bin..."
+	@if [ -w /usr/local/bin ]; then \
+		cp bin/ubik-cli /usr/local/bin/ubik; \
+		chmod +x /usr/local/bin/ubik; \
+	else \
+		sudo cp bin/ubik-cli /usr/local/bin/ubik; \
+		sudo chmod +x /usr/local/bin/ubik; \
+	fi
+	@echo "✅ Installation complete!"
+	@echo ""
+	@echo "Try it out:"
+	@echo "  ubik --version"
+	@echo "  ubik --help"
+	@echo "  ubik login"
+
+uninstall-cli:
+	@echo "🗑️  Uninstalling ubik CLI..."
+	@if [ -w /usr/local/bin ]; then \
+		rm -f /usr/local/bin/ubik; \
+	else \
+		sudo rm -f /usr/local/bin/ubik; \
+	fi
+	@echo "✅ Uninstalled successfully"
 
 # Cleanup
 clean:

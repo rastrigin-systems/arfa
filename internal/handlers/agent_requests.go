@@ -10,11 +10,11 @@ import (
 )
 
 type AgentRequestsHandler struct {
-	queries *db.Queries
+	db db.Querier
 }
 
-func NewAgentRequestsHandler(queries *db.Queries) *AgentRequestsHandler {
-	return &AgentRequestsHandler{queries: queries}
+func NewAgentRequestsHandler(database db.Querier) *AgentRequestsHandler {
+	return &AgentRequestsHandler{db: database}
 }
 
 // GetPendingCount gets the count of pending agent requests for the organization
@@ -26,7 +26,7 @@ func (h *AgentRequestsHandler) GetPendingCount(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	count, err := h.queries.CountPendingRequestsByOrg(ctx, orgID)
+	count, err := h.db.CountPendingRequestsByOrg(ctx, orgID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to get pending count")
 		return
@@ -65,7 +65,7 @@ func (h *AgentRequestsHandler) ListAgentRequests(w http.ResponseWriter, r *http.
 	limit := int32(100)
 	offset := int32(0)
 
-	requests, err := h.queries.ListAgentRequests(ctx, db.ListAgentRequestsParams{
+	requests, err := h.db.ListAgentRequests(ctx, db.ListAgentRequestsParams{
 		Status:      statusFilter,
 		EmployeeID:  employeeID,
 		QueryOffset: offset,
@@ -76,7 +76,7 @@ func (h *AgentRequestsHandler) ListAgentRequests(w http.ResponseWriter, r *http.
 		return
 	}
 
-	count, err := h.queries.CountAgentRequests(ctx, db.CountAgentRequestsParams{
+	count, err := h.db.CountAgentRequests(ctx, db.CountAgentRequestsParams{
 		Status:     statusFilter,
 		EmployeeID: employeeID,
 	})

@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +16,11 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
 	"github.com/sergeirastrigin/ubik-enterprise/internal/handlers"
 )
+
+// Helper to create string pointer
+func strPtr(s string) *string {
+	return &s
+}
 
 // ============================================================================
 // GetPendingCount Tests
@@ -169,7 +173,7 @@ func TestListAgentRequests_Success_NoFilters(t *testing.T) {
 			RequestType: "agent_access",
 			RequestData: []byte(`{"agent_id": "claude-code"}`),
 			Status:      "pending",
-			Reason:      pgtype.Text{String: "Need for project", Valid: true},
+			Reason:      strPtr("Need for project"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 			ResolvedAt:  pgtype.Timestamp{Valid: false},
 		},
@@ -179,7 +183,7 @@ func TestListAgentRequests_Success_NoFilters(t *testing.T) {
 			RequestType: "mcp_access",
 			RequestData: []byte(`{"mcp_id": "github-mcp"}`),
 			Status:      "approved",
-			Reason:      pgtype.Text{String: "Required for development", Valid: true},
+			Reason:      strPtr("Required for development"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 			ResolvedAt:  pgtype.Timestamp{Valid: true},
 		},
@@ -247,7 +251,7 @@ func TestListAgentRequests_Success_WithStatusFilter(t *testing.T) {
 			RequestType: "agent_access",
 			RequestData: []byte(`{"agent_id": "claude-code"}`),
 			Status:      "pending",
-			Reason:      pgtype.Text{String: "Need for project", Valid: true},
+			Reason:      strPtr("Need for project"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 			ResolvedAt:  pgtype.Timestamp{Valid: false},
 		},
@@ -314,7 +318,7 @@ func TestListAgentRequests_Success_WithEmployeeFilter(t *testing.T) {
 			RequestType: "agent_access",
 			RequestData: []byte(`{"agent_id": "claude-code"}`),
 			Status:      "pending",
-			Reason:      pgtype.Text{String: "Need for project", Valid: true},
+			Reason:      strPtr("Need for project"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 			ResolvedAt:  pgtype.Timestamp{Valid: false},
 		},
@@ -380,7 +384,7 @@ func TestListAgentRequests_Success_WithMultipleFilters(t *testing.T) {
 			RequestType: "agent_access",
 			RequestData: []byte(`{"agent_id": "claude-code"}`),
 			Status:      "approved",
-			Reason:      pgtype.Text{String: "Need for project", Valid: true},
+			Reason:      strPtr("Need for project"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 			ResolvedAt:  pgtype.Timestamp{Valid: true},
 		},
@@ -548,7 +552,7 @@ func TestListAgentRequests_Success_CountErrorFallback(t *testing.T) {
 			RequestType: "agent_access",
 			RequestData: []byte(`{}`),
 			Status:      "pending",
-			Reason:      pgtype.Text{String: "Test", Valid: true},
+			Reason:      strPtr("Test"),
 			CreatedAt:   pgtype.Timestamp{Valid: true},
 		},
 	}
