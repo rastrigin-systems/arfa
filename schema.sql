@@ -17,6 +17,7 @@ CREATE TABLE organizations (
     settings JSONB NOT NULL DEFAULT '{}',
     max_employees INT NOT NULL DEFAULT 10,
     max_agents_per_employee INT NOT NULL DEFAULT 3,
+    claude_api_token TEXT, -- Company-wide Claude token (from 'claude setup-token')
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -63,6 +64,7 @@ CREATE TABLE employees (
     password_hash VARCHAR(255) NOT NULL, -- bcrypt hash
     status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, suspended, inactive
     preferences JSONB NOT NULL DEFAULT '{}',
+    personal_claude_token TEXT, -- Employee personal Claude token (takes precedence over org token)
     last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -339,6 +341,7 @@ CREATE TABLE usage_records (
     period_start TIMESTAMP NOT NULL,
     period_end TIMESTAMP NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}',
+    token_source VARCHAR(20) DEFAULT 'company' CHECK (token_source IN ('company', 'personal')), -- Track which token was used
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -602,3 +605,37 @@ WHERE ar.status = 'pending';
 COMMENT ON VIEW v_employee_agents IS 'Complete view of employee agent configurations with catalog details';
 COMMENT ON VIEW v_employee_mcps IS 'Complete view of employee MCP configurations with catalog details';
 COMMENT ON VIEW v_pending_approvals IS 'Pending approval requests with full requester context';
+
+-- ============================================================================
+-- CLAUDE TOKEN MANAGEMENT (Hybrid Auth Model)
+-- ============================================================================
+
+-- Index for quick lookup of employees with personal tokens
+CREATE INDEX idx_employees_personal_token ON employees(org_id, personal_claude_token)
+WHERE personal_claude_token IS NOT NULL;
+
+-- Function to get effective Claude token for an employee
+CREATE OR REPLACE FUNCTION get_effective_claude_token(emp_id UUID)
+RETURNS TABLE (
+    token TEXT,
+    source VARCHAR(20),
+    org_id UUID
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        COALESCE(e.personal_claude_token, o.claude_api_token) as token,
+        CASE
+            WHEN e.personal_claude_token IS NOT NULL THEN 'personal'::VARCHAR(20)
+            ELSE 'company'::VARCHAR(20)
+        END as source,
+        e.org_id
+    FROM employees e
+    JOIN organizations o ON e.org_id = o.id
+    WHERE e.id = emp_id
+    AND e.deleted_at IS NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION get_effective_claude_token(UUID) IS
+'Returns the effective Claude token for an employee (personal if available, otherwise company token)';

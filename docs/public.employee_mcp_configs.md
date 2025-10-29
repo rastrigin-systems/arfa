@@ -80,6 +80,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.mcp_catalog" {
   uuid id

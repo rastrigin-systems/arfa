@@ -141,10 +141,6 @@ components:
         preferences:
           type: object
           additionalProperties: true
-        has_personal_claude_token:
-          type: boolean
-          description: Whether employee has configured a personal Claude API token
-          readOnly: true
         last_login_at:
           type: string
           format: date-time
@@ -264,10 +260,6 @@ components:
           type: integer
           minimum: 1
           default: 3
-        has_claude_token:
-          type: boolean
-          description: Whether organization has a Claude API token configured
-          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -342,52 +334,6 @@ components:
           type: integer
           description: Number of employees with this role
           readOnly: true
-
-    # Claude Token Management schemas
-    SetClaudeTokenRequest:
-      type: object
-      required:
-        - token
-      properties:
-        token:
-          type: string
-          minLength: 10
-          description: Claude API token from 'claude setup-token' command
-          example: "eyJhbGci..."
-
-    ClaudeTokenStatusResponse:
-      type: object
-      required:
-        - has_personal_token
-        - has_company_token
-        - active_token_source
-      properties:
-        employee_id:
-          type: string
-          format: uuid
-          readOnly: true
-        has_personal_token:
-          type: boolean
-          description: Whether employee has configured a personal token
-        has_company_token:
-          type: boolean
-          description: Whether organization has a company-wide token
-        active_token_source:
-          type: string
-          enum: [personal, company, none]
-          description: Which token will be used (personal takes precedence)
-
-    ClaudeTokenResponse:
-      type: object
-      required:
-        - success
-        - message
-      properties:
-        success:
-          type: boolean
-        message:
-          type: string
-          example: "Claude API token updated successfully"
 
     # Agent schemas
     Agent:
@@ -1357,138 +1303,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  # ============================================================================
-  # Claude Token Management (Hybrid Auth Model)
-  # ============================================================================
-  /organizations/current/claude-token:
-    put:
-      tags:
-        - organizations
-      summary: Set organization Claude token
-      description: |
-        Set the company-wide Claude API token (from 'claude setup-token').
-        This token is used as default for all employees who don't have personal tokens.
-      operationId: setOrganizationClaudeToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetClaudeTokenRequest'
-      responses:
-        '200':
-          description: Token set successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaudeTokenResponse'
-        '400':
-          description: Invalid token format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      tags:
-        - organizations
-      summary: Delete organization Claude token
-      description: Remove the company-wide Claude API token
-      operationId: deleteOrganizationClaudeToken
-      responses:
-        '200':
-          description: Token deleted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaudeTokenResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /employees/me/claude-token:
-    put:
-      tags:
-        - employees
-      summary: Set personal Claude token
-      description: |
-        Set employee's personal Claude API token (from 'claude setup-token').
-        Personal tokens take precedence over organization tokens.
-      operationId: setEmployeeClaudeToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetClaudeTokenRequest'
-      responses:
-        '200':
-          description: Token set successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaudeTokenResponse'
-        '400':
-          description: Invalid token format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      tags:
-        - employees
-      summary: Delete personal Claude token
-      description: Remove employee's personal Claude API token (will fall back to org token)
-      operationId: deleteEmployeeClaudeToken
-      responses:
-        '200':
-          description: Token deleted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaudeTokenResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /employees/me/claude-token/status:
-    get:
-      tags:
-        - employees
-      summary: Get Claude token status
-      description: Check which Claude token is active (personal, company, or none)
-      operationId: getClaudeTokenStatus
-      responses:
-        '200':
-          description: Token status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaudeTokenStatusResponse'
         '401':
           description: Unauthorized
           content:

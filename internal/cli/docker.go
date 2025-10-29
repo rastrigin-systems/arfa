@@ -58,7 +58,7 @@ func (dc *DockerClient) GetVersion() (string, error) {
 // PullImage pulls a Docker image (or uses local if available)
 func (dc *DockerClient) PullImage(imageName string) error {
 	// Check if image exists locally
-	_, _, err := dc.cli.ImageInspectWithRaw(dc.ctx, imageName)
+	_, err := dc.cli.ImageInspect(dc.ctx, imageName)
 	if err == nil {
 		fmt.Printf("  Using local image %s\n", imageName)
 		return nil

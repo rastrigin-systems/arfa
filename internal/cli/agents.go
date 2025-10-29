@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -111,14 +114,85 @@ func (as *AgentService) RequestAgent(employeeID, agentID string) error {
 
 // CheckForUpdates checks if there are config updates available
 func (as *AgentService) CheckForUpdates(employeeID string) (bool, error) {
-	// TODO: Implement agent config update checking
-	// This requires integrating with SyncService
-	return false, fmt.Errorf("not implemented yet")
+	// Get local configs from ~/.ubik/agents/
+	localConfigs, err := as.getLocalAgentConfigsInternal()
+	if err != nil {
+		return false, fmt.Errorf("failed to read local configs: %w", err)
+	}
+
+	// Get remote configs
+	remoteConfigs, err := as.client.GetResolvedAgentConfigs(employeeID)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch remote configs: %w", err)
+	}
+
+	// Simple check: if counts differ, there are updates
+	if len(localConfigs) != len(remoteConfigs) {
+		return true, nil
+	}
+
+	// Check for config changes (compare agent IDs)
+	localAgentIDs := make(map[string]bool)
+	for _, agent := range localConfigs {
+		localAgentIDs[agent.AgentID] = true
+	}
+
+	for _, remoteAgent := range remoteConfigs {
+		if !localAgentIDs[remoteAgent.AgentID] {
+			return true, nil // New agent found
+		}
+	}
+
+	// TODO: Deep comparison of config content
+	// For now, just checking presence/absence
+
+	return false, nil
 }
 
 // GetLocalAgents returns locally configured agents
 func (as *AgentService) GetLocalAgents() ([]AgentConfig, error) {
-	// TODO: Implement local agent listing
-	// This requires integrating with SyncService
-	return nil, fmt.Errorf("not implemented yet")
+	return as.getLocalAgentConfigsInternal()
+}
+
+// getLocalAgentConfigsInternal reads agent configs from ~/.ubik/agents/ directory
+func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	agentsDir := filepath.Join(homeDir, ".ubik", "agents")
+
+	// Check if agents directory exists
+	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {
+		return []AgentConfig{}, nil
+	}
+
+	entries, err := os.ReadDir(agentsDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read agents directory: %w", err)
+	}
+
+	var configs []AgentConfig
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		configPath := filepath.Join(agentsDir, entry.Name(), "config.json")
+		configData, err := os.ReadFile(configPath)
+		if err != nil {
+			// Skip if config file doesn't exist
+			continue
+		}
+
+		var config AgentConfig
+		if err := json.Unmarshal(configData, &config); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+		}
+
+		configs = append(configs, config)
+	}
+
+	return configs, nil
 }

@@ -40,7 +40,7 @@ func TestListEmployees_Success(t *testing.T) {
 	roleID := uuid.New()
 
 	// Create test employees
-	employees := []db.Employee{
+	employees := []db.ListEmployeesRow{
 		{
 			ID:           emp1ID,
 			OrgID:        orgID,
@@ -50,9 +50,10 @@ func TestListEmployees_Success(t *testing.T) {
 			Status:       "active",
 			TeamID:       pgtype.UUID{},
 			PasswordHash: "hash1",
-			Preferences:  []byte("{}"),
+			Preferences:  json.RawMessage("{}"),
 			CreatedAt:    pgtype.Timestamp{Valid: true},
 			UpdatedAt:    pgtype.Timestamp{Valid: true},
+			TeamName:     nil, // No team assigned
 		},
 		{
 			ID:           emp2ID,
@@ -63,9 +64,10 @@ func TestListEmployees_Success(t *testing.T) {
 			Status:       "active",
 			TeamID:       pgtype.UUID{},
 			PasswordHash: "hash2",
-			Preferences:  []byte("{}"),
+			Preferences:  json.RawMessage("{}"),
 			CreatedAt:    pgtype.Timestamp{Valid: true},
 			UpdatedAt:    pgtype.Timestamp{Valid: true},
+			TeamName:     nil, // No team assigned
 		},
 	}
 
@@ -128,7 +130,7 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 	roleID := uuid.New()
 
 	// Only active employees
-	employees := []db.Employee{
+	employees := []db.ListEmployeesRow{
 		{
 			ID:           empID,
 			OrgID:        orgID,
@@ -138,9 +140,10 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 			Status:       "active",
 			TeamID:       pgtype.UUID{},
 			PasswordHash: "hash",
-			Preferences:  []byte("{}"),
+			Preferences:  json.RawMessage("{}"),
 			CreatedAt:    pgtype.Timestamp{Valid: true},
 			UpdatedAt:    pgtype.Timestamp{Valid: true},
+			TeamName:     nil,
 		},
 	}
 
@@ -202,7 +205,7 @@ func TestListEmployees_Pagination(t *testing.T) {
 			QueryLimit:  10,  // Custom limit
 			QueryOffset: 20,  // Custom offset
 		}).
-		Return([]db.Employee{}, nil)
+		Return([]db.ListEmployeesRow{}, nil)
 
 	mockDB.EXPECT().
 		CountEmployees(gomock.Any(), gomock.Any()).
@@ -239,7 +242,7 @@ func TestListEmployees_EmptyResult(t *testing.T) {
 	// Expect database query returning empty list
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), gomock.Any()).
-		Return([]db.Employee{}, nil)
+		Return([]db.ListEmployeesRow{}, nil)
 
 	mockDB.EXPECT().
 		CountEmployees(gomock.Any(), gomock.Any()).

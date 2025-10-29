@@ -15,6 +15,7 @@
 | max_agents_per_employee | integer | 3 | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
+| claude_api_token | text |  | true |  |  | Company-wide Claude API token (from claude setup-token). Used as default for all employees who dont have personal tokens. |
 
 ## Constraints
 
@@ -59,6 +60,7 @@ erDiagram
   integer max_agents_per_employee
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text claude_api_token
 }
 "public.subscriptions" {
   uuid id
@@ -94,6 +96,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.org_agent_configs" {
   uuid id
@@ -125,6 +128,7 @@ erDiagram
   timestamp_without_time_zone period_end
   jsonb metadata
   timestamp_without_time_zone created_at
+  varchar_20_ token_source
 }
 ```
 

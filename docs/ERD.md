@@ -56,6 +56,7 @@ erDiagram
         int max_agents_per_employee
         timestamp created_at
         timestamp updated_at
+        text claude_api_token
     }
     
     subscriptions {
@@ -86,6 +87,7 @@ erDiagram
         text description
         jsonb permissions
         timestamp created_at
+        timestamp updated_at
     }
     
     employees {
@@ -102,6 +104,7 @@ erDiagram
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+        text personal_claude_token
     }
     
     sessions {
@@ -246,6 +249,7 @@ erDiagram
         timestamp period_end
         jsonb metadata
         timestamp created_at
+        varchar20 token_source
     }
     
 ```
@@ -341,9 +345,9 @@ All tables have appropriate indexes on:
 - **Total Tables**: 24
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~184
+- **Total Columns**: ~188
 - **Foreign Keys**: 32+
-- **Indexes**: 74+
+- **Indexes**: 75+
 
 ## Legend
 
@@ -355,6 +359,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-10-29 10:34:05
+**Generated**: 2025-10-29 20:21:15
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

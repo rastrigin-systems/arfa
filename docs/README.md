@@ -4,11 +4,11 @@
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [public.organizations](public.organizations.md) | 9 |  | BASE TABLE |
+| [public.organizations](public.organizations.md) | 10 |  | BASE TABLE |
 | [public.subscriptions](public.subscriptions.md) | 10 |  | BASE TABLE |
 | [public.teams](public.teams.md) | 6 |  | BASE TABLE |
-| [public.roles](public.roles.md) | 5 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 13 |  | BASE TABLE |
+| [public.roles](public.roles.md) | 6 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 14 |  | BASE TABLE |
 | [public.sessions](public.sessions.md) | 7 |  | BASE TABLE |
 | [public.agents](public.agents.md) | 12 |  | BASE TABLE |
 | [public.tools](public.tools.md) | 8 |  | BASE TABLE |
@@ -27,7 +27,7 @@
 | [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
 | [public.approvals](public.approvals.md) | 7 |  | BASE TABLE |
 | [public.activity_logs](public.activity_logs.md) | 7 |  | BASE TABLE |
-| [public.usage_records](public.usage_records.md) | 11 |  | BASE TABLE |
+| [public.usage_records](public.usage_records.md) | 12 |  | BASE TABLE |
 | [public.v_employee_agents](public.v_employee_agents.md) | 12 | Complete view of employee agent configurations with catalog details | VIEW |
 | [public.v_employee_mcps](public.v_employee_mcps.md) | 11 | Complete view of employee MCP configurations with catalog details | VIEW |
 | [public.v_pending_approvals](public.v_pending_approvals.md) | 10 | Pending approval requests with full requester context | VIEW |
@@ -46,8 +46,45 @@
 | public.uuid_generate_v3 | uuid | namespace uuid, name text | FUNCTION |
 | public.uuid_generate_v4 | uuid |  | FUNCTION |
 | public.uuid_generate_v5 | uuid | namespace uuid, name text | FUNCTION |
+| public.digest | bytea | text, text | FUNCTION |
+| public.digest | bytea | bytea, text | FUNCTION |
+| public.hmac | bytea | text, text, text | FUNCTION |
+| public.hmac | bytea | bytea, bytea, text | FUNCTION |
+| public.crypt | text | text, text | FUNCTION |
+| public.gen_salt | text | text | FUNCTION |
+| public.gen_salt | text | text, integer | FUNCTION |
+| public.encrypt | bytea | bytea, bytea, text | FUNCTION |
+| public.decrypt | bytea | bytea, bytea, text | FUNCTION |
+| public.encrypt_iv | bytea | bytea, bytea, bytea, text | FUNCTION |
+| public.decrypt_iv | bytea | bytea, bytea, bytea, text | FUNCTION |
+| public.gen_random_bytes | bytea | integer | FUNCTION |
+| public.gen_random_uuid | uuid |  | FUNCTION |
+| public.pgp_sym_encrypt | bytea | text, text | FUNCTION |
+| public.pgp_sym_encrypt_bytea | bytea | bytea, text | FUNCTION |
+| public.pgp_sym_encrypt | bytea | text, text, text | FUNCTION |
+| public.pgp_sym_encrypt_bytea | bytea | bytea, text, text | FUNCTION |
+| public.pgp_sym_decrypt | text | bytea, text | FUNCTION |
+| public.pgp_sym_decrypt_bytea | bytea | bytea, text | FUNCTION |
+| public.pgp_sym_decrypt | text | bytea, text, text | FUNCTION |
+| public.pgp_sym_decrypt_bytea | bytea | bytea, text, text | FUNCTION |
+| public.pgp_pub_encrypt | bytea | text, bytea | FUNCTION |
+| public.pgp_pub_encrypt_bytea | bytea | bytea, bytea | FUNCTION |
+| public.pgp_pub_encrypt | bytea | text, bytea, text | FUNCTION |
+| public.pgp_pub_encrypt_bytea | bytea | bytea, bytea, text | FUNCTION |
+| public.pgp_pub_decrypt | text | bytea, bytea | FUNCTION |
+| public.pgp_pub_decrypt_bytea | bytea | bytea, bytea | FUNCTION |
+| public.pgp_pub_decrypt | text | bytea, bytea, text | FUNCTION |
+| public.pgp_pub_decrypt_bytea | bytea | bytea, bytea, text | FUNCTION |
+| public.pgp_pub_decrypt | text | bytea, bytea, text, text | FUNCTION |
+| public.pgp_pub_decrypt_bytea | bytea | bytea, bytea, text, text | FUNCTION |
+| public.pgp_key_id | text | bytea | FUNCTION |
+| public.armor | text | bytea | FUNCTION |
+| public.armor | text | bytea, text[], text[] | FUNCTION |
+| public.dearmor | bytea | text | FUNCTION |
+| public.pgp_armor_headers | record | text, OUT key text, OUT value text | FUNCTION |
 | public.update_updated_at_column | trigger |  | FUNCTION |
 | public.generate_sync_token | trigger |  | FUNCTION |
+| public.get_effective_claude_token | record | emp_id uuid | FUNCTION |
 
 ## Relations
 
@@ -97,6 +134,7 @@ erDiagram
   integer max_agents_per_employee
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text claude_api_token
 }
 "public.subscriptions" {
   uuid id
@@ -124,6 +162,7 @@ erDiagram
   text description
   jsonb permissions
   timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 "public.employees" {
   uuid id
@@ -139,6 +178,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.sessions" {
   uuid id
@@ -318,6 +358,7 @@ erDiagram
   timestamp_without_time_zone period_end
   jsonb metadata
   timestamp_without_time_zone created_at
+  varchar_20_ token_source
 }
 "public.v_employee_agents" {
   uuid id

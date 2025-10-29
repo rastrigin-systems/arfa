@@ -65,6 +65,7 @@ erDiagram
   integer max_agents_per_employee
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text claude_api_token
 }
 ```
 

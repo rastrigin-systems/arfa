@@ -19,6 +19,7 @@
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
 | deleted_at | timestamp without time zone |  | true |  |  |  |
+| personal_claude_token | text |  | true |  |  | Employee personal Claude API token. If set, takes precedence over organization token. |
 
 ## Constraints
 
@@ -40,6 +41,7 @@
 | idx_employees_team_id | CREATE INDEX idx_employees_team_id ON public.employees USING btree (team_id) |
 | idx_employees_email | CREATE INDEX idx_employees_email ON public.employees USING btree (email) |
 | idx_employees_status | CREATE INDEX idx_employees_status ON public.employees USING btree (status) |
+| idx_employees_personal_token | CREATE INDEX idx_employees_personal_token ON public.employees USING btree (org_id, personal_claude_token) WHERE (personal_claude_token IS NOT NULL) |
 
 ## Triggers
 
@@ -78,6 +80,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.sessions" {
   uuid id
@@ -158,6 +161,7 @@ erDiagram
   timestamp_without_time_zone period_end
   jsonb metadata
   timestamp_without_time_zone created_at
+  varchar_20_ token_source
 }
 "public.organizations" {
   uuid id
@@ -169,6 +173,7 @@ erDiagram
   integer max_agents_per_employee
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text claude_api_token
 }
 "public.teams" {
   uuid id
@@ -184,6 +189,7 @@ erDiagram
   text description
   jsonb permissions
   timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 ```
 

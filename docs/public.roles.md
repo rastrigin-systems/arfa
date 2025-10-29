@@ -11,6 +11,7 @@
 | description | text |  | true |  |  |  |
 | permissions | jsonb | '[]'::jsonb | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
+| updated_at | timestamp without time zone | now() | false |  |  |  |
 
 ## Constraints
 
@@ -26,6 +27,12 @@
 | roles_pkey | CREATE UNIQUE INDEX roles_pkey ON public.roles USING btree (id) |
 | roles_name_key | CREATE UNIQUE INDEX roles_name_key ON public.roles USING btree (name) |
 
+## Triggers
+
+| Name | Definition |
+| ---- | ---------- |
+| update_roles_updated_at | CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON public.roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column() |
+
 ## Relations
 
 ```mermaid
@@ -39,6 +46,7 @@ erDiagram
   text description
   jsonb permissions
   timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 "public.employees" {
   uuid id
@@ -54,6 +62,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 ```
 

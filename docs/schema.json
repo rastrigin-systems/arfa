@@ -56,6 +56,12 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "claude_api_token",
+          "type": "text",
+          "nullable": true,
+          "comment": "Company-wide Claude API token (from claude setup-token). Used as default for all employees who dont have personal tokens."
         }
       ],
       "indexes": [
@@ -355,6 +361,12 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
         }
       ],
       "indexes": [
@@ -395,6 +407,12 @@
           "columns": [
             "name"
           ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "update_roles_updated_at",
+          "def": "CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON public.roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
         }
       ]
     },
@@ -471,6 +489,12 @@
           "name": "deleted_at",
           "type": "timestamp without time zone",
           "nullable": true
+        },
+        {
+          "name": "personal_claude_token",
+          "type": "text",
+          "nullable": true,
+          "comment": "Employee personal Claude API token. If set, takes precedence over organization token."
         }
       ],
       "indexes": [
@@ -520,6 +544,15 @@
           "table": "public.employees",
           "columns": [
             "status"
+          ]
+        },
+        {
+          "name": "idx_employees_personal_token",
+          "def": "CREATE INDEX idx_employees_personal_token ON public.employees USING btree (org_id, personal_claude_token) WHERE (personal_claude_token IS NOT NULL)",
+          "table": "public.employees",
+          "columns": [
+            "org_id",
+            "personal_claude_token"
           ]
         }
       ],
@@ -2702,6 +2735,13 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "token_source",
+          "type": "varchar(20)",
+          "nullable": true,
+          "default": "'company'::character varying",
+          "comment": "Indicates which token was used: company (org token) or personal (employee token)"
         }
       ],
       "indexes": [
@@ -2748,6 +2788,16 @@
         }
       ],
       "constraints": [
+        {
+          "name": "usage_records_token_source_check",
+          "type": "CHECK",
+          "def": "CHECK (((token_source)::text = ANY ((ARRAY['company'::character varying, 'personal'::character varying])::text[])))",
+          "table": "public.usage_records",
+          "referenced_table": "",
+          "columns": [
+            "token_source"
+          ]
+        },
         {
           "name": "usage_records_org_id_fkey",
           "type": "FOREIGN KEY",
@@ -3485,6 +3535,222 @@
       "type": "FUNCTION"
     },
     {
+      "name": "public.digest",
+      "return_type": "bytea",
+      "arguments": "text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.digest",
+      "return_type": "bytea",
+      "arguments": "bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.hmac",
+      "return_type": "bytea",
+      "arguments": "text, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.hmac",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.crypt",
+      "return_type": "text",
+      "arguments": "text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.gen_salt",
+      "return_type": "text",
+      "arguments": "text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.gen_salt",
+      "return_type": "text",
+      "arguments": "text, integer",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.encrypt",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.decrypt",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.encrypt_iv",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.decrypt_iv",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.gen_random_bytes",
+      "return_type": "bytea",
+      "arguments": "integer",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.gen_random_uuid",
+      "return_type": "uuid",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_encrypt",
+      "return_type": "bytea",
+      "arguments": "text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_encrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_encrypt",
+      "return_type": "bytea",
+      "arguments": "text, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_encrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_decrypt",
+      "return_type": "text",
+      "arguments": "bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_decrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_decrypt",
+      "return_type": "text",
+      "arguments": "bytea, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_sym_decrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_encrypt",
+      "return_type": "bytea",
+      "arguments": "text, bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_encrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_encrypt",
+      "return_type": "bytea",
+      "arguments": "text, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_encrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt",
+      "return_type": "text",
+      "arguments": "bytea, bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt",
+      "return_type": "text",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt",
+      "return_type": "text",
+      "arguments": "bytea, bytea, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_pub_decrypt_bytea",
+      "return_type": "bytea",
+      "arguments": "bytea, bytea, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_key_id",
+      "return_type": "text",
+      "arguments": "bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.armor",
+      "return_type": "text",
+      "arguments": "bytea",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.armor",
+      "return_type": "text",
+      "arguments": "bytea, text[], text[]",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.dearmor",
+      "return_type": "bytea",
+      "arguments": "text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.pgp_armor_headers",
+      "return_type": "record",
+      "arguments": "text, OUT key text, OUT value text",
+      "type": "FUNCTION"
+    },
+    {
       "name": "public.update_updated_at_column",
       "return_type": "trigger",
       "arguments": "",
@@ -3494,6 +3760,12 @@
       "name": "public.generate_sync_token",
       "return_type": "trigger",
       "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.get_effective_claude_token",
+      "return_type": "record",
+      "arguments": "emp_id uuid",
       "type": "FUNCTION"
     }
   ],

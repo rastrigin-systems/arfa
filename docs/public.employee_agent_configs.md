@@ -77,6 +77,7 @@ erDiagram
   timestamp_without_time_zone period_end
   jsonb metadata
   timestamp_without_time_zone created_at
+  varchar_20_ token_source
 }
 "public.employees" {
   uuid id
@@ -92,6 +93,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.agents" {
   uuid id

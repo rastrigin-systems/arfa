@@ -17,11 +17,13 @@
 | period_end | timestamp without time zone |  | false |  |  |  |
 | metadata | jsonb | '{}'::jsonb | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
+| token_source | varchar(20) | 'company'::character varying | true |  |  | Indicates which token was used: company (org token) or personal (employee token) |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| usage_records_token_source_check | CHECK | CHECK (((token_source)::text = ANY ((ARRAY['company'::character varying, 'personal'::character varying])::text[]))) |
 | usage_records_org_id_fkey | FOREIGN KEY | FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE |
 | usage_records_employee_id_fkey | FOREIGN KEY | FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL |
 | usage_records_agent_config_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL |
@@ -58,6 +60,7 @@ erDiagram
   timestamp_without_time_zone period_end
   jsonb metadata
   timestamp_without_time_zone created_at
+  varchar_20_ token_source
 }
 "public.organizations" {
   uuid id
@@ -69,6 +72,7 @@ erDiagram
   integer max_agents_per_employee
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text claude_api_token
 }
 "public.employees" {
   uuid id
@@ -84,6 +88,7 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+  text personal_claude_token
 }
 "public.employee_agent_configs" {
   uuid id

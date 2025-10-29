@@ -56,6 +56,14 @@ func TestListRoles_Success(t *testing.T) {
 		ListRoles(gomock.Any()).
 		Return(roles, nil)
 
+	// Expect employee count queries for each role
+	mockDB.EXPECT().
+		CountEmployeesByRole(gomock.Any(), role1ID).
+		Return(int64(5), nil)
+	mockDB.EXPECT().
+		CountEmployeesByRole(gomock.Any(), role2ID).
+		Return(int64(3), nil)
+
 	req := httptest.NewRequest(http.MethodGet, "/roles", nil)
 	rec := httptest.NewRecorder()
 
