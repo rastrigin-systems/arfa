@@ -92,11 +92,14 @@ db-reset:
 
 db-seed:
 	@echo "🌱 Loading seed data into database..."
-	@if [ ! -f seed.sql ]; then \
+	@if [ -f seed.sql ]; then \
+		docker-compose exec -T postgres psql -U ubik -d ubik < seed.sql; \
+	elif [ -f shared/schema/seed.sql ]; then \
+		docker-compose exec -T postgres psql -U ubik -d ubik < shared/schema/seed.sql; \
+	else \
 		echo "❌ Error: seed.sql not found"; \
 		exit 1; \
 	fi
-	docker-compose exec -T postgres psql -U ubik -d ubik < seed.sql
 	@echo "✅ Seed data loaded successfully"
 	@echo ""
 	@echo "Test credentials (all passwords: 'password123'):"
@@ -124,7 +127,7 @@ generate-erd:
 generate-api:
 	@echo "🔧 Generating API code from OpenAPI spec..."
 	@mkdir -p $(GENERATED_DIR)/api
-	oapi-codegen -package api -generate types,chi-server -o $(GENERATED_DIR)/api/server.gen.go openapi/spec.yaml
+	oapi-codegen -package api -generate types,chi-server -o $(GENERATED_DIR)/api/server.gen.go shared/openapi/spec.yaml
 	@echo "✅ API code generated at $(GENERATED_DIR)/api/"
 
 generate-db:
@@ -166,22 +169,28 @@ check-drift:
 # Testing
 test:
 	@echo "🧪 Running all tests with coverage..."
-	go test -v -race -coverprofile=coverage.out ./...
+	@echo "Testing API server..."
+	cd services/api && go test -v -race -coverprofile=../../coverage-api.out ./...
 	@echo ""
-	@echo "Coverage summary:"
-	@go tool cover -func=coverage.out | tail -1
+	@echo "Testing CLI client..."
+	cd services/cli && go test -v -race -coverprofile=../../coverage-cli.out ./...
+	@echo ""
+	@echo "Testing shared types..."
+	cd pkg/types && go test -v -race -coverprofile=../../coverage-types.out ./...
+	@echo ""
+	@echo "✅ All tests passed!"
 
 test-unit:
 	@echo "⚡ Running unit tests (fast)..."
-	go test -v -short -race ./internal/...
+	cd services/api && go test -v -short -race ./internal/...
 
 test-integration:
 	@echo "🔄 Running integration tests (requires Docker)..."
-	go test -v -run Integration ./tests/integration/...
+	cd services/api && go test -v -run Integration ./tests/integration/...
 
 test-cli:
 	@echo "🧪 Running CLI tests..."
-	go test -v -race ./internal/cli/...
+	cd services/cli && go test -v -race ./internal/...
 
 test-coverage:
 	@echo "📊 Generating HTML coverage report..."
@@ -219,13 +228,13 @@ build: build-server build-cli
 build-server:
 	@echo "🔨 Building server binary..."
 	@mkdir -p bin
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/ubik-server cmd/server/main.go
+	cd services/api && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-server cmd/server/main.go
 	@echo "✅ Server built: bin/ubik-server"
 
 build-cli:
 	@echo "🔨 Building CLI binary..."
 	@mkdir -p bin
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/ubik-cli cmd/cli/main.go
+	cd services/cli && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-cli cmd/ubik/main.go
 	@echo "✅ CLI built: bin/ubik-cli"
 	@echo ""
 	@echo "Try it out:"

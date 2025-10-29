@@ -75,22 +75,38 @@ Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Co
 ### System Design
 
 ```
+🌟 Go Workspace Monorepo
+    ├─→ services/api/       (API Server Module)
+    ├─→ services/cli/       (CLI Client Module)
+    ├─→ pkg/types/          (Shared Types Module)
+    └─→ generated/          (Generated Code Module)
+
 PostgreSQL Schema (DB source of truth)
     ↓
     ├─→ tbls → schema.json, README.md, public.*.md, schema.svg (auto-generated)
     ├─→ Python script → ERD.md (from schema.json, auto-generated)
-    └─→ sqlc → Type-safe Go database code
+    └─→ sqlc → Type-safe Go database code → generated/db/
 
 OpenAPI Spec (API source of truth)
     ↓
-    └─→ oapi-codegen → Go API types + Chi server
+    └─→ oapi-codegen → Go API types + Chi server → generated/api/
 
-Employee CLI Client (future)
+Services consume generated code
     ↓
-    └─→ Syncs configs from central server
+    ├─→ services/api/ imports generated/api, generated/db, pkg/types
+    └─→ services/cli/ imports pkg/types (no DB/API deps!)
 ```
 
-**Hybrid Approach**: Database schema and API spec maintained separately, both generate code automatically.
+**Monorepo Approach**: Go workspace with independent modules, shared dependencies via local replace directives.
+
+**Why Monorepo?**
+- **Cleaner Dependencies**: CLI doesn't carry 50+ server deps
+- **Independent Versioning**: API v0.5 + CLI v1.0 possible
+- **Smaller Binaries**: CLI binary ~60% smaller (no DB drivers, HTTP handlers)
+- **Better Modularity**: Clear service boundaries
+- **Future-Ready**: Easy to add web UI, workers, etc.
+
+**Hybrid Schema/API**: Database schema and API spec maintained separately, both generate code automatically.
 
 **Why Hybrid?**
 - DB tables ≠ API DTOs (different concerns)
@@ -162,65 +178,75 @@ Employee CLI Client (future)
 ## Project Structure
 
 ```
-ubik-enterprise/
-├── CLAUDE.md                  # This file - documentation root
-├── README.md                  # Quick overview
-├── IMPLEMENTATION_ROADMAP.md  # Next endpoints to build
-├── schema.sql                 # PostgreSQL schema (source of truth)
-├── Makefile                   # Automation commands
-├── docker-compose.yml         # Local environment
-├── go.mod                     # Go dependencies
+ubik-enterprise/                  # 🌟 Monorepo Root
+├── go.work                       # Go workspace configuration
+├── Makefile                      # Automation commands
+├── docker-compose.yml            # Local environment
+├── CLAUDE.md                     # This file - documentation root
+├── README.md                     # Quick overview
+├── IMPLEMENTATION_ROADMAP.md     # Next endpoints to build
 │
-├── docs/
-│   ├── QUICKSTART.md          # 5-minute setup
-│   ├── TESTING.md             # Testing guide
-│   ├── DEVELOPMENT.md         # Development workflow
+├── services/                     # 🎯 Microservices
+│   ├── api/                      # API Server Module
+│   │   ├── go.mod                # API dependencies
+│   │   ├── cmd/server/main.go    # Server entry point
+│   │   ├── internal/
+│   │   │   ├── handlers/         # HTTP handlers
+│   │   │   ├── auth/             # JWT utilities
+│   │   │   ├── middleware/       # Auth, RLS, logging
+│   │   │   └── service/          # Business logic
+│   │   └── tests/integration/    # Integration tests
 │   │
-│   ├── ERD.md                 # ⭐ Auto-generated ERD
-│   ├── README.md              # Auto-generated table index (tbls)
-│   ├── public.*.md            # Auto-generated per-table docs (27 files)
-│   ├── schema.json            # Machine-readable schema
-│   ├── schema.svg             # Visual diagram
-│   │
-│   └── archive/               # Historical documentation
-│       ├── MIGRATION_PLAN.md
-│       ├── INIT_COMPLETE.md
-│       ├── SETUP_COMPLETE.md
-│       └── DOCUMENTATION_COMPLETE.md
+│   └── cli/                      # CLI Client Module
+│       ├── go.mod                # CLI dependencies
+│       ├── cmd/ubik/main.go      # CLI entry point
+│       ├── internal/
+│       │   ├── client/           # API client
+│       │   ├── config/           # Config management
+│       │   ├── docker/           # Docker SDK wrapper
+│       │   └── commands/         # Cobra commands
+│       └── tests/                # CLI tests
 │
-├── openapi/
-│   ├── spec.yaml              # OpenAPI 3.0.3 spec (source of truth)
-│   └── oapi-codegen.yaml      # Generator config
+├── pkg/                          # 📦 Shared Go Code
+│   └── types/                    # Shared domain types
+│       ├── go.mod
+│       └── types.go              # Common models
+│
+├── shared/                       # 🔧 Cross-language Shared
+│   ├── openapi/
+│   │   └── spec.yaml             # OpenAPI 3.0.3 spec
+│   ├── schema/
+│   │   └── schema.sql            # PostgreSQL schema
+│   └── docker/                   # Docker images
+│
+├── generated/                    # ⚠️ AUTO-GENERATED (don't edit!)
+│   ├── go.mod                    # Generated code module
+│   ├── api/                      # From OpenAPI spec
+│   ├── db/                       # From SQL queries
+│   └── mocks/                    # From interfaces
 │
 ├── sqlc/
-│   ├── sqlc.yaml              # Generator config
-│   └── queries/
-│       ├── employees.sql      # Employee CRUD
-│       ├── auth.sql           # Sessions
-│       └── organizations.sql  # Org/team/roles
+│   ├── sqlc.yaml                 # Generator config
+│   └── queries/                  # SQL queries
 │
-├── generated/                 # ⚠️ AUTO-GENERATED (don't edit!)
-│   ├── api/                   # From OpenAPI spec
-│   ├── db/                    # From SQL queries
-│   └── mocks/                 # From interfaces
+├── docs/
+│   ├── QUICKSTART.md             # 5-minute setup
+│   ├── TESTING.md                # Testing guide
+│   ├── DEVELOPMENT.md            # Development workflow
+│   ├── MONOREPO_MIGRATION.md     # Migration plan
+│   ├── ERD.md                    # ⭐ Auto-generated ERD
+│   ├── README.md                 # Auto-generated table index
+│   └── archive/                  # Historical docs
 │
-├── internal/                  # Your code goes here
-│   ├── handlers/              # HTTP handlers
-│   ├── auth/                  # JWT utilities
-│   ├── middleware/            # Auth, RLS, logging
-│   ├── mapper/                # Type conversion
-│   └── validation/            # Custom validators
-│
-├── tests/
-│   ├── integration/           # Full stack tests
-│   └── testutil/              # Test helpers
-│
-├── cmd/
-│   └── server/                # API server
-│
-└── scripts/                   # Utility scripts
-    └── generate-erd-overview.py  # Auto-generates ERD.md
+└── scripts/                      # Utility scripts
 ```
+
+**Monorepo Benefits:**
+- 🎯 **Clean Dependencies** - Each service has minimal, focused deps
+- 📦 **Independent Versioning** - API and CLI can evolve separately
+- 🚀 **Smaller Binaries** - No unused code in builds
+- 🔧 **Better Modularity** - Clear service boundaries
+- 🌐 **Web UI Ready** - Easy to add Next.js as services/web/
 
 ---
 
@@ -513,9 +539,10 @@ Use Row-Level Security (RLS) policies as safety net.
 ## Current Status
 
 **Last Updated:** 2025-10-29
-**Version:** 0.2.0 🎉
+**Version:** 0.2.0 🎉 + **Monorepo Migration Complete** 🌟
 **Status:** 🟢 **CLI Phase 4 Complete - Ready for v0.2.0 Release**
 **Git Tag:** `v0.1.0` (v0.2.0 tag pending)
+**Branch:** `feature/monorepo-migration` (ready to merge)
 
 ### 🎉 Milestone v0.1.0 Released!
 

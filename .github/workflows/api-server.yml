@@ -6,25 +6,23 @@ on:
       - main
       - develop
     paths:
-      - 'cmd/server/**'
-      - 'internal/**'
+      - 'services/api/**'
+      - 'pkg/types/**'
       - 'generated/**'
-      - 'schema.sql'
-      - 'openapi/**'
+      - 'shared/schema/**'
+      - 'shared/openapi/**'
       - 'sqlc/**'
-      - 'go.mod'
-      - 'go.sum'
+      - 'go.work'
       - '.github/workflows/api-server.yml'
   pull_request:
     paths:
-      - 'cmd/server/**'
-      - 'internal/**'
+      - 'services/api/**'
+      - 'pkg/types/**'
       - 'generated/**'
-      - 'schema.sql'
-      - 'openapi/**'
+      - 'shared/schema/**'
+      - 'shared/openapi/**'
       - 'sqlc/**'
-      - 'go.mod'
-      - 'go.sum'
+      - 'go.work'
       - '.github/workflows/api-server.yml'
 
 jobs:
@@ -42,12 +40,13 @@ jobs:
           go-version: '1.24'
           cache: true
 
-      - name: Download dependencies
-        run: go mod download
+      - name: Sync workspace
+        run: go work sync
 
       - name: Build API server binary
         run: |
-          go build -v -o bin/ubik-server cmd/server/main.go
+          mkdir -p bin
+          cd services/api && go build -v -o ../../bin/ubik-server cmd/server/main.go
 
       - name: Verify binary
         run: |
@@ -100,22 +99,22 @@ jobs:
         env:
           PGPASSWORD: ubik_dev_password
         run: |
-          psql -h localhost -U ubik -d ubik -f schema.sql
+          psql -h localhost -U ubik -d ubik -f shared/schema/schema.sql
 
-      - name: Download dependencies
-        run: go mod download
+      - name: Sync workspace
+        run: go work sync
 
       - name: Run unit tests
         env:
           DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
         run: |
-          go test -v -race -coverprofile=coverage-unit.out -covermode=atomic ./internal/...
+          cd services/api && go test -v -race -coverprofile=../../coverage-unit.out -covermode=atomic ./internal/...
 
       - name: Run integration tests
         env:
           DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
         run: |
-          go test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./tests/integration/...
+          cd services/api && go test -v -race -coverprofile=../../coverage-integration.out -covermode=atomic ./tests/integration/...
 
       - name: Generate coverage report
         run: |
