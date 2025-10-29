@@ -1,0 +1,37 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  Teams                                   ( + Create Team)|
+|                                                          |
+|  Search: [_______________]                               |
+|                                                          |
++----------------------------------------------------------+
+|  Team Name    | Members | Agents | Description           |
+|----------------------------------------------------------+
+|  Leadership   |    5    |   3    | Executive team        |
+|  Engineering  |   45    |   5    | Software development  |
+|  Design       |   12    |   4    | Product design team   |
+|  Marketing    |   18    |   2    | Marketing & growth    |
+|  Sales        |   25    |   2    | Sales team            |
+|  Support      |   20    |   3    | Customer support      |
+|  ...          |   ...   |  ...   | ...                   |
++----------------------------------------------------------+
+|                                                          |
+|  Showing 1-10 of 12 teams                   [1] [2] >    |
+|                                                          |
++----------------------------------------------------------+
+|  Actions per row: [View] [Edit] [Agent Configs] [Delete]|
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoint: GET /teams                                |
+|  Response: {"teams": [...], "total": 12}                 |
+|                                                          |
+|  Per team actions:                                       |
+|  - GET /teams/{team_id}                                  |
+|  - PATCH /teams/{team_id}                                |
+|  - DELETE /teams/{team_id}                               |
+|  - GET /teams/{team_id}/agent-configs                    |
++----------------------------------------------------------+

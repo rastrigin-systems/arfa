@@ -1,0 +1,58 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  < Back to Employees                                     |
+|                                                          |
+|  Create New Employee                                     |
+|                                                          |
++----------------------------------------------------------+
+|  Employee Information                                    |
+|  ------------------------------------------------------- |
+|                                                          |
+|  Full Name: *    [_________________________________]     |
+|                                                          |
+|  Email: *        [_________________________________]     |
+|                                                          |
+|  Team:           [Engineering                        v]  |
+|                  ( None - assign later )                 |
+|                                                          |
+|  Role: *         [Member                             v]  |
+|                  Options: Admin, Approver, Member        |
+|                                                          |
++----------------------------------------------------------+
+|  Initial Preferences (Optional)                          |
+|  ------------------------------------------------------- |
+|                                                          |
+|  +------------------------------------------------------+|
+|  |{                                                     ||
+|  |  "theme": "light",                                   ||
+|  |  "notifications": true                               ||
+|  |}                                                     ||
+|  +------------------------------------------------------+|
+|                                                          |
+|  Leave empty for default preferences                     |
+|                                                          |
++----------------------------------------------------------+
+|  Initial Setup                                           |
+|  ------------------------------------------------------- |
+|                                                          |
+|  [ ] Send welcome email with login instructions          |
+|  [ ] Auto-assign default agent configurations            |
+|  [x] Require password change on first login              |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|            ( Cancel )  ( Create Employee )               |
+|                                                          |
++----------------------------------------------------------+
+|  * Required fields                                       |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoint: POST /employees                           |
+|  Request Body: CreateEmployeeRequest                     |
+|  {"email": "...", "full_name": "...", "role_id": "...",  |
+|   "team_id": "...", "preferences": {...}}                |
++----------------------------------------------------------+

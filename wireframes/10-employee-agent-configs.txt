@@ -1,0 +1,58 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  < Back to Employee: Bob Jones                           |
+|                                                          |
+|  Employee Agent Configurations                           |
+|                             ( + Add Configuration )      |
+|                                                          |
++----------------------------------------------------------+
+|  [ICON]  Claude Code                             [Edit v]|
+|  ------------------------------------------------------- |
+|  Status:      [x] Enabled for this employee              |
+|  Last Sync:   2 hours ago                                |
+|  Sync Token:  abc123...                                  |
+|                                                          |
+|  Configuration Override (JSON):                          |
+|  {                                                       |
+|    "temperature": 0.5,                                   |
+|    "max_tokens": 16384                                   |
+|  }                                                       |
+|                                                          |
+|  Note: Overrides team/org settings. Empty = inherit      |
+|                                                          |
+|  Effective Config: ( View Resolved Config )              |
+|                                                          |
+|  ( Save ) ( Remove Override )                            |
+|                                                          |
++----------------------------------------------------------+
+|  [ICON]  Cursor                                  [Edit v]|
+|  ------------------------------------------------------- |
+|  Status:      [x] Enabled for this employee              |
+|  Last Sync:   5 hours ago                                |
+|  Sync Token:  def456...                                  |
+|                                                          |
+|  Configuration Override (JSON):                          |
+|  {                                                       |
+|    "features": {                                         |
+|      "autocomplete": false                               |
+|    }                                                     |
+|  }                                                       |
+|                                                          |
+|  ( Save ) ( Remove Override )                            |
+|                                                          |
++----------------------------------------------------------+
+|  Resolved Configurations for CLI                         |
+|  ( Download All Configs ) ( Force Sync )                 |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoints:                                          |
+|  - GET /employees/{id}/agent-configs                     |
+|  - POST /employees/{id}/agent-configs (create override)  |
+|  - PATCH /employees/{id}/agent-configs/{config_id}       |
+|  - DELETE /employees/{id}/agent-configs/{config_id}      |
+|  - GET /employees/{id}/agent-configs/resolved (for CLI)  |
++----------------------------------------------------------+

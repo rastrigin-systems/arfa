@@ -1,0 +1,37 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  Welcome back, Alice!                                    |
+|                                                          |
++------------------------+--------------------------------+
+|  [ICON] Employees      |  [ICON] Teams                  |
+|  125 Active            |  12 Teams                      |
+|  5 Pending Approvals   |  8 Agents Configured           |
+|  (View All)            |  (Manage)                      |
++------------------------+--------------------------------+
+|  [ICON] Agent Usage    |  [ICON] This Month             |
+|  Claude Code: 45 users |  Budget: $2,450 / $5,000       |
+|  Cursor: 32 users      |  API Calls: 125,430            |
+|  Windsurf: 18 users    |  Token Usage: 45.2M            |
+|  (Details)             |  (View Reports)                |
++------------------------+--------------------------------+
+|                                                          |
+|  Recent Activity                                         |
+|  ------------------------------------------------------- |
+|  [10:23] Alice created agent config for Engineering team |
+|  [09:45] Bob requested access to Claude Code             |
+|  [09:12] Carol updated employee permissions              |
+|  [Yesterday] Dave added 5 new employees                  |
+|                                                          |
+|  (View All Activity)                                     |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoints Used:                                     |
+|  - GET /auth/me (current user)                           |
+|  - GET /employees (count/stats)                          |
+|  - GET /teams (count)                                    |
+|  - GET /organizations/current (usage stats)              |
++----------------------------------------------------------+

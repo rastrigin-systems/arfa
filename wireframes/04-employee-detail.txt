@@ -1,0 +1,45 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  < Back to Employees                                     |
+|                                                          |
+|  Employee Details                        ( Edit ) (Delete)|
+|                                                          |
++----------------------------------------------------------+
+|  Personal Information                                    |
+|  ------------------------------------------------------- |
+|  Full Name:     Bob Jones                                |
+|  Email:         bob@acme.com                             |
+|  Status:        [Active v]                               |
+|  Team:          [Engineering v]                          |
+|  Role:          [Member v]                               |
+|  Last Login:    2025-10-28 14:23 UTC                     |
+|  Created:       2025-01-15                               |
+|                                                          |
++----------------------------------------------------------+
+|  Agent Configurations                  ( + Add Config )  |
+|  ------------------------------------------------------- |
+|  Agent          | Status   | Last Sync   | Actions       |
+|  Claude Code    | Enabled  | 2h ago      | [Edit][Remove]|
+|  Cursor         | Enabled  | 5h ago      | [Edit][Remove]|
+|  Windsurf       | Disabled | Never       | [Edit][Remove]|
+|                                                          |
+|  (View Resolved Configs)                                 |
+|                                                          |
++----------------------------------------------------------+
+|  Usage Statistics (Last 30 Days)                         |
+|  ------------------------------------------------------- |
+|  API Calls:     12,450                                   |
+|  Tokens Used:   2.3M                                     |
+|  Cost:          $45.50                                   |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoints:                                          |
+|  - GET /employees/{employee_id}                          |
+|  - PATCH /employees/{employee_id} (update)               |
+|  - DELETE /employees/{employee_id}                       |
+|  - GET /employees/{employee_id}/agent-configs            |
++----------------------------------------------------------+

@@ -1,0 +1,54 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  Roles & Permissions                                     |
+|                                                          |
+|  Available roles in your organization                    |
+|                                                          |
++----------------------------------------------------------+
+|  [ICON]  Admin                                           |
+|  ------------------------------------------------------- |
+|  Full system access and configuration rights             |
+|                                                          |
+|  Permissions:                                            |
+|  • Manage employees, teams, and roles                    |
+|  • Configure agents at all levels                        |
+|  • Approve/reject requests                               |
+|  • View all analytics and logs                           |
+|  • Manage billing and subscriptions                      |
+|                                                          |
+|  Employees with this role: 5                             |
+|                                                          |
++----------------------------------------------------------+
+|  [ICON]  Approver                                        |
+|  ------------------------------------------------------- |
+|  Can approve agent requests and manage team configs      |
+|                                                          |
+|  Permissions:                                            |
+|  • View team members                                     |
+|  • Approve/reject agent requests                         |
+|  • Configure team-level agent settings                   |
+|  • View team analytics                                   |
+|                                                          |
+|  Employees with this role: 18                            |
+|                                                          |
++----------------------------------------------------------+
+|  [ICON]  Member                                          |
+|  ------------------------------------------------------- |
+|  Standard employee with agent access                     |
+|                                                          |
+|  Permissions:                                            |
+|  • Use assigned agents                                   |
+|  • Request new agent access                              |
+|  • View own usage statistics                             |
+|  • Manage personal preferences                           |
+|                                                          |
+|  Employees with this role: 102                           |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoint: GET /roles                                |
+|  Response: {"data": [...]}                               |
++----------------------------------------------------------+
