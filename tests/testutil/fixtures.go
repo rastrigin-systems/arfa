@@ -107,3 +107,8 @@ func CreateTestTeam(t *testing.T, queries *db.Queries, ctx context.Context, orgI
 	require.NoError(t, err)
 	return team
 }
+
+// GenerateUniqueName generates a unique name by appending a timestamp
+func GenerateUniqueName(baseName string, timestamp int64) string {
+	return baseName + "-" + uuid.NewString()[:8]
+}

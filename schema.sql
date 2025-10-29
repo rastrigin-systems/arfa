@@ -81,7 +81,7 @@ CREATE TABLE sessions (
 -- AGENT CONFIGURATION
 -- ============================================================================
 
-CREATE TABLE agent_catalog (
+CREATE TABLE agents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(100) NOT NULL, -- claude-code, cursor, windsurf, continue, etc.
@@ -119,7 +119,7 @@ CREATE TABLE policies (
 
 -- Agent-Tool mappings
 CREATE TABLE agent_tools (
-    agent_id UUID NOT NULL REFERENCES agent_catalog(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
     tool_id UUID NOT NULL REFERENCES tools(id) ON DELETE CASCADE,
     config JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -128,7 +128,7 @@ CREATE TABLE agent_tools (
 
 -- Agent-Policy mappings
 CREATE TABLE agent_policies (
-    agent_id UUID NOT NULL REFERENCES agent_catalog(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
     policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (agent_id, policy_id)
@@ -144,19 +144,107 @@ CREATE TABLE team_policies (
     CONSTRAINT unique_team_policy UNIQUE (team_id, policy_id)
 );
 
--- Employee-specific agent configurations
+-- ============================================================================
+-- HIERARCHICAL AGENT CONFIGURATION (Org → Team → Employee)
+-- ============================================================================
+
+-- Org-level: Default agent configurations for entire organization
+CREATE TABLE org_agent_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
+
+    -- Agent settings (model, temperature, max_tokens, etc.)
+    config JSONB NOT NULL DEFAULT '{}',
+
+    -- Status at org level
+    is_enabled BOOLEAN NOT NULL DEFAULT true,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT unique_org_agent UNIQUE (org_id, agent_id)
+);
+
+-- Team-level: Overrides org-level config for specific teams
+-- Team members automatically inherit team's agents (access model a)
+CREATE TABLE team_agent_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
+
+    -- Overrides org config (merged at resolution time)
+    -- Only include fields you want to override
+    config_override JSONB NOT NULL DEFAULT '{}',
+
+    -- Status at team level (can disable for team even if org has it)
+    is_enabled BOOLEAN NOT NULL DEFAULT true,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT unique_team_agent UNIQUE (team_id, agent_id)
+);
+
+-- Employee-level: Final overrides for individual employees
+-- Only needed when employee needs different config than team
 CREATE TABLE employee_agent_configs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-    agent_catalog_id UUID NOT NULL REFERENCES agent_catalog(id) ON DELETE RESTRICT,
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, disabled, pending_approval
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
+
+    -- Overrides team/org config
+    -- Only include fields you want to override
     config_override JSONB NOT NULL DEFAULT '{}',
-    sync_token VARCHAR(255) UNIQUE, -- Used by CLI to sync configs
-    last_sync_at TIMESTAMP,
+
+    -- Status at employee level
+    is_enabled BOOLEAN NOT NULL DEFAULT true,
+
+    -- CLI sync metadata
+    sync_token VARCHAR(255) UNIQUE,
+    last_synced_at TIMESTAMP,
+
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_agent_name_per_employee UNIQUE (employee_id, name)
+
+    CONSTRAINT unique_employee_agent UNIQUE (employee_id, agent_id)
+);
+
+-- System Prompts: Additive across hierarchy (org + team + employee)
+-- Priority determines concatenation order
+CREATE TABLE system_prompts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    -- Polymorphic scope: which level this prompt applies to
+    scope_type VARCHAR(20) NOT NULL CHECK (scope_type IN ('org', 'team', 'employee')),
+    scope_id UUID NOT NULL,  -- References org_id, team_id, or employee_id
+
+    -- Which agent (NULL = all agents at this scope)
+    agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+
+    -- The actual prompt text
+    prompt TEXT NOT NULL,
+
+    -- Priority for concatenation order (lower = higher priority)
+    priority INT NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT unique_system_prompt UNIQUE (scope_type, scope_id, agent_id, priority)
+);
+
+-- Index for efficient lookups during config resolution
+CREATE INDEX idx_system_prompts_scope ON system_prompts(scope_type, scope_id, agent_id);
+
+-- Employee-level policy overrides (completes the hierarchy: agent → team → employee)
+CREATE TABLE employee_policies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    overrides JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_employee_policy UNIQUE (employee_id, policy_id)
 );
 
 -- ============================================================================
@@ -273,8 +361,8 @@ CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
 
 -- Agent Configs
 CREATE INDEX idx_employee_agent_configs_employee_id ON employee_agent_configs(employee_id);
-CREATE INDEX idx_employee_agent_configs_agent_catalog_id ON employee_agent_configs(agent_catalog_id);
-CREATE INDEX idx_employee_agent_configs_status ON employee_agent_configs(status);
+CREATE INDEX idx_employee_agent_configs_agent_id ON employee_agent_configs(agent_id);
+CREATE INDEX idx_employee_agent_configs_is_enabled ON employee_agent_configs(is_enabled);
 CREATE INDEX idx_employee_agent_configs_sync_token ON employee_agent_configs(sync_token) WHERE sync_token IS NOT NULL;
 
 -- MCP Configs
@@ -344,7 +432,7 @@ CREATE TRIGGER update_teams_updated_at BEFORE UPDATE ON teams
 CREATE TRIGGER update_employees_updated_at BEFORE UPDATE ON employees
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_agent_catalog_updated_at BEFORE UPDATE ON agent_catalog
+CREATE TRIGGER update_agents_updated_at BEFORE UPDATE ON agents
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_tools_updated_at BEFORE UPDATE ON tools
@@ -413,8 +501,8 @@ INSERT INTO policies (name, type, rules, severity) VALUES
     ('cost_limit_daily', 'cost_limit', '{"max_usd_per_day":10.0}', 'warn'),
     ('approval_required_prod', 'approval_required', '{"patterns":[".*prod.*",".*production.*"]}', 'block');
 
--- Agent Catalog (Popular AI coding assistants)
-INSERT INTO agent_catalog (name, type, description, provider, default_config, capabilities, llm_provider, llm_model) VALUES
+-- Agents (Popular AI coding assistants)
+INSERT INTO agents (name, type, description, provider, default_config, capabilities, llm_provider, llm_model) VALUES
     ('Claude Code', 'claude-code', 'Anthropic Claude Code CLI', 'anthropic', '{"temperature":0.2}', '["code_generation","debugging","refactoring","research"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
     ('Cursor', 'cursor', 'Cursor AI IDE', 'cursor', '{"temperature":0.3}', '["code_generation","autocomplete","chat"]', 'openai', 'gpt-4o'),
     ('Windsurf', 'windsurf', 'Windsurf AI IDE', 'codeium', '{"temperature":0.2}', '["code_generation","chat","cascade"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
@@ -423,18 +511,18 @@ INSERT INTO agent_catalog (name, type, description, provider, default_config, ca
 
 -- Link agents with tools
 INSERT INTO agent_tools (agent_id, tool_id)
-SELECT ac.id, t.id
-FROM agent_catalog ac, tools t
-WHERE (ac.name = 'Claude Code' AND t.name IN ('filesystem', 'git', 'http'))
-   OR (ac.name = 'Cursor' AND t.name IN ('filesystem', 'git'))
-   OR (ac.name = 'Windsurf' AND t.name IN ('filesystem', 'git'))
-   OR (ac.name = 'Continue' AND t.name IN ('filesystem', 'git'))
-   OR (ac.name = 'GitHub Copilot' AND t.name IN ('filesystem'));
+SELECT a.id, t.id
+FROM agents a, tools t
+WHERE (a.name = 'Claude Code' AND t.name IN ('filesystem', 'git', 'http'))
+   OR (a.name = 'Cursor' AND t.name IN ('filesystem', 'git'))
+   OR (a.name = 'Windsurf' AND t.name IN ('filesystem', 'git'))
+   OR (a.name = 'Continue' AND t.name IN ('filesystem', 'git'))
+   OR (a.name = 'GitHub Copilot' AND t.name IN ('filesystem'));
 
 -- Link agents with policies
 INSERT INTO agent_policies (agent_id, policy_id)
-SELECT ac.id, p.id
-FROM agent_catalog ac, policies p
+SELECT a.id, p.id
+FROM agents a, policies p
 WHERE p.name IN ('restricted_paths', 'rate_limit_basic', 'cost_limit_daily');
 
 -- Sample MCP Servers
@@ -449,22 +537,25 @@ INSERT INTO mcp_catalog (name, provider, version, description, connection_schema
 -- ============================================================================
 
 -- Employee agent configurations with catalog details
+-- Employee agents view (simplified - shows only employee-level configs)
+-- For full resolution (org + team + employee), use application code
 CREATE VIEW v_employee_agents AS
-SELECT 
+SELECT
     eac.id,
     eac.employee_id,
     e.full_name as employee_name,
     e.email as employee_email,
-    ac.name as agent_name,
-    ac.type as agent_type,
-    ac.provider,
-    eac.status,
+    a.name as agent_name,
+    a.type as agent_type,
+    a.provider,
+    eac.is_enabled,
+    eac.config_override,
     eac.sync_token,
-    eac.last_sync_at,
+    eac.last_synced_at,
     eac.created_at
 FROM employee_agent_configs eac
 JOIN employees e ON eac.employee_id = e.id
-JOIN agent_catalog ac ON eac.agent_catalog_id = ac.id;
+JOIN agents a ON eac.agent_id = a.id;
 
 -- Employee MCP configurations with catalog details
 CREATE VIEW v_employee_mcps AS

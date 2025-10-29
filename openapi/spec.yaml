@@ -318,6 +318,81 @@ components:
           format: date-time
           readOnly: true
 
+    # Agent schemas
+    Agent:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - description
+        - provider
+        - llm_provider
+        - llm_model
+        - is_public
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+          example: "Claude Code"
+        type:
+          type: string
+          maxLength: 100
+          example: "claude-code"
+        description:
+          type: string
+          example: "AI-powered code assistant with deep codebase understanding"
+        provider:
+          type: string
+          maxLength: 100
+          example: "anthropic"
+        default_config:
+          type: object
+          additionalProperties: true
+          example: {"model": "claude-3-5-sonnet-20241022", "max_tokens": 8192}
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: ["code_generation", "code_review", "refactoring"]
+        llm_provider:
+          type: string
+          maxLength: 50
+          example: "anthropic"
+        llm_model:
+          type: string
+          maxLength: 100
+          example: "claude-3-5-sonnet-20241022"
+        is_public:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ListAgentsResponse:
+      type: object
+      required:
+        - agents
+        - total
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        total:
+          type: integer
+          example: 5
+
     # Pagination
     PaginationMeta:
       type: object
@@ -682,6 +757,30 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Agents
+  # ============================================================================
+  /agents:
+    get:
+      tags:
+        - agents
+      summary: List available agents
+      description: Get catalog of available AI agents (Claude Code, Cursor, Windsurf, etc.)
+      operationId: listAgents
+      responses:
+        '200':
+          description: Agent catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAgentsResponse'
         '401':
           description: Unauthorized
           content:

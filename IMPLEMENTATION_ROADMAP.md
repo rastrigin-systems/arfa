@@ -1,20 +1,338 @@
 # Implementation Roadmap - Phase 2 API Development
 
-**Last Updated**: 2025-10-28
-**Current Progress**: 3/10 endpoints complete (30%)
+**Last Updated**: 2025-10-28 (Updated Priority)
+**Current Progress**: 9/9 core employee endpoints complete (100%) + **82 tests passing**
 
 ---
 
-## 🎯 Priority Order for Next Endpoints
+## 🎯 NEW PRIORITY: Agent Configuration APIs (Core Value Proposition)
 
-### ✅ COMPLETED (3/10 endpoints + middleware)
+**Strategic Decision**: Skip full org/team/role CRUD for now. Focus on the unique value proposition - **AI Agent Management**.
+
+**Rationale**:
+- We have enough employee infrastructure to support agent configuration
+- This is what makes the platform unique and valuable
+- Fastest path to MVP
+- Org/team/role full CRUD can wait until needed
+
+---
+
+## ✅ COMPLETED: Core Employee CRUD (9/9 endpoints)
 
 1. ✅ **POST /auth/login** - Full authentication (5 unit + 4 integration tests)
 2. ✅ **POST /auth/logout** - Session invalidation (3 unit + 1 integration tests)
 3. ✅ **GET /auth/me** - Current employee data (5 unit tests)
-4. ✅ **JWT Middleware** - Centralized authentication (9 unit + 2 integration tests) **NEW!**
+4. ✅ **JWT Middleware** - Centralized authentication (9 unit + 2 integration tests)
+5. ✅ **GET /employees** - List employees (4 unit + 4 integration tests)
+6. ✅ **GET /employees/{id}** - Get employee by ID (4 unit + 3 integration tests)
+7. ✅ **POST /employees** - Create employee (6 unit + 3 integration tests)
+8. ✅ **PATCH /employees/{id}** - Update employee (5 unit + 2 integration tests)
+9. ✅ **DELETE /employees/{id}** - Soft delete employee (4 unit + 2 integration tests)
 
-**Status**: Authentication system + middleware production-ready with **43/43 tests passing** (as of 2025-10-28)
+**Status**: Employee CRUD complete with **82/82 tests passing** (as of 2025-10-28)
+
+---
+
+## 📋 NEXT: Agent Configuration APIs (Core Value Proposition)
+
+### Phase 1: Agent Catalog & Employee Agent Configuration
+
+**Goal**: Enable employees to view available AI agents and assign them to their account.
+
+#### Endpoint 1: GET /agents - List available AI agents
+
+**Purpose**: Return catalog of available AI agents (Claude Code, Cursor, Windsurf, Continue, Copilot)
+
+**Implementation Plan:**
+- **Estimated Time**: 1 hour
+- **Tests to Write**: 4 unit + 2 integration
+
+**SQL Query Needed:**
+```sql
+-- name: ListAgents :many
+SELECT id, name, provider, description, logo_url,
+       is_active, supported_platforms, pricing_tier,
+       created_at, updated_at
+FROM agent_catalog
+WHERE is_active = true
+ORDER BY name ASC;
+```
+
+**Unit Tests (4):**
+1. `TestListAgents_Success` - Returns all active agents
+2. `TestListAgents_EmptyResult` - No agents available
+3. `TestListAgents_OnlyActiveAgents` - Filters out inactive agents
+4. `TestListAgents_OrderedByName` - Returns agents alphabetically
+
+**Integration Tests (2):**
+5. `TestListAgents_Integration_WithSeedData` - Real DB with catalog data
+6. `TestListAgents_Integration_Authentication` - Requires valid JWT
+
+**Response Format:**
+```json
+{
+  "agents": [
+    {
+      "id": "uuid",
+      "name": "Claude Code",
+      "provider": "anthropic",
+      "description": "AI-powered code assistant with deep codebase understanding",
+      "logo_url": "https://...",
+      "supported_platforms": ["macos", "linux", "windows"],
+      "pricing_tier": "enterprise"
+    }
+  ],
+  "total": 5
+}
+```
+
+---
+
+#### Endpoint 2: GET /employees/{employee_id}/agent-configs - List employee's assigned agents
+
+**Purpose**: Return all agents assigned to a specific employee with their configurations
+
+**Implementation Plan:**
+- **Estimated Time**: 1.5 hours
+- **Tests to Write**: 6 unit + 3 integration
+
+**SQL Query Needed:**
+```sql
+-- name: ListEmployeeAgentConfigs :many
+SELECT
+    eac.id,
+    eac.employee_id,
+    eac.agent_id,
+    eac.config,
+    eac.is_enabled,
+    eac.last_synced_at,
+    eac.created_at,
+    eac.updated_at,
+    ac.name as agent_name,
+    ac.provider as agent_provider,
+    ac.logo_url as agent_logo
+FROM employee_agent_configs eac
+JOIN agent_catalog ac ON eac.agent_id = ac.id
+WHERE eac.employee_id = $1
+  AND eac.deleted_at IS NULL
+ORDER BY eac.created_at DESC;
+```
+
+**Unit Tests (6):**
+1. `TestListEmployeeAgentConfigs_Success` - Returns employee's agents
+2. `TestListEmployeeAgentConfigs_WithConfig` - Includes config JSON
+3. `TestListEmployeeAgentConfigs_EmptyResult` - No agents assigned
+4. `TestListEmployeeAgentConfigs_OnlyEnabled` - Can filter by is_enabled
+5. `TestListEmployeeAgentConfigs_WrongEmployee` - Cannot view other employee's agents (org isolation)
+6. `TestListEmployeeAgentConfigs_InvalidEmployeeID` - Returns 400
+
+**Integration Tests (3):**
+7. `TestListEmployeeAgentConfigs_Integration_MultipleAgents` - Real DB with multiple configs
+8. `TestListEmployeeAgentConfigs_Integration_OrgIsolation` - Cannot access other org's data
+9. `TestListEmployeeAgentConfigs_Integration_WithPolicies` - Includes policy restrictions
+
+**Response Format:**
+```json
+{
+  "agent_configs": [
+    {
+      "id": "uuid",
+      "employee_id": "uuid",
+      "agent_id": "uuid",
+      "agent_name": "Claude Code",
+      "agent_provider": "anthropic",
+      "config": {
+        "model": "claude-3-5-sonnet-20241022",
+        "max_tokens": 8192,
+        "temperature": 0.7
+      },
+      "is_enabled": true,
+      "last_synced_at": "2025-10-28T10:00:00Z",
+      "created_at": "2025-10-20T15:30:00Z"
+    }
+  ],
+  "total": 3
+}
+```
+
+---
+
+#### Endpoint 3: POST /employees/{employee_id}/agent-configs - Assign agent to employee
+
+**Purpose**: Create new agent configuration for an employee
+
+**Implementation Plan:**
+- **Estimated Time**: 2 hours
+- **Tests to Write**: 8 unit + 4 integration
+
+**SQL Query Needed:**
+```sql
+-- name: CreateEmployeeAgentConfig :one
+INSERT INTO employee_agent_configs (
+    employee_id,
+    agent_id,
+    config,
+    is_enabled
+) VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: GetAgentById :one
+SELECT * FROM agent_catalog WHERE id = $1;
+
+-- name: CheckEmployeeAgentExists :one
+SELECT EXISTS(
+    SELECT 1 FROM employee_agent_configs
+    WHERE employee_id = $1 AND agent_id = $2 AND deleted_at IS NULL
+);
+```
+
+**Request Body:**
+```json
+{
+  "agent_id": "uuid",
+  "config": {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 8192
+  },
+  "is_enabled": true
+}
+```
+
+**Unit Tests (8):**
+1. `TestCreateEmployeeAgentConfig_Success` - Creates config
+2. `TestCreateEmployeeAgentConfig_WithDefaultConfig` - Uses default if not provided
+3. `TestCreateEmployeeAgentConfig_InvalidAgentID` - Returns 400
+4. `TestCreateEmployeeAgentConfig_AgentNotFound` - Returns 404
+5. `TestCreateEmployeeAgentConfig_DuplicateAgent` - Returns 409 (already assigned)
+6. `TestCreateEmployeeAgentConfig_InvalidConfig` - Returns 400 (malformed JSON)
+7. `TestCreateEmployeeAgentConfig_WrongEmployee` - Cannot create for other employee (org isolation)
+8. `TestCreateEmployeeAgentConfig_MissingAgentID` - Returns 422
+
+**Integration Tests (4):**
+9. `TestCreateEmployeeAgentConfig_Integration_Success` - Real DB creation
+10. `TestCreateEmployeeAgentConfig_Integration_DuplicateCheck` - Uniqueness constraint
+11. `TestCreateEmployeeAgentConfig_Integration_OrgIsolation` - Cross-org validation
+12. `TestCreateEmployeeAgentConfig_Integration_WithPolicies` - Policy inheritance
+
+---
+
+#### Endpoint 4: PATCH /employees/{employee_id}/agent-configs/{config_id} - Update agent config
+
+**Purpose**: Update existing agent configuration (model, settings, enabled status)
+
+**Implementation Plan:**
+- **Estimated Time**: 1.5 hours
+- **Tests to Write**: 6 unit + 2 integration
+
+**SQL Query Needed:**
+```sql
+-- name: UpdateEmployeeAgentConfig :one
+UPDATE employee_agent_configs
+SET
+    config = COALESCE($2, config),
+    is_enabled = COALESCE($3, is_enabled),
+    updated_at = NOW()
+WHERE id = $1
+  AND deleted_at IS NULL
+RETURNING *;
+
+-- name: GetEmployeeAgentConfig :one
+SELECT * FROM employee_agent_configs
+WHERE id = $1 AND deleted_at IS NULL;
+```
+
+**Unit Tests (6):**
+1. `TestUpdateEmployeeAgentConfig_Success` - Updates config
+2. `TestUpdateEmployeeAgentConfig_PartialUpdate` - Updates only provided fields
+3. `TestUpdateEmployeeAgentConfig_DisableAgent` - Sets is_enabled = false
+4. `TestUpdateEmployeeAgentConfig_NotFound` - Returns 404
+5. `TestUpdateEmployeeAgentConfig_WrongEmployee` - Cannot update other's config
+6. `TestUpdateEmployeeAgentConfig_InvalidConfig` - Returns 400
+
+**Integration Tests (2):**
+7. `TestUpdateEmployeeAgentConfig_Integration_Success` - Real DB update
+8. `TestUpdateEmployeeAgentConfig_Integration_OrgIsolation` - Cross-org check
+
+---
+
+#### Endpoint 5: DELETE /employees/{employee_id}/agent-configs/{config_id} - Remove agent assignment
+
+**Purpose**: Soft delete agent configuration
+
+**Implementation Plan:**
+- **Estimated Time**: 45 minutes
+- **Tests to Write**: 4 unit + 2 integration
+
+**SQL Query Needed:**
+```sql
+-- name: SoftDeleteEmployeeAgentConfig :exec
+UPDATE employee_agent_configs
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL;
+```
+
+**Unit Tests (4):**
+1. `TestDeleteEmployeeAgentConfig_Success` - Soft deletes config
+2. `TestDeleteEmployeeAgentConfig_NotFound` - Returns 404
+3. `TestDeleteEmployeeAgentConfig_WrongEmployee` - Cannot delete other's config
+4. `TestDeleteEmployeeAgentConfig_Idempotent` - Can delete twice
+
+**Integration Tests (2):**
+5. `TestDeleteEmployeeAgentConfig_Integration_SoftDelete` - Sets deleted_at
+6. `TestDeleteEmployeeAgentConfig_Integration_CannotSync` - Deleted config not returned by list
+
+---
+
+### Phase 2: MCP Server Configuration (Lower Priority)
+
+Similar structure for MCP server endpoints:
+- GET /mcp-servers - List available MCP servers
+- GET /employees/{employee_id}/mcp-configs - List employee's MCP configs
+- POST /employees/{employee_id}/mcp-configs - Assign MCP server
+- PATCH /employees/{employee_id}/mcp-configs/{config_id} - Update MCP config
+- DELETE /employees/{employee_id}/mcp-configs/{config_id} - Remove MCP assignment
+
+**Deferred until Phase 1 complete**
+
+---
+
+### Phase 3: Policy & Tool Management (Even Lower Priority)
+
+- GET /policies - List available policies
+- GET /tools - List available tools
+- GET /agents/{agent_id}/policies - Get agent's policies
+- GET /agents/{agent_id}/tools - Get agent's available tools
+
+**Deferred until Phase 2 complete**
+
+---
+
+## 📊 Updated Summary Table
+
+| Priority | Endpoint | Method | Tests | Est. Time | Status |
+|----------|----------|--------|-------|-----------|--------|
+| **COMPLETED** | **Authentication & Employees** | | | | |
+| 0 | /auth/login | POST | 9 | - | ✅ Complete |
+| 0 | /auth/logout | POST | 4 | - | ✅ Complete |
+| 0 | /auth/me | GET | 5 | - | ✅ Complete |
+| 0 | JWT Middleware | - | 11 | - | ✅ Complete |
+| 1 | /employees | GET | 8 | - | ✅ Complete |
+| 2 | /employees/{id} | GET | 7 | - | ✅ Complete |
+| 3 | /employees | POST | 9 | - | ✅ Complete |
+| 4 | /employees/{id} | PATCH | 7 | - | ✅ Complete |
+| 5 | /employees/{id} | DELETE | 6 | - | ✅ Complete |
+| **NEXT** | **Agent Configuration (Phase 1)** | | | | |
+| 6 | /agents | GET | 6 | 1 hr | ⏳ **NEXT** |
+| 7 | /employees/{id}/agent-configs | GET | 9 | 1.5 hrs | ⏸️ Pending |
+| 8 | /employees/{id}/agent-configs | POST | 12 | 2 hrs | ⏸️ Pending |
+| 9 | /employees/{id}/agent-configs/{cid} | PATCH | 8 | 1.5 hrs | ⏸️ Pending |
+| 10 | /employees/{id}/agent-configs/{cid} | DELETE | 6 | 45 min | ⏸️ Pending |
+| **LATER** | **MCP & Policies (Phase 2-3)** | | | | |
+| 11+ | MCP endpoints | Various | TBD | ~6 hrs | ⏸️ Deferred |
+
+**Completed**: 9 endpoints (82 tests passing)
+**Next Phase**: 5 agent endpoints (~7-8 hours)
+**Total Remaining**: ~15 hours for full MVP
 
 ---
 
