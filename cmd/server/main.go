@@ -22,7 +22,7 @@ import (
 
 func main() {
 	// Get configuration from environment
-	dbURL := getEnv("DATABASE_URL", "postgres://pivot:pivot_dev_password@localhost:5432/pivot?sslmode=disable")
+	dbURL := getEnv("DATABASE_URL", "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable")
 	port := getEnv("PORT", "3001")
 
 	// Connect to database

@@ -226,7 +226,7 @@ $ ubik sync
 ### CLI Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── cmd/
 │   └── ubik-cli/
 │       └── main.go           # CLI entry point
@@ -610,7 +610,7 @@ docker run -it \
 
 **Directory Structure**:
 ```
-pivot/
+ubik-enterprise/
 └── docker/
     ├── agents/
     │   └── claude-code/

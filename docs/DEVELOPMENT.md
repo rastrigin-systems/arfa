@@ -356,7 +356,7 @@ go build ./...
 ## Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── schema.sql                 # Database schema (source of truth)
 ├── openapi/spec.yaml          # API contract (source of truth)
 │

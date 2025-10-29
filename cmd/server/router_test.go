@@ -83,7 +83,7 @@ func setupTestRouter(queries *db.Queries) chi.Router {
 func setupTestDB(t *testing.T) (*pgxpool.Pool, *db.Queries, func()) {
 	// Use the same test database setup as integration tests
 	ctx := context.Background()
-	dbURL := "postgres://pivot:pivot_dev_password@localhost:5432/pivot_test?sslmode=disable"
+	dbURL := "postgres://ubik:ubik_dev_password@localhost:5432/ubik_test?sslmode=disable"
 
 	pool, err := pgxpool.New(ctx, dbURL)
 	require.NoError(t, err, "Failed to connect to test database")

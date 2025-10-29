@@ -1,4 +1,4 @@
-# Pivot — Enterprise AI Agent Management Platform
+# Ubik Enterprise — AI Agent Management Platform
 
 **Multi-tenant SaaS for centralized AI agent and MCP configuration management**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## What is Pivot?
+## What is Ubik Enterprise?
 
 Centralized platform for companies to manage AI agent configurations (Claude Code, Cursor, Windsurf, etc.) and MCP servers for their employees.
 
@@ -41,7 +41,7 @@ open docs/ERD.md
 
 **Access:**
 - Adminer (DB UI): http://localhost:8080
-- Database: `postgres://pivot:pivot_dev_password@localhost:5432/pivot`
+- Database: `postgres://ubik:ubik_dev_password@localhost:5432/ubik`
 
 ---
 
@@ -80,7 +80,7 @@ OpenAPI 3.0.3 Spec
 ## Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── CLAUDE.md              # ⭐ Start here
 ├── schema.sql             # Database schema
 ├── openapi/spec.yaml      # API contract
@@ -146,8 +146,6 @@ make clean            # Clean generated files
 ## Contributing
 
 See [CLAUDE.md](./CLAUDE.md) for complete development guide.
-
-**This is a pivot from the original Ubik project. See [../CLAUDE.md](../CLAUDE.md) for context.**
 
 ---
 

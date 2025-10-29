@@ -55,9 +55,9 @@ erDiagram
   jsonb settings
   integer max_employees
   integer max_agents_per_employee
+  text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  text claude_api_token
 }
 "public.agents" {
   uuid id

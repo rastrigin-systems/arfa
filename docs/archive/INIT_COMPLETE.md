@@ -104,7 +104,7 @@
 
 ### Files Created
 ```
-pivot/
+ubik-enterprise/
 ├── MIGRATION_PLAN.md           ✅ 10-week roadmap
 ├── DATABASE_SCHEMA.md          ✅ Complete ERD
 ├── README.md                   ✅ Project overview
@@ -144,7 +144,7 @@ which tbls
 
 ### 2. Generate All Code
 ```bash
-cd pivot
+cd ubik-enterprise
 
 # Generate ERD from database
 make generate-erd
@@ -250,13 +250,13 @@ go run cmd/server/main.go
 open http://localhost:8080
 
 # Option 2: psql CLI
-docker exec pivot-postgres psql -U pivot -d pivot -c "SELECT * FROM employees;"
+docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT * FROM employees;"
 ```
 
 ### Check Logs
 ```bash
 # PostgreSQL logs
-docker logs pivot-postgres
+docker logs ubik-postgres
 
 # Container status
 docker ps
@@ -344,7 +344,7 @@ make help               # Show all commands
 
 ## Access URLs
 
-- **PostgreSQL**: `postgres://pivot:pivot_dev_password@localhost:5432/pivot`
+- **PostgreSQL**: `postgres://ubik:ubik_dev_password@localhost:5432/ubik`
 - **Adminer**: http://localhost:8080
 - **API Server** (once running): http://localhost:3001
 - **Health Check** (once running): http://localhost:3001/health

@@ -267,7 +267,7 @@ Version 0.1 represents the **complete foundational infrastructure** for the Ubik
 ## 📁 Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── cmd/server/              # API server (main.go)
 ├── internal/
 │   ├── handlers/            # HTTP handlers (39 endpoints)

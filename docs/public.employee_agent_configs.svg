@@ -82,20 +82,20 @@
 <text text-anchor="start" x="255.89" y="-209.4" font-family="Arial" font-size="14.00">preferences </text>
 <text text-anchor="start" x="333.71" y="-209.4" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
 <polygon fill="none" stroke="black" points="248.89,-166.4 248.89,-197.2 530.58,-197.2 530.58,-166.4 248.89,-166.4"/>
-<text text-anchor="start" x="255.89" y="-178.6" font-family="Arial" font-size="14.00">last_login_at </text>
-<text text-anchor="start" x="338.39" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="255.89" y="-178.6" font-family="Arial" font-size="14.00">personal_claude_token </text>
+<text text-anchor="start" x="404.56" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="black" points="248.89,-135.6 248.89,-166.4 530.58,-166.4 530.58,-135.6 248.89,-135.6"/>
-<text text-anchor="start" x="255.89" y="-147.8" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="325.94" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="255.89" y="-147.8" font-family="Arial" font-size="14.00">last_login_at </text>
+<text text-anchor="start" x="338.39" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="248.89,-104.8 248.89,-135.6 530.58,-135.6 530.58,-104.8 248.89,-104.8"/>
-<text text-anchor="start" x="255.89" y="-117" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="329.85" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="255.89" y="-117" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="325.94" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="248.89,-74 248.89,-104.8 530.58,-104.8 530.58,-74 248.89,-74"/>
-<text text-anchor="start" x="255.89" y="-86.2" font-family="Arial" font-size="14.00">deleted_at </text>
-<text text-anchor="start" x="325.17" y="-86.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="255.89" y="-86.2" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="329.85" y="-86.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="248.89,-43.2 248.89,-74 530.58,-74 530.58,-43.2 248.89,-43.2"/>
-<text text-anchor="start" x="255.89" y="-55.4" font-family="Arial" font-size="14.00">personal_claude_token </text>
-<text text-anchor="start" x="404.56" y="-55.4" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<text text-anchor="start" x="255.89" y="-55.4" font-family="Arial" font-size="14.00">deleted_at </text>
+<text text-anchor="start" x="325.17" y="-55.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.employee_agent_configs&#45;&gt;public.employees -->
 <g id="edge2" class="edge">
@@ -195,11 +195,11 @@
 <text text-anchor="start" x="442.26" y="-1147.4" font-family="Arial" font-size="14.00">metadata </text>
 <text text-anchor="start" x="504.53" y="-1147.4" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
 <polygon fill="none" stroke="black" points="435.26,-1104.4 435.26,-1135.2 726.2,-1135.2 726.2,-1104.4 435.26,-1104.4"/>
-<text text-anchor="start" x="442.26" y="-1116.6" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="512.31" y="-1116.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="442.26" y="-1116.6" font-family="Arial" font-size="14.00">token_source </text>
+<text text-anchor="start" x="530.21" y="-1116.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(20)]</text>
 <polygon fill="none" stroke="black" points="435.26,-1073.6 435.26,-1104.4 726.2,-1104.4 726.2,-1073.6 435.26,-1073.6"/>
-<text text-anchor="start" x="442.26" y="-1085.8" font-family="Arial" font-size="14.00">token_source </text>
-<text text-anchor="start" x="530.21" y="-1085.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(20)]</text>
+<text text-anchor="start" x="442.26" y="-1085.8" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="512.31" y="-1085.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.usage_records&#45;&gt;public.employee_agent_configs -->
 <g id="edge1" class="edge">

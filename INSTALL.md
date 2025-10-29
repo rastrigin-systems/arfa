@@ -1,6 +1,6 @@
 # Installation Guide - Ubik Enterprise
 
-Complete installation and setup instructions for the Ubik Enterprise platform (Pivot).
+Complete installation and setup instructions for the Ubik Enterprise platform.
 
 ---
 
@@ -40,7 +40,7 @@ Complete installation and setup instructions for the Ubik Enterprise platform (P
 
 ```bash
 git clone https://github.com/yourusername/ubik-enterprise.git
-cd ubik-enterprise/pivot
+cd ubik-enterprise
 ```
 
 ### 2. Start Database
@@ -50,7 +50,7 @@ cd ubik-enterprise/pivot
 make db-up
 
 # Verify database is running
-docker ps | grep pivot-postgres
+docker ps | grep ubik-postgres
 ```
 
 ### 3. Install Tools (One-Time)
@@ -73,7 +73,7 @@ make generate
 make build
 
 # Or build individually
-make build-server  # → bin/pivot-server
+make build-server  # → bin/ubik-server
 make build-cli     # → bin/ubik-cli
 ```
 
@@ -81,7 +81,7 @@ make build-cli     # → bin/ubik-cli
 
 ```bash
 # Start API server
-./bin/pivot-server
+./bin/ubik-server
 
 # Server will start on http://localhost:3001
 ```
@@ -105,7 +105,7 @@ cp bin/ubik-cli /usr/local/bin/ubik
 **1. Start Database:**
 
 ```bash
-cd pivot
+cd ubik-enterprise
 make db-up
 ```
 
@@ -114,7 +114,7 @@ make db-up
 ```bash
 # Schema is applied automatically on first connection
 # Or manually:
-docker exec pivot-postgres psql -U pivot -d pivot -f /docker-entrypoint-initdb.d/schema.sql
+docker exec ubik-postgres psql -U ubik -d ubik -f /docker-entrypoint-initdb.d/schema.sql
 ```
 
 **3. Seed Data (Optional):**
@@ -129,7 +129,7 @@ make db-seed
 go run cmd/server/main.go
 
 # Or use compiled binary
-./bin/pivot-server
+./bin/ubik-server
 ```
 
 **5. Verify:**
@@ -156,7 +156,7 @@ docker-compose up -d
 **3. Check Logs:**
 
 ```bash
-docker-compose logs -f pivot-api
+docker-compose logs -f ubik-api
 ```
 
 ### Environment Variables
@@ -165,7 +165,7 @@ Create `.env` file:
 
 ```bash
 # Database
-DATABASE_URL=postgres://pivot:pivot_dev_password@localhost:5432/pivot
+DATABASE_URL=postgres://ubik:ubik_dev_password@localhost:5432/ubik
 
 # Server
 PORT=3001
@@ -187,7 +187,7 @@ ENVIRONMENT=development
 **Option 1: Build from Source**
 
 ```bash
-cd pivot
+cd ubik-enterprise
 make build-cli
 cp bin/ubik-cli /usr/local/bin/ubik
 ```
@@ -196,7 +196,7 @@ cp bin/ubik-cli /usr/local/bin/ubik
 
 ```bash
 # Will be available at releases page
-curl -LO https://github.com/ubik/pivot/releases/download/v0.2.0/ubik-cli-darwin-amd64
+curl -LO https://github.com/sergeirastrigin/ubik-enterprise/releases/download/v0.2.0/ubik-cli-darwin-amd64
 chmod +x ubik-cli-darwin-amd64
 mv ubik-cli-darwin-amd64 /usr/local/bin/ubik
 ```
@@ -246,7 +246,7 @@ docker ps
 **2. Build Agent Images (First Time):**
 
 ```bash
-cd pivot/docker
+cd ubik-enterprise/docker
 make build-all
 
 # This will build:
@@ -282,7 +282,7 @@ ubik start --api-key sk-ant-...
 **All Images:**
 
 ```bash
-cd pivot/docker
+cd ubik-enterprise/docker
 make build-all
 ```
 
@@ -305,7 +305,7 @@ docker build -t ubik/mcp-git:latest .
 ### Testing Images
 
 ```bash
-cd pivot/docker
+cd ubik-enterprise/docker
 make test-all
 ```
 
@@ -324,7 +324,7 @@ make test-all
 
 **Database Connection:**
 
-Edit `pivot/.env`:
+Edit `.env`:
 
 ```bash
 DATABASE_URL=postgres://user:password@host:port/database
@@ -393,10 +393,10 @@ Stored in `~/.ubik/agents/{agent-id}/config.json`:
 
 ```bash
 # Check if PostgreSQL is running
-docker ps | grep pivot-postgres
+docker ps | grep ubik-postgres
 
 # Check logs
-docker logs pivot-postgres
+docker logs ubik-postgres
 
 # Restart database
 make db-down && make db-up
@@ -412,7 +412,7 @@ lsof -i :3001
 kill -9 <PID>
 
 # Or use different port
-PORT=3002 ./bin/pivot-server
+PORT=3002 ./bin/ubik-server
 ```
 
 #### 3. Docker Not Running
@@ -449,7 +449,7 @@ stty sane
 
 ```bash
 # Build Docker images
-cd pivot/docker
+cd ubik-enterprise/docker
 make build-all
 
 # Verify
@@ -462,7 +462,7 @@ docker images | grep ubik
 
 ```bash
 # Server logs
-docker-compose logs -f pivot-api
+docker-compose logs -f ubik-api
 
 # Container logs
 docker logs <container-id>
@@ -483,7 +483,7 @@ psql --version    # Should be 15+
 ubik --version
 
 # Check server
-./bin/pivot-server --version
+./bin/ubik-server --version
 ```
 
 ---
@@ -577,7 +577,7 @@ ubik --version
    open http://localhost:8080
 
    # Or psql
-   docker exec -it pivot-postgres psql -U pivot -d pivot
+   docker exec -it ubik-postgres psql -U ubik -d ubik
    ```
 
 ---
@@ -594,8 +594,8 @@ ubik --version
 
 ## Support
 
-- **Issues**: https://github.com/ubik/pivot/issues
-- **Discussions**: https://github.com/ubik/pivot/discussions
+- **Issues**: https://github.com/sergeirastrigin/ubik-enterprise/issues
+- **Discussions**: https://github.com/sergeirastrigin/ubik-enterprise/discussions
 - **Email**: support@ubik-enterprise.com
 
 ---

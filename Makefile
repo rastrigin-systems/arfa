@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Pivot - Enterprise AI Agent Management Platform"
+	@echo "Ubik Enterprise - AI Agent Management Platform"
 	@echo ""
 	@echo "Setup Commands:"
 	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc, mockgen)"
@@ -37,7 +37,7 @@ help:
 	@echo "  make clean           Clean generated files and build artifacts"
 
 # Configuration
-DATABASE_URL ?= postgres://pivot:pivot_dev_password@localhost:5432/pivot?sslmode=disable
+DATABASE_URL ?= postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
 SERVER_PORT ?= 8080
 GENERATED_DIR = generated
 DOCS_DIR = docs
@@ -63,7 +63,7 @@ db-up:
 	docker-compose up -d postgres
 	@echo "⏳ Waiting for PostgreSQL to be ready..."
 	@sleep 3
-	@docker-compose exec -T postgres pg_isready -U pivot || (echo "⚠️  PostgreSQL not ready yet, waiting..." && sleep 5)
+	@docker-compose exec -T postgres pg_isready -U ubik || (echo "⚠️  PostgreSQL not ready yet, waiting..." && sleep 5)
 	@echo "✅ PostgreSQL is ready"
 	@echo ""
 	@echo "Database connection:"
@@ -89,7 +89,7 @@ db-seed:
 		echo "❌ Error: seed.sql not found"; \
 		exit 1; \
 	fi
-	docker-compose exec -T postgres psql -U pivot -d pivot < seed.sql
+	docker-compose exec -T postgres psql -U ubik -d ubik < seed.sql
 	@echo "✅ Seed data loaded successfully"
 	@echo ""
 	@echo "Test credentials (all passwords: 'password123'):"
@@ -201,7 +201,7 @@ run-server: build-server
 	@echo ""
 	@echo "To use a different port: PORT=3002 make run-server"
 	@echo ""
-	PORT=$(SERVER_PORT) ./bin/pivot-server
+	PORT=$(SERVER_PORT) ./bin/ubik-server
 
 # Build
 build: build-server build-cli
@@ -212,8 +212,8 @@ build: build-server build-cli
 build-server:
 	@echo "🔨 Building server binary..."
 	@mkdir -p bin
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/pivot-server cmd/server/main.go
-	@echo "✅ Server built: bin/pivot-server"
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/ubik-server cmd/server/main.go
+	@echo "✅ Server built: bin/ubik-server"
 
 build-cli:
 	@echo "🔨 Building CLI binary..."
@@ -274,8 +274,8 @@ format:
 # Docker build
 docker-build:
 	@echo "🐳 Building Docker image..."
-	docker build -t pivot-api:latest .
-	@echo "✅ Docker image built: pivot-api:latest"
+	docker build -t ubik-api:latest .
+	@echo "✅ Docker image built: ubik-api:latest"
 
 # Initialize new project
 init: install-tools db-up

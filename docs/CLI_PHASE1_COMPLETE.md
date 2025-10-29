@@ -90,7 +90,7 @@ Phase 1 (Foundation) of the ubik CLI client has been successfully completed. The
 ## File Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── cmd/cli/
 │   └── main.go                   # CLI entry point with cobra commands
 │
@@ -306,7 +306,7 @@ The following features are planned for future phases:
 
 ### Build Binary
 ```bash
-cd pivot
+cd ubik-enterprise
 go build -o bin/ubik-cli cmd/cli/main.go
 ```
 

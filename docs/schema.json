@@ -1,5 +1,5 @@
 {
-  "name": "pivot",
+  "name": "ubik",
   "tables": [
     {
       "name": "public.organizations",
@@ -46,6 +46,11 @@
           "default": "3"
         },
         {
+          "name": "claude_api_token",
+          "type": "text",
+          "nullable": true
+        },
+        {
           "name": "created_at",
           "type": "timestamp without time zone",
           "nullable": false,
@@ -56,12 +61,6 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
-        },
-        {
-          "name": "claude_api_token",
-          "type": "text",
-          "nullable": true,
-          "comment": "Company-wide Claude API token (from claude setup-token). Used as default for all employees who dont have personal tokens."
         }
       ],
       "indexes": [
@@ -469,6 +468,11 @@
           "default": "'{}'::jsonb"
         },
         {
+          "name": "personal_claude_token",
+          "type": "text",
+          "nullable": true
+        },
+        {
           "name": "last_login_at",
           "type": "timestamp without time zone",
           "nullable": true
@@ -489,12 +493,6 @@
           "name": "deleted_at",
           "type": "timestamp without time zone",
           "nullable": true
-        },
-        {
-          "name": "personal_claude_token",
-          "type": "text",
-          "nullable": true,
-          "comment": "Employee personal Claude API token. If set, takes precedence over organization token."
         }
       ],
       "indexes": [
@@ -2731,17 +2729,16 @@
           "default": "'{}'::jsonb"
         },
         {
+          "name": "token_source",
+          "type": "varchar(20)",
+          "nullable": true,
+          "default": "'company'::character varying"
+        },
+        {
           "name": "created_at",
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
-        },
-        {
-          "name": "token_source",
-          "type": "varchar(20)",
-          "nullable": true,
-          "default": "'company'::character varying",
-          "comment": "Indicates which token was used: company (org token) or personal (employee token)"
         }
       ],
       "indexes": [
@@ -3775,7 +3772,7 @@
     "meta": {
       "current_schema": "public",
       "search_paths": [
-        "pivot",
+        "ubik",
         "public"
       ],
       "dict": {

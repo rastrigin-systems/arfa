@@ -31,9 +31,9 @@ func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 		Image:        "postgres:15-alpine",
 		ExposedPorts: []string{"5432/tcp"},
 		Env: map[string]string{
-			"POSTGRES_USER":     "pivot",
+			"POSTGRES_USER":     "ubik",
 			"POSTGRES_PASSWORD": "test_password",
-			"POSTGRES_DB":       "pivot_test",
+			"POSTGRES_DB":       "ubik_test",
 		},
 		Files: []testcontainers.ContainerFile{
 			{
@@ -68,7 +68,7 @@ func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 	require.NoError(t, err)
 
 	// Build connection string
-	connStr := fmt.Sprintf("postgres://pivot:test_password@%s:%s/pivot_test?sslmode=disable",
+	connStr := fmt.Sprintf("postgres://ubik:test_password@%s:%s/ubik_test?sslmode=disable",
 		host, port.Port())
 
 	// Connect to database

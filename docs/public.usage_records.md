@@ -16,8 +16,8 @@
 | period_start | timestamp without time zone |  | false |  |  |  |
 | period_end | timestamp without time zone |  | false |  |  |  |
 | metadata | jsonb | '{}'::jsonb | false |  |  |  |
+| token_source | varchar(20) | 'company'::character varying | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
-| token_source | varchar(20) | 'company'::character varying | true |  |  | Indicates which token was used: company (org token) or personal (employee token) |
 
 ## Constraints
 
@@ -59,8 +59,8 @@ erDiagram
   timestamp_without_time_zone period_start
   timestamp_without_time_zone period_end
   jsonb metadata
-  timestamp_without_time_zone created_at
   varchar_20_ token_source
+  timestamp_without_time_zone created_at
 }
 "public.organizations" {
   uuid id
@@ -70,9 +70,9 @@ erDiagram
   jsonb settings
   integer max_employees
   integer max_agents_per_employee
+  text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  text claude_api_token
 }
 "public.employees" {
   uuid id
@@ -84,11 +84,11 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
+  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
-  text personal_claude_token
 }
 "public.employee_agent_configs" {
   uuid id

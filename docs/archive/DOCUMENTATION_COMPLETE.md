@@ -40,7 +40,7 @@
 ## Documentation Tree
 
 ```
-pivot/
+ubik-enterprise/
 ├── CLAUDE.md                       ⭐ Main project documentation
 ├── MIGRATION_PLAN.md               📋 10-week roadmap
 ├── QUICKSTART.md                   🚀 Setup guide

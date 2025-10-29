@@ -80,7 +80,7 @@ Phase 2 (Docker Integration) of the ubik CLI client has been successfully comple
 ## File Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── cmd/cli/
 │   └── main.go                      # CLI with Docker commands
 │

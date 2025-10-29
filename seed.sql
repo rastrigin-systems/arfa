@@ -1,4 +1,4 @@
--- Seed Data for Pivot - AI Agent Management Platform
+-- Seed Data for Ubik Enterprise - AI Agent Management Platform
 -- Purpose: Reusable test data for development and testing
 -- Password for all test users: "password123"
 -- Password hash: $2a$10$LoAcqAqR2r6aCRRtmtcJROs0d1JUXmg3tkxQwVxTf3uJvUc5ttRiC

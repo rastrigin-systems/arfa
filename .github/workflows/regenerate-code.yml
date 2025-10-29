@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - pivot/**
     paths:
       # Trigger on source model changes
       - 'schema.sql'
@@ -77,7 +76,7 @@ jobs:
 
       - name: Run code generation
         env:
-          DATABASE_URL: postgres://pivot:pivot_dev_password@localhost:5432/pivot?sslmode=disable
+          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
         run: |
           make generate
 

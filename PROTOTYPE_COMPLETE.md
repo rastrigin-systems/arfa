@@ -157,7 +157,7 @@ All pages tested with Playwright and screenshots captured:
 ## 📂 Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── static/
 │   ├── login.html         ✅ Login page (working)
 │   ├── dashboard.html     ✅ Dashboard (working)
@@ -277,7 +277,7 @@ All endpoints tested and working:
 ### Start the Server
 
 ```bash
-cd pivot
+cd ubik-enterprise
 
 # Start database (if not running)
 make db-up

@@ -162,7 +162,7 @@ Employee CLI Client (future)
 ## Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── CLAUDE.md                  # This file - documentation root
 ├── README.md                  # Quick overview
 ├── IMPLEMENTATION_ROADMAP.md  # Next endpoints to build
@@ -280,7 +280,7 @@ pivot/
 
 ```bash
 # Start database
-cd pivot
+cd ubik-enterprise
 make db-up
 
 # Install tools (one-time)
@@ -327,13 +327,13 @@ make help               # Show all commands
 
 ```bash
 # PostgreSQL connection
-postgres://pivot:pivot_dev_password@localhost:5432/pivot
+postgres://ubik:ubik_dev_password@localhost:5432/ubik
 
 # Adminer web UI
 open http://localhost:8080
 
 # psql CLI
-docker exec pivot-postgres psql -U pivot -d pivot
+docker exec ubik-postgres psql -U ubik -d ubik
 ```
 
 ---

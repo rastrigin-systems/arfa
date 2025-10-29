@@ -150,7 +150,7 @@ See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete roadmap.
 
 ### Project Structure
 ```
-pivot/
+ubik-enterprise/
 ├── cmd/cli/
 │   └── main.go              # CLI entry point
 │

@@ -41,7 +41,7 @@
 ## 📁 What's in `/pivot`
 
 ```
-pivot/
+ubik-enterprise/
 ├── MIGRATION_PLAN.md          ✅ Complete 10-week roadmap
 ├── DATABASE_SCHEMA.md         ✅ ERD + table docs
 ├── schema.sql                 ✅ PostgreSQL schema (17 tables)
@@ -64,7 +64,7 @@ pivot/
 
 ### Step 1: Start the Database
 ```bash
-cd pivot
+cd ubik-enterprise
 make db-up
 ```
 This will:
@@ -233,7 +233,7 @@ Your development environment is fully set up. The architecture is planned, datab
 
 **Start with**:
 ```bash
-cd pivot
+cd ubik-enterprise
 make db-up
 make install-tools
 ```

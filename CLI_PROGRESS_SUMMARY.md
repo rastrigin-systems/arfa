@@ -186,7 +186,7 @@ Coverage:              ~85-90%
 
 ```bash
 # Build CLI
-cd pivot
+cd ubik-enterprise
 make build-cli
 
 # Login to platform

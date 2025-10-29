@@ -70,14 +70,14 @@
 <text text-anchor="start" x="213.49" y="-178.6" font-family="Arial" font-size="14.00">max_agents_per_employee </text>
 <text text-anchor="start" x="390.15" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[integer]</text>
 <polygon fill="none" stroke="black" points="206.49,-135.6 206.49,-166.4 491.44,-166.4 491.44,-135.6 206.49,-135.6"/>
-<text text-anchor="start" x="213.49" y="-147.8" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="283.53" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="213.49" y="-147.8" font-family="Arial" font-size="14.00">claude_api_token </text>
+<text text-anchor="start" x="327.13" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="black" points="206.49,-104.8 206.49,-135.6 491.44,-135.6 491.44,-104.8 206.49,-104.8"/>
-<text text-anchor="start" x="213.49" y="-117" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="287.44" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="213.49" y="-117" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="283.53" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="206.49,-74 206.49,-104.8 491.44,-104.8 491.44,-74 206.49,-74"/>
-<text text-anchor="start" x="213.49" y="-86.2" font-family="Arial" font-size="14.00">claude_api_token </text>
-<text text-anchor="start" x="327.13" y="-86.2" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<text text-anchor="start" x="213.49" y="-86.2" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="287.44" y="-86.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.org_agent_configs&#45;&gt;public.organizations -->
 <g id="edge1" class="edge">

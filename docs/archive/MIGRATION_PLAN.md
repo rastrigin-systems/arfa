@@ -56,7 +56,7 @@ openapi.yaml (API source of truth) → Auto-generated Go code (oapi-codegen)
 ## 📁 New Project Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── MIGRATION_PLAN.md          # This file
 ├── DATABASE_SCHEMA.md         # ERD + schema documentation
 ├── schema.sql                 # PostgreSQL schema (DB source of truth)

@@ -54,9 +54,9 @@ erDiagram
         jsonb settings
         int max_employees
         int max_agents_per_employee
+        text claude_api_token
         timestamp created_at
         timestamp updated_at
-        text claude_api_token
     }
     
     subscriptions {
@@ -100,11 +100,11 @@ erDiagram
         varchar255 password_hash
         varchar50 status
         jsonb preferences
+        text personal_claude_token
         timestamp last_login_at
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
-        text personal_claude_token
     }
     
     sessions {
@@ -248,8 +248,8 @@ erDiagram
         timestamp period_start
         timestamp period_end
         jsonb metadata
-        timestamp created_at
         varchar20 token_source
+        timestamp created_at
     }
     
 ```
@@ -359,6 +359,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-10-29 20:21:15
+**Generated**: 2025-10-29 22:11:27
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

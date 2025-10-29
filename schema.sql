@@ -1,5 +1,5 @@
 -- Enterprise AI Agent Management System - PostgreSQL Schema (Simplified)
--- Version: 2.0.0 (Pivot - Configuration Management Focus)
+-- Version: 2.0.0 (Ubik Enterprise - Configuration Management Focus)
 -- Description: Multi-tenant system for managing employee AI agent and MCP configurations
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

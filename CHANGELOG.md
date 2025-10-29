@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Ubik Enterprise - Pivot platform will be documented in this file.
+All notable changes to the Ubik Enterprise platform will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -117,7 +117,7 @@ None - fully backward compatible with v0.1.0
 
 ### 🎉 Initial Release: Foundation Complete
 
-First official release of Ubik Enterprise - Pivot platform.
+First official release of Ubik Enterprise platform.
 
 ### ✨ Features
 
@@ -201,7 +201,7 @@ First official release of Ubik Enterprise - Pivot platform.
 
 ```bash
 # 1. Pull latest changes
-git pull origin pivot/sass
+git pull origin main
 
 # 2. Rebuild CLI
 make build-cli
@@ -231,4 +231,4 @@ Built with ❤️ using Claude Code and TDD best practices.
 
 ---
 
-**[Full Changelog](https://github.com/ubik/pivot/compare/v0.1.0...v0.2.0)**
+**[Full Changelog](https://github.com/sergeirastrigin/ubik-enterprise/compare/v0.1.0...v0.2.0)**

@@ -73,20 +73,20 @@
 <text text-anchor="start" x="50.2" y="-558.2" font-family="Arial" font-size="14.00">preferences </text>
 <text text-anchor="start" x="128.02" y="-558.2" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
 <polygon fill="none" stroke="black" points="43.2,-515.2 43.2,-546 324.89,-546 324.89,-515.2 43.2,-515.2"/>
-<text text-anchor="start" x="50.2" y="-527.4" font-family="Arial" font-size="14.00">last_login_at </text>
-<text text-anchor="start" x="132.7" y="-527.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="50.2" y="-527.4" font-family="Arial" font-size="14.00">personal_claude_token </text>
+<text text-anchor="start" x="198.87" y="-527.4" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="black" points="43.2,-484.4 43.2,-515.2 324.89,-515.2 324.89,-484.4 43.2,-484.4"/>
-<text text-anchor="start" x="50.2" y="-496.6" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="120.25" y="-496.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="50.2" y="-496.6" font-family="Arial" font-size="14.00">last_login_at </text>
+<text text-anchor="start" x="132.7" y="-496.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="43.2,-453.6 43.2,-484.4 324.89,-484.4 324.89,-453.6 43.2,-453.6"/>
-<text text-anchor="start" x="50.2" y="-465.8" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="124.16" y="-465.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="50.2" y="-465.8" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="120.25" y="-465.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="43.2,-422.8 43.2,-453.6 324.89,-453.6 324.89,-422.8 43.2,-422.8"/>
-<text text-anchor="start" x="50.2" y="-435" font-family="Arial" font-size="14.00">deleted_at </text>
-<text text-anchor="start" x="119.48" y="-435" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="50.2" y="-435" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="124.16" y="-435" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="43.2,-392 43.2,-422.8 324.89,-422.8 324.89,-392 43.2,-392"/>
-<text text-anchor="start" x="50.2" y="-404.2" font-family="Arial" font-size="14.00">personal_claude_token </text>
-<text text-anchor="start" x="198.87" y="-404.2" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<text text-anchor="start" x="50.2" y="-404.2" font-family="Arial" font-size="14.00">deleted_at </text>
+<text text-anchor="start" x="119.48" y="-404.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.employees&#45;&gt;public.roles -->
 <g id="edge1" class="edge">

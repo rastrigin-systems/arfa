@@ -36,14 +36,14 @@ make db-up
 
 # Expected output:
 # ✅ PostgreSQL is ready
-# Database connection: postgres://pivot:pivot_dev_password@localhost:5432/pivot
+# Database connection: postgres://ubik:ubik_dev_password@localhost:5432/ubik
 # Web UI: http://localhost:8080 (Adminer)
 ```
 
 ### 4. Verify Database
 ```bash
 # Check if schema was applied
-docker exec -it pivot-postgres psql -U pivot -d pivot -c "\dt"
+docker exec -it ubik-postgres psql -U ubik -d ubik -c "\dt"
 
 # Should show 17 tables:
 # - organizations
@@ -225,10 +225,10 @@ echo $GOPATH
 ### Database schema not applied
 ```bash
 # Manually apply schema
-docker exec -i pivot-postgres psql -U pivot -d pivot < schema.sql
+docker exec -i ubik-postgres psql -U ubik -d ubik < schema.sql
 
 # Verify tables exist
-docker exec -it pivot-postgres psql -U pivot -d pivot -c "\dt"
+docker exec -it ubik-postgres psql -U ubik -d ubik -c "\dt"
 ```
 
 ## Useful Commands
@@ -271,7 +271,7 @@ make help               # Show all commands
 ## File Structure
 
 ```
-pivot/
+ubik-enterprise/
 ├── openapi/
 │   ├── spec.yaml              ✅ OpenAPI 3.1 spec
 │   └── oapi-codegen.yaml      ✅ Generator config

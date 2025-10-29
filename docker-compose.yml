@@ -3,25 +3,25 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: pivot-postgres
+    container_name: ubik-postgres
     environment:
-      POSTGRES_DB: pivot
-      POSTGRES_USER: pivot
-      POSTGRES_PASSWORD: pivot_dev_password
+      POSTGRES_DB: ubik
+      POSTGRES_USER: ubik
+      POSTGRES_PASSWORD: ubik_dev_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pivot"]
+      test: ["CMD-SHELL", "pg_isready -U ubik"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   adminer:
     image: adminer:latest
-    container_name: pivot-adminer
+    container_name: ubik-adminer
     ports:
       - "8080:8080"
     environment:
@@ -34,11 +34,11 @@ services:
   #   build:
   #     context: .
   #     dockerfile: Dockerfile
-  #   container_name: pivot-api
+  #   container_name: ubik-api
   #   ports:
   #     - "3001:3001"
   #   environment:
-  #     DATABASE_URL: postgres://pivot:pivot_dev_password@postgres:5432/pivot?sslmode=disable
+  #     DATABASE_URL: postgres://ubik:ubik_dev_password@postgres:5432/ubik?sslmode=disable
   #     JWT_SECRET: dev_secret_change_in_production
   #     PORT: 3001
   #   depends_on:

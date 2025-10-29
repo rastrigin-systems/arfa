@@ -57,9 +57,9 @@ erDiagram
   jsonb settings
   integer max_employees
   integer max_agents_per_employee
+  text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  text claude_api_token
 }
 "public.employees" {
   uuid id
@@ -71,11 +71,11 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
+  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
-  text personal_claude_token
 }
 ```
 
