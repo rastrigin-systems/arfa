@@ -510,15 +510,25 @@ See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release 
 
 ### Phase 3 - Next Steps 🎯
 
-**Next Focus:** Config resolution service and CLI client
+**Next Focus:** Employee CLI Client (v0.2.0)
 
-**Upcoming Features:**
-- Config resolution (org → team → employee merge)
-- System prompts (hierarchical concatenation)
-- Policy resolution (most restrictive wins)
-- Employee CLI for config sync
+**Primary Feature:**
+- **ubik CLI** - Container-orchestrated agent management
+  - Employee types `ubik login`, `ubik sync`, `ubik` → agent ready
+  - Docker containers for agents (Claude Code initially)
+  - Separate MCP server containers (filesystem, git)
+  - Transparent I/O proxy (feels like native CLI)
+  - Central config injection
+  - Usage tracking (design TBD)
+  - Workspace: ask user, default to current directory
+
+**See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete architecture.**
+
+**Future Features (v0.3+):**
+- System prompts API
 - MCP server management
-- Approval workflows
+- Approval workflows UI
+- Web admin console
 
 **See [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for detailed plan.**
 
