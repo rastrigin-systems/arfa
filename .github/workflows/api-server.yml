@@ -47,11 +47,13 @@ jobs:
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install go.uber.org/mock/mockgen@latest
 
       - name: Generate code
         run: |
           make generate-api
           make generate-db
+          make generate-mocks
 
       - name: Sync workspace
         run: go work sync
@@ -121,11 +123,13 @@ jobs:
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install go.uber.org/mock/mockgen@latest
 
       - name: Generate code
         run: |
           make generate-api
           make generate-db
+          make generate-mocks
 
       - name: Sync workspace
         run: go work sync
