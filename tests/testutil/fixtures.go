@@ -99,11 +99,16 @@ func CreateSessionParams(employeeID uuid.UUID, tokenHash string) db.CreateSessio
 }
 
 // CreateTestTeam creates a test team in the organization
-func CreateTestTeam(t *testing.T, queries *db.Queries, ctx context.Context, orgID uuid.UUID, name string) db.Team {
-	team, err := queries.CreateTeam(ctx, db.CreateTeamParams{
+// Optional description can be passed as last parameter
+func CreateTestTeam(t *testing.T, queries *db.Queries, ctx context.Context, orgID uuid.UUID, name string, description ...string) db.Team {
+	params := db.CreateTeamParams{
 		OrgID: orgID,
 		Name:  name,
-	})
+	}
+	if len(description) > 0 && description[0] != "" {
+		params.Description = &description[0]
+	}
+	team, err := queries.CreateTeam(ctx, params)
 	require.NoError(t, err)
 	return team
 }
@@ -111,4 +116,14 @@ func CreateTestTeam(t *testing.T, queries *db.Queries, ctx context.Context, orgI
 // GenerateUniqueName generates a unique name by appending a timestamp
 func GenerateUniqueName(baseName string, timestamp int64) string {
 	return baseName + "-" + uuid.NewString()[:8]
+}
+
+// CreateTeamAgentConfigParams creates parameters for team agent config creation
+func CreateTeamAgentConfigParams(teamID, agentID uuid.UUID, configJSON []byte, isEnabled bool) db.CreateTeamAgentConfigParams {
+	return db.CreateTeamAgentConfigParams{
+		TeamID:         teamID,
+		AgentID:        agentID,
+		ConfigOverride: configJSON,
+		IsEnabled:      isEnabled,
+	}
 }

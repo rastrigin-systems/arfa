@@ -3,6 +3,7 @@
 -- Description: Multi-tenant system for managing employee AI agent and MCP configurations
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================
 -- CORE: Organizations, Teams, Employees
