@@ -379,7 +379,7 @@ func TestGetClaudeTokenStatus_BothTokens(t *testing.T) {
 	assert.Equal(t, employeeID, *response.EmployeeId)
 	assert.True(t, response.HasPersonalToken)
 	assert.True(t, response.HasCompanyToken)
-	assert.Equal(t, api.Personal, response.ActiveTokenSource)
+	assert.Equal(t, api.ClaudeTokenStatusResponseActiveTokenSourcePersonal, response.ActiveTokenSource)
 }
 
 func TestGetClaudeTokenStatus_CompanyTokenOnly(t *testing.T) {
@@ -415,7 +415,7 @@ func TestGetClaudeTokenStatus_CompanyTokenOnly(t *testing.T) {
 
 	assert.False(t, response.HasPersonalToken)
 	assert.True(t, response.HasCompanyToken)
-	assert.Equal(t, api.Company, response.ActiveTokenSource)
+	assert.Equal(t, api.ClaudeTokenStatusResponseActiveTokenSourceCompany, response.ActiveTokenSource)
 }
 
 func TestGetClaudeTokenStatus_NoTokens(t *testing.T) {
@@ -451,7 +451,7 @@ func TestGetClaudeTokenStatus_NoTokens(t *testing.T) {
 
 	assert.False(t, response.HasPersonalToken)
 	assert.False(t, response.HasCompanyToken)
-	assert.Equal(t, api.None, response.ActiveTokenSource)
+	assert.Equal(t, api.ClaudeTokenStatusResponseActiveTokenSourceNone, response.ActiveTokenSource)
 }
 
 func TestGetClaudeTokenStatus_Unauthorized(t *testing.T) {

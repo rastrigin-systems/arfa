@@ -28,10 +28,21 @@ if [ -n "$MCP_CONFIG" ]; then
     echo "$MCP_CONFIG" > ~/.claude/mcp.json
 fi
 
-# Write API key if provided (for authentication)
-if [ -n "$ANTHROPIC_API_KEY" ]; then
-    echo "🔑 Setting API key..."
+# Setup Claude authentication (hybrid auth)
+# Priority: CLAUDE_API_TOKEN > ANTHROPIC_API_KEY
+if [ -n "$CLAUDE_API_TOKEN" ]; then
+    echo "🔑 Setting up Claude token from platform..."
+    # Use claude setup-token for long-lived authentication
+    echo "$CLAUDE_API_TOKEN" | claude setup-token --non-interactive 2>/dev/null || {
+        echo "⚠️  Failed to setup Claude token, trying as environment variable..."
+        export ANTHROPIC_API_KEY="$CLAUDE_API_TOKEN"
+    }
+elif [ -n "$ANTHROPIC_API_KEY" ]; then
+    echo "🔑 Setting API key (legacy)..."
     export ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
+else
+    echo "⚠️  No authentication token provided"
+    echo "   Set CLAUDE_API_TOKEN or ANTHROPIC_API_KEY environment variable"
 fi
 
 echo "✅ Claude Code ready!"

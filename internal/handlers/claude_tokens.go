@@ -196,13 +196,13 @@ func (h *ClaudeTokensHandler) GetClaudeTokenStatus(w http.ResponseWriter, r *htt
 	var activeSource api.ClaudeTokenStatusResponseActiveTokenSource
 	switch status.ActiveTokenSource {
 	case "personal":
-		activeSource = "personal"
+		activeSource = api.ClaudeTokenStatusResponseActiveTokenSourcePersonal
 	case "company":
-		activeSource = "company"
+		activeSource = api.ClaudeTokenStatusResponseActiveTokenSourceCompany
 	case "none":
-		activeSource = "none"
+		activeSource = api.ClaudeTokenStatusResponseActiveTokenSourceNone
 	default:
-		activeSource = "none"
+		activeSource = api.ClaudeTokenStatusResponseActiveTokenSourceNone
 	}
 
 	// Convert interface{} booleans from sqlc

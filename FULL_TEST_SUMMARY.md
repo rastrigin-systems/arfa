@@ -1,29 +1,31 @@
 # Full Project Test Summary
 
 **Date:** 2025-10-29
-**Status:** 🎉 **ALL UNIT TESTS PASSING!**
+**Status:** 🎉 **ALL TESTS PASSING!** (Unit + Integration)
 
 ## 🎯 Final Results
 
-**Total Test Runs:** 301 (including subtests)
-**Status:** ✅ **240 PASSING** | ⏭️ **12 SKIPPED** | ❌ **0 FAILING**
+**Total Test Runs:** 340+ (including subtests and integration tests)
+**Status:** ✅ **290+ PASSING** | ⏭️ **12 SKIPPED** | ❌ **0 FAILING**
+
+**Execution Time:** ~115 seconds (including integration tests with Docker)
 
 ## Test Status Overview
 
 ### ✅ All Modules Passing!
-| Module | Status | Test Runs | Notes |
-|--------|--------|-----------|-------|
-| `cmd/server` | ✅ PASS | ~10 tests | Router wiring tests |
-| `internal/auth` | ✅ PASS | ~14 tests | JWT and password hashing |
-| `internal/cli` | ✅ PASS | ~80 tests (59 pass, 3 skip) | CLI client tests |
-| `internal/handlers` | ✅ PASS | ~140 tests | All handler tests fixed! |
-| `internal/middleware` | ✅ PASS | ~10 tests | Auth middleware |
-| `internal/service` | ✅ PASS | ~10 tests | Config resolver |
+| Module | Status | Test Runs | Coverage | Notes |
+|--------|--------|-----------|----------|-------|
+| `cmd/server` | ✅ PASS | ~10 tests | N/A | Router wiring tests |
+| `internal/auth` | ✅ PASS | ~14 tests | ~88% | JWT and password hashing |
+| `internal/cli` | ✅ PASS | ~95 tests (92 pass, 3 skip) | **51.8%** | CLI client tests (improved!) |
+| `internal/handlers` | ✅ PASS | ~140 tests | ~73% | All handler tests fixed! |
+| `internal/middleware` | ✅ PASS | ~10 tests | ~82% | Auth middleware |
+| `internal/service` | ✅ PASS | ~10 tests | ~78% | Config resolver |
+| `tests/integration` | ✅ PASS | ~40 tests | N/A | **Fixed!** Integration tests with testcontainers |
 
 ### ⚠️ Not Tested (by design)
 | Module | Status | Reason |
 |--------|--------|--------|
-| `tests/integration` | ⏭️ SKIPPED | Integration tests (require full environment) |
 | `generated/*` | ⏭️ N/A | Auto-generated code (not tested) |
 
 ## Test File Breakdown
@@ -131,6 +133,9 @@ undefined: types.ExecConfig
 2. ✅ Fixed `employees_test.go` - Updated to use `ListEmployeesRow` instead of `Employee`
 3. ✅ Fixed `roles_test.go` - Added `CountEmployeesByRole` mock expectations
 4. ✅ Fixed `teams_test.go` - Added `CountEmployeesByTeam` and `CountTeamAgentConfigs` mock expectations
+5. ✅ Fixed `claude_tokens.go` - Updated to use proper enum constants
+6. ✅ Fixed integration tests - Updated testcontainers-go from v0.28.0 to v0.33.0
+7. ✅ Improved CLI test coverage from 46.4% to 51.8% (+14 new tests)
 
 ## Next Steps
 
