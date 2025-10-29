@@ -58,6 +58,7 @@ func main() {
 	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
+	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -155,6 +156,11 @@ func main() {
 				r.Get("/{employee_id}", employeesHandler.GetEmployee)
 				r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
 				r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
+
+				// Employee personal Claude token (hybrid auth)
+				r.Put("/me/claude-token", claudeTokensHandler.SetEmployeeClaudeToken)
+				r.Delete("/me/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
+				r.Get("/me/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
 			})
 
 			// Roles routes
@@ -188,6 +194,10 @@ func main() {
 			r.Route("/organizations/current", func(r chi.Router) {
 				r.Get("/", organizationsHandler.GetCurrentOrganization)
 				r.Patch("/", organizationsHandler.UpdateCurrentOrganization)
+
+				// Organization Claude token (hybrid auth)
+				r.Put("/claude-token", claudeTokensHandler.SetOrganizationClaudeToken)
+				r.Delete("/claude-token", claudeTokensHandler.DeleteOrganizationClaudeToken)
 
 				// Organization agent configs
 				r.Route("/agent-configs", func(r chi.Router) {

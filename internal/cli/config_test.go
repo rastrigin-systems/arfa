@@ -127,3 +127,23 @@ func TestConfigManager_GetConfigPath(t *testing.T) {
 
 	assert.Equal(t, expectedPath, cm.GetConfigPath())
 }
+
+func TestNewConfigManager(t *testing.T) {
+	// Test with temp HOME
+	tempDir := t.TempDir()
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", oldHome)
+
+	cm, err := NewConfigManager()
+	require.NoError(t, err)
+	assert.NotNil(t, cm)
+	assert.Contains(t, cm.configPath, ".ubik")
+	assert.Contains(t, cm.configPath, "config.json")
+
+	// Verify config directory was created
+	configDir := filepath.Join(tempDir, ".ubik")
+	info, err := os.Stat(configDir)
+	require.NoError(t, err)
+	assert.True(t, info.IsDir())
+}

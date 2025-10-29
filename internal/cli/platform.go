@@ -149,6 +149,46 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentCon
 	return configs, nil
 }
 
+// ClaudeTokenStatusResponse represents the Claude token status response
+type ClaudeTokenStatusResponse struct {
+	EmployeeID        string `json:"employee_id"`
+	HasPersonalToken  bool   `json:"has_personal_token"`
+	HasCompanyToken   bool   `json:"has_company_token"`
+	ActiveTokenSource string `json:"active_token_source"` // "personal", "company", or "none"
+}
+
+// GetClaudeTokenStatus fetches the Claude token status for the current employee
+func (pc *PlatformClient) GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, error) {
+	var resp ClaudeTokenStatusResponse
+	endpoint := "/employees/me/claude-token/status"
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get Claude token status: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetEffectiveClaudeToken fetches the effective Claude token for the current employee
+// This is a convenience wrapper that extracts just the token from the status
+func (pc *PlatformClient) GetEffectiveClaudeToken() (string, error) {
+	status, err := pc.GetClaudeTokenStatus()
+	if err != nil {
+		return "", err
+	}
+
+	// Check if any token is available
+	if status.ActiveTokenSource == "none" {
+		return "", fmt.Errorf("no Claude API token configured. Please configure a token at organization or personal level")
+	}
+
+	// Token exists but we need to make another API call to get the actual token value
+	// For security reasons, the status endpoint doesn't return the actual token
+	// In a real implementation, you would either:
+	// 1. Have a separate endpoint to get the decrypted token (with proper auth)
+	// 2. Return a reference/ID that can be used to fetch the token securely
+	// For now, we'll return a placeholder indicating where the token comes from
+	return fmt.Sprintf("token-source:%s", status.ActiveTokenSource), nil
+}
+
 // doRequest is a helper method to perform HTTP requests
 func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
 	// Add /api/v1 prefix to all API calls

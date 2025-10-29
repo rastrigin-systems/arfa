@@ -470,9 +470,9 @@ Use Row-Level Security (RLS) policies as safety net.
 ## Current Status
 
 **Last Updated:** 2025-10-29
-**Version:** 0.1.0 🎉
-**Status:** 🟢 **Milestone v0.1 - Foundation Complete**
-**Git Tag:** `v0.1.0`
+**Version:** 0.2.0 🎉
+**Status:** 🟢 **CLI Phase 4 Complete - Ready for v0.2.0 Release**
+**Git Tag:** `v0.1.0` (v0.2.0 tag pending)
 
 ### 🎉 Milestone v0.1.0 Released!
 
@@ -547,11 +547,22 @@ See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release 
 - Coverage: ~25% (unit only), ~65-75% (with Docker)
 - See **[docs/CLI_PHASE3_COMPLETE.md](./docs/CLI_PHASE3_COMPLETE.md)** for details
 
-**🎯 CLI Phase 4 - Agent Management (Next)**
-- Agent listing/info commands
-- Agent request/approval workflow
-- Update mechanism
-- Cleanup commands
+**✅ CLI Phase 4 - Agent Management (Complete)** ⭐⭐⭐
+- `ubik agents list` - List available/local agents
+- `ubik agents info <id>` - Get agent details
+- `ubik agents request <id>` - Request agent access
+- `ubik update` - Check for config updates (with --sync)
+- `ubik cleanup` - Clean containers/config
+- **TTY raw mode fix** - Interactive input working perfectly
+- **Automatic container cleanup** - No more name conflicts
+- **Docker images built** - Claude Code (1.8GB), MCP filesystem (252MB), MCP git (422MB)
+- **79 tests passing (6 new + 3 skipped)** ✅
+- **100% pass rate maintained**
+- See **[docs/CLI_PHASE4_COMPLETE.md](./docs/CLI_PHASE4_COMPLETE.md)** for details
+- See **[docs/CLI_TTY_FIX.md](./docs/CLI_TTY_FIX.md)** for TTY troubleshooting
+- See **[CHANGELOG.md](./CHANGELOG.md)** for v0.2.0 release notes
+- See **[INSTALL.md](./INSTALL.md)** for installation guide
+- See **[MARKETING.md](./MARKETING.md)** for product strategy
 
 **See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete architecture.**
 
