@@ -46,6 +46,7 @@ func main() {
 
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(queries)
+	employeesHandler := handlers.NewEmployeesHandler(queries)
 	teamsHandler := handlers.NewTeamsHandler(queries)
 	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
@@ -97,6 +98,15 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.JWTAuth(queries))
 
+			// Employees routes
+			r.Route("/employees", func(r chi.Router) {
+				r.Get("/", employeesHandler.ListEmployees)
+				r.Post("/", employeesHandler.CreateEmployee)
+				r.Get("/{employee_id}", employeesHandler.GetEmployee)
+				r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
+				r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
+			})
+
 			// Teams routes
 			r.Route("/teams", func(r chi.Router) {
 				r.Get("/", teamsHandler.ListTeams)
@@ -136,9 +146,8 @@ func main() {
 		})
 
 		// TODO: Add more routes as they are implemented
-		// - /employees (CRUD)
 		// - /roles (CRUD)
-		// - /agents (catalog)
+		// - /agents (catalog - read-only)
 		// - /mcps (catalog, configs)
 		// - /approvals (workflow)
 	})
