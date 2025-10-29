@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -49,7 +49,7 @@ func (h *TeamAgentConfigsHandler) ListTeamAgentConfigs(w http.ResponseWriter, r 
 		OrgID: orgID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}
@@ -107,7 +107,7 @@ func (h *TeamAgentConfigsHandler) CreateTeamAgentConfig(w http.ResponseWriter, r
 		OrgID: orgID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}
@@ -133,7 +133,7 @@ func (h *TeamAgentConfigsHandler) CreateTeamAgentConfig(w http.ResponseWriter, r
 	// Check if agent exists
 	_, err = h.db.GetAgentByID(ctx, agentID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Agent not found")
 			return
 		}
@@ -225,7 +225,7 @@ func (h *TeamAgentConfigsHandler) GetTeamAgentConfig(w http.ResponseWriter, r *h
 		OrgID: orgID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}
@@ -236,7 +236,7 @@ func (h *TeamAgentConfigsHandler) GetTeamAgentConfig(w http.ResponseWriter, r *h
 	// Get config by ID
 	config, err := h.db.GetTeamAgentConfigByID(ctx, configID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Config not found")
 			return
 		}
@@ -304,7 +304,7 @@ func (h *TeamAgentConfigsHandler) UpdateTeamAgentConfig(w http.ResponseWriter, r
 		OrgID: orgID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}
@@ -336,7 +336,7 @@ func (h *TeamAgentConfigsHandler) UpdateTeamAgentConfig(w http.ResponseWriter, r
 		IsEnabled:      req.IsEnabled,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Config not found")
 			return
 		}
@@ -395,7 +395,7 @@ func (h *TeamAgentConfigsHandler) DeleteTeamAgentConfig(w http.ResponseWriter, r
 		OrgID: orgID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}

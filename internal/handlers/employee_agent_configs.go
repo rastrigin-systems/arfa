@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -46,7 +46,7 @@ func (h *EmployeeAgentConfigsHandler) ListEmployeeAgentConfigs(w http.ResponseWr
 
 	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
@@ -107,7 +107,7 @@ func (h *EmployeeAgentConfigsHandler) CreateEmployeeAgentConfig(w http.ResponseW
 
 	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
@@ -139,7 +139,7 @@ func (h *EmployeeAgentConfigsHandler) CreateEmployeeAgentConfig(w http.ResponseW
 	// Check if agent exists
 	_, err = h.db.GetAgentByID(ctx, agentID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Agent not found")
 			return
 		}
@@ -228,7 +228,7 @@ func (h *EmployeeAgentConfigsHandler) GetEmployeeAgentConfig(w http.ResponseWrit
 
 	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
@@ -245,7 +245,7 @@ func (h *EmployeeAgentConfigsHandler) GetEmployeeAgentConfig(w http.ResponseWrit
 	// Get config by ID
 	config, err := h.db.GetEmployeeAgentConfig(ctx, configID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Config not found")
 			return
 		}
@@ -312,7 +312,7 @@ func (h *EmployeeAgentConfigsHandler) UpdateEmployeeAgentConfig(w http.ResponseW
 
 	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
@@ -350,7 +350,7 @@ func (h *EmployeeAgentConfigsHandler) UpdateEmployeeAgentConfig(w http.ResponseW
 		IsEnabled:      req.IsEnabled,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Config not found")
 			return
 		}
@@ -406,7 +406,7 @@ func (h *EmployeeAgentConfigsHandler) DeleteEmployeeAgentConfig(w http.ResponseW
 
 	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
