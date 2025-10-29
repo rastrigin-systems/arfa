@@ -45,6 +45,10 @@ func main() {
 
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(queries)
+	teamsHandler := handlers.NewTeamsHandler(queries)
+	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
+	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
+	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -82,12 +86,47 @@ func main() {
 			r.Get("/me", authHandler.GetMe)
 		})
 
+		// Teams routes
+		r.Route("/teams", func(r chi.Router) {
+			r.Get("/", teamsHandler.ListTeams)
+			r.Post("/", teamsHandler.CreateTeam)
+			r.Get("/{team_id}", teamsHandler.GetTeam)
+			r.Patch("/{team_id}", teamsHandler.UpdateTeam)
+			r.Delete("/{team_id}", teamsHandler.DeleteTeam)
+
+			// Team agent configs
+			r.Route("/{team_id}/agent-configs", func(r chi.Router) {
+				r.Get("/", teamAgentConfigsHandler.ListTeamAgentConfigs)
+				r.Post("/", teamAgentConfigsHandler.CreateTeamAgentConfig)
+				r.Get("/{config_id}", teamAgentConfigsHandler.GetTeamAgentConfig)
+				r.Patch("/{config_id}", teamAgentConfigsHandler.UpdateTeamAgentConfig)
+				r.Delete("/{config_id}", teamAgentConfigsHandler.DeleteTeamAgentConfig)
+			})
+		})
+
+		// Organizations routes
+		r.Route("/organizations/current/agent-configs", func(r chi.Router) {
+			r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
+			r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
+			r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
+			r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
+			r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
+		})
+
+		// Employee agent configs routes
+		r.Route("/employees/{employee_id}/agent-configs", func(r chi.Router) {
+			r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
+			r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
+			r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
+			r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
+			r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
+			r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
+		})
+
 		// TODO: Add more routes as they are implemented
 		// - /employees (CRUD)
-		// - /organizations (CRUD)
-		// - /teams (CRUD)
 		// - /roles (CRUD)
-		// - /agents (catalog, configs)
+		// - /agents (catalog)
 		// - /mcps (catalog, configs)
 		// - /approvals (workflow)
 	})

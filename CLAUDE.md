@@ -431,13 +431,31 @@ Use Row-Level Security (RLS) policies as safety net.
 
 ### Testing Strategy
 
-**Write tests immediately after implementing:**
+**⚠️ CRITICAL: ALWAYS FOLLOW STRICT TDD (Test-Driven Development)**
+
+**Mandatory TDD Workflow:**
 ```
-✅ Implement handler → Write unit tests → Add integration test
-❌ Implement 5 handlers → Write tests later
+✅ 1. Write failing tests FIRST
+✅ 2. Implement minimal code to pass tests
+✅ 3. Refactor with tests passing
+❌ NEVER write implementation before tests
+```
+
+**Example:**
+```
+✅ CORRECT: Write router tests → Implement router wiring → Tests pass
+❌ WRONG:   Implement router wiring → Write tests later
+❌ WRONG:   Implement handler → Write tests after
 ```
 
 **Target Coverage:** 85% overall (excluding generated code)
+
+**Why TDD is Mandatory:**
+- Prevents regression bugs
+- Forces good API design
+- Ensures all code is testable
+- Provides immediate feedback
+- Builds confidence in changes
 
 **See [docs/TESTING.md](./docs/TESTING.md) for complete testing guide with TDD workflow.**
 
