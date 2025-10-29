@@ -50,6 +50,7 @@ func main() {
 	rolesHandler := handlers.NewRolesHandler(queries)
 	organizationsHandler := handlers.NewOrganizationsHandler(queries)
 	teamsHandler := handlers.NewTeamsHandler(queries)
+	agentsHandler := handlers.NewAgentsHandler(queries)
 	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
 	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
@@ -160,11 +161,15 @@ func main() {
 				r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
 				r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
 			})
+
+			// Agents catalog routes (read-only)
+			r.Route("/agents", func(r chi.Router) {
+				r.Get("/", agentsHandler.ListAgents)
+				r.Get("/{agent_id}", agentsHandler.GetAgent)
+			})
 		})
 
 		// TODO: Add more routes as they are implemented
-		// - /roles (CRUD)
-		// - /agents (catalog - read-only)
 		// - /mcps (catalog, configs)
 		// - /approvals (workflow)
 	})

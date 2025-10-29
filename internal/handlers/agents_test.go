@@ -229,3 +229,83 @@ func TestListAgents_OrderedByName(t *testing.T) {
 	assert.Equal(t, "Agent B", response.Agents[1].Name)
 	assert.Equal(t, "Agent C", response.Agents[2].Name)
 }
+
+// ============================================================================
+// GetAgentByID Tests
+// ============================================================================
+
+// TDD Lesson: Test successful retrieval of a specific agent
+func TestGetAgentByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	agentID := uuid.New()
+	agent := db.Agent{
+		ID:            agentID,
+		Name:          "Claude Code",
+		Type:          "claude-code",
+		Description:   "AI-powered code assistant with deep codebase understanding",
+		Provider:      "anthropic",
+		DefaultConfig: []byte(`{"model":"claude-3-5-sonnet-20241022","max_tokens":8192}`),
+		Capabilities:  []byte(`["code_generation","code_review","refactoring"]`),
+		LlmProvider:   "anthropic",
+		LlmModel:      "claude-3-5-sonnet-20241022",
+		IsPublic:      true,
+		CreatedAt:     pgtype.Timestamp{Valid: true},
+		UpdatedAt:     pgtype.Timestamp{Valid: true},
+	}
+
+	mockDB.EXPECT().
+		GetAgentByID(gomock.Any(), agentID).
+		Return(agent, nil)
+
+	handler := handlers.NewAgentsHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/agents/"+agentID.String(), nil)
+	rec := httptest.NewRecorder()
+
+	// We'll test this with integration tests where routing works
+	// For now just call the method directly with the ID
+	handler.GetAgentByIDDirect(rec, req, agentID)
+
+	// Verify response
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.Agent
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	assert.Equal(t, agentID.String(), response.Id.String())
+	assert.Equal(t, "Claude Code", response.Name)
+	assert.Equal(t, "claude-code", response.Type)
+	assert.Equal(t, "anthropic", response.Provider)
+	assert.True(t, response.IsPublic)
+	assert.NotNil(t, response.DefaultConfig)
+	assert.NotNil(t, response.Capabilities)
+}
+
+// TDD Lesson: Test agent not found
+func TestGetAgentByID_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	agentID := uuid.New()
+
+	mockDB.EXPECT().
+		GetAgentByID(gomock.Any(), agentID).
+		Return(db.Agent{}, assert.AnError)
+
+	handler := handlers.NewAgentsHandler(mockDB)
+
+	req := httptest.NewRequest(http.MethodGet, "/agents/"+agentID.String(), nil)
+	rec := httptest.NewRecorder()
+
+	handler.GetAgentByIDDirect(rec, req, agentID)
+
+	// Should return 404
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
