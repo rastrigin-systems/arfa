@@ -1,0 +1,161 @@
+name: API Server
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'cmd/server/**'
+      - 'internal/**'
+      - 'generated/**'
+      - 'schema.sql'
+      - 'openapi/**'
+      - 'sqlc/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/api-server.yml'
+  pull_request:
+    paths:
+      - 'cmd/server/**'
+      - 'internal/**'
+      - 'generated/**'
+      - 'schema.sql'
+      - 'openapi/**'
+      - 'sqlc/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/api-server.yml'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build API server binary
+        run: |
+          go build -v -o bin/ubik-server cmd/server/main.go
+
+      - name: Verify binary
+        run: |
+          ./bin/ubik-server --version || echo "Server binary built successfully"
+          ls -lh bin/ubik-server
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubik-server
+          path: bin/ubik-server
+          retention-days: 7
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ubik
+          POSTGRES_PASSWORD: ubik_dev_password
+          POSTGRES_DB: ubik
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply database schema
+        env:
+          PGPASSWORD: ubik_dev_password
+        run: |
+          psql -h localhost -U ubik -d ubik -f schema.sql
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
+        run: |
+          go test -v -race -coverprofile=coverage-unit.out -covermode=atomic ./internal/...
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
+        run: |
+          go test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./tests/integration/...
+
+      - name: Generate coverage report
+        run: |
+          echo "=== Unit Test Coverage ==="
+          go tool cover -func=coverage-unit.out
+          echo ""
+          echo "=== Integration Test Coverage ==="
+          go tool cover -func=coverage-integration.out
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          files: ./coverage-unit.out,./coverage-integration.out
+          flags: api-server
+          name: api-server-coverage
+        continue-on-error: true
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ubik-server
+          path: bin/
+
+      - name: Placeholder - Deploy to staging
+        run: |
+          echo "🚀 API Server deployment will be configured here"
+          echo "Future steps:"
+          echo "  - Build Docker image"
+          echo "  - Push to container registry"
+          echo "  - Deploy to Kubernetes/ECS/Cloud Run"
+          echo "  - Run smoke tests"
+          echo "  - Promote to production (if on main)"

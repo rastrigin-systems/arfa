@@ -27,9 +27,9 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: pivot
-          POSTGRES_PASSWORD: pivot_dev_password
-          POSTGRES_DB: pivot
+          POSTGRES_USER: ubik
+          POSTGRES_PASSWORD: ubik_dev_password
+          POSTGRES_DB: ubik
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -70,9 +70,9 @@ jobs:
 
       - name: Apply database schema
         env:
-          PGPASSWORD: pivot_dev_password
+          PGPASSWORD: ubik_dev_password
         run: |
-          psql -h localhost -U pivot -d pivot -f schema.sql
+          psql -h localhost -U ubik -d ubik -f schema.sql
 
       - name: Run code generation
         env:
