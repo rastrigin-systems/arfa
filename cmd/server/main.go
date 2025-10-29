@@ -55,6 +55,9 @@ func main() {
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
 	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
+	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
+	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
+	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -216,11 +219,31 @@ func main() {
 			r.Route("/activity-logs", func(r chi.Router) {
 				r.Get("/", activityLogsHandler.ListActivityLogs)
 			})
+
+			// Subscription routes
+			r.Route("/organizations/current/subscription", func(r chi.Router) {
+				r.Get("/", subscriptionsHandler.GetCurrentSubscription)
+			})
+
+			// Usage stats routes
+			r.Route("/usage-stats", func(r chi.Router) {
+				r.Get("/org", usageStatsHandler.GetOrgUsageStats)
+				r.Get("/me", usageStatsHandler.GetCurrentEmployeeUsageStats)
+			})
+
+			r.Route("/employees/{employee_id}/usage-stats", func(r chi.Router) {
+				r.Get("/", usageStatsHandler.GetEmployeeUsageStats)
+			})
+
+			// Agent requests routes
+			r.Route("/agent-requests", func(r chi.Router) {
+				r.Get("/", agentRequestsHandler.ListAgentRequests)
+				r.Get("/pending/count", agentRequestsHandler.GetPendingCount)
+			})
 		})
 
 		// TODO: Add more routes as they are implemented
 		// - /mcps (catalog, configs)
-		// - /approvals (workflow)
 	})
 
 	// Create HTTP server

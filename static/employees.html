@@ -269,7 +269,8 @@
                 },
 
                 editEmployee(employee) {
-                    alert(`Edit employee: ${employee.full_name}\nTODO: Create edit form`);
+                    // Navigate to employee detail page where user can click Edit button
+                    window.location.href = `/employee-detail.html?id=${employee.id}`;
                 }
             }
         }

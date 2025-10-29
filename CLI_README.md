@@ -92,10 +92,12 @@ Password: ****
 - Container status display
 
 ✅ **Testing** (Phases 1 & 2)
-- 15 unit tests (fast, no Docker required)
-- 9 integration tests (require Docker)
-- 100% pass rate
-- Full coverage of core functionality
+- 24 unit tests (fast, no Docker required)
+- 18 integration tests (require Docker)
+- **42 total tests** (100% pass rate)
+- ~22% coverage (unit only), ~60-70% coverage (with Docker)
+- Comprehensive error handling and edge cases
+- See **[docs/CLI_TEST_SUMMARY.md](./docs/CLI_TEST_SUMMARY.md)** for details
 
 ---
 
@@ -158,15 +160,23 @@ pivot/
 
 ### Testing
 ```bash
-# Run all CLI tests
+# Run unit tests only (fast, no Docker)
 make test-cli
+go test ./internal/cli/... -short -v
+
+# Run all tests including Docker integration
+go test ./internal/cli/... -v
 
 # Run specific test
 go test -v ./internal/cli/ -run TestAuthService_Login
 
-# Run with coverage
-go test -race -coverprofile=coverage.out ./internal/cli/...
+# Run with coverage (unit tests only)
+go test -short -race -coverprofile=coverage.out ./internal/cli/...
 go tool cover -html=coverage.out
+
+# Run with coverage (all tests including Docker)
+go test -race -coverprofile=coverage-full.out ./internal/cli/...
+go tool cover -html=coverage-full.out
 ```
 
 ### Building
@@ -250,8 +260,9 @@ When working on the CLI:
 ## Status Summary
 
 **Phase 0:** ✅ Docker Images Complete
-**Phase 1:** ✅ Foundation Complete (15 unit tests passing)
-**Phase 2:** ✅ Docker Integration Complete (24 tests passing)
+**Phase 1:** ✅ Foundation Complete (Authentication, Config, Sync)
+**Phase 2:** ✅ Docker Integration Complete (Containers, Networks, Orchestration)
+**Testing:** ✅ 42 tests (24 unit + 18 integration, 100% passing)
 **Phase 3:** 🎯 Interactive Mode (Next)
 **Phase 4:** 📅 Agent Management (Planned)
 **Phase 5:** 📅 Polish & Telemetry (Planned)

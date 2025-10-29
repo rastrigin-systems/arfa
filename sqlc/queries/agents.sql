@@ -341,3 +341,11 @@ SELECT EXISTS(
     SELECT 1 FROM org_agent_configs
     WHERE org_id = $1 AND agent_id = $2
 ) AS exists;
+
+
+-- name: CountTeamAgentConfigs :one
+-- Count agent configurations for a specific team
+SELECT COUNT(*) as count
+FROM team_agent_configs
+WHERE team_id = $1;
+

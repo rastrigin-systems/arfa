@@ -68,10 +68,20 @@ WHERE team_id = $1
 ORDER BY full_name;
 
 -- name: GetEmployeeWithRole :one
-SELECT 
+SELECT
     e.*,
     r.name as role_name,
     r.permissions as role_permissions
 FROM employees e
 JOIN roles r ON e.role_id = r.id
 WHERE e.id = $1 AND e.deleted_at IS NULL;
+
+-- name: CountEmployeesByTeam :one
+SELECT COUNT(*) as count
+FROM employees
+WHERE team_id = $1 AND deleted_at IS NULL;
+
+-- name: CountEmployeesByRole :one
+SELECT COUNT(*) as count
+FROM employees
+WHERE role_id = $1 AND deleted_at IS NULL;

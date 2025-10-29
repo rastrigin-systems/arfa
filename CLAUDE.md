@@ -532,7 +532,9 @@ See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release 
 - MCP server orchestration
 - Enhanced `ubik sync --start-containers`
 - New commands: `ubik start`, `ubik stop`
-- 24 tests passing (15 unit + 9 integration)
+- **42 tests passing (24 unit + 18 integration)** ✅
+- Coverage: ~22% (unit only), ~60-70% (with Docker)
+- Comprehensive error handling and edge case coverage
 - See **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** for details
 
 **🎯 CLI Phase 3 - Interactive Mode (Next)**
@@ -633,3 +635,18 @@ vim docs/DEVELOPMENT.md
 - 🧪 [Testing Guide](./docs/TESTING.md)
 - 🔧 [Development Guide](./docs/DEVELOPMENT.md)
 - 📊 [Database ERD](./docs/ERD.md)
+
+## Critical Usage Notes
+
+### ✅ Qdrant MCP for Knowledge Management
+
+**MANDATORY: Use Qdrant MCP for all knowledge operations**
+
+- **Before any task**: Search using `mcp__code-search__qdrant-find`
+- **During work**: Store findings using `mcp__code-search__qdrant-store`
+- **After completion**: Update stored knowledge
+
+**Setup:**
+```bash
+docker run -d --name claude-qdrant -p 6333:6333 qdrant/qdrant:latest
+```

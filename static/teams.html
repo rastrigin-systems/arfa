@@ -230,11 +230,13 @@
                 },
 
                 editTeam(team) {
-                    alert(`Edit team: ${team.name}\nTODO: Create edit form`);
+                    // Navigate to team detail page where user can click Edit button
+                    window.location.href = `/team-detail.html?id=${team.id}`;
                 },
 
                 configureAgents(team) {
-                    alert(`Configure agents for: ${team.name}\nTODO: Navigate to team agent configs page`);
+                    // Navigate to team detail page, agent configs section
+                    window.location.href = `/team-detail.html?id=${team.id}#agent-configs`;
                 }
             }
         }
