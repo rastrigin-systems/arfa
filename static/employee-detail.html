@@ -206,7 +206,11 @@
                 </button>
             </div>
 
-            <div class="mt-4">
+            <div class="mt-4 flex space-x-4">
+                <a :href="`/employee-agent-configs.html?employee_id=${employeeId}`"
+                   class="text-sm text-blue-600 hover:text-blue-700">
+                    Manage All Agent Configs →
+                </a>
                 <button @click="viewResolvedConfigs" class="text-sm text-blue-600 hover:text-blue-700">
                     View Resolved Configs
                 </button>
