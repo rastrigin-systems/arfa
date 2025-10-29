@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 )
 
@@ -27,7 +28,7 @@ func (h *AgentRequestsHandler) GetPendingCount(w http.ResponseWriter, r *http.Re
 
 	count, err := h.queries.CountPendingRequestsByOrg(ctx, orgID)
 	if err != nil {
-		http.Error(w, "Failed to get pending count", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to get pending count")
 		return
 	}
 
@@ -47,14 +48,17 @@ func (h *AgentRequestsHandler) ListAgentRequests(w http.ResponseWriter, r *http.
 	status := r.URL.Query().Get("status")
 	employeeIDStr := r.URL.Query().Get("employee_id")
 
-	var employeeID sql.NullString
+	var employeeID pgtype.UUID
 	if employeeIDStr != "" {
-		employeeID = sql.NullString{String: employeeIDStr, Valid: true}
+		empUUID, err := uuid.Parse(employeeIDStr)
+		if err == nil {
+			employeeID = pgtype.UUID{Bytes: empUUID, Valid: true}
+		}
 	}
 
-	var statusFilter sql.NullString
+	var statusFilter *string
 	if status != "" {
-		statusFilter = sql.NullString{String: status, Valid: true}
+		statusFilter = &status
 	}
 
 	// TODO: Add pagination
@@ -62,19 +66,19 @@ func (h *AgentRequestsHandler) ListAgentRequests(w http.ResponseWriter, r *http.
 	offset := int32(0)
 
 	requests, err := h.queries.ListAgentRequests(ctx, db.ListAgentRequestsParams{
-		Column1: statusFilter,
-		Column2: employeeID,
-		Limit:   limit,
-		Offset:  offset,
+		Status:      statusFilter,
+		EmployeeID:  employeeID,
+		QueryOffset: offset,
+		QueryLimit:  limit,
 	})
 	if err != nil {
-		http.Error(w, "Failed to list requests", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to list requests")
 		return
 	}
 
 	count, err := h.queries.CountAgentRequests(ctx, db.CountAgentRequestsParams{
-		Column1: statusFilter,
-		Column2: employeeID,
+		Status:     statusFilter,
+		EmployeeID: employeeID,
 	})
 	if err != nil {
 		count = int64(len(requests))

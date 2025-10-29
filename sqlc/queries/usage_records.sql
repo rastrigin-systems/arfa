@@ -34,9 +34,9 @@ SELECT
     COALESCE(SUM(CASE WHEN resource_type = 'llm_tokens' THEN quantity ELSE 0 END), 0) as total_tokens,
     COALESCE(SUM(cost_usd), 0) as total_cost_usd
 FROM usage_records
-WHERE employee_id = $1
-  AND period_start >= $2
-  AND period_end <= $3;
+WHERE employee_id = sqlc.arg(employee_id)::uuid
+  AND period_start >= sqlc.arg(period_start)
+  AND period_end <= sqlc.arg(period_end);
 
 -- name: GetOrgUsageStats :one
 SELECT
@@ -45,6 +45,6 @@ SELECT
     COALESCE(SUM(CASE WHEN resource_type = 'llm_tokens' THEN quantity ELSE 0 END), 0) as total_tokens,
     COALESCE(SUM(cost_usd), 0) as total_cost_usd
 FROM usage_records
-WHERE org_id = $1
-  AND period_start >= $2
-  AND period_end <= $3;
+WHERE org_id = sqlc.arg(org_id)
+  AND period_start >= sqlc.arg(period_start)
+  AND period_end <= sqlc.arg(period_end);

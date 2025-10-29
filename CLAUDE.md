@@ -537,17 +537,25 @@ See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release 
 - Comprehensive error handling and edge case coverage
 - See **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** for details
 
-**🎯 CLI Phase 3 - Interactive Mode (Next)**
-- Interactive workspace selection
-- I/O proxying to agent container
-- TTY mode for interactive sessions
-- Agent switching on-the-fly
-- Session management
+**✅ CLI Phase 3 - Interactive Mode (Complete)** ⭐
+- Interactive workspace selection with prompt & validation
+- I/O proxying to agent container (bidirectional streaming)
+- Agent switching with --agent flag
+- Session management (tracking, duration, metadata)
+- Interactive `ubik` command (seamless agent interaction)
+- **73 tests passing (~38 unit + ~35 integration)** ✅
+- Coverage: ~25% (unit only), ~65-75% (with Docker)
+- See **[docs/CLI_PHASE3_COMPLETE.md](./docs/CLI_PHASE3_COMPLETE.md)** for details
+
+**🎯 CLI Phase 4 - Agent Management (Next)**
+- Agent listing/info commands
+- Agent request/approval workflow
+- Update mechanism
+- Cleanup commands
 
 **See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete architecture.**
 
 **Future Phases:**
-- Phase 3: Interactive mode & I/O proxying
 - Phase 4: Agent management & approvals
 - Phase 5: Polish & telemetry
 - v0.3+: System prompts, MCP management, Web UI
@@ -645,6 +653,27 @@ vim docs/DEVELOPMENT.md
 - **Before any task**: Search using `mcp__code-search__qdrant-find`
 - **During work**: Store findings using `mcp__code-search__qdrant-store`
 - **After completion**: Update stored knowledge
+
+1. Index important findings in Qdrant as you work
+2. Use Qdrant for search/discovery →
+  then read full .md file
+
+  What to store in Qdrant:
+  - Solutions to specific problems you
+  solved
+  - "Why we chose X over Y" decisions
+  - Performance lessons ("approach X was
+  10x faster")
+  - Failed attempts and why they didn't
+  work
+  - Code patterns that work well in this
+  codebase
+
+  What to keep in .md:
+  - Architecture overviews
+  - Getting started guides
+  - API references
+  - Comprehensive feature docs
 
 **Setup:**
 ```bash

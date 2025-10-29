@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 )
 
@@ -36,12 +36,15 @@ func (h *UsageStatsHandler) GetEmployeeUsageStats(w http.ResponseWriter, r *http
 	}
 
 	// Verify employee belongs to org
-	employee, err := h.queries.GetEmployee(ctx, db.GetEmployeeParams{
-		ID:    employeeID,
-		OrgID: orgID,
-	})
+	employee, err := h.queries.GetEmployee(ctx, employeeID)
 	if err != nil {
-		http.Error(w, "Employee not found", http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+
+	// Verify employee belongs to this org
+	if employee.OrgID != orgID {
+		writeError(w, http.StatusForbidden, "Forbidden")
 		return
 	}
 
@@ -50,12 +53,12 @@ func (h *UsageStatsHandler) GetEmployeeUsageStats(w http.ResponseWriter, r *http
 	startTime := endTime.AddDate(0, 0, -30)
 
 	stats, err := h.queries.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
-		EmployeeID: sql.NullString{String: employee.ID.String(), Valid: true},
-		Column2:    startTime,
-		Column3:    endTime,
+		EmployeeID:  employeeID,
+		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
+		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
 	})
 	if err != nil {
-		http.Error(w, "Failed to get usage stats", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to get usage stats")
 		return
 	}
 
@@ -87,12 +90,12 @@ func (h *UsageStatsHandler) GetOrgUsageStats(w http.ResponseWriter, r *http.Requ
 	startTime := endTime.AddDate(0, 0, -30)
 
 	stats, err := h.queries.GetOrgUsageStats(ctx, db.GetOrgUsageStatsParams{
-		OrgID:   orgID,
-		Column2: startTime,
-		Column3: endTime,
+		OrgID:       orgID,
+		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
+		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
 	})
 	if err != nil {
-		http.Error(w, "Failed to get usage stats", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to get usage stats")
 		return
 	}
 
@@ -123,12 +126,12 @@ func (h *UsageStatsHandler) GetCurrentEmployeeUsageStats(w http.ResponseWriter, 
 	startTime := endTime.AddDate(0, 0, -30)
 
 	stats, err := h.queries.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
-		EmployeeID: sql.NullString{String: employeeID.String(), Valid: true},
-		Column2:    startTime,
-		Column3:    endTime,
+		EmployeeID:  employeeID,
+		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
+		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
 	})
 	if err != nil {
-		http.Error(w, "Failed to get usage stats", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to get usage stats")
 		return
 	}
 

@@ -15,15 +15,15 @@ WHERE id = $1;
 
 -- name: ListAgentRequests :many
 SELECT * FROM agent_requests
-WHERE ($1::varchar IS NULL OR status = $1)
-  AND ($2::uuid IS NULL OR employee_id = $2)
+WHERE (sqlc.narg(status)::varchar IS NULL OR status = sqlc.narg(status)::varchar)
+  AND (sqlc.narg(employee_id)::uuid IS NULL OR employee_id = sqlc.narg(employee_id)::uuid)
 ORDER BY created_at DESC
-LIMIT $3 OFFSET $4;
+LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 
 -- name: CountAgentRequests :one
 SELECT COUNT(*) FROM agent_requests
-WHERE ($1::varchar IS NULL OR status = $1)
-  AND ($2::uuid IS NULL OR employee_id = $2);
+WHERE (sqlc.narg(status)::varchar IS NULL OR status = sqlc.narg(status)::varchar)
+  AND (sqlc.narg(employee_id)::uuid IS NULL OR employee_id = sqlc.narg(employee_id)::uuid);
 
 -- name: UpdateAgentRequestStatus :one
 UPDATE agent_requests

@@ -1,7 +1,7 @@
 # ubik CLI - Employee Agent Management
 
 **Version:** v0.2.0-dev
-**Status:** Phase 2 Complete ✅ (Docker Integration)
+**Status:** Phase 3 Complete ✅ (Interactive Mode)
 **Location:** `pivot/cmd/cli/`
 
 ---
@@ -54,6 +54,9 @@ Password: ****
 | `ubik logout` | Clear stored credentials | ✅ Working |
 | `ubik sync` | Fetch configs from platform | ✅ Working |
 | `ubik sync --start-containers` | Fetch configs and start Docker containers | ✅ Working |
+| `ubik` | Interactive mode (attach to agent) | ✅ Working |
+| `ubik --workspace <path>` | Interactive mode with workspace | ✅ Working |
+| `ubik --agent <name>` | Interactive mode with specific agent | ✅ Working |
 | `ubik start` | Start Docker containers | ✅ Working |
 | `ubik stop` | Stop Docker containers | ✅ Working |
 | `ubik config` | View local configuration | ✅ Working |
@@ -91,24 +94,30 @@ Password: ****
 - Environment variable injection
 - Container status display
 
-✅ **Testing** (Phases 1 & 2)
-- 24 unit tests (fast, no Docker required)
-- 18 integration tests (require Docker)
-- **42 total tests** (100% pass rate)
-- ~22% coverage (unit only), ~60-70% coverage (with Docker)
+✅ **Interactive Mode** (Phase 3)
+- Interactive workspace selection with prompt
+- I/O proxying to agent container (bidirectional streaming)
+- Session management (duration, tracking)
+- Agent switching with --agent flag
+- Seamless container attachment
+
+✅ **Testing** (Phases 1, 2 & 3)
+- ~38 unit tests (fast, no Docker required)
+- ~35 integration tests (require Docker)
+- **73 total tests** (100% pass rate)
+- ~25% coverage (unit only), ~65-75% coverage (with Docker)
 - Comprehensive error handling and edge cases
 - See **[docs/CLI_TEST_SUMMARY.md](./docs/CLI_TEST_SUMMARY.md)** for details
 
 ---
 
-## What's Coming Next (Phase 3)
+## What's Coming Next (Phase 4)
 
-🎯 **Interactive Mode & I/O Proxying** (3-4 days)
-- Interactive workspace selection
-- I/O proxying to agent container (stdin/stdout)
-- TTY mode for interactive sessions
-- Agent switching on-the-fly
-- Session management
+🎯 **Agent Management** (3-4 days)
+- Agent listing/info commands
+- Agent request/approval workflow
+- Config update mechanism
+- Cleanup commands
 
 See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete roadmap.
 
@@ -262,9 +271,9 @@ When working on the CLI:
 **Phase 0:** ✅ Docker Images Complete
 **Phase 1:** ✅ Foundation Complete (Authentication, Config, Sync)
 **Phase 2:** ✅ Docker Integration Complete (Containers, Networks, Orchestration)
-**Testing:** ✅ 42 tests (24 unit + 18 integration, 100% passing)
-**Phase 3:** 🎯 Interactive Mode (Next)
-**Phase 4:** 📅 Agent Management (Planned)
+**Phase 3:** ✅ Interactive Mode Complete (Workspace Selection, I/O Proxy, Sessions)
+**Testing:** ✅ 73 tests (~38 unit + ~35 integration, 100% passing)
+**Phase 4:** 🎯 Agent Management (Next)
 **Phase 5:** 📅 Polish & Telemetry (Planned)
 
 ---
