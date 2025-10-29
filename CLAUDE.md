@@ -286,6 +286,9 @@ make db-up
 # Install tools (one-time)
 make install-tools
 
+# Install Git hooks (one-time, auto-generates code on commit)
+make install-hooks
+
 # Generate all code
 make generate
 
@@ -300,6 +303,10 @@ open docs/ERD.md
 make db-up              # Start PostgreSQL
 make db-down            # Stop PostgreSQL
 make db-reset           # Reset database (⚠️ deletes data)
+
+# Setup
+make install-tools      # Install code generation tools
+make install-hooks      # Install Git hooks (auto-generates code on commit)
 
 # Code Generation
 make generate           # Generate everything (ERD + API + DB + Mocks)
@@ -346,6 +353,16 @@ docker exec ubik-postgres psql -U ubik -d ubik
 
 ## Development Workflow
 
+### First-Time Setup
+
+```bash
+# Install code generation tools (one-time)
+make install-tools
+
+# Install Git hooks for auto code generation (one-time)
+make install-hooks
+```
+
 ### Making Changes
 
 ```bash
@@ -361,17 +378,27 @@ vim openapi/spec.yaml
 # 4. Update SQL queries (if needed)
 vim sqlc/queries/employees.sql
 
-# 5. Regenerate all code
-make generate
-
-# 6. Implement handlers
+# 5. Implement handlers
 vim internal/handlers/employees.go
 
-# 7. Run tests
+# 6. Run tests
 make test
+
+# 7. Commit changes (Git hook auto-generates code!)
+git add .
+git commit -m "feat: Add new feature"
+# 🪝 Pre-commit hook will:
+#   - Detect changes to source models (schema.sql, openapi/spec.yaml, sqlc queries)
+#   - Run `make generate` automatically
+#   - Add generated files to your commit
 
 # 8. Build and test locally
 go run cmd/server/main.go
+```
+
+**Note:** If you need to skip code generation (not recommended):
+```bash
+git commit --no-verify -m "your message"
 ```
 
 ### Code Generation Pipeline
@@ -403,7 +430,20 @@ Your code (internal/) → Uses generated types
 
 **Never edit files in `generated/`** - they are completely regenerated!
 
-**Always regenerate after changes:**
+**Automatic Code Generation (Recommended):**
+```bash
+# Install Git hooks (one-time setup)
+make install-hooks
+
+# Now code is auto-generated on commit!
+git commit -m "feat: Update schema"
+# 🪝 Pre-commit hook automatically:
+#   - Detects changes to source models
+#   - Runs `make generate`
+#   - Adds generated files to commit
+```
+
+**Manual Code Generation (if needed):**
 ```bash
 # After changing schema.sql
 make db-reset && make generate-db && make generate-mocks
@@ -413,6 +453,9 @@ make generate-api
 
 # After changing SQL queries
 make generate-db && make generate-mocks
+
+# Or regenerate everything
+make generate
 ```
 
 ### Multi-Tenancy

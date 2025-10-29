@@ -1,4 +1,4 @@
-.PHONY: help install-tools install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev run-server build build-cli build-server clean
+.PHONY: help install-tools install-hooks install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev run-server build build-cli build-server clean
 
 # Default target
 help:
@@ -6,6 +6,7 @@ help:
 	@echo ""
 	@echo "Setup Commands:"
 	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc, mockgen)"
+	@echo "  make install-hooks    Install Git hooks (auto-regenerate ERD docs on commit)"
 	@echo "  make db-up           Start PostgreSQL with Docker Compose"
 	@echo "  make db-down         Stop PostgreSQL"
 	@echo "  make db-reset        Reset database (drop and recreate)"
@@ -56,6 +57,12 @@ install-tools:
 	@which sqlc
 	@which tbls
 	@which mockgen
+
+# Install Git hooks
+install-hooks:
+	@echo "🪝 Installing Git hooks..."
+	@chmod +x scripts/install-hooks.sh
+	@./scripts/install-hooks.sh
 
 # Database management
 db-up:

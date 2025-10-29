@@ -639,3 +639,4 @@ $$ LANGUAGE plpgsql STABLE;
 
 COMMENT ON FUNCTION get_effective_claude_token(UUID) IS
 'Returns the effective Claude token for an employee (personal if available, otherwise company token)';
+-- Test comment
