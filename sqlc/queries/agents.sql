@@ -182,6 +182,76 @@ SELECT
 FROM team_agent_configs
 WHERE team_id = $1 AND agent_id = $2;
 
+-- Team Agent Configuration CRUD Queries
+
+-- name: ListTeamAgentConfigs :many
+-- List all agent configurations for a specific team
+SELECT
+    tac.id,
+    tac.team_id,
+    tac.agent_id,
+    tac.config_override,
+    tac.is_enabled,
+    tac.created_at,
+    tac.updated_at,
+    a.name as agent_name,
+    a.type as agent_type,
+    a.provider as agent_provider
+FROM team_agent_configs tac
+JOIN agents a ON tac.agent_id = a.id
+WHERE tac.team_id = $1
+ORDER BY tac.created_at DESC;
+
+-- name: GetTeamAgentConfigByID :one
+-- Get a specific team agent configuration by ID
+SELECT
+    tac.id,
+    tac.team_id,
+    tac.agent_id,
+    tac.config_override,
+    tac.is_enabled,
+    tac.created_at,
+    tac.updated_at,
+    a.name as agent_name,
+    a.type as agent_type,
+    a.provider as agent_provider
+FROM team_agent_configs tac
+JOIN agents a ON tac.agent_id = a.id
+WHERE tac.id = $1;
+
+-- name: CreateTeamAgentConfig :one
+-- Create a new team-level agent configuration override
+INSERT INTO team_agent_configs (
+    team_id,
+    agent_id,
+    config_override,
+    is_enabled
+) VALUES ($1, $2, $3, $4)
+RETURNING id, team_id, agent_id, config_override, is_enabled, created_at, updated_at;
+
+-- name: UpdateTeamAgentConfig :one
+-- Update an existing team agent configuration
+UPDATE team_agent_configs
+SET
+    config_override = COALESCE(sqlc.narg('config_override')::jsonb, config_override),
+    is_enabled = COALESCE(sqlc.narg('is_enabled')::boolean, is_enabled),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, team_id, agent_id, config_override, is_enabled, created_at, updated_at;
+
+-- name: DeleteTeamAgentConfig :exec
+-- Delete a team agent configuration (hard delete)
+DELETE FROM team_agent_configs
+WHERE id = $1;
+
+-- name: CheckTeamAgentConfigExists :one
+-- Check if team already has this agent configured
+SELECT EXISTS(
+    SELECT 1 FROM team_agent_configs
+    WHERE team_id = $1
+      AND agent_id = $2
+) AS exists;
+
 -- name: GetEmployeeAgentConfigByAgent :one
 -- Get employee-level config for a specific agent
 SELECT
