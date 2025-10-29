@@ -470,43 +470,55 @@ Use Row-Level Security (RLS) policies as safety net.
 ## Current Status
 
 **Last Updated:** 2025-10-29
-**Version:** 0.2.0
-**Status:** 🟢 Phase 2 - Authentication Complete
+**Version:** 0.1.0 🎉
+**Status:** 🟢 **Milestone v0.1 - Foundation Complete**
+**Git Tag:** `v0.1.0`
+
+### 🎉 Milestone v0.1.0 Released!
+
+**39 API endpoints implemented** | **144+ tests passing** | **73-88% coverage**
+
+See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release notes.
 
 ### Phase 1 Achievements ✅
 - Complete database schema (20 tables + 3 views)
 - Code generation pipeline working
-- 60+ documentation files (reduced from 46 files, 11,600 lines)
-- OpenAPI spec for auth + employees
+- 60+ documentation files
+- OpenAPI spec for all endpoints
 - Type-safe SQL queries
 - Local development environment
 - Comprehensive Mermaid ERD
 
-### Phase 2 Achievements ✅
-- **Complete authentication system** with TDD
-- **JWT Middleware** - Centralized auth for all endpoints
-- **43/43 tests passing** (36 unit + 7 integration)
-- **~88% code coverage** across auth, handlers, and middleware
-- **3/10 API endpoints + middleware implemented:**
-  - POST /auth/login
-  - POST /auth/logout
-  - GET /auth/me
-  - JWT Middleware (context-based auth)
-- Real PostgreSQL integration tests with testcontainers
-- JWT token lifecycle fully tested and working
-- TDD best practices documented
+### Phase 2 Achievements ✅ (v0.1.0)
+- **Complete authentication system** with JWT + sessions
+- **Employee CRUD** - Full lifecycle management (5 endpoints)
+- **Organization management** - Get/Update current org (2 endpoints)
+- **Team management** - Full CRUD (5 endpoints)
+- **Role management** - Full CRUD (5 endpoints)
+- **Agent catalog** - List and get agents (2 endpoints)
+- **Agent configurations** - Org/Team/Employee configs (16 endpoints)
+- **144+ tests passing** (119 unit + 25+ integration)
+- **73-88% code coverage** across all modules
+- Multi-tenancy verified with integration tests
+- TDD workflow throughout
 
-**Test Breakdown:**
-- 14 JWT helper tests (auth utilities)
-- 13 handler unit tests (Login, Logout, GetMe)
-- 9 middleware unit tests
-- 2 middleware integration tests
-- 6 auth integration tests (full stack with PostgreSQL)
-- 100% of auth user flows covered
+**Test Coverage by Module:**
+- `internal/handlers`: 73.3%
+- `internal/auth`: 88.2%
+- `internal/middleware`: 82.2%
+- `internal/service`: 77.8%
 
 ### Phase 3 - Next Steps 🎯
 
-**Next Milestone:** Employee CRUD endpoints
+**Next Focus:** Config resolution service and CLI client
+
+**Upcoming Features:**
+- Config resolution (org → team → employee merge)
+- System prompts (hierarchical concatenation)
+- Policy resolution (most restrictive wins)
+- Employee CLI for config sync
+- MCP server management
+- Approval workflows
 
 **See [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for detailed plan.**
 
