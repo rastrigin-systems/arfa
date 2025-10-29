@@ -248,3 +248,52 @@ func (dc *DockerClient) RemoveNetwork(name string) error {
 	}
 	return nil
 }
+
+// RemoveContainerByName finds and removes a container by name
+func (dc *DockerClient) RemoveContainerByName(name string) error {
+	// List all containers (including stopped ones)
+	containers, err := dc.cli.ContainerList(dc.ctx, container.ListOptions{
+		All: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	// Find container with matching name
+	var containerID string
+	for _, c := range containers {
+		for _, cName := range c.Names {
+			// Remove leading slash from container name
+			cleanName := cName
+			if len(cleanName) > 0 && cleanName[0] == '/' {
+				cleanName = cleanName[1:]
+			}
+			if cleanName == name {
+				containerID = c.ID
+				break
+			}
+		}
+		if containerID != "" {
+			break
+		}
+	}
+
+	// If container not found, that's okay - nothing to remove
+	if containerID == "" {
+		return nil
+	}
+
+	// Stop container if it's running (use default 10s timeout)
+	timeout := 10
+	_ = dc.StopContainer(containerID, &timeout)
+
+	// Remove container
+	removeOptions := container.RemoveOptions{
+		Force: true, // Force removal even if running
+	}
+	if err := dc.cli.ContainerRemove(dc.ctx, containerID, removeOptions); err != nil {
+		return fmt.Errorf("failed to remove container %s: %w", name, err)
+	}
+
+	return nil
+}

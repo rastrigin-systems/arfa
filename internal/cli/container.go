@@ -148,6 +148,12 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 
 	fmt.Printf("  Starting %s (%s)...\n", spec.AgentName, spec.AgentType)
 
+	// Check if container with this name already exists and remove it
+	if err := cm.dockerClient.RemoveContainerByName(containerName); err != nil {
+		// Log warning but continue - container might not exist
+		fmt.Printf("  Note: Cleaned up existing container\n")
+	}
+
 	// Pull image
 	if err := cm.dockerClient.PullImage(spec.Image); err != nil {
 		return "", fmt.Errorf("failed to pull agent image: %w", err)

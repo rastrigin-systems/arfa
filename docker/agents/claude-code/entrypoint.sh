@@ -3,10 +3,22 @@ set -e
 
 echo "🚀 Starting Claude Code container..."
 
+# Ensure .claude directory exists
+mkdir -p ~/.claude
+
+# Create minimal settings.json to skip first-run setup wizard
+if [ ! -f ~/.claude/settings.json ]; then
+    echo "📝 Creating default settings..."
+    cat > ~/.claude/settings.json << 'EOF'
+{
+  "theme": "dark"
+}
+EOF
+fi
+
 # Write config from environment variable if provided
 if [ -n "$AGENT_CONFIG" ]; then
     echo "📝 Writing agent configuration..."
-    mkdir -p ~/.claude
     echo "$AGENT_CONFIG" > ~/.claude/config.json
 fi
 

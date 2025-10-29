@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	"golang.org/x/term"
 )
 
 // ProxyService handles I/O proxying between CLI and container
@@ -118,12 +118,30 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 		options.Stderr = os.Stderr
 	}
 
+	// Check if stdin is a terminal
+	stdinFd := int(os.Stdin.Fd())
+	isTerminal := term.IsTerminal(stdinFd)
+
+	// If stdin is a terminal, set it to raw mode for proper TTY behavior
+	var oldState *term.State
+	if isTerminal {
+		var err error
+		oldState, err = term.MakeRaw(stdinFd)
+		if err != nil {
+			return fmt.Errorf("failed to set terminal to raw mode: %w", err)
+		}
+		defer func() {
+			_ = term.Restore(stdinFd, oldState)
+		}()
+	}
+
 	// Create attach options
 	attachOpts := container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
 		Stdout: true,
 		Stderr: true,
+		Logs:   false,
 	}
 
 	// Attach to container
@@ -136,6 +154,7 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 	// Setup signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
 
 	// Create error channel for streaming errors
 	errChan := make(chan error, 2)
@@ -150,10 +169,10 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 		}
 	}()
 
-	// Start goroutine to copy container output to stdout/stderr
+	// Start goroutine to copy container output to stdout
 	go func() {
-		// Use stdcopy to demultiplex Docker's stdout/stderr streams
-		_, err := stdcopy.StdCopy(options.Stdout, options.Stderr, resp.Reader)
+		// For TTY containers, output is not multiplexed - just copy directly
+		_, err := io.Copy(options.Stdout, resp.Reader)
 		if err != nil && err != io.EOF {
 			errChan <- fmt.Errorf("output copy error: %w", err)
 		} else {
@@ -167,7 +186,11 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 	// - Streaming error
 	select {
 	case sig := <-sigChan:
-		fmt.Fprintf(options.Stdout, "\nReceived signal %v, detaching...\n", sig)
+		// Restore terminal before printing
+		if isTerminal && oldState != nil {
+			_ = term.Restore(stdinFd, oldState)
+		}
+		fmt.Fprintf(os.Stderr, "\n\nReceived signal %v, detaching...\n", sig)
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
