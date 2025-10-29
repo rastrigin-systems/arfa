@@ -280,6 +280,29 @@ pivot/
 
 ## Implementation Plan
 
+### Phase 0: Docker Images (PREREQUISITE - 4-7 hours)
+
+**Goal**: Build Docker images for Claude Code + MCP servers
+
+**Tasks**:
+- [ ] Research Claude Code CLI installation method
+- [ ] Create docker directory structure
+- [ ] Build claude-code image (2-3 hours)
+- [ ] Build mcp-filesystem image (1-2 hours)
+- [ ] Build mcp-git image (1-2 hours)
+- [ ] Test all images with config injection
+- [ ] Document build process
+
+**Deliverables**:
+- `ubik/claude-code:latest` - Working
+- `ubik/mcp-filesystem:latest` - Working
+- `ubik/mcp-git:latest` - Working
+- All images tested with volume mounts
+
+**Estimated Time**: 4-7 hours (can be done in 1 day)
+
+---
+
 ### Phase 1: Foundation (Week 1 - 3-4 days)
 
 **Tasks**:
@@ -343,7 +366,10 @@ pivot/
 
 ---
 
-**Total Timeline**: 4-5 weeks
+**Total Timeline**:
+- Phase 0 (Docker Images): 1 day
+- Phases 1-5 (CLI Development): 4-5 weeks
+- **Total: ~5 weeks**
 
 ---
 
@@ -351,14 +377,20 @@ pivot/
 
 ### 🔴 High Priority (Blocking)
 
-1. **Claude Code CLI Access**
-   - Is Claude Code CLI publicly available?
-   - Do we have API keys/licenses?
-   - Docker base image available?
+1. **Claude Code CLI Access** ✅ **RESOLVED**
+   - ✅ Claude Code CLI is publicly available
+   - ✅ Max license available
+   - ❌ Docker base image does NOT exist - **we need to create one**
 
-2. **Platform API Endpoints**
-   - Is GET /employees/{id}/agent-configs/resolved implemented?
-   - Need agent approval endpoints (POST/GET /agent-requests)
+2. **Docker Image Creation** ⚠️ **REQUIRED BEFORE IMPLEMENTATION**
+   - Need to build: `ubik/claude-code:latest`
+   - Need to build: `ubik/mcp-filesystem:latest`
+   - Need to build: `ubik/mcp-git:latest`
+   - See "Docker Image Creation Plan" section below
+
+3. **Platform API Endpoints**
+   - ❓ Is GET /employees/{id}/agent-configs/resolved implemented?
+   - ❌ Need agent approval endpoints (POST/GET /agent-requests)
 
 ### 🟡 Medium Priority
 
@@ -388,6 +420,221 @@ pivot/
      - filesystem (required)
      - git (required)
      - postgres (optional?)
+
+---
+
+## Docker Image Creation Plan
+
+**Status**: ⚠️ **REQUIRED BEFORE CLI IMPLEMENTATION**
+
+Since no official Docker images exist, we need to create our own. This is a **prerequisite** for CLI development.
+
+### Images to Build
+
+#### 1. `ubik/claude-code:latest`
+
+**Dockerfile** (estimated):
+```dockerfile
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        git \
+        nodejs \
+        npm \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Claude Code CLI
+# TODO: Determine actual installation method
+RUN curl -fsSL https://claude.ai/install-cli.sh | sh
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Entry point that reads config from env vars
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+**entrypoint.sh**:
+```bash
+#!/bin/bash
+set -e
+
+# Write config from environment variable
+mkdir -p ~/.claude
+echo "$AGENT_CONFIG" > ~/.claude/config.json
+
+# Write MCP server config
+echo "$MCP_CONFIG" > ~/.claude/mcp.json
+
+# Start Claude Code in interactive mode
+exec claude-code "$@"
+```
+
+**Build & Test**:
+```bash
+cd docker/agents/claude-code
+docker build -t ubik/claude-code:latest .
+docker run -it \
+  -v $(pwd):/workspace \
+  -e AGENT_CONFIG='{"model":"claude-3-5-sonnet-20241022"}' \
+  ubik/claude-code:latest
+```
+
+**Estimated Time**: 2-3 hours (research + build + test)
+
+---
+
+#### 2. `ubik/mcp-filesystem:latest`
+
+**Dockerfile**:
+```dockerfile
+FROM node:20-alpine
+
+# Install MCP filesystem server
+RUN npm install -g @modelcontextprotocol/server-filesystem
+
+# Entry point
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /workspace
+EXPOSE 8001
+
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+**entrypoint.sh**:
+```bash
+#!/bin/sh
+set -e
+
+# Write config from environment
+mkdir -p /etc/mcp
+echo "$MCP_CONFIG" > /etc/mcp/config.json
+
+# Start MCP filesystem server
+exec npx @modelcontextprotocol/server-filesystem \
+  --root /workspace \
+  --port 8001
+```
+
+**Build & Test**:
+```bash
+cd docker/mcp/filesystem
+docker build -t ubik/mcp-filesystem:latest .
+docker run -it \
+  -v $(pwd):/workspace \
+  -p 8001:8001 \
+  ubik/mcp-filesystem:latest
+```
+
+**Estimated Time**: 1-2 hours
+
+---
+
+#### 3. `ubik/mcp-git:latest`
+
+**Dockerfile**:
+```dockerfile
+FROM node:20-alpine
+
+# Install git and MCP git server
+RUN apk add --no-cache git && \
+    npm install -g @modelcontextprotocol/server-git
+
+# Entry point
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /workspace
+EXPOSE 8002
+
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+**entrypoint.sh**:
+```bash
+#!/bin/sh
+set -e
+
+# Write config from environment
+mkdir -p /etc/mcp
+echo "$MCP_CONFIG" > /etc/mcp/config.json
+
+# Start MCP git server
+exec npx @modelcontextprotocol/server-git \
+  --root /workspace \
+  --port 8002
+```
+
+**Build & Test**:
+```bash
+cd docker/mcp/git
+docker build -t ubik/mcp-git:latest .
+docker run -it \
+  -v $(pwd):/workspace \
+  -p 8002:8002 \
+  ubik/mcp-git:latest
+```
+
+**Estimated Time**: 1-2 hours
+
+---
+
+### Docker Image Build Timeline
+
+**Phase 0: Docker Images (Week 0 - PREREQUISITE)**
+
+**Total Time**: 4-7 hours
+
+**Tasks**:
+- [ ] Research Claude Code CLI installation (1 hour)
+- [ ] Create `docker/agents/claude-code/` structure
+- [ ] Write Dockerfile for Claude Code (2-3 hours)
+- [ ] Test Claude Code container (1 hour)
+- [ ] Create `docker/mcp/filesystem/` structure
+- [ ] Write Dockerfile for MCP filesystem (1 hour)
+- [ ] Test filesystem MCP (30 min)
+- [ ] Create `docker/mcp/git/` structure
+- [ ] Write Dockerfile for MCP git (1 hour)
+- [ ] Test git MCP (30 min)
+- [ ] Document image build process
+- [ ] Push images to registry (optional for v0.2)
+
+**Directory Structure**:
+```
+pivot/
+└── docker/
+    ├── agents/
+    │   └── claude-code/
+    │       ├── Dockerfile
+    │       ├── entrypoint.sh
+    │       └── README.md
+    └── mcp/
+        ├── filesystem/
+        │   ├── Dockerfile
+        │   ├── entrypoint.sh
+        │   └── README.md
+        └── git/
+            ├── Dockerfile
+            ├── entrypoint.sh
+            └── README.md
+```
+
+**Deliverables**:
+- 3 Docker images built and tested
+- All images work with mounted volumes
+- Config injection working via env vars
+- Documentation for building images
+
+**Next**: After images are ready, proceed to CLI Phase 1
 
 ---
 
