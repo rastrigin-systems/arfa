@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/sergeirastrigin/ubik-enterprise/internal/cli"
 	"github.com/spf13/cobra"
@@ -150,6 +151,13 @@ Optionally starts Docker containers for agents and MCP servers.`,
 				if workspace == "" {
 					workspace = "."
 				}
+
+				// Convert to absolute path
+				absWorkspace, err := filepath.Abs(workspace)
+				if err != nil {
+					return fmt.Errorf("failed to resolve workspace path: %w", err)
+				}
+				workspace = absWorkspace
 
 				// Setup Docker client
 				dockerClient, err := cli.NewDockerClient()
@@ -354,6 +362,13 @@ func newStartCommand() *cobra.Command {
 			if workspace == "" {
 				workspace = "."
 			}
+
+			// Convert to absolute path
+			absWorkspace, err := filepath.Abs(workspace)
+			if err != nil {
+				return fmt.Errorf("failed to resolve workspace path: %w", err)
+			}
+			workspace = absWorkspace
 
 			// Start containers
 			if err := syncService.StartContainers(workspace, apiKey); err != nil {

@@ -9,12 +9,16 @@ SELECT * FROM employees
 WHERE email = $1 AND deleted_at IS NULL;
 
 -- name: ListEmployees :many
-SELECT * FROM employees
-WHERE org_id = sqlc.arg(org_id)
-  AND deleted_at IS NULL
-  AND (sqlc.narg(status)::text IS NULL OR status = sqlc.narg(status)::text)
-  AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid)
-ORDER BY created_at DESC
+SELECT
+  e.*,
+  t.name as team_name
+FROM employees e
+LEFT JOIN teams t ON e.team_id = t.id
+WHERE e.org_id = sqlc.arg(org_id)
+  AND e.deleted_at IS NULL
+  AND (sqlc.narg(status)::text IS NULL OR e.status = sqlc.narg(status)::text)
+  AND (sqlc.narg(team_id)::uuid IS NULL OR e.team_id = sqlc.narg(team_id)::uuid)
+ORDER BY e.created_at DESC
 LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 
 -- name: CountEmployees :one

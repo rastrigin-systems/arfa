@@ -106,10 +106,10 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Convert db.Employee to api.Employee
+	// Convert db.ListEmployeesRow to api.Employee
 	apiEmployees := make([]api.Employee, len(employees))
 	for i, emp := range employees {
-		apiEmployees[i] = dbEmployeeToAPI(emp)
+		apiEmployees[i] = listEmployeesRowToAPI(emp)
 	}
 
 	// Build response
@@ -443,6 +443,51 @@ func (h *EmployeesHandler) DeleteEmployee(w http.ResponseWriter, r *http.Request
 
 	// Return 204 No Content
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// listEmployeesRowToAPI converts db.ListEmployeesRow to api.Employee
+func listEmployeesRowToAPI(row db.ListEmployeesRow) api.Employee {
+	apiEmp := api.Employee{
+		Id:       &row.ID,
+		OrgId:    row.OrgID,
+		Email:    openapi_types.Email(row.Email),
+		FullName: row.FullName,
+		RoleId:   row.RoleID,
+		Status:   api.EmployeeStatus(row.Status),
+	}
+
+	// Handle nullable fields
+	if row.TeamID.Valid {
+		teamUUID := row.TeamID.Bytes
+		apiEmp.TeamId = (*openapi_types.UUID)(&teamUUID)
+	}
+
+	// Add team name if available (from JOIN)
+	if row.TeamName != nil {
+		apiEmp.TeamName = row.TeamName
+	}
+
+	if row.CreatedAt.Valid {
+		apiEmp.CreatedAt = &row.CreatedAt.Time
+	}
+
+	if row.UpdatedAt.Valid {
+		apiEmp.UpdatedAt = &row.UpdatedAt.Time
+	}
+
+	if row.LastLoginAt.Valid {
+		apiEmp.LastLoginAt = &row.LastLoginAt.Time
+	}
+
+	// Handle preferences JSON
+	if len(row.Preferences) > 0 && string(row.Preferences) != "null" {
+		var prefs map[string]interface{}
+		if err := json.Unmarshal(row.Preferences, &prefs); err == nil {
+			apiEmp.Preferences = &prefs
+		}
+	}
+
+	return apiEmp
 }
 
 // dbEmployeeToAPI converts db.Employee to api.Employee

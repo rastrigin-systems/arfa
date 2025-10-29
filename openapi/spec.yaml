@@ -118,6 +118,11 @@ components:
           type: string
           format: uuid
           nullable: true
+        team_name:
+          type: string
+          description: Name of the team (populated in list endpoints)
+          readOnly: true
+          nullable: true
         role_id:
           type: string
           format: uuid
