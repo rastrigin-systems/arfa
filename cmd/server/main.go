@@ -48,6 +48,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(queries)
 	employeesHandler := handlers.NewEmployeesHandler(queries)
 	rolesHandler := handlers.NewRolesHandler(queries)
+	organizationsHandler := handlers.NewOrganizationsHandler(queries)
 	teamsHandler := handlers.NewTeamsHandler(queries)
 	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
@@ -136,12 +137,18 @@ func main() {
 			})
 
 			// Organizations routes
-			r.Route("/organizations/current/agent-configs", func(r chi.Router) {
-				r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
-				r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
-				r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
-				r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
-				r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
+			r.Route("/organizations/current", func(r chi.Router) {
+				r.Get("/", organizationsHandler.GetCurrentOrganization)
+				r.Patch("/", organizationsHandler.UpdateCurrentOrganization)
+
+				// Organization agent configs
+				r.Route("/agent-configs", func(r chi.Router) {
+					r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
+					r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
+					r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
+					r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
+					r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
+				})
 			})
 
 			// Employee agent configs routes
