@@ -17,6 +17,7 @@ import (
 
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/internal/handlers"
+	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/internal/middleware"
 )
 
 func main() {
@@ -72,6 +73,7 @@ func main() {
 
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {
+		// Public routes (no auth required)
 		// Health check
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -79,48 +81,58 @@ func main() {
 			fmt.Fprintf(w, `{"status":"ok","timestamp":"%s"}`, time.Now().Format(time.RFC3339))
 		})
 
-		// Auth routes
+		// Auth routes (login is public, others need auth)
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/login", authHandler.Login)
-			r.Post("/logout", authHandler.Logout)
-			r.Get("/me", authHandler.GetMe)
-		})
 
-		// Teams routes
-		r.Route("/teams", func(r chi.Router) {
-			r.Get("/", teamsHandler.ListTeams)
-			r.Post("/", teamsHandler.CreateTeam)
-			r.Get("/{team_id}", teamsHandler.GetTeam)
-			r.Patch("/{team_id}", teamsHandler.UpdateTeam)
-			r.Delete("/{team_id}", teamsHandler.DeleteTeam)
-
-			// Team agent configs
-			r.Route("/{team_id}/agent-configs", func(r chi.Router) {
-				r.Get("/", teamAgentConfigsHandler.ListTeamAgentConfigs)
-				r.Post("/", teamAgentConfigsHandler.CreateTeamAgentConfig)
-				r.Get("/{config_id}", teamAgentConfigsHandler.GetTeamAgentConfig)
-				r.Patch("/{config_id}", teamAgentConfigsHandler.UpdateTeamAgentConfig)
-				r.Delete("/{config_id}", teamAgentConfigsHandler.DeleteTeamAgentConfig)
+			// Protected auth routes
+			r.Group(func(r chi.Router) {
+				r.Use(authmiddleware.JWTAuth(queries))
+				r.Post("/logout", authHandler.Logout)
+				r.Get("/me", authHandler.GetMe)
 			})
 		})
 
-		// Organizations routes
-		r.Route("/organizations/current/agent-configs", func(r chi.Router) {
-			r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
-			r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
-			r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
-			r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
-			r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
-		})
+		// Protected routes (require authentication)
+		r.Group(func(r chi.Router) {
+			r.Use(authmiddleware.JWTAuth(queries))
 
-		// Employee agent configs routes
-		r.Route("/employees/{employee_id}/agent-configs", func(r chi.Router) {
-			r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
-			r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
-			r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
-			r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
-			r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
-			r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
+			// Teams routes
+			r.Route("/teams", func(r chi.Router) {
+				r.Get("/", teamsHandler.ListTeams)
+				r.Post("/", teamsHandler.CreateTeam)
+				r.Get("/{team_id}", teamsHandler.GetTeam)
+				r.Patch("/{team_id}", teamsHandler.UpdateTeam)
+				r.Delete("/{team_id}", teamsHandler.DeleteTeam)
+
+				// Team agent configs
+				r.Route("/{team_id}/agent-configs", func(r chi.Router) {
+					r.Get("/", teamAgentConfigsHandler.ListTeamAgentConfigs)
+					r.Post("/", teamAgentConfigsHandler.CreateTeamAgentConfig)
+					r.Get("/{config_id}", teamAgentConfigsHandler.GetTeamAgentConfig)
+					r.Patch("/{config_id}", teamAgentConfigsHandler.UpdateTeamAgentConfig)
+					r.Delete("/{config_id}", teamAgentConfigsHandler.DeleteTeamAgentConfig)
+				})
+			})
+
+			// Organizations routes
+			r.Route("/organizations/current/agent-configs", func(r chi.Router) {
+				r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
+				r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
+				r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
+				r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
+				r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
+			})
+
+			// Employee agent configs routes
+			r.Route("/employees/{employee_id}/agent-configs", func(r chi.Router) {
+				r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
+				r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
+				r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
+				r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
+				r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
+				r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
+			})
 		})
 
 		// TODO: Add more routes as they are implemented

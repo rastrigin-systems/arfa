@@ -1,4 +1,4 @@
-.PHONY: help install-tools db-up db-down db-reset generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage dev build clean
+.PHONY: help install-tools db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage dev build clean
 
 # Default target
 help:
@@ -9,6 +9,7 @@ help:
 	@echo "  make db-up           Start PostgreSQL with Docker Compose"
 	@echo "  make db-down         Stop PostgreSQL"
 	@echo "  make db-reset        Reset database (drop and recreate)"
+	@echo "  make db-seed         Load seed data into database"
 	@echo ""
 	@echo "Generation Commands:"
 	@echo "  make generate-erd    Generate ERD from PostgreSQL schema"
@@ -74,6 +75,22 @@ db-reset:
 	@echo "⏳ Waiting for PostgreSQL..."
 	@sleep 5
 	@echo "✅ Database reset complete"
+
+db-seed:
+	@echo "🌱 Loading seed data into database..."
+	@if [ ! -f seed.sql ]; then \
+		echo "❌ Error: seed.sql not found"; \
+		exit 1; \
+	fi
+	docker-compose exec -T postgres psql -U pivot -d pivot < seed.sql
+	@echo "✅ Seed data loaded successfully"
+	@echo ""
+	@echo "Test credentials (all passwords: 'password123'):"
+	@echo "  alice@acme.com         (Super Admin at Acme Corp)"
+	@echo "  bob@acme.com           (Admin at Acme Corp)"
+	@echo "  charlie@acme.com       (Developer at Acme Corp)"
+	@echo "  grace@techstartup.com  (Admin at Tech Startup)"
+	@echo "  iris@smallbiz.com      (Super Admin at Small Business)"
 
 # Code generation
 generate-erd:
