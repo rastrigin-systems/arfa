@@ -39,6 +39,9 @@ jobs:
         with:
           go-version: '1.24'
           cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
 
       - name: Install code generation tools
         run: |
@@ -99,6 +102,9 @@ jobs:
         with:
           go-version: '1.24'
           cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
 
       - name: Install PostgreSQL client
         run: |

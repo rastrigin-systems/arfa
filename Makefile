@@ -124,13 +124,31 @@ generate-erd:
 	@echo "   - SVG:       $(DOCS_DIR)/schema.svg"
 	@echo "   - JSON:      $(DOCS_DIR)/schema.json"
 
-generate-api:
+generate-setup:
+	@echo "📦 Setting up generated module..."
+	@mkdir -p $(GENERATED_DIR)
+	@if [ ! -f $(GENERATED_DIR)/go.mod ]; then \
+		echo 'module github.com/sergeirastrigin/ubik-enterprise/generated' > $(GENERATED_DIR)/go.mod; \
+		echo '' >> $(GENERATED_DIR)/go.mod; \
+		echo 'go 1.24.5' >> $(GENERATED_DIR)/go.mod; \
+		echo '' >> $(GENERATED_DIR)/go.mod; \
+		echo 'require (' >> $(GENERATED_DIR)/go.mod; \
+		echo '	github.com/go-chi/chi/v5 v5.0.11' >> $(GENERATED_DIR)/go.mod; \
+		echo '	github.com/google/uuid v1.6.0' >> $(GENERATED_DIR)/go.mod; \
+		echo '	github.com/jackc/pgx/v5 v5.5.3' >> $(GENERATED_DIR)/go.mod; \
+		echo '	github.com/oapi-codegen/runtime v1.1.1' >> $(GENERATED_DIR)/go.mod; \
+		echo '	go.uber.org/mock v0.4.0' >> $(GENERATED_DIR)/go.mod; \
+		echo ')' >> $(GENERATED_DIR)/go.mod; \
+		echo "✅ Created $(GENERATED_DIR)/go.mod"; \
+	fi
+
+generate-api: generate-setup
 	@echo "🔧 Generating API code from OpenAPI spec..."
 	@mkdir -p $(GENERATED_DIR)/api
 	oapi-codegen -package api -generate types,chi-server -o $(GENERATED_DIR)/api/server.gen.go shared/openapi/spec.yaml
 	@echo "✅ API code generated at $(GENERATED_DIR)/api/"
 
-generate-db:
+generate-db: generate-setup
 	@echo "🔧 Generating database code from SQL queries..."
 	@mkdir -p $(GENERATED_DIR)/db
 	cd sqlc && sqlc generate
