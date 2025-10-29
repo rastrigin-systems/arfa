@@ -78,7 +78,7 @@
                             </div>
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-gray-600">Agents:</span>
-                                <span class="font-medium text-gray-900" x-text="team.agent_count || 0"></span>
+                                <span class="font-medium text-gray-900" x-text="team.agent_config_count || 0"></span>
                             </div>
                         </div>
 
@@ -198,12 +198,6 @@
                         const data = await response.json();
                         this.teams = data.teams || [];
                         this.filteredTeams = this.teams;
-
-                        // Mock member and agent counts (TODO: get from API)
-                        this.teams.forEach(team => {
-                            team.member_count = Math.floor(Math.random() * 50) + 5;
-                            team.agent_count = Math.floor(Math.random() * 5) + 1;
-                        });
 
                     } catch (error) {
                         console.error('Error loading teams:', error);

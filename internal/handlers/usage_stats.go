@@ -12,11 +12,11 @@ import (
 )
 
 type UsageStatsHandler struct {
-	queries *db.Queries
+	db db.Querier
 }
 
-func NewUsageStatsHandler(queries *db.Queries) *UsageStatsHandler {
-	return &UsageStatsHandler{queries: queries}
+func NewUsageStatsHandler(database db.Querier) *UsageStatsHandler {
+	return &UsageStatsHandler{db: database}
 }
 
 // GetEmployeeUsageStats gets usage statistics for a specific employee
@@ -36,7 +36,7 @@ func (h *UsageStatsHandler) GetEmployeeUsageStats(w http.ResponseWriter, r *http
 	}
 
 	// Verify employee belongs to org
-	employee, err := h.queries.GetEmployee(ctx, employeeID)
+	employee, err := h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "Employee not found")
 		return
@@ -52,7 +52,7 @@ func (h *UsageStatsHandler) GetEmployeeUsageStats(w http.ResponseWriter, r *http
 	endTime := time.Now()
 	startTime := endTime.AddDate(0, 0, -30)
 
-	stats, err := h.queries.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
+	stats, err := h.db.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
 		EmployeeID:  employeeID,
 		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
 		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
@@ -89,7 +89,7 @@ func (h *UsageStatsHandler) GetOrgUsageStats(w http.ResponseWriter, r *http.Requ
 	endTime := time.Now()
 	startTime := endTime.AddDate(0, 0, -30)
 
-	stats, err := h.queries.GetOrgUsageStats(ctx, db.GetOrgUsageStatsParams{
+	stats, err := h.db.GetOrgUsageStats(ctx, db.GetOrgUsageStatsParams{
 		OrgID:       orgID,
 		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
 		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
@@ -125,7 +125,7 @@ func (h *UsageStatsHandler) GetCurrentEmployeeUsageStats(w http.ResponseWriter, 
 	endTime := time.Now()
 	startTime := endTime.AddDate(0, 0, -30)
 
-	stats, err := h.queries.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
+	stats, err := h.db.GetEmployeeUsageStats(ctx, db.GetEmployeeUsageStatsParams{
 		EmployeeID:  employeeID,
 		PeriodStart: pgtype.Timestamp{Time: startTime, Valid: true},
 		PeriodEnd:   pgtype.Timestamp{Time: endTime, Valid: true},

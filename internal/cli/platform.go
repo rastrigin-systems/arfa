@@ -39,9 +39,17 @@ type LoginRequest struct {
 
 // LoginResponse represents a login response
 type LoginResponse struct {
-	Token      string `json:"token"`
-	EmployeeID string `json:"employee_id"`
-	OrgID      string `json:"org_id"`
+	Token     string            `json:"token"`
+	ExpiresAt string            `json:"expires_at"`
+	Employee  LoginEmployeeInfo `json:"employee"`
+}
+
+// LoginEmployeeInfo contains employee info from login response
+type LoginEmployeeInfo struct {
+	ID       string `json:"id"`
+	OrgID    string `json:"org_id"`
+	Email    string `json:"email"`
+	FullName string `json:"full_name"`
 }
 
 // Login authenticates the user and returns a token
@@ -79,7 +87,20 @@ func (pc *PlatformClient) GetEmployeeInfo(employeeID string) (*EmployeeInfo, err
 	return &resp, nil
 }
 
-// AgentConfig represents a resolved agent configuration
+// AgentConfigAPIResponse represents an agent config as returned by the API
+type AgentConfigAPIResponse struct {
+	AgentID      string                 `json:"agent_id"`
+	AgentName    string                 `json:"agent_name"`
+	AgentType    string                 `json:"agent_type"`
+	IsEnabled    bool                   `json:"is_enabled"`
+	Config       map[string]interface{} `json:"config"`
+	Provider     string                 `json:"provider"`
+	SyncToken    string                 `json:"sync_token"`
+	SystemPrompt string                 `json:"system_prompt"`
+	LastSyncedAt *string                `json:"last_synced_at"` // nullable timestamp
+}
+
+// AgentConfig represents a resolved agent configuration (internal use)
 type AgentConfig struct {
 	AgentID       string                 `json:"agent_id"`
 	AgentName     string                 `json:"agent_name"`
@@ -98,19 +119,40 @@ type MCPServerConfig struct {
 	Config     map[string]interface{} `json:"config"`
 }
 
+// ResolvedConfigsResponse represents the response from the resolved configs endpoint
+type ResolvedConfigsResponse struct {
+	Configs []AgentConfigAPIResponse `json:"configs"`
+	Total   int                      `json:"total"`
+}
+
 // GetResolvedAgentConfigs fetches resolved agent configurations for an employee
 func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentConfig, error) {
-	var configs []AgentConfig
+	var resp ResolvedConfigsResponse
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs/resolved", employeeID)
-	if err := pc.doRequest("GET", endpoint, nil, &configs); err != nil {
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
+
+	// Convert API response to internal format
+	configs := make([]AgentConfig, len(resp.Configs))
+	for i, apiConfig := range resp.Configs {
+		configs[i] = AgentConfig{
+			AgentID:       apiConfig.AgentID,
+			AgentName:     apiConfig.AgentName,
+			AgentType:     apiConfig.AgentType,
+			IsEnabled:     apiConfig.IsEnabled,
+			Configuration: apiConfig.Config,
+			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
+		}
+	}
+
 	return configs, nil
 }
 
 // doRequest is a helper method to perform HTTP requests
 func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
-	url := pc.baseURL + path
+	// Add /api/v1 prefix to all API calls
+	url := pc.baseURL + "/api/v1" + path
 
 	var reqBody io.Reader
 	if body != nil {

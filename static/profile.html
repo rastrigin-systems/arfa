@@ -413,10 +413,10 @@
                 employee: {},
                 agentConfigs: [],
                 usage: {
-                    api_calls: 15234,
-                    tokens_used: 3200000,
-                    cost: 58.45,
-                    budget_percent: 58
+                    api_calls: 0,
+                    tokens_used: 0,
+                    cost: 0,
+                    budget_percent: 0
                 },
                 preferencesJson: '',
                 passwordForm: {
@@ -432,6 +432,7 @@
                 async init() {
                     await this.loadProfile();
                     await this.loadAgentConfigs();
+                    await this.loadUsageStats();
                 },
 
                 async loadProfile() {
@@ -492,6 +493,29 @@
                     } catch (error) {
                         console.error('Error loading agent configs:', error);
                         this.agentConfigs = [];
+                    }
+                },
+
+                async loadUsageStats() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/usage-stats/me`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load usage stats');
+
+                        const data = await response.json();
+                        this.usage = {
+                            api_calls: data.total_api_calls || 0,
+                            tokens_used: data.total_tokens || 0,
+                            cost: data.total_cost_usd || 0,
+                            budget_percent: 0 // TODO: Calculate from subscription
+                        };
+
+                    } catch (error) {
+                        console.error('Error loading usage stats:', error);
                     }
                 },
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/sergeirastrigin/ubik-enterprise/internal/middleware"
 )
 
 // ActivityLogsHandler handles activity log requests
@@ -262,9 +264,7 @@ func CreateActivityLog(ctx *http.Request, database db.Querier, eventType, eventC
 	return err
 }
 
-// Helper functions for getting IDs from context
-func GetEmployeeID(ctx interface{}) (uuid.UUID, error) {
-	// This should match the implementation in auth middleware
-	// For now, return nil UUID
-	return uuid.Nil, nil
+// GetEmployeeID wraps middleware.GetEmployeeID for convenience
+func GetEmployeeID(ctx context.Context) (uuid.UUID, error) {
+	return middleware.GetEmployeeID(ctx)
 }

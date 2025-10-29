@@ -27,7 +27,7 @@ make test-cli
 ```bash
 # 1. Login to platform
 ./bin/ubik-cli login
-Platform URL [https://api.ubik.io]: http://localhost:8080
+Platform URL [http://localhost:8080]:
 Email: alice@acme.com
 Password: ****
 

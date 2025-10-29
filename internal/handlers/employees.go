@@ -54,10 +54,13 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 		status = &statusParam
 	}
 
-	// Team filter (optional) - not currently used but supported by SQL
-	// Use pgtype.UUID with Valid=false for no filter
+	// Team filter (optional)
 	teamID := pgtype.UUID{Valid: false}
-	// Future: add team_id query parameter support
+	if teamIDParam := query.Get("team_id"); teamIDParam != "" {
+		if parsedTeamID, err := uuid.Parse(teamIDParam); err == nil {
+			teamID = pgtype.UUID{Bytes: parsedTeamID, Valid: true}
+		}
+	}
 
 	// Pagination: limit (default 50, max 100)
 	limit := 50

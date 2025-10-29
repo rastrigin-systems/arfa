@@ -185,19 +185,6 @@
                         const data = await response.json();
                         this.roles = data.roles || [];
 
-                        // Mock employee counts (TODO: get from API)
-                        this.roles.forEach(role => {
-                            if (role.name.includes('Admin') || role.name.includes('Super')) {
-                                role.employee_count = Math.floor(Math.random() * 10) + 1;
-                            } else if (role.name.includes('Manager') || role.name.includes('Approver')) {
-                                role.employee_count = Math.floor(Math.random() * 20) + 10;
-                            } else if (role.name.includes('Developer')) {
-                                role.employee_count = Math.floor(Math.random() * 50) + 30;
-                            } else {
-                                role.employee_count = Math.floor(Math.random() * 150) + 50;
-                            }
-                        });
-
                     } catch (error) {
                         console.error('Error loading roles:', error);
                     } finally {

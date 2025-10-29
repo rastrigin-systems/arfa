@@ -292,6 +292,14 @@ components:
           type: string
           format: date-time
           readOnly: true
+        member_count:
+          type: integer
+          description: Number of employees in this team
+          readOnly: true
+        agent_config_count:
+          type: integer
+          description: Number of agent configurations for this team
+          readOnly: true
 
     Role:
       type: object
@@ -316,6 +324,10 @@ components:
         created_at:
           type: string
           format: date-time
+          readOnly: true
+        employee_count:
+          type: integer
+          description: Number of employees with this role
           readOnly: true
 
     # Agent schemas

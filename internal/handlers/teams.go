@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -41,10 +42,26 @@ func (h *TeamsHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to API response
+	// Convert to API response with aggregate counts
 	apiTeams := make([]api.Team, len(teams))
 	for i, team := range teams {
-		apiTeams[i] = dbTeamToAPI(team)
+		apiTeam := dbTeamToAPI(team)
+
+		// Get member count for this team
+		memberCount, err := h.db.CountEmployeesByTeam(ctx, pgtype.UUID{Bytes: team.ID, Valid: true})
+		if err == nil {
+			count := int(memberCount)
+			apiTeam.MemberCount = &count
+		}
+
+		// Get agent config count for this team
+		agentCount, err := h.db.CountTeamAgentConfigs(ctx, team.ID)
+		if err == nil {
+			count := int(agentCount)
+			apiTeam.AgentConfigCount = &count
+		}
+
+		apiTeams[i] = apiTeam
 	}
 
 	// Build response

@@ -8,11 +8,11 @@ import (
 )
 
 type SubscriptionsHandler struct {
-	queries *db.Queries
+	db db.Querier
 }
 
-func NewSubscriptionsHandler(queries *db.Queries) *SubscriptionsHandler {
-	return &SubscriptionsHandler{queries: queries}
+func NewSubscriptionsHandler(database db.Querier) *SubscriptionsHandler {
+	return &SubscriptionsHandler{db: database}
 }
 
 // GetCurrentSubscription gets the subscription for the authenticated user's organization
@@ -24,7 +24,7 @@ func (h *SubscriptionsHandler) GetCurrentSubscription(w http.ResponseWriter, r *
 		return
 	}
 
-	subscription, err := h.queries.GetSubscriptionByOrgID(ctx, orgID)
+	subscription, err := h.db.GetSubscriptionByOrgID(ctx, orgID)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "Subscription not found")
 		return

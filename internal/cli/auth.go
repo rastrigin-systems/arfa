@@ -29,11 +29,11 @@ func (as *AuthService) LoginInteractive() error {
 	reader := bufio.NewReader(os.Stdin)
 
 	// Get platform URL
-	fmt.Print("Platform URL [https://api.ubik.io]: ")
+	fmt.Print("Platform URL [http://localhost:8080]: ")
 	platformURL, _ := reader.ReadString('\n')
 	platformURL = strings.TrimSpace(platformURL)
 	if platformURL == "" {
-		platformURL = "https://api.ubik.io"
+		platformURL = "http://localhost:8080"
 	}
 
 	// Get email
@@ -70,7 +70,7 @@ func (as *AuthService) LoginInteractive() error {
 	config := &Config{
 		PlatformURL: platformURL,
 		Token:       loginResp.Token,
-		EmployeeID:  loginResp.EmployeeID,
+		EmployeeID:  loginResp.Employee.ID,
 	}
 
 	if err := as.configManager.Save(config); err != nil {
@@ -78,7 +78,7 @@ func (as *AuthService) LoginInteractive() error {
 	}
 
 	fmt.Println("✓ Authenticated successfully")
-	fmt.Printf("✓ Employee ID: %s\n", loginResp.EmployeeID)
+	fmt.Printf("✓ Employee ID: %s\n", loginResp.Employee.ID)
 
 	return nil
 }
@@ -98,7 +98,7 @@ func (as *AuthService) Login(platformURL, email, password string) error {
 	config := &Config{
 		PlatformURL: platformURL,
 		Token:       loginResp.Token,
-		EmployeeID:  loginResp.EmployeeID,
+		EmployeeID:  loginResp.Employee.ID,
 	}
 
 	if err := as.configManager.Save(config); err != nil {

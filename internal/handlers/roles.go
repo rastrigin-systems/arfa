@@ -48,10 +48,19 @@ func (h *RolesHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to API response
+	// Convert to API response with employee counts
 	apiRoles := make([]api.Role, len(roles))
 	for i, role := range roles {
-		apiRoles[i] = dbRoleToAPI(role)
+		apiRole := dbRoleToAPI(role)
+
+		// Get employee count for this role
+		employeeCount, err := h.db.CountEmployeesByRole(ctx, role.ID)
+		if err == nil {
+			count := int(employeeCount)
+			apiRole.EmployeeCount = &count
+		}
+
+		apiRoles[i] = apiRole
 	}
 
 	// Build response
