@@ -27,7 +27,32 @@
 
 ## Relations
 
-![er](public.mcp_categories.svg)
+```mermaid
+erDiagram
+
+"public.mcp_catalog" }o--o| "public.mcp_categories" : "FOREIGN KEY (category_id) REFERENCES mcp_categories(id) ON DELETE SET NULL"
+
+"public.mcp_categories" {
+  uuid id
+  varchar_100_ name
+  text description
+  timestamp_without_time_zone created_at
+}
+"public.mcp_catalog" {
+  uuid id
+  varchar_255_ name
+  varchar_255_ provider
+  varchar_50_ version
+  text description
+  jsonb connection_schema
+  jsonb capabilities
+  boolean requires_credentials
+  boolean is_approved
+  uuid category_id FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

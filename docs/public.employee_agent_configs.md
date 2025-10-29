@@ -8,12 +8,11 @@
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | uuid | uuid_generate_v4() | false | [public.usage_records](public.usage_records.md) |  |  |
 | employee_id | uuid |  | false |  | [public.employees](public.employees.md) |  |
-| agent_catalog_id | uuid |  | false |  | [public.agent_catalog](public.agent_catalog.md) |  |
-| name | varchar(255) |  | false |  |  |  |
-| status | varchar(50) | 'active'::character varying | false |  |  |  |
+| agent_id | uuid |  | false |  | [public.agents](public.agents.md) |  |
 | config_override | jsonb | '{}'::jsonb | false |  |  |  |
+| is_enabled | boolean | true | false |  |  |  |
 | sync_token | varchar(255) |  | true |  |  |  |
-| last_sync_at | timestamp without time zone |  | true |  |  |  |
+| last_synced_at | timestamp without time zone |  | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
 
@@ -22,10 +21,10 @@
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | employee_agent_configs_employee_id_fkey | FOREIGN KEY | FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE |
-| employee_agent_configs_agent_catalog_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_catalog_id) REFERENCES agent_catalog(id) ON DELETE RESTRICT |
+| employee_agent_configs_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT |
 | employee_agent_configs_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 | employee_agent_configs_sync_token_key | UNIQUE | UNIQUE (sync_token) |
-| unique_agent_name_per_employee | UNIQUE | UNIQUE (employee_id, name) |
+| unique_employee_agent | UNIQUE | UNIQUE (employee_id, agent_id) |
 
 ## Indexes
 
@@ -33,10 +32,10 @@
 | ---- | ---------- |
 | employee_agent_configs_pkey | CREATE UNIQUE INDEX employee_agent_configs_pkey ON public.employee_agent_configs USING btree (id) |
 | employee_agent_configs_sync_token_key | CREATE UNIQUE INDEX employee_agent_configs_sync_token_key ON public.employee_agent_configs USING btree (sync_token) |
-| unique_agent_name_per_employee | CREATE UNIQUE INDEX unique_agent_name_per_employee ON public.employee_agent_configs USING btree (employee_id, name) |
+| unique_employee_agent | CREATE UNIQUE INDEX unique_employee_agent ON public.employee_agent_configs USING btree (employee_id, agent_id) |
 | idx_employee_agent_configs_employee_id | CREATE INDEX idx_employee_agent_configs_employee_id ON public.employee_agent_configs USING btree (employee_id) |
-| idx_employee_agent_configs_agent_catalog_id | CREATE INDEX idx_employee_agent_configs_agent_catalog_id ON public.employee_agent_configs USING btree (agent_catalog_id) |
-| idx_employee_agent_configs_status | CREATE INDEX idx_employee_agent_configs_status ON public.employee_agent_configs USING btree (status) |
+| idx_employee_agent_configs_agent_id | CREATE INDEX idx_employee_agent_configs_agent_id ON public.employee_agent_configs USING btree (agent_id) |
+| idx_employee_agent_configs_is_enabled | CREATE INDEX idx_employee_agent_configs_is_enabled ON public.employee_agent_configs USING btree (is_enabled) |
 | idx_employee_agent_configs_sync_token | CREATE INDEX idx_employee_agent_configs_sync_token ON public.employee_agent_configs USING btree (sync_token) WHERE (sync_token IS NOT NULL) |
 
 ## Triggers
@@ -48,7 +47,67 @@
 
 ## Relations
 
-![er](public.employee_agent_configs.svg)
+```mermaid
+erDiagram
+
+"public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
+"public.employee_agent_configs" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.employee_agent_configs" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
+
+"public.employee_agent_configs" {
+  uuid id
+  uuid employee_id FK
+  uuid agent_id FK
+  jsonb config_override
+  boolean is_enabled
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_synced_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.usage_records" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  uuid agent_config_id FK
+  varchar_50_ resource_type
+  bigint quantity
+  numeric_10_4_ cost_usd
+  timestamp_without_time_zone period_start
+  timestamp_without_time_zone period_end
+  jsonb metadata
+  timestamp_without_time_zone created_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+"public.agents" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ type
+  text description
+  varchar_100_ provider
+  jsonb default_config
+  jsonb capabilities
+  varchar_50_ llm_provider
+  varchar_100_ llm_model
+  boolean is_public
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

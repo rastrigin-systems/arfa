@@ -49,13 +49,29 @@ CREATE VIEW v_pending_approvals AS (
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 12 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 13 |  | BASE TABLE |
 | [public.organizations](public.organizations.md) | 9 |  | BASE TABLE |
 | [public.teams](public.teams.md) | 6 |  | BASE TABLE |
 
 ## Relations
 
-![er](public.v_pending_approvals.svg)
+```mermaid
+erDiagram
+
+
+"public.v_pending_approvals" {
+  uuid request_id
+  varchar_50_ request_type
+  jsonb request_data
+  text reason
+  timestamp_without_time_zone requested_at
+  uuid employee_id
+  varchar_255_ requester_name
+  varchar_255_ requester_email
+  varchar_255_ team_name
+  varchar_255_ org_name
+}
+```
 
 ---
 

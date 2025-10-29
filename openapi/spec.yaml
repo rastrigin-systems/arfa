@@ -393,6 +393,155 @@ components:
           type: integer
           example: 5
 
+    # Agent Configuration schemas
+    OrgAgentConfig:
+      type: object
+      required:
+        - id
+        - org_id
+        - agent_id
+        - config
+        - is_enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        org_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+          readOnly: true
+          example: "Claude Code"
+        agent_type:
+          type: string
+          readOnly: true
+          example: "claude-code"
+        agent_provider:
+          type: string
+          readOnly: true
+          example: "anthropic"
+        config:
+          type: object
+          additionalProperties: true
+          description: "Full agent configuration (not an override)"
+          example: {"model": "claude-3-5-sonnet-20241022", "temperature": 0.2, "max_tokens": 8192}
+        is_enabled:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CreateOrgAgentConfigRequest:
+      type: object
+      required:
+        - agent_id
+        - config
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        config:
+          type: object
+          additionalProperties: true
+          example: {"model": "claude-3-5-sonnet-20241022", "temperature": 0.2}
+        is_enabled:
+          type: boolean
+          default: true
+
+    UpdateOrgAgentConfigRequest:
+      type: object
+      properties:
+        config:
+          type: object
+          additionalProperties: true
+          example: {"temperature": 0.5}
+        is_enabled:
+          type: boolean
+
+    ListOrgAgentConfigsResponse:
+      type: object
+      required:
+        - configs
+        - total
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgAgentConfig'
+        total:
+          type: integer
+          example: 3
+
+    ResolvedAgentConfig:
+      type: object
+      required:
+        - agent_id
+        - agent_name
+        - agent_type
+        - provider
+        - config
+        - system_prompt
+        - is_enabled
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+          example: "Claude Code"
+        agent_type:
+          type: string
+          example: "claude-code"
+        provider:
+          type: string
+          example: "anthropic"
+        config:
+          type: object
+          additionalProperties: true
+          description: "Fully resolved config (org → team → employee merged)"
+          example: {"model": "claude-3-5-sonnet-20241022", "temperature": 0.5, "max_tokens": 16384}
+        system_prompt:
+          type: string
+          description: "Concatenated system prompts from all hierarchy levels"
+          example: "You are a helpful coding assistant."
+        is_enabled:
+          type: boolean
+          description: "True only if enabled at all levels"
+        sync_token:
+          type: string
+          nullable: true
+          description: "Token for CLI sync tracking"
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Last time config was synced to CLI"
+
+    ListResolvedAgentConfigsResponse:
+      type: object
+      required:
+        - configs
+        - total
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResolvedAgentConfig'
+        total:
+          type: integer
+          example: 3
+
     # Pagination
     PaginationMeta:
       type: object
@@ -783,6 +932,205 @@ paths:
                 $ref: '#/components/schemas/ListAgentsResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Organization Agent Configurations
+  # ============================================================================
+  /organizations/current/agent-configs:
+    get:
+      tags:
+        - agents
+      summary: List org agent configurations
+      description: Get all agent configurations for the current organization
+      operationId: listOrgAgentConfigs
+      responses:
+        '200':
+          description: Org agent configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrgAgentConfigsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - agents
+      summary: Create org agent configuration
+      description: Configure an agent at organization level (applies to all employees)
+      operationId: createOrgAgentConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrgAgentConfigRequest'
+      responses:
+        '201':
+          description: Config created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Agent already configured for this org
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /organizations/current/agent-configs/{config_id}:
+    parameters:
+      - name: config_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Org agent config UUID
+
+    get:
+      tags:
+        - agents
+      summary: Get org agent configuration
+      description: Get details of a specific org agent configuration
+      operationId: getOrgAgentConfig
+      responses:
+        '200':
+          description: Org agent config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgAgentConfig'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - agents
+      summary: Update org agent configuration
+      description: Update an existing org agent configuration
+      operationId: updateOrgAgentConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrgAgentConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - agents
+      summary: Delete org agent configuration
+      description: Remove an agent configuration from the organization
+      operationId: deleteOrgAgentConfig
+      responses:
+        '204':
+          description: Config deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Employee Resolved Agent Configurations (for CLI sync)
+  # ============================================================================
+  /employees/{employee_id}/agent-configs/resolved:
+    parameters:
+      - name: employee_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Employee UUID
+
+    get:
+      tags:
+        - agents
+      summary: Get resolved agent configs for employee
+      description: |
+        Get all agent configurations for an employee with full hierarchy resolution
+        (org → team → employee). This is the primary endpoint used by the CLI for sync.
+      operationId: getEmployeeResolvedAgentConfigs
+      responses:
+        '200':
+          description: Resolved agent configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResolvedAgentConfigsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Employee not found
           content:
             application/json:
               schema:

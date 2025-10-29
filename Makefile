@@ -79,8 +79,16 @@ db-reset:
 generate-erd:
 	@echo "📊 Generating ERD from database schema..."
 	@mkdir -p $(DOCS_DIR)
-	tbls doc $(DATABASE_URL) $(DOCS_DIR) --force
-	@echo "✅ ERD generated at $(DOCS_DIR)/schema.md"
+	tbls doc $(DATABASE_URL) $(DOCS_DIR) --force --er-format svg
+	tbls doc $(DATABASE_URL) $(DOCS_DIR) --force --er-format mermaid
+	@echo "🔧 Generating ERD overview (ERD.md)..."
+	python3 scripts/generate-erd-overview.py
+	@echo ""
+	@echo "✅ ERD generation complete:"
+	@echo "   - Overview:  $(DOCS_DIR)/ERD.md (auto-generated Mermaid)"
+	@echo "   - Per-table: $(DOCS_DIR)/public.*.md (27 files)"
+	@echo "   - SVG:       $(DOCS_DIR)/schema.svg"
+	@echo "   - JSON:      $(DOCS_DIR)/schema.json"
 
 generate-api:
 	@echo "🔧 Generating API code from OpenAPI spec..."

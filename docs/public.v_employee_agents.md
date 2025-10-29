@@ -13,16 +13,17 @@ CREATE VIEW v_employee_agents AS (
     eac.employee_id,
     e.full_name AS employee_name,
     e.email AS employee_email,
-    ac.name AS agent_name,
-    ac.type AS agent_type,
-    ac.provider,
-    eac.status,
+    a.name AS agent_name,
+    a.type AS agent_type,
+    a.provider,
+    eac.is_enabled,
+    eac.config_override,
     eac.sync_token,
-    eac.last_sync_at,
+    eac.last_synced_at,
     eac.created_at
    FROM ((employee_agent_configs eac
      JOIN employees e ON ((eac.employee_id = e.id)))
-     JOIN agent_catalog ac ON ((eac.agent_catalog_id = ac.id)))
+     JOIN agents a ON ((eac.agent_id = a.id)))
 )
 ```
 
@@ -39,22 +40,41 @@ CREATE VIEW v_employee_agents AS (
 | agent_name | varchar(255) |  | true |  |  |  |
 | agent_type | varchar(100) |  | true |  |  |  |
 | provider | varchar(100) |  | true |  |  |  |
-| status | varchar(50) |  | true |  |  |  |
+| is_enabled | boolean |  | true |  |  |  |
+| config_override | jsonb |  | true |  |  |  |
 | sync_token | varchar(255) |  | true |  |  |  |
-| last_sync_at | timestamp without time zone |  | true |  |  |  |
+| last_synced_at | timestamp without time zone |  | true |  |  |  |
 | created_at | timestamp without time zone |  | true |  |  |  |
 
 ## Referenced Tables
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [public.employee_agent_configs](public.employee_agent_configs.md) | 10 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 12 |  | BASE TABLE |
-| [public.agent_catalog](public.agent_catalog.md) | 12 |  | BASE TABLE |
+| [public.employee_agent_configs](public.employee_agent_configs.md) | 9 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 13 |  | BASE TABLE |
+| [public.agents](public.agents.md) | 12 |  | BASE TABLE |
 
 ## Relations
 
-![er](public.v_employee_agents.svg)
+```mermaid
+erDiagram
+
+
+"public.v_employee_agents" {
+  uuid id
+  uuid employee_id
+  varchar_255_ employee_name
+  varchar_255_ employee_email
+  varchar_255_ agent_name
+  varchar_100_ agent_type
+  varchar_100_ provider
+  boolean is_enabled
+  jsonb config_override
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_synced_at
+  timestamp_without_time_zone created_at
+}
+```
 
 ---
 

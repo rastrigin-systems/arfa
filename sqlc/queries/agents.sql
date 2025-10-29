@@ -152,3 +152,122 @@ SELECT EXISTS(
 SELECT COUNT(*)
 FROM employee_agent_configs
 WHERE employee_id = $1;
+
+-- Hierarchical Config Resolution Queries
+-- These queries fetch configs at different levels for merging
+
+-- name: GetOrgAgentConfig :one
+-- Get org-level config for an agent
+SELECT
+    id,
+    org_id,
+    agent_id,
+    config,
+    is_enabled,
+    created_at,
+    updated_at
+FROM org_agent_configs
+WHERE org_id = $1 AND agent_id = $2;
+
+-- name: GetTeamAgentConfig :one
+-- Get team-level config for an agent (requires team_id lookup)
+SELECT
+    id,
+    team_id,
+    agent_id,
+    config_override,
+    is_enabled,
+    created_at,
+    updated_at
+FROM team_agent_configs
+WHERE team_id = $1 AND agent_id = $2;
+
+-- name: GetEmployeeAgentConfigByAgent :one
+-- Get employee-level config for a specific agent
+SELECT
+    id,
+    employee_id,
+    agent_id,
+    config_override,
+    is_enabled,
+    sync_token,
+    last_synced_at,
+    created_at,
+    updated_at
+FROM employee_agent_configs
+WHERE employee_id = $1 AND agent_id = $2;
+
+-- name: GetSystemPrompts :many
+-- Get all system prompts for org/team/employee + agent
+-- Returns prompts ordered by scope hierarchy (org -> team -> employee) then priority
+SELECT
+    id,
+    scope_type,
+    scope_id,
+    agent_id,
+    prompt,
+    priority,
+    created_at,
+    updated_at
+FROM system_prompts
+WHERE (scope_type = 'org' AND scope_id = $1 AND (agent_id = $2 OR agent_id IS NULL))
+   OR (scope_type = 'team' AND scope_id = $3 AND (agent_id = $2 OR agent_id IS NULL))
+   OR (scope_type = 'employee' AND scope_id = $4 AND (agent_id = $2 OR agent_id IS NULL))
+ORDER BY
+    CASE scope_type
+        WHEN 'org' THEN 1
+        WHEN 'team' THEN 2
+        WHEN 'employee' THEN 3
+    END,
+    priority ASC;
+
+-- name: ListOrgAgentConfigs :many
+-- List all org-level agent configs for an organization
+SELECT
+    oac.id,
+    oac.org_id,
+    oac.agent_id,
+    oac.config,
+    oac.is_enabled,
+    oac.created_at,
+    oac.updated_at,
+    a.name as agent_name,
+    a.type as agent_type,
+    a.provider as agent_provider,
+    a.default_config as agent_default_config
+FROM org_agent_configs oac
+JOIN agents a ON oac.agent_id = a.id
+WHERE oac.org_id = $1
+ORDER BY a.name ASC;
+
+-- name: CreateOrgAgentConfig :one
+-- Create org-level agent config
+INSERT INTO org_agent_configs (
+    org_id,
+    agent_id,
+    config,
+    is_enabled
+) VALUES ($1, $2, $3, $4)
+RETURNING id, org_id, agent_id, config, is_enabled, created_at, updated_at;
+
+-- name: UpdateOrgAgentConfig :one
+-- Update org-level agent config
+UPDATE org_agent_configs
+SET
+    config = COALESCE(sqlc.narg('config')::jsonb, config),
+    is_enabled = COALESCE(sqlc.narg('is_enabled')::boolean, is_enabled),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, org_id, agent_id, config, is_enabled, created_at, updated_at;
+
+-- name: DeleteOrgAgentConfig :exec
+-- Delete org-level agent config
+DELETE FROM org_agent_configs
+WHERE id = $1;
+
+-- name: CheckOrgAgentConfigExists :one
+-- Check if org already has this agent configured
+SELECT EXISTS(
+    SELECT 1 FROM org_agent_configs
+    WHERE org_id = $1 AND agent_id = $2
+) AS exists;

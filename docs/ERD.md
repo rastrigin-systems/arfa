@@ -4,53 +4,53 @@
 
 This Mermaid ERD diagram visualizes all tables and their relationships in the Ubik Enterprise platform.
 
+**⚠️ AUTO-GENERATED FILE - DO NOT EDIT MANUALLY**
+- Generated from: `docs/schema.json`
+- Script: `scripts/generate-erd-overview.py`
+- To update: `make generate-erd`
+
 ```mermaid
 erDiagram
     %% Core Organization Structure
     organizations ||--o{ subscriptions : "has"
     organizations ||--o{ teams : "has"
     organizations ||--o{ employees : "has"
-    organizations ||--o{ activity_logs : "tracks"
-    organizations ||--o{ usage_records : "tracks"
-    
-    teams ||--o{ employees : "contains"
-    teams ||--o{ team_policies : "enforces"
-    
-    roles ||--o{ employees : "assigned_to"
-    
-    employees ||--o{ sessions : "creates"
+    teams ||--o{ employees : "has"
+    roles ||--o{ employees : "has"
+    employees ||--o{ sessions : "has"
+    agents ||--o{ agent_tools : "has"
+    tools ||--o{ agent_tools : "has"
+    agents ||--o{ agent_policies : "has"
+    policies ||--o{ agent_policies : "has"
+    teams ||--o{ team_policies : "has"
+    policies ||--o{ team_policies : "has"
+    organizations ||--o{ org_agent_configs : "has"
+    agents ||--o{ org_agent_configs : "has"
+    teams ||--o{ team_agent_configs : "has"
+    agents ||--o{ team_agent_configs : "has"
     employees ||--o{ employee_agent_configs : "has"
+    agents ||--o{ employee_agent_configs : "has"
+    agents ||--o{ system_prompts : "has"
+    employees ||--o{ employee_policies : "has"
+    policies ||--o{ employee_policies : "has"
+    mcp_categories ||--o{ mcp_catalog : "has"
     employees ||--o{ employee_mcp_configs : "has"
-    employees ||--o{ agent_requests : "submits"
-    employees ||--o{ approvals : "approves"
-    employees ||--o{ activity_logs : "performs"
-    employees ||--o{ usage_records : "generates"
-    
-    %% Agent Configuration
-    agent_catalog ||--o{ agent_tools : "includes"
-    agent_catalog ||--o{ agent_policies : "enforces"
-    agent_catalog ||--o{ employee_agent_configs : "instantiates"
-    
-    tools ||--o{ agent_tools : "used_in"
-    
-    policies ||--o{ agent_policies : "applied_to"
-    policies ||--o{ team_policies : "overridden_by"
-    
-    employee_agent_configs ||--o{ usage_records : "generates"
-    
-    %% MCP Configuration
-    mcp_categories ||--o{ mcp_catalog : "contains"
-    mcp_catalog ||--o{ employee_mcp_configs : "provides"
-    
-    %% Approval Workflow
-    agent_requests ||--o{ approvals : "requires"
-    
+    mcp_catalog ||--o{ employee_mcp_configs : "has"
+    employees ||--o{ agent_requests : "has"
+    employees ||--o{ approvals : "has"
+    agent_requests ||--o{ approvals : "has"
+    organizations ||--o{ activity_logs : "has"
+    employees ||--o{ activity_logs : "has"
+    organizations ||--o{ usage_records : "has"
+    employees ||--o{ usage_records : "has"
+    employee_agent_configs ||--o{ usage_records : "has"
+
     %% Table Definitions
     organizations {
         uuid id PK
-        varchar name
-        varchar slug UK
-        varchar plan
+        varchar255 name
+        varchar100 slug UK
+        varchar50 plan
         jsonb settings
         int max_employees
         int max_agents_per_employee
@@ -61,12 +61,12 @@ erDiagram
     subscriptions {
         uuid id PK
         uuid org_id FK
-        varchar plan_type
+        varchar50 plan_type
         decimal monthly_budget_usd
         decimal current_spending_usd
         timestamp billing_period_start
         timestamp billing_period_end
-        varchar status
+        varchar50 status
         timestamp created_at
         timestamp updated_at
     }
@@ -74,7 +74,7 @@ erDiagram
     teams {
         uuid id PK
         uuid org_id FK
-        varchar name
+        varchar255 name UK
         text description
         timestamp created_at
         timestamp updated_at
@@ -82,7 +82,7 @@ erDiagram
     
     roles {
         uuid id PK
-        varchar name UK
+        varchar100 name UK
         text description
         jsonb permissions
         timestamp created_at
@@ -93,10 +93,10 @@ erDiagram
         uuid org_id FK
         uuid team_id FK
         uuid role_id FK
-        varchar email UK
-        varchar full_name
-        varchar password_hash
-        varchar status
+        varchar255 email UK
+        varchar255 full_name
+        varchar255 password_hash
+        varchar50 status
         jsonb preferences
         timestamp last_login_at
         timestamp created_at
@@ -107,32 +107,17 @@ erDiagram
     sessions {
         uuid id PK
         uuid employee_id FK
-        varchar token_hash UK
-        varchar ip_address
+        varchar255 token_hash UK
+        varchar45 ip_address
         text user_agent
         timestamp expires_at
         timestamp created_at
     }
     
-    agent_catalog {
-        uuid id PK
-        varchar name UK
-        varchar type
-        text description
-        varchar provider
-        jsonb default_config
-        jsonb capabilities
-        varchar llm_provider
-        varchar llm_model
-        boolean is_public
-        timestamp created_at
-        timestamp updated_at
-    }
-    
     tools {
         uuid id PK
-        varchar name UK
-        varchar type
+        varchar100 name UK
+        varchar50 type
         text description
         jsonb schema
         boolean requires_approval
@@ -142,24 +127,24 @@ erDiagram
     
     policies {
         uuid id PK
-        varchar name UK
-        varchar type
+        varchar100 name UK
+        varchar50 type
         jsonb rules
-        varchar severity
+        varchar20 severity
         timestamp created_at
         timestamp updated_at
     }
     
     agent_tools {
-        uuid agent_id FK
-        uuid tool_id FK
+        uuid agent_id PK
+        uuid tool_id PK
         jsonb config
         timestamp created_at
     }
     
     agent_policies {
-        uuid agent_id FK
-        uuid policy_id FK
+        uuid agent_id PK
+        uuid policy_id PK
         timestamp created_at
     }
     
@@ -174,28 +159,27 @@ erDiagram
     employee_agent_configs {
         uuid id PK
         uuid employee_id FK
-        uuid agent_catalog_id FK
-        varchar name
-        varchar status
+        uuid agent_id FK
         jsonb config_override
-        varchar sync_token UK
-        timestamp last_sync_at
+        boolean is_enabled
+        varchar255 sync_token UK
+        timestamp last_synced_at
         timestamp created_at
         timestamp updated_at
     }
     
     mcp_categories {
         uuid id PK
-        varchar name UK
+        varchar100 name UK
         text description
         timestamp created_at
     }
     
     mcp_catalog {
         uuid id PK
-        varchar name UK
-        varchar provider
-        varchar version
+        varchar255 name UK
+        varchar255 provider
+        varchar50 version
         text description
         jsonb connection_schema
         jsonb capabilities
@@ -210,10 +194,10 @@ erDiagram
         uuid id PK
         uuid employee_id FK
         uuid mcp_catalog_id FK
-        varchar status
+        varchar50 status
         jsonb connection_config
         text credentials_encrypted
-        varchar sync_token UK
+        varchar255 sync_token UK
         timestamp last_sync_at
         timestamp created_at
         timestamp updated_at
@@ -222,9 +206,9 @@ erDiagram
     agent_requests {
         uuid id PK
         uuid employee_id FK
-        varchar request_type
+        varchar50 request_type
         jsonb request_data
-        varchar status
+        varchar50 status
         text reason
         timestamp created_at
         timestamp resolved_at
@@ -234,7 +218,7 @@ erDiagram
         uuid id PK
         uuid request_id FK
         uuid approver_id FK
-        varchar status
+        varchar50 status
         text comment
         timestamp created_at
         timestamp resolved_at
@@ -244,8 +228,8 @@ erDiagram
         uuid id PK
         uuid org_id FK
         uuid employee_id FK
-        varchar event_type
-        varchar event_category
+        varchar100 event_type
+        varchar50 event_category
         jsonb payload
         timestamp created_at
     }
@@ -255,7 +239,7 @@ erDiagram
         uuid org_id FK
         uuid employee_id FK
         uuid agent_config_id FK
-        varchar resource_type
+        varchar50 resource_type
         bigint quantity
         decimal cost_usd
         timestamp period_start
@@ -263,6 +247,7 @@ erDiagram
         jsonb metadata
         timestamp created_at
     }
+    
 ```
 
 ## Table Groups
@@ -337,7 +322,7 @@ employees (1) ──→ (N) approvals (approver)
 
 ## Views
 
-The schema also includes 3 materialized views for common queries:
+The schema also includes {len(views)} materialized views for common queries:
 
 1. **v_employee_agents** - Employee agents with catalog details
 2. **v_employee_mcps** - Employee MCPs with catalog details
@@ -353,12 +338,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 20
+- **Total Tables**: 24
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~150
-- **Foreign Keys**: 25+
-- **Indexes**: 50+
+- **Total Columns**: ~184
+- **Foreign Keys**: 32+
+- **Indexes**: 74+
 
 ## Legend
 
@@ -370,6 +355,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-10-28  
-**Schema Version**: 1.0.0  
+**Generated**: 2025-10-29 10:34:05
+**Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

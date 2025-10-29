@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| agent_id | uuid |  | false |  | [public.agent_catalog](public.agent_catalog.md) |  |
+| agent_id | uuid |  | false |  | [public.agents](public.agents.md) |  |
 | policy_id | uuid |  | false |  | [public.policies](public.policies.md) |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 
@@ -14,7 +14,7 @@
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| agent_policies_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE |
+| agent_policies_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE |
 | agent_policies_policy_id_fkey | FOREIGN KEY | FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE |
 | agent_policies_pkey | PRIMARY KEY | PRIMARY KEY (agent_id, policy_id) |
 
@@ -26,7 +26,41 @@
 
 ## Relations
 
-![er](public.agent_policies.svg)
+```mermaid
+erDiagram
+
+"public.agent_policies" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
+"public.agent_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
+
+"public.agent_policies" {
+  uuid agent_id FK
+  uuid policy_id FK
+  timestamp_without_time_zone created_at
+}
+"public.agents" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ type
+  text description
+  varchar_100_ provider
+  jsonb default_config
+  jsonb capabilities
+  varchar_50_ llm_provider
+  varchar_100_ llm_model
+  boolean is_public
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.policies" {
+  uuid id
+  varchar_100_ name
+  varchar_50_ type
+  jsonb rules
+  varchar_20_ severity
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

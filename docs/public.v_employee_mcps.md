@@ -49,12 +49,29 @@ CREATE VIEW v_employee_mcps AS (
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [public.employee_mcp_configs](public.employee_mcp_configs.md) | 10 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 12 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 13 |  | BASE TABLE |
 | [public.mcp_catalog](public.mcp_catalog.md) | 12 |  | BASE TABLE |
 
 ## Relations
 
-![er](public.v_employee_mcps.svg)
+```mermaid
+erDiagram
+
+
+"public.v_employee_mcps" {
+  uuid id
+  uuid employee_id
+  varchar_255_ employee_name
+  varchar_255_ employee_email
+  varchar_255_ mcp_name
+  varchar_255_ provider
+  varchar_50_ version
+  varchar_50_ status
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_sync_at
+  timestamp_without_time_zone created_at
+}
+```
 
 ---
 

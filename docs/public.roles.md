@@ -28,7 +28,34 @@
 
 ## Relations
 
-![er](public.roles.svg)
+```mermaid
+erDiagram
+
+"public.employees" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
+
+"public.roles" {
+  uuid id
+  varchar_100_ name
+  text description
+  jsonb permissions
+  timestamp_without_time_zone created_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+```
 
 ---
 

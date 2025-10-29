@@ -34,7 +34,48 @@
 
 ## Relations
 
-![er](public.activity_logs.svg)
+```mermaid
+erDiagram
+
+"public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
+
+"public.activity_logs" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  varchar_100_ event_type
+  varchar_50_ event_category
+  jsonb payload
+  timestamp_without_time_zone created_at
+}
+"public.organizations" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ slug
+  varchar_50_ plan
+  jsonb settings
+  integer max_employees
+  integer max_agents_per_employee
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+```
 
 ---
 

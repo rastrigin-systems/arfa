@@ -37,7 +37,28 @@
 
 ## Relations
 
-![er](public.tools.svg)
+```mermaid
+erDiagram
+
+"public.agent_tools" }o--|| "public.tools" : "FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE"
+
+"public.tools" {
+  uuid id
+  varchar_100_ name
+  varchar_50_ type
+  text description
+  jsonb schema
+  boolean requires_approval
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.agent_tools" {
+  uuid agent_id FK
+  uuid tool_id FK
+  jsonb config
+  timestamp_without_time_zone created_at
+}
+```
 
 ---
 

@@ -38,7 +38,35 @@
 
 ## Relations
 
-![er](public.subscriptions.svg)
+```mermaid
+erDiagram
+
+"public.subscriptions" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+
+"public.subscriptions" {
+  uuid id
+  uuid org_id FK
+  varchar_50_ plan_type
+  numeric_10_2_ monthly_budget_usd
+  numeric_10_2_ current_spending_usd
+  timestamp_without_time_zone billing_period_start
+  timestamp_without_time_zone billing_period_end
+  varchar_50_ status
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.organizations" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ slug
+  varchar_50_ plan
+  jsonb settings
+  integer max_employees
+  integer max_agents_per_employee
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

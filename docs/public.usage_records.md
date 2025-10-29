@@ -39,7 +39,64 @@
 
 ## Relations
 
-![er](public.usage_records.svg)
+```mermaid
+erDiagram
+
+"public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
+"public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
+
+"public.usage_records" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  uuid agent_config_id FK
+  varchar_50_ resource_type
+  bigint quantity
+  numeric_10_4_ cost_usd
+  timestamp_without_time_zone period_start
+  timestamp_without_time_zone period_end
+  jsonb metadata
+  timestamp_without_time_zone created_at
+}
+"public.organizations" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ slug
+  varchar_50_ plan
+  jsonb settings
+  integer max_employees
+  integer max_agents_per_employee
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+"public.employee_agent_configs" {
+  uuid id
+  uuid employee_id FK
+  uuid agent_id FK
+  jsonb config_override
+  boolean is_enabled
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_synced_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

@@ -34,7 +34,36 @@
 
 ## Relations
 
-![er](public.sessions.svg)
+```mermaid
+erDiagram
+
+"public.sessions" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+
+"public.sessions" {
+  uuid id
+  uuid employee_id FK
+  varchar_255_ token_hash
+  varchar_45_ ip_address
+  text user_agent
+  timestamp_without_time_zone expires_at
+  timestamp_without_time_zone created_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+```
 
 ---
 

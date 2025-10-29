@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| agent_id | uuid |  | false |  | [public.agent_catalog](public.agent_catalog.md) |  |
+| agent_id | uuid |  | false |  | [public.agents](public.agents.md) |  |
 | tool_id | uuid |  | false |  | [public.tools](public.tools.md) |  |
 | config | jsonb | '{}'::jsonb | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
@@ -15,7 +15,7 @@
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| agent_tools_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE |
+| agent_tools_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE |
 | agent_tools_tool_id_fkey | FOREIGN KEY | FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE |
 | agent_tools_pkey | PRIMARY KEY | PRIMARY KEY (agent_id, tool_id) |
 
@@ -27,7 +27,43 @@
 
 ## Relations
 
-![er](public.agent_tools.svg)
+```mermaid
+erDiagram
+
+"public.agent_tools" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
+"public.agent_tools" }o--|| "public.tools" : "FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE"
+
+"public.agent_tools" {
+  uuid agent_id FK
+  uuid tool_id FK
+  jsonb config
+  timestamp_without_time_zone created_at
+}
+"public.agents" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ type
+  text description
+  varchar_100_ provider
+  jsonb default_config
+  jsonb capabilities
+  varchar_50_ llm_provider
+  varchar_100_ llm_model
+  boolean is_public
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.tools" {
+  uuid id
+  varchar_100_ name
+  varchar_50_ type
+  text description
+  jsonb schema
+  boolean requires_approval
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

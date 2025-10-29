@@ -466,6 +466,11 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
         }
       ],
       "indexes": [
@@ -707,7 +712,7 @@
       ]
     },
     {
-      "name": "public.agent_catalog",
+      "name": "public.agents",
       "type": "BASE TABLE",
       "columns": [
         {
@@ -781,17 +786,17 @@
       ],
       "indexes": [
         {
-          "name": "agent_catalog_pkey",
-          "def": "CREATE UNIQUE INDEX agent_catalog_pkey ON public.agent_catalog USING btree (id)",
-          "table": "public.agent_catalog",
+          "name": "agents_pkey",
+          "def": "CREATE UNIQUE INDEX agents_pkey ON public.agents USING btree (id)",
+          "table": "public.agents",
           "columns": [
             "id"
           ]
         },
         {
-          "name": "agent_catalog_name_key",
-          "def": "CREATE UNIQUE INDEX agent_catalog_name_key ON public.agent_catalog USING btree (name)",
-          "table": "public.agent_catalog",
+          "name": "agents_name_key",
+          "def": "CREATE UNIQUE INDEX agents_name_key ON public.agents USING btree (name)",
+          "table": "public.agents",
           "columns": [
             "name"
           ]
@@ -799,20 +804,20 @@
       ],
       "constraints": [
         {
-          "name": "agent_catalog_pkey",
+          "name": "agents_pkey",
           "type": "PRIMARY KEY",
           "def": "PRIMARY KEY (id)",
-          "table": "public.agent_catalog",
+          "table": "public.agents",
           "referenced_table": "",
           "columns": [
             "id"
           ]
         },
         {
-          "name": "agent_catalog_name_key",
+          "name": "agents_name_key",
           "type": "UNIQUE",
           "def": "UNIQUE (name)",
-          "table": "public.agent_catalog",
+          "table": "public.agents",
           "referenced_table": "",
           "columns": [
             "name"
@@ -821,8 +826,8 @@
       ],
       "triggers": [
         {
-          "name": "update_agent_catalog_updated_at",
-          "def": "CREATE TRIGGER update_agent_catalog_updated_at BEFORE UPDATE ON public.agent_catalog FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
+          "name": "update_agents_updated_at",
+          "def": "CREATE TRIGGER update_agents_updated_at BEFORE UPDATE ON public.agents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
         }
       ]
     },
@@ -1056,9 +1061,9 @@
         {
           "name": "agent_tools_agent_id_fkey",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE",
           "table": "public.agent_tools",
-          "referenced_table": "agent_catalog",
+          "referenced_table": "agents",
           "columns": [
             "agent_id"
           ],
@@ -1128,9 +1133,9 @@
         {
           "name": "agent_policies_agent_id_fkey",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE",
           "table": "public.agent_policies",
-          "referenced_table": "agent_catalog",
+          "referenced_table": "agents",
           "columns": [
             "agent_id"
           ],
@@ -1267,6 +1272,234 @@
       ]
     },
     {
+      "name": "public.org_agent_configs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "org_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "agent_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "config",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "org_agent_configs_pkey",
+          "def": "CREATE UNIQUE INDEX org_agent_configs_pkey ON public.org_agent_configs USING btree (id)",
+          "table": "public.org_agent_configs",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_org_agent",
+          "def": "CREATE UNIQUE INDEX unique_org_agent ON public.org_agent_configs USING btree (org_id, agent_id)",
+          "table": "public.org_agent_configs",
+          "columns": [
+            "org_id",
+            "agent_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "org_agent_configs_org_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE",
+          "table": "public.org_agent_configs",
+          "referenced_table": "organizations",
+          "columns": [
+            "org_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "org_agent_configs_agent_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT",
+          "table": "public.org_agent_configs",
+          "referenced_table": "agents",
+          "columns": [
+            "agent_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "org_agent_configs_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.org_agent_configs",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_org_agent",
+          "type": "UNIQUE",
+          "def": "UNIQUE (org_id, agent_id)",
+          "table": "public.org_agent_configs",
+          "referenced_table": "",
+          "columns": [
+            "org_id",
+            "agent_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.team_agent_configs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "team_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "agent_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "config_override",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "team_agent_configs_pkey",
+          "def": "CREATE UNIQUE INDEX team_agent_configs_pkey ON public.team_agent_configs USING btree (id)",
+          "table": "public.team_agent_configs",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_team_agent",
+          "def": "CREATE UNIQUE INDEX unique_team_agent ON public.team_agent_configs USING btree (team_id, agent_id)",
+          "table": "public.team_agent_configs",
+          "columns": [
+            "team_id",
+            "agent_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "team_agent_configs_team_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE",
+          "table": "public.team_agent_configs",
+          "referenced_table": "teams",
+          "columns": [
+            "team_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_agent_configs_agent_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT",
+          "table": "public.team_agent_configs",
+          "referenced_table": "agents",
+          "columns": [
+            "agent_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_agent_configs_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.team_agent_configs",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_team_agent",
+          "type": "UNIQUE",
+          "def": "UNIQUE (team_id, agent_id)",
+          "table": "public.team_agent_configs",
+          "referenced_table": "",
+          "columns": [
+            "team_id",
+            "agent_id"
+          ]
+        }
+      ]
+    },
+    {
       "name": "public.employee_agent_configs",
       "type": "BASE TABLE",
       "columns": [
@@ -1282,20 +1515,9 @@
           "nullable": false
         },
         {
-          "name": "agent_catalog_id",
+          "name": "agent_id",
           "type": "uuid",
           "nullable": false
-        },
-        {
-          "name": "name",
-          "type": "varchar(255)",
-          "nullable": false
-        },
-        {
-          "name": "status",
-          "type": "varchar(50)",
-          "nullable": false,
-          "default": "'active'::character varying"
         },
         {
           "name": "config_override",
@@ -1304,12 +1526,18 @@
           "default": "'{}'::jsonb"
         },
         {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
+        },
+        {
           "name": "sync_token",
           "type": "varchar(255)",
           "nullable": true
         },
         {
-          "name": "last_sync_at",
+          "name": "last_synced_at",
           "type": "timestamp without time zone",
           "nullable": true
         },
@@ -1344,12 +1572,12 @@
           ]
         },
         {
-          "name": "unique_agent_name_per_employee",
-          "def": "CREATE UNIQUE INDEX unique_agent_name_per_employee ON public.employee_agent_configs USING btree (employee_id, name)",
+          "name": "unique_employee_agent",
+          "def": "CREATE UNIQUE INDEX unique_employee_agent ON public.employee_agent_configs USING btree (employee_id, agent_id)",
           "table": "public.employee_agent_configs",
           "columns": [
             "employee_id",
-            "name"
+            "agent_id"
           ]
         },
         {
@@ -1361,19 +1589,19 @@
           ]
         },
         {
-          "name": "idx_employee_agent_configs_agent_catalog_id",
-          "def": "CREATE INDEX idx_employee_agent_configs_agent_catalog_id ON public.employee_agent_configs USING btree (agent_catalog_id)",
+          "name": "idx_employee_agent_configs_agent_id",
+          "def": "CREATE INDEX idx_employee_agent_configs_agent_id ON public.employee_agent_configs USING btree (agent_id)",
           "table": "public.employee_agent_configs",
           "columns": [
-            "agent_catalog_id"
+            "agent_id"
           ]
         },
         {
-          "name": "idx_employee_agent_configs_status",
-          "def": "CREATE INDEX idx_employee_agent_configs_status ON public.employee_agent_configs USING btree (status)",
+          "name": "idx_employee_agent_configs_is_enabled",
+          "def": "CREATE INDEX idx_employee_agent_configs_is_enabled ON public.employee_agent_configs USING btree (is_enabled)",
           "table": "public.employee_agent_configs",
           "columns": [
-            "status"
+            "is_enabled"
           ]
         },
         {
@@ -1400,13 +1628,13 @@
           ]
         },
         {
-          "name": "employee_agent_configs_agent_catalog_id_fkey",
+          "name": "employee_agent_configs_agent_id_fkey",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (agent_catalog_id) REFERENCES agent_catalog(id) ON DELETE RESTRICT",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT",
           "table": "public.employee_agent_configs",
-          "referenced_table": "agent_catalog",
+          "referenced_table": "agents",
           "columns": [
-            "agent_catalog_id"
+            "agent_id"
           ],
           "referenced_columns": [
             "id"
@@ -1433,14 +1661,14 @@
           ]
         },
         {
-          "name": "unique_agent_name_per_employee",
+          "name": "unique_employee_agent",
           "type": "UNIQUE",
-          "def": "UNIQUE (employee_id, name)",
+          "def": "UNIQUE (employee_id, agent_id)",
           "table": "public.employee_agent_configs",
           "referenced_table": "",
           "columns": [
             "employee_id",
-            "name"
+            "agent_id"
           ]
         }
       ],
@@ -1452,6 +1680,237 @@
         {
           "name": "generate_agent_config_sync_token",
           "def": "CREATE TRIGGER generate_agent_config_sync_token BEFORE INSERT ON public.employee_agent_configs FOR EACH ROW EXECUTE FUNCTION generate_sync_token()"
+        }
+      ]
+    },
+    {
+      "name": "public.system_prompts",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "scope_type",
+          "type": "varchar(20)",
+          "nullable": false
+        },
+        {
+          "name": "scope_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "agent_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "prompt",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "priority",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "system_prompts_pkey",
+          "def": "CREATE UNIQUE INDEX system_prompts_pkey ON public.system_prompts USING btree (id)",
+          "table": "public.system_prompts",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_system_prompt",
+          "def": "CREATE UNIQUE INDEX unique_system_prompt ON public.system_prompts USING btree (scope_type, scope_id, agent_id, priority)",
+          "table": "public.system_prompts",
+          "columns": [
+            "scope_type",
+            "scope_id",
+            "agent_id",
+            "priority"
+          ]
+        },
+        {
+          "name": "idx_system_prompts_scope",
+          "def": "CREATE INDEX idx_system_prompts_scope ON public.system_prompts USING btree (scope_type, scope_id, agent_id)",
+          "table": "public.system_prompts",
+          "columns": [
+            "scope_type",
+            "scope_id",
+            "agent_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "system_prompts_scope_type_check",
+          "type": "CHECK",
+          "def": "CHECK (((scope_type)::text = ANY ((ARRAY['org'::character varying, 'team'::character varying, 'employee'::character varying])::text[])))",
+          "table": "public.system_prompts",
+          "referenced_table": "",
+          "columns": [
+            "scope_type"
+          ]
+        },
+        {
+          "name": "system_prompts_agent_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE",
+          "table": "public.system_prompts",
+          "referenced_table": "agents",
+          "columns": [
+            "agent_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "system_prompts_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.system_prompts",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_system_prompt",
+          "type": "UNIQUE",
+          "def": "UNIQUE (scope_type, scope_id, agent_id, priority)",
+          "table": "public.system_prompts",
+          "referenced_table": "",
+          "columns": [
+            "scope_type",
+            "scope_id",
+            "agent_id",
+            "priority"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.employee_policies",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "employee_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "policy_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "overrides",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "employee_policies_pkey",
+          "def": "CREATE UNIQUE INDEX employee_policies_pkey ON public.employee_policies USING btree (id)",
+          "table": "public.employee_policies",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_employee_policy",
+          "def": "CREATE UNIQUE INDEX unique_employee_policy ON public.employee_policies USING btree (employee_id, policy_id)",
+          "table": "public.employee_policies",
+          "columns": [
+            "employee_id",
+            "policy_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "employee_policies_employee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
+          "table": "public.employee_policies",
+          "referenced_table": "employees",
+          "columns": [
+            "employee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_policies_policy_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE",
+          "table": "public.employee_policies",
+          "referenced_table": "policies",
+          "columns": [
+            "policy_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_policies_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.employee_policies",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_employee_policy",
+          "type": "UNIQUE",
+          "def": "UNIQUE (employee_id, policy_id)",
+          "table": "public.employee_policies",
+          "referenced_table": "",
+          "columns": [
+            "employee_id",
+            "policy_id"
+          ]
         }
       ]
     },
@@ -2381,8 +2840,13 @@
           "nullable": true
         },
         {
-          "name": "status",
-          "type": "varchar(50)",
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": true
+        },
+        {
+          "name": "config_override",
+          "type": "jsonb",
           "nullable": true
         },
         {
@@ -2391,7 +2855,7 @@
           "nullable": true
         },
         {
-          "name": "last_sync_at",
+          "name": "last_synced_at",
           "type": "timestamp without time zone",
           "nullable": true
         },
@@ -2401,11 +2865,11 @@
           "nullable": true
         }
       ],
-      "def": "CREATE VIEW v_employee_agents AS (\n SELECT eac.id,\n    eac.employee_id,\n    e.full_name AS employee_name,\n    e.email AS employee_email,\n    ac.name AS agent_name,\n    ac.type AS agent_type,\n    ac.provider,\n    eac.status,\n    eac.sync_token,\n    eac.last_sync_at,\n    eac.created_at\n   FROM ((employee_agent_configs eac\n     JOIN employees e ON ((eac.employee_id = e.id)))\n     JOIN agent_catalog ac ON ((eac.agent_catalog_id = ac.id)))\n)",
+      "def": "CREATE VIEW v_employee_agents AS (\n SELECT eac.id,\n    eac.employee_id,\n    e.full_name AS employee_name,\n    e.email AS employee_email,\n    a.name AS agent_name,\n    a.type AS agent_type,\n    a.provider,\n    eac.is_enabled,\n    eac.config_override,\n    eac.sync_token,\n    eac.last_synced_at,\n    eac.created_at\n   FROM ((employee_agent_configs eac\n     JOIN employees e ON ((eac.employee_id = e.id)))\n     JOIN agents a ON ((eac.agent_id = a.id)))\n)",
       "referenced_tables": [
         "public.employee_agent_configs",
         "public.employees",
-        "public.agent_catalog"
+        "public.agents"
       ]
     },
     {
@@ -2626,12 +3090,12 @@
         "agent_id"
       ],
       "cardinality": "zero_or_more",
-      "parent_table": "public.agent_catalog",
+      "parent_table": "public.agents",
       "parent_columns": [
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE"
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
     },
     {
       "table": "public.agent_tools",
@@ -2652,12 +3116,12 @@
         "agent_id"
       ],
       "cardinality": "zero_or_more",
-      "parent_table": "public.agent_catalog",
+      "parent_table": "public.agents",
       "parent_columns": [
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (agent_id) REFERENCES agent_catalog(id) ON DELETE CASCADE"
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
     },
     {
       "table": "public.agent_policies",
@@ -2699,6 +3163,58 @@
       "def": "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
     },
     {
+      "table": "public.org_agent_configs",
+      "columns": [
+        "org_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.organizations",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.org_agent_configs",
+      "columns": [
+        "agent_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.agents",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
+    },
+    {
+      "table": "public.team_agent_configs",
+      "columns": [
+        "team_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.teams",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.team_agent_configs",
+      "columns": [
+        "agent_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.agents",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
+    },
+    {
       "table": "public.employee_agent_configs",
       "columns": [
         "employee_id"
@@ -2714,15 +3230,54 @@
     {
       "table": "public.employee_agent_configs",
       "columns": [
-        "agent_catalog_id"
+        "agent_id"
       ],
       "cardinality": "zero_or_more",
-      "parent_table": "public.agent_catalog",
+      "parent_table": "public.agents",
       "parent_columns": [
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (agent_catalog_id) REFERENCES agent_catalog(id) ON DELETE RESTRICT"
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
+    },
+    {
+      "table": "public.system_prompts",
+      "columns": [
+        "agent_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.agents",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.employee_policies",
+      "columns": [
+        "employee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.employee_policies",
+      "columns": [
+        "policy_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.policies",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
     },
     {
       "table": "public.mcp_catalog",

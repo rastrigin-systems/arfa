@@ -330,9 +330,256 @@ Similar structure for MCP server endpoints:
 | **LATER** | **MCP & Policies (Phase 2-3)** | | | | |
 | 11+ | MCP endpoints | Various | TBD | ~6 hrs | ⏸️ Deferred |
 
-**Completed**: 9 endpoints (82 tests passing)
-**Next Phase**: 5 agent endpoints (~7-8 hours)
-**Total Remaining**: ~15 hours for full MVP
+**Completed**: 9 endpoints (84 tests passing)
+**Next Phase**: Hierarchical agent config system
+**Total Remaining**: ~20 hours for full MVP
+
+---
+
+## 🎯 NEW SCHEMA: Hierarchical Configuration System
+
+### Schema Changes (2025-10-29)
+
+**✅ COMPLETED:**
+1. Renamed `agent_catalog` → `agents` (consistency with other tables)
+2. Split `employee_agent_configs` into 3-level hierarchy:
+   - `org_agent_configs` - Organization defaults (full config)
+   - `team_agent_configs` - Team overrides (config_override)
+   - `employee_agent_configs` - Employee overrides (config_override)
+3. Added `system_prompts` table - Additive prompts across org/team/employee
+4. Added `employee_policies` table - Completes policy hierarchy
+5. All 84 tests passing ✅
+
+### Configuration Resolution
+
+**Hierarchy**: Org (base) → Team (override) → Employee (final override)
+
+**Example**:
+```javascript
+// Org config (base)
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "temperature": 0.2,
+  "max_tokens": 8192
+}
+
+// Team override
+{
+  "temperature": 0.5  // Override org
+}
+
+// Employee override
+{
+  "max_tokens": 16384  // Override org
+}
+
+// RESOLVED (merged)
+{
+  "model": "claude-3-5-sonnet-20241022",    // From org
+  "temperature": 0.5,                        // From team
+  "max_tokens": 16384                        // From employee
+}
+```
+
+**System Prompts** (concatenated):
+```
+Org:      "Follow company coding standards. Use TypeScript."
+Team:     "Focus on React components."
+Employee: "I prefer functional programming style."
+
+RESULT: All three concatenated with priority order
+```
+
+### Access Model
+
+**Team Members Inherit Team's Agents Automatically**
+- If Team A has ChatGPT configured → All Team A members get ChatGPT
+- If Team B has Claude → All Team B members get Claude
+- Employees can add overrides but don't need individual assignment
+
+**Example Scenario**:
+- Org enables ChatGPT and Claude (org_agent_configs)
+- Team A gets only ChatGPT (team_agent_configs)
+- Team B gets only Claude (team_agent_configs)
+- Team C gets both (team_agent_configs for both)
+- Alice (Team B) wants higher temperature (employee_agent_configs override)
+
+---
+
+## 📋 IMPLEMENTATION PLAN: Hierarchical Config System
+
+### Phase 1: Config Resolution Service (Core Logic)
+
+**Goal**: Build the service that resolves org → team → employee configs
+
+**Tasks**:
+1. Create `internal/service/config_resolver.go`
+2. Implement config merge logic (deep merge JSONB)
+3. Implement system prompt concatenation
+4. Implement policy resolution (most restrictive wins)
+5. Write comprehensive tests
+
+**Estimated Time**: 3-4 hours
+
+**Key Functions**:
+```go
+type ConfigResolver struct {
+    db db.Querier
+}
+
+// Resolve full config for an employee + agent
+func (r *ConfigResolver) ResolveAgentConfig(ctx context.Context, employeeID, agentID uuid.UUID) (*ResolvedConfig, error)
+
+// Resolve all agents for an employee (for CLI sync)
+func (r *ConfigResolver) ResolveEmployeeAgents(ctx context.Context, employeeID uuid.UUID) ([]ResolvedAgentConfig, error)
+
+type ResolvedConfig struct {
+    AgentID      uuid.UUID
+    Config       map[string]interface{}  // Merged config
+    SystemPrompt string                   // Concatenated prompts
+    Policies     []Policy                 // Resolved policies
+    IsEnabled    bool                     // All levels must be enabled
+}
+```
+
+---
+
+### Phase 2: Org-Level Management (Admin Operations)
+
+**Goal**: Allow admins to manage org-level agent configurations
+
+#### Endpoint 1: POST /organizations/current/agent-configs
+Create org-level agent configuration (makes agent available to org)
+
+**Tests**: 6 unit + 2 integration
+**Time**: 1.5 hours
+
+#### Endpoint 2: GET /organizations/current/agent-configs
+List all agents configured at org level
+
+**Tests**: 4 unit + 2 integration
+**Time**: 1 hour
+
+#### Endpoint 3: PATCH /organizations/current/agent-configs/{config_id}
+Update org-level config (affects all teams/employees)
+
+**Tests**: 5 unit + 2 integration
+**Time**: 1 hour
+
+#### Endpoint 4: DELETE /organizations/current/agent-configs/{config_id}
+Remove agent from org (cascades to teams/employees)
+
+**Tests**: 4 unit + 2 integration
+**Time**: 45 min
+
+**Phase 2 Total**: ~4.5 hours
+
+---
+
+### Phase 3: Employee Resolved View (CLI Sync)
+
+**Goal**: Employees can fetch their fully resolved configs for CLI sync
+
+#### Endpoint: GET /employees/{employee_id}/agent-configs/resolved
+Returns fully resolved configs (org + team + employee merged)
+
+**This is THE MOST IMPORTANT endpoint** - CLI needs this to sync
+
+**Tests**: 8 unit + 4 integration
+**Time**: 2 hours
+
+**Response Format**:
+```json
+{
+  "configs": [
+    {
+      "agent": {
+        "id": "uuid",
+        "name": "Claude Code",
+        "type": "claude-code"
+      },
+      "config": {
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.5,
+        "max_tokens": 16384
+      },
+      "system_prompt": "Org prompt\n\nTeam prompt\n\nEmployee prompt",
+      "policies": [...],
+      "source": {
+        "org_config_id": "uuid",
+        "team_config_id": "uuid",
+        "employee_config_id": null
+      }
+    }
+  ]
+}
+```
+
+---
+
+### Phase 4: Team-Level Management (Optional for MVP)
+
+Can be deferred - most orgs will use org-level + employee overrides
+
+#### Endpoints (if needed):
+- POST /teams/{team_id}/agent-configs
+- GET /teams/{team_id}/agent-configs
+- PATCH /teams/{team_id}/agent-configs/{config_id}
+- DELETE /teams/{team_id}/agent-configs/{config_id}
+
+**Phase 4 Total**: ~5 hours (DEFERRED)
+
+---
+
+### Phase 5: Employee-Level Overrides
+
+**Goal**: Employees can request custom overrides (pending approval)
+
+#### Endpoint: POST /employees/{employee_id}/agent-configs
+Create employee-level override (may require approval)
+
+**Tests**: 7 unit + 3 integration
+**Time**: 2 hours
+
+---
+
+### Phase 6: System Prompts API
+
+**Goal**: Manage hierarchical system prompts
+
+#### Endpoints:
+- GET /organizations/current/system-prompts
+- POST /organizations/current/system-prompts
+- GET /teams/{team_id}/system-prompts (if team management enabled)
+- POST /employees/{employee_id}/system-prompts
+
+**Phase 6 Total**: ~4 hours (DEFERRED to post-MVP)
+
+---
+
+## 🎯 MVP RECOMMENDATION (Next 2 Weeks)
+
+### Week 1: Core + Org Management
+1. ✅ Config Resolution Service (3-4 hours) - **START HERE**
+2. ✅ Org-level CRUD (4.5 hours)
+3. ✅ Employee resolved view (2 hours)
+
+**Total**: ~10 hours
+**Deliverable**: Admins can configure agents at org level, employees can sync to CLI
+
+### Week 2: Employee Overrides + Polish
+1. ✅ Employee override requests (2 hours)
+2. ✅ Integration tests for full flow (2 hours)
+3. ✅ Documentation (1 hour)
+
+**Total**: ~5 hours
+**Deliverable**: Complete MVP with hierarchical config system
+
+### Post-MVP (Later)
+- Team-level management
+- System prompts API
+- Approval workflows
+- Policy resolution UI
 
 ---
 

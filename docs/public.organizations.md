@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.subscriptions](public.subscriptions.md) [public.teams](public.teams.md) [public.employees](public.employees.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.subscriptions](public.subscriptions.md) [public.teams](public.teams.md) [public.employees](public.employees.md) [public.org_agent_configs](public.org_agent_configs.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
 | name | varchar(255) |  | false |  |  |  |
 | slug | varchar(100) |  | false |  |  |  |
 | plan | varchar(50) | 'starter'::character varying | false |  |  |  |
@@ -39,7 +39,94 @@
 
 ## Relations
 
-![er](public.organizations.svg)
+```mermaid
+erDiagram
+
+"public.subscriptions" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.org_agent_configs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+
+"public.organizations" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ slug
+  varchar_50_ plan
+  jsonb settings
+  integer max_employees
+  integer max_agents_per_employee
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.subscriptions" {
+  uuid id
+  uuid org_id FK
+  varchar_50_ plan_type
+  numeric_10_2_ monthly_budget_usd
+  numeric_10_2_ current_spending_usd
+  timestamp_without_time_zone billing_period_start
+  timestamp_without_time_zone billing_period_end
+  varchar_50_ status
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.teams" {
+  uuid id
+  uuid org_id FK
+  varchar_255_ name
+  text description
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+"public.org_agent_configs" {
+  uuid id
+  uuid org_id FK
+  uuid agent_id FK
+  jsonb config
+  boolean is_enabled
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.activity_logs" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  varchar_100_ event_type
+  varchar_50_ event_category
+  jsonb payload
+  timestamp_without_time_zone created_at
+}
+"public.usage_records" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  uuid agent_config_id FK
+  varchar_50_ resource_type
+  bigint quantity
+  numeric_10_4_ cost_usd
+  timestamp_without_time_zone period_start
+  timestamp_without_time_zone period_end
+  jsonb metadata
+  timestamp_without_time_zone created_at
+}
+```
 
 ---
 

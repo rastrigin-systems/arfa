@@ -42,7 +42,45 @@
 
 ## Relations
 
-![er](public.mcp_catalog.svg)
+```mermaid
+erDiagram
+
+"public.employee_mcp_configs" }o--|| "public.mcp_catalog" : "FOREIGN KEY (mcp_catalog_id) REFERENCES mcp_catalog(id) ON DELETE CASCADE"
+"public.mcp_catalog" }o--o| "public.mcp_categories" : "FOREIGN KEY (category_id) REFERENCES mcp_categories(id) ON DELETE SET NULL"
+
+"public.mcp_catalog" {
+  uuid id
+  varchar_255_ name
+  varchar_255_ provider
+  varchar_50_ version
+  text description
+  jsonb connection_schema
+  jsonb capabilities
+  boolean requires_credentials
+  boolean is_approved
+  uuid category_id FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employee_mcp_configs" {
+  uuid id
+  uuid employee_id FK
+  uuid mcp_catalog_id FK
+  varchar_50_ status
+  jsonb connection_config
+  text credentials_encrypted
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_sync_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.mcp_categories" {
+  uuid id
+  varchar_100_ name
+  text description
+  timestamp_without_time_zone created_at
+}
+```
 
 ---
 

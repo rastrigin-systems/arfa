@@ -32,7 +32,47 @@
 
 ## Relations
 
-![er](public.approvals.svg)
+```mermaid
+erDiagram
+
+"public.approvals" }o--|| "public.agent_requests" : "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
+"public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
+
+"public.approvals" {
+  uuid id
+  uuid request_id FK
+  uuid approver_id FK
+  varchar_50_ status
+  text comment
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone resolved_at
+}
+"public.agent_requests" {
+  uuid id
+  uuid employee_id FK
+  varchar_50_ request_type
+  jsonb request_data
+  varchar_50_ status
+  text reason
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone resolved_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+```
 
 ---
 

@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) [public.team_policies](public.team_policies.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) [public.team_policies](public.team_policies.md) [public.team_agent_configs](public.team_agent_configs.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | name | varchar(255) |  | false |  |  |  |
 | description | text |  | true |  |  |  |
@@ -37,7 +37,65 @@
 
 ## Relations
 
-![er](public.teams.svg)
+```mermaid
+erDiagram
+
+"public.employees" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
+"public.team_policies" }o--|| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
+"public.team_agent_configs" }o--|| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
+"public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+
+"public.teams" {
+  uuid id
+  uuid org_id FK
+  varchar_255_ name
+  text description
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+"public.team_policies" {
+  uuid id
+  uuid team_id FK
+  uuid policy_id FK
+  jsonb overrides
+  timestamp_without_time_zone created_at
+}
+"public.team_agent_configs" {
+  uuid id
+  uuid team_id FK
+  uuid agent_id FK
+  jsonb config_override
+  boolean is_enabled
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.organizations" {
+  uuid id
+  varchar_255_ name
+  varchar_100_ slug
+  varchar_50_ plan
+  jsonb settings
+  integer max_employees
+  integer max_agents_per_employee
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

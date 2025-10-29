@@ -30,7 +30,37 @@
 
 ## Relations
 
-![er](public.team_policies.svg)
+```mermaid
+erDiagram
+
+"public.team_policies" }o--|| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
+"public.team_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
+
+"public.team_policies" {
+  uuid id
+  uuid team_id FK
+  uuid policy_id FK
+  jsonb overrides
+  timestamp_without_time_zone created_at
+}
+"public.teams" {
+  uuid id
+  uuid org_id FK
+  varchar_255_ name
+  text description
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.policies" {
+  uuid id
+  varchar_100_ name
+  varchar_50_ type
+  jsonb rules
+  varchar_20_ severity
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 

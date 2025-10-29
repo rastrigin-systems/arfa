@@ -48,7 +48,54 @@
 
 ## Relations
 
-![er](public.employee_mcp_configs.svg)
+```mermaid
+erDiagram
+
+"public.employee_mcp_configs" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.employee_mcp_configs" }o--|| "public.mcp_catalog" : "FOREIGN KEY (mcp_catalog_id) REFERENCES mcp_catalog(id) ON DELETE CASCADE"
+
+"public.employee_mcp_configs" {
+  uuid id
+  uuid employee_id FK
+  uuid mcp_catalog_id FK
+  varchar_50_ status
+  jsonb connection_config
+  text credentials_encrypted
+  varchar_255_ sync_token
+  timestamp_without_time_zone last_sync_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.employees" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid role_id FK
+  varchar_255_ email
+  varchar_255_ full_name
+  varchar_255_ password_hash
+  varchar_50_ status
+  jsonb preferences
+  timestamp_without_time_zone last_login_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+  timestamp_without_time_zone deleted_at
+}
+"public.mcp_catalog" {
+  uuid id
+  varchar_255_ name
+  varchar_255_ provider
+  varchar_50_ version
+  text description
+  jsonb connection_schema
+  jsonb capabilities
+  boolean requires_credentials
+  boolean is_approved
+  uuid category_id FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+```
 
 ---
 
