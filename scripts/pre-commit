@@ -78,17 +78,17 @@ if ! make generate; then
     exit 1
 fi
 
-# Update go.mod with generated packages
-echo -e "${BLUE}🔧 Running: go mod tidy${NC}"
-if ! go mod tidy; then
-    echo -e "${RED}❌ go mod tidy failed${NC}"
+# Sync workspace instead of go mod tidy (for monorepo)
+echo -e "${BLUE}🔧 Running: go work sync${NC}"
+if ! go work sync; then
+    echo -e "${RED}❌ go work sync failed${NC}"
     echo -e "${YELLOW}Fix the errors and try again${NC}"
     exit 1
 fi
 
 # Check what changed
 DOCS_CHANGES=$(git diff --name-only docs/ 2>/dev/null || echo "")
-GOMOD_CHANGES=$(git diff --name-only go.mod go.sum 2>/dev/null || echo "")
+GOMOD_CHANGES=$(git diff --name-only go.work.sum services/*/go.sum 2>/dev/null || echo "")
 
 if [ -z "$DOCS_CHANGES" ] && [ -z "$GOMOD_CHANGES" ]; then
     echo -e "${GREEN}✓ No changes to commit${NC}"
@@ -103,8 +103,8 @@ if [ -n "$DOCS_CHANGES" ]; then
 fi
 
 if [ -n "$GOMOD_CHANGES" ]; then
-    echo -e "${BLUE}📦 Adding go.mod/go.sum to commit...${NC}"
-    git add go.mod go.sum
+    echo -e "${BLUE}📦 Adding workspace files to commit...${NC}"
+    git add go.work.sum services/*/go.sum 2>/dev/null || true
     echo "$GOMOD_CHANGES" | sed 's/^/  - /'
 fi
 

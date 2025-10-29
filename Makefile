@@ -243,13 +243,13 @@ build: build-server build-cli
 	@echo "✅ All binaries built:"
 	@ls -lh bin/
 
-build-server:
+build-server: generate-api generate-db
 	@echo "🔨 Building server binary..."
 	@mkdir -p bin
 	cd services/api && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-server cmd/server/main.go
 	@echo "✅ Server built: bin/ubik-server"
 
-build-cli:
+build-cli: generate-api generate-db
 	@echo "🔨 Building CLI binary..."
 	@mkdir -p bin
 	cd services/cli && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-cli cmd/ubik/main.go
