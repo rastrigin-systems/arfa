@@ -259,7 +259,7 @@
                 },
 
                 viewEmployee(employee) {
-                    alert(`View employee: ${employee.full_name}\nTODO: Create employee detail page`);
+                    window.location.href = `/employee-detail.html?id=${employee.id}`;
                 },
 
                 editEmployee(employee) {

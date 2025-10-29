@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents - Ubik Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-8">
+                    <span class="text-xl font-bold text-blue-600">Ubik Enterprise</span>
+                    <span id="org-name" class="text-gray-600">[Loading...]</span>
+                </div>
+                <div class="flex items-center space-x-4" x-data="{ open: false }">
+                    <span id="user-email" class="text-gray-700">Loading...</span>
+                    <button @click="open = !open" class="text-gray-600 hover:text-gray-900">▼</button>
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-4 top-14 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                        <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8 h-12">
+                <a href="/dashboard.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Dashboard</a>
+                <a href="/employees.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Employees</a>
+                <a href="/teams.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Teams</a>
+                <a href="/agents.html" class="border-b-2 border-blue-500 text-blue-600 px-1 py-3 text-sm font-medium">Agents</a>
+                <a href="/settings.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Settings</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="agentsCatalog()">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Agent Catalog</h1>
+            <p class="text-gray-600">Available AI agents for your organization</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <nav class="flex space-x-4 border-b border-gray-200">
+                <button @click="activeTab = 'catalog'"
+                        :class="activeTab === 'catalog' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        class="py-2 px-4 border-b-2 font-medium text-sm">
+                    Available Agents
+                </button>
+                <button @click="activeTab = 'configured'"
+                        :class="activeTab === 'configured' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        class="py-2 px-4 border-b-2 font-medium text-sm">
+                    Organization Configs
+                </button>
+            </nav>
+        </div>
+
+        <!-- Agent Catalog -->
+        <div x-show="activeTab === 'catalog'" class="space-y-6">
+            <template x-for="agent in agents" :key="agent.id">
+                <div class="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-xl" x-text="agent.name.charAt(0)"></span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900" x-text="agent.name"></h3>
+                                    <p class="text-sm text-gray-500" x-text="`${agent.provider} • ${agent.type}`"></p>
+                                </div>
+                            </div>
+
+                            <p class="text-gray-700 mb-4" x-text="agent.description"></p>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-500">Provider:</span>
+                                    <span class="ml-2 text-sm text-gray-900" x-text="agent.provider"></span>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-500">Type:</span>
+                                    <span class="ml-2 text-sm text-gray-900" x-text="agent.type"></span>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-500">Model:</span>
+                                    <span class="ml-2 text-sm text-gray-900" x-text="agent.llm_model"></span>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-500">Status:</span>
+                                    <span class="ml-2 text-sm" x-text="agent.is_configured ? 'Configured' : 'Available'"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <span class="text-sm font-medium text-gray-700">Capabilities:</span>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <template x-for="capability in agent.capabilities" :key="capability">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full" x-text="capability"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ml-6">
+                            <button @click="configureAgent(agent)"
+                                    class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap">
+                                <span x-text="agent.is_configured ? 'Manage Config' : 'Configure'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <div x-show="agents.length === 0 && !loading" class="text-center py-12">
+                <p class="text-gray-500">No agents available</p>
+            </div>
+
+            <div x-show="loading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="mt-2 text-sm text-gray-500">Loading agents...</p>
+            </div>
+        </div>
+
+        <!-- Organization Configs -->
+        <div x-show="activeTab === 'configured'" x-cloak class="space-y-6">
+            <template x-for="config in orgConfigs" :key="config.id">
+                <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900" x-text="config.agent_name"></h3>
+                            <p class="text-sm text-gray-500" x-text="`${config.agent_provider} • ${config.agent_type}`"></p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span :class="config.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                  class="px-2 py-1 text-xs rounded-full"
+                                  x-text="config.is_enabled ? 'Enabled' : 'Disabled'"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded p-4 mb-4">
+                        <pre class="text-xs text-gray-800 overflow-x-auto" x-text="JSON.stringify(config.config, null, 2)"></pre>
+                    </div>
+
+                    <div class="flex space-x-2">
+                        <button @click="editConfig(config)" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
+                            Edit
+                        </button>
+                        <button @click="viewTeamOverrides(config)" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">
+                            View Team Overrides
+                        </button>
+                        <button @click="deleteConfig(config)" class="px-4 py-2 border border-red-300 text-red-700 text-sm rounded-md hover:bg-red-50">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <div x-show="orgConfigs.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <p class="text-gray-500 mb-4">No agents configured for your organization</p>
+                <button @click="activeTab = 'catalog'" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Browse Agent Catalog
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        function getToken() {
+            return localStorage.getItem('auth_token');
+        }
+
+        function logout() {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            }).finally(() => {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
+            });
+        }
+
+        async function loadCurrentUser() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Unauthorized');
+
+                const employee = await response.json();
+                document.getElementById('user-email').textContent = employee.email;
+
+                const orgResponse = await fetch(`${API_BASE}/organizations/current`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (orgResponse.ok) {
+                    const org = await orgResponse.json();
+                    document.getElementById('org-name').textContent = `[${org.name}]`;
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        loadCurrentUser();
+
+        function agentsCatalog() {
+            return {
+                agents: [],
+                orgConfigs: [],
+                loading: false,
+                activeTab: 'catalog',
+
+                async init() {
+                    await this.loadAgents();
+                    await this.loadOrgConfigs();
+                },
+
+                async loadAgents() {
+                    this.loading = true;
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/agents`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load agents');
+
+                        const data = await response.json();
+                        this.agents = data.agents || [];
+
+                        // Mark which agents are configured (TODO: get from API)
+                        this.agents.forEach(agent => {
+                            agent.is_configured = Math.random() > 0.5;
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading agents:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async loadOrgConfigs() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/organizations/current/agent-configs`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load org configs');
+
+                        const data = await response.json();
+                        this.orgConfigs = data.configs || [];
+
+                    } catch (error) {
+                        console.error('Error loading org configs:', error);
+                    }
+                },
+
+                configureAgent(agent) {
+                    alert(`Configure ${agent.name}\nTODO: Open configuration form with JSON editor`);
+                },
+
+                editConfig(config) {
+                    alert(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
+                },
+
+                viewTeamOverrides(config) {
+                    alert(`View team overrides for ${config.agent_name}\nTODO: Show list of team-level configs`);
+                },
+
+                deleteConfig(config) {
+                    if (confirm(`Delete configuration for ${config.agent_name}?`)) {
+                        alert('TODO: Call DELETE API');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
