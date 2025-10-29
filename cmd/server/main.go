@@ -75,6 +75,31 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// Serve static files (HTML prototype)
+	fileServer := http.FileServer(http.Dir("./static"))
+	router.Handle("/static/*", http.StripPrefix("/static", fileServer))
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/login.html")
+	})
+	router.Get("/login.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/login.html")
+	})
+	router.Get("/dashboard.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/dashboard.html")
+	})
+	router.Get("/employees.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/employees.html")
+	})
+	router.Get("/teams.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/teams.html")
+	})
+	router.Get("/agents.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/agents.html")
+	})
+	router.Get("/settings.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/settings.html")
+	})
+
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {
 		// Public routes (no auth required)
@@ -186,6 +211,7 @@ func main() {
 	// Start server in goroutine
 	go func() {
 		log.Printf("🚀 Server starting on http://localhost:%s", port)
+		log.Printf("🌐 Web UI: http://localhost:%s/", port)
 		log.Printf("📝 API Documentation: http://localhost:%s/api/v1/health", port)
 		log.Printf("🔐 Auth endpoints:")
 		log.Printf("   POST http://localhost:%s/api/v1/auth/login", port)
