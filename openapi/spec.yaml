@@ -542,6 +542,229 @@ components:
           type: integer
           example: 3
 
+    # Teams
+    CreateTeamRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: "Engineering"
+        description:
+          type: string
+          nullable: true
+          example: "Software development team"
+
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+
+    ListTeamsResponse:
+      type: object
+      required:
+        - teams
+        - total
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        total:
+          type: integer
+          example: 5
+
+    # Team-level agent configs
+    TeamAgentConfig:
+      type: object
+      required:
+        - id
+        - team_id
+        - agent_id
+        - config_override
+        - is_enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        team_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+          readOnly: true
+          example: "Claude Code"
+        agent_type:
+          type: string
+          readOnly: true
+          example: "ide"
+        agent_provider:
+          type: string
+          readOnly: true
+          example: "anthropic"
+        config_override:
+          type: object
+          additionalProperties: true
+          description: "Overrides org-level config (deep merge)"
+          example:
+            api_endpoint: "https://custom.example.com"
+            features:
+              autocomplete: false
+        is_enabled:
+          type: boolean
+          description: "Can disable for team even if org has it enabled"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CreateTeamAgentConfigRequest:
+      type: object
+      required:
+        - agent_id
+        - config_override
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        config_override:
+          type: object
+          additionalProperties: true
+          description: "Only include fields you want to override from org config"
+        is_enabled:
+          type: boolean
+          default: true
+
+    UpdateTeamAgentConfigRequest:
+      type: object
+      properties:
+        config_override:
+          type: object
+          additionalProperties: true
+        is_enabled:
+          type: boolean
+
+    ListTeamAgentConfigsResponse:
+      type: object
+      required:
+        - configs
+        - total
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamAgentConfig'
+        total:
+          type: integer
+
+    # Employee-level agent configs
+    EmployeeAgentConfig:
+      type: object
+      required:
+        - id
+        - employee_id
+        - agent_id
+        - config_override
+        - is_enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        agent_name:
+          type: string
+          readOnly: true
+        agent_type:
+          type: string
+          readOnly: true
+        agent_provider:
+          type: string
+          readOnly: true
+        config_override:
+          type: object
+          additionalProperties: true
+          description: "Overrides team/org config (deep merge)"
+        is_enabled:
+          type: boolean
+          description: "Can disable for employee even if team/org has it enabled"
+        sync_token:
+          type: string
+          nullable: true
+          description: "Token used by CLI for sync validation"
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Last time CLI synced this config"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CreateEmployeeAgentConfigRequest:
+      type: object
+      required:
+        - agent_id
+        - config_override
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        config_override:
+          type: object
+          additionalProperties: true
+          description: "Only include fields you want to override"
+        is_enabled:
+          type: boolean
+          default: true
+
+    UpdateEmployeeAgentConfigRequest:
+      type: object
+      properties:
+        config_override:
+          type: object
+          additionalProperties: true
+        is_enabled:
+          type: boolean
+
+    ListEmployeeAgentConfigsResponse:
+      type: object
+      required:
+        - configs
+        - total
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeAgentConfig'
+        total:
+          type: integer
+
     # Pagination
     PaginationMeta:
       type: object
@@ -586,6 +809,24 @@ components:
         type: string
         format: uuid
       description: Employee UUID
+
+    TeamId:
+      name: team_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Team UUID
+
+    ConfigId:
+      name: config_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Agent configuration UUID
 
     Page:
       name: page
@@ -862,6 +1103,173 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # ============================================================================
+  # Teams
+  # ============================================================================
+  /teams:
+    get:
+      tags:
+        - organizations
+      summary: List teams
+      description: Get all teams in current organization
+      operationId: listTeams
+      responses:
+        '200':
+          description: Team list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTeamsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - organizations
+      summary: Create team
+      description: Create a new team in current organization (admin only)
+      operationId: createTeam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamRequest'
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /teams/{team_id}:
+    get:
+      tags:
+        - organizations
+      summary: Get team
+      description: Get team by ID
+      operationId: getTeam
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - organizations
+      summary: Update team
+      description: Update team details (admin only)
+      operationId: updateTeam
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamRequest'
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - organizations
+      summary: Delete team
+      description: Delete a team (admin only)
+      operationId: deleteTeam
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '204':
+          description: Team deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
   # Organizations
   # ============================================================================
   /organizations/current:
@@ -1084,6 +1492,390 @@ paths:
           description: Config deleted
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Team Agent Configurations (team-level overrides)
+  # ============================================================================
+  /teams/{team_id}/agent-configs:
+    get:
+      tags:
+        - agents
+      summary: List team agent configs
+      description: Get all agent configurations for a specific team (overrides of org configs)
+      operationId: listTeamAgentConfigs
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: Team agent configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTeamAgentConfigsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - agents
+      summary: Create team agent config override
+      description: Create a team-level override for an agent configuration (admin/manager only)
+      operationId: createTeamAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamAgentConfigRequest'
+      responses:
+        '201':
+          description: Team agent config created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team or agent not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Config already exists for this agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /teams/{team_id}/agent-configs/{config_id}:
+    get:
+      tags:
+        - agents
+      summary: Get team agent config
+      description: Get details of a specific team agent configuration
+      operationId: getTeamAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+        - $ref: '#/components/parameters/ConfigId'
+      responses:
+        '200':
+          description: Team agent config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamAgentConfig'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - agents
+      summary: Update team agent config
+      description: Update team-level agent configuration override (admin/manager only)
+      operationId: updateTeamAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+        - $ref: '#/components/parameters/ConfigId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamAgentConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - agents
+      summary: Delete team agent config
+      description: Remove team-level override (reverts to org config) (admin/manager only)
+      operationId: deleteTeamAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+        - $ref: '#/components/parameters/ConfigId'
+      responses:
+        '204':
+          description: Config deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Employee Agent Configurations (employee-level overrides)
+  # ============================================================================
+  /employees/{employee_id}/agent-configs:
+    get:
+      tags:
+        - agents
+      summary: List employee agent configs
+      description: Get all agent configuration overrides for a specific employee
+      operationId: listEmployeeAgentConfigs
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '200':
+          description: Employee agent configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEmployeeAgentConfigsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - agents
+      summary: Create employee agent config override
+      description: Create an employee-level override for an agent configuration (admin/manager only)
+      operationId: createEmployeeAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeAgentConfigRequest'
+      responses:
+        '201':
+          description: Employee agent config created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Employee or agent not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Config already exists for this agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees/{employee_id}/agent-configs/{config_id}:
+    get:
+      tags:
+        - agents
+      summary: Get employee agent config
+      description: Get details of a specific employee agent configuration override
+      operationId: getEmployeeAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+        - $ref: '#/components/parameters/ConfigId'
+      responses:
+        '200':
+          description: Employee agent config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeAgentConfig'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - agents
+      summary: Update employee agent config
+      description: Update employee-level agent configuration override (admin/manager only)
+      operationId: updateEmployeeAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+        - $ref: '#/components/parameters/ConfigId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeAgentConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeAgentConfig'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - agents
+      summary: Delete employee agent config
+      description: Remove employee-level override (reverts to team/org config) (admin/manager only)
+      operationId: deleteEmployeeAgentConfig
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+        - $ref: '#/components/parameters/ConfigId'
+      responses:
+        '204':
+          description: Config deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
           content:
             application/json:
               schema:
