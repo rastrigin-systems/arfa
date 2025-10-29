@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Agent Configurations - Ubik Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-8">
+                    <span class="text-xl font-bold text-blue-600">Ubik Enterprise</span>
+                    <span id="org-name" class="text-gray-600">[Loading...]</span>
+                </div>
+                <div class="flex items-center space-x-4" x-data="{ open: false }">
+                    <span id="user-email" class="text-gray-700">Loading...</span>
+                    <button @click="open = !open" class="text-gray-600 hover:text-gray-900">▼</button>
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-4 top-14 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                        <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8 h-12">
+                <a href="/dashboard.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Dashboard</a>
+                <a href="/employees.html" class="border-b-2 border-blue-500 text-blue-600 px-1 py-3 text-sm font-medium">Employees</a>
+                <a href="/teams.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Teams</a>
+                <a href="/agents.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Agents</a>
+                <a href="/settings.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Settings</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="employeeAgentConfigs()">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a :href="`/employee-detail.html?id=${employeeId}`" class="text-blue-600 hover:text-blue-700 text-sm">
+                <span>← Back to Employee: </span><span x-text="employeeName"></span>
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Employee Agent Configurations</h1>
+                <p class="text-gray-600">Manage agent settings for this employee</p>
+            </div>
+            <button @click="addConfiguration"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                + Add Configuration
+            </button>
+        </div>
+
+        <!-- Agent Configs -->
+        <div class="space-y-6">
+            <template x-for="config in agentConfigs" :key="config.id">
+                <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <!-- Agent Icon -->
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-white font-bold text-xl" x-text="config.agent_name?.charAt(0) || 'A'"></span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900" x-text="config.agent_name"></h3>
+                                <p class="text-sm text-gray-500" x-text="config.agent_provider"></p>
+                            </div>
+                        </div>
+                        <button @click="config.expanded = !config.expanded"
+                                class="text-gray-400 hover:text-gray-600">
+                            <svg :class="config.expanded ? 'rotate-180' : ''" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div x-show="config.expanded" x-cloak class="space-y-4">
+                        <!-- Status -->
+                        <div class="flex items-center">
+                            <input type="checkbox" x-model="config.is_enabled" :id="`enabled-${config.id}`"
+                                   class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label :for="`enabled-${config.id}`" class="ml-2 text-sm text-gray-700">
+                                Enabled for this employee
+                            </label>
+                        </div>
+
+                        <!-- Metadata -->
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Last Sync:</span>
+                                <span class="ml-2 text-gray-900" x-text="formatDate(config.updated_at)"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Sync Token:</span>
+                                <span class="ml-2 text-gray-900 font-mono text-xs">
+                                    <span x-text="config.id ? config.id.substring(0, 12) + '...' : 'N/A'"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Override -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Configuration Override (JSON):
+                            </label>
+                            <textarea x-model="config.config_json" rows="8"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder='{\n  "temperature": 0.5,\n  "max_tokens": 16384\n}'></textarea>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Note: Overrides team/org settings. Empty = inherit defaults
+                            </p>
+                        </div>
+
+                        <!-- View Resolved Config -->
+                        <div>
+                            <button @click="viewResolvedConfig(config)"
+                                    class="text-sm text-blue-600 hover:text-blue-700">
+                                View Resolved Config →
+                            </button>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                            <button @click="saveConfig(config)"
+                                    class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
+                                Save
+                            </button>
+                            <button @click="removeOverride(config)"
+                                    class="px-4 py-2 border border-red-300 text-red-700 text-sm rounded-md hover:bg-red-50">
+                                Remove Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="agentConfigs.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No agent configurations</h3>
+            <p class="mt-1 text-sm text-gray-500">Add an agent configuration to get started.</p>
+            <div class="mt-6">
+                <button @click="addConfiguration" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    + Add Configuration
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="mt-8 bg-white rounded-lg shadow border border-gray-200 p-6">
+            <h3 class="text-sm font-medium text-gray-900 mb-4">Resolved Configurations for CLI</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                Download all resolved configurations or force a sync to update the CLI client.
+            </p>
+            <div class="flex space-x-3">
+                <button @click="downloadAllConfigs"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 border border-gray-300">
+                    Download All Configs
+                </button>
+                <button @click="forceSync"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 border border-gray-300">
+                    Force Sync
+                </button>
+            </div>
+        </div>
+
+        <div x-show="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-sm text-gray-500">Loading configurations...</p>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        function getToken() {
+            return localStorage.getItem('auth_token');
+        }
+
+        function logout() {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            }).finally(() => {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
+            });
+        }
+
+        async function loadCurrentUser() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Unauthorized');
+
+                const employee = await response.json();
+                document.getElementById('user-email').textContent = employee.email;
+
+                const orgResponse = await fetch(`${API_BASE}/organizations/current`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (orgResponse.ok) {
+                    const org = await orgResponse.json();
+                    document.getElementById('org-name').textContent = `[${org.name}]`;
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        loadCurrentUser();
+
+        function employeeAgentConfigs() {
+            return {
+                employeeId: null,
+                employeeName: 'Loading...',
+                agentConfigs: [],
+                loading: false,
+
+                async init() {
+                    // Get employee ID from URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    this.employeeId = urlParams.get('employee_id');
+
+                    if (!this.employeeId) {
+                        alert('No employee ID provided');
+                        window.location.href = '/employees.html';
+                        return;
+                    }
+
+                    await this.loadEmployee();
+                    await this.loadAgentConfigs();
+                },
+
+                async loadEmployee() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load employee');
+
+                        const employee = await response.json();
+                        this.employeeName = employee.full_name || employee.email;
+
+                    } catch (error) {
+                        console.error('Error loading employee:', error);
+                    }
+                },
+
+                async loadAgentConfigs() {
+                    this.loading = true;
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load agent configs');
+
+                        const data = await response.json();
+                        this.agentConfigs = (data.configs || []).map(config => ({
+                            ...config,
+                            expanded: false,
+                            config_json: JSON.stringify(config.config || {}, null, 2)
+                        }));
+
+                    } catch (error) {
+                        console.error('Error loading agent configs:', error);
+                        this.agentConfigs = [];
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async saveConfig(config) {
+                    // Parse JSON
+                    let parsedConfig;
+                    try {
+                        parsedConfig = JSON.parse(config.config_json);
+                    } catch (error) {
+                        alert('Invalid JSON format. Please check the configuration.');
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs/${config.id}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                is_enabled: config.is_enabled,
+                                config: parsedConfig
+                            })
+                        });
+
+                        if (!response.ok) throw new Error('Failed to save configuration');
+
+                        alert('Configuration saved successfully!');
+                        await this.loadAgentConfigs();
+
+                    } catch (error) {
+                        console.error('Error saving config:', error);
+                        alert('Failed to save configuration: ' + error.message);
+                    }
+                },
+
+                async removeOverride(config) {
+                    if (!confirm(`Remove configuration override for ${config.agent_name}?`)) {
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs/${config.id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to remove configuration');
+
+                        alert('Configuration override removed');
+                        await this.loadAgentConfigs();
+
+                    } catch (error) {
+                        console.error('Error removing config:', error);
+                        alert('Failed to remove configuration: ' + error.message);
+                    }
+                },
+
+                viewResolvedConfig(config) {
+                    alert(`View Resolved Configuration for ${config.agent_name}\n\nThis would show the final merged config from:\n- Organization settings\n- Team settings\n- Employee overrides\n\nTODO: Implement resolved config viewer`);
+                },
+
+                addConfiguration() {
+                    alert('Add New Agent Configuration\n\nTODO: Open agent selection form');
+                },
+
+                downloadAllConfigs() {
+                    alert('Download All Configurations\n\nThis would download a JSON file with all resolved configs for CLI sync.\n\nTODO: Implement download');
+                },
+
+                forceSync() {
+                    alert('Force Sync\n\nThis would trigger an immediate sync to the CLI client.\n\nTODO: Implement force sync');
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return 'Never';
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+                    if (diffHours < 1) return 'Just now';
+                    if (diffHours < 24) return `${diffHours} hours ago`;
+                    const diffDays = Math.floor(diffHours / 24);
+                    if (diffDays === 1) return 'Yesterday';
+                    return `${diffDays} days ago`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

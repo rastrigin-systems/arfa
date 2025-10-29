@@ -99,6 +99,24 @@ func main() {
 	router.Get("/settings.html", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/settings.html")
 	})
+	router.Get("/profile.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/profile.html")
+	})
+	router.Get("/employee-detail.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/employee-detail.html")
+	})
+	router.Get("/team-detail.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/team-detail.html")
+	})
+	router.Get("/create-employee.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/create-employee.html")
+	})
+	router.Get("/roles.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/roles.html")
+	})
+	router.Get("/employee-agent-configs.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/employee-agent-configs.html")
+	})
 
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {

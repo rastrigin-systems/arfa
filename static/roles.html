@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles & Permissions - Ubik Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-8">
+                    <span class="text-xl font-bold text-blue-600">Ubik Enterprise</span>
+                    <span id="org-name" class="text-gray-600">[Loading...]</span>
+                </div>
+                <div class="flex items-center space-x-4" x-data="{ open: false }">
+                    <span id="user-email" class="text-gray-700">Loading...</span>
+                    <button @click="open = !open" class="text-gray-600 hover:text-gray-900">▼</button>
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-4 top-14 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                        <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8 h-12">
+                <a href="/dashboard.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Dashboard</a>
+                <a href="/employees.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Employees</a>
+                <a href="/teams.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Teams</a>
+                <a href="/agents.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Agents</a>
+                <a href="/settings.html" class="border-b-2 border-blue-500 text-blue-600 px-1 py-3 text-sm font-medium">Settings</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="rolesList()">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Roles & Permissions</h1>
+            <p class="text-gray-600">Available roles in your organization</p>
+        </div>
+
+        <!-- Roles List -->
+        <div class="space-y-6">
+            <template x-for="role in roles" :key="role.id">
+                <div class="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-4">
+                            <!-- Role Icon -->
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900" x-text="role.name"></h2>
+                                <p class="text-gray-600 mt-1" x-text="role.description"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permissions -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Permissions:</h3>
+                        <ul class="space-y-1">
+                            <template x-for="permission in getPermissions(role.name)" :key="permission">
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-700" x-text="permission"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <!-- Employee Count -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium" x-text="role.employee_count || 0"></span>
+                            <span> employees with this role</span>
+                        </p>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="roles.length === 0 && !loading" class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No roles found</h3>
+            <p class="mt-1 text-sm text-gray-500">Roles define employee permissions in your organization.</p>
+        </div>
+
+        <div x-show="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-sm text-gray-500">Loading roles...</p>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        function getToken() {
+            return localStorage.getItem('auth_token');
+        }
+
+        function logout() {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            }).finally(() => {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
+            });
+        }
+
+        async function loadCurrentUser() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Unauthorized');
+
+                const employee = await response.json();
+                document.getElementById('user-email').textContent = employee.email;
+
+                const orgResponse = await fetch(`${API_BASE}/organizations/current`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (orgResponse.ok) {
+                    const org = await orgResponse.json();
+                    document.getElementById('org-name').textContent = `[${org.name}]`;
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        loadCurrentUser();
+
+        function rolesList() {
+            return {
+                roles: [],
+                loading: false,
+
+                async init() {
+                    await this.loadRoles();
+                },
+
+                async loadRoles() {
+                    this.loading = true;
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/roles`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load roles');
+
+                        const data = await response.json();
+                        this.roles = data.roles || [];
+
+                        // Mock employee counts (TODO: get from API)
+                        this.roles.forEach(role => {
+                            if (role.name.includes('Admin') || role.name.includes('Super')) {
+                                role.employee_count = Math.floor(Math.random() * 10) + 1;
+                            } else if (role.name.includes('Manager') || role.name.includes('Approver')) {
+                                role.employee_count = Math.floor(Math.random() * 20) + 10;
+                            } else if (role.name.includes('Developer')) {
+                                role.employee_count = Math.floor(Math.random() * 50) + 30;
+                            } else {
+                                role.employee_count = Math.floor(Math.random() * 150) + 50;
+                            }
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading roles:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                getPermissions(roleName) {
+                    // Define permissions based on role name
+                    const permissionsMap = {
+                        'Admin': [
+                            'Manage employees, teams, and roles',
+                            'Configure agents at all levels',
+                            'Approve/reject requests',
+                            'View all analytics and logs',
+                            'Manage billing and subscriptions'
+                        ],
+                        'Super Admin': [
+                            'Full system access and configuration rights',
+                            'Manage all employees, teams, and roles',
+                            'Configure agents at all levels',
+                            'Approve/reject all requests',
+                            'Access all analytics and logs',
+                            'Manage billing and subscriptions',
+                            'System-level configuration'
+                        ],
+                        'Manager': [
+                            'Manage team members',
+                            'Configure team-level agent settings',
+                            'Approve team requests',
+                            'View team analytics',
+                            'Assign roles within team'
+                        ],
+                        'Approver': [
+                            'View team members',
+                            'Approve/reject agent requests',
+                            'Configure team-level agent settings',
+                            'View team analytics'
+                        ],
+                        'Developer': [
+                            'Use assigned agents',
+                            'Request new agent access',
+                            'View own usage statistics',
+                            'Manage personal preferences',
+                            'Access development tools'
+                        ],
+                        'Member': [
+                            'Use assigned agents',
+                            'Request new agent access',
+                            'View own usage statistics',
+                            'Manage personal preferences'
+                        ],
+                        'Viewer': [
+                            'View own assigned agents',
+                            'View own usage statistics',
+                            'Read-only access to team information'
+                        ]
+                    };
+
+                    // Check for exact match or partial match
+                    for (const [key, permissions] of Object.entries(permissionsMap)) {
+                        if (roleName === key || roleName.includes(key)) {
+                            return permissions;
+                        }
+                    }
+
+                    // Default permissions
+                    return [
+                        'View own information',
+                        'Manage personal preferences'
+                    ];
+                }
+            }
+        }
+    </script>
+</body>
+</html>
