@@ -47,6 +47,7 @@ func main() {
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(queries)
 	employeesHandler := handlers.NewEmployeesHandler(queries)
+	rolesHandler := handlers.NewRolesHandler(queries)
 	teamsHandler := handlers.NewTeamsHandler(queries)
 	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
@@ -105,6 +106,15 @@ func main() {
 				r.Get("/{employee_id}", employeesHandler.GetEmployee)
 				r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
 				r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
+			})
+
+			// Roles routes
+			r.Route("/roles", func(r chi.Router) {
+				r.Get("/", rolesHandler.ListRoles)
+				r.Post("/", rolesHandler.CreateRole)
+				r.Get("/{role_id}", rolesHandler.GetRole)
+				r.Patch("/{role_id}", rolesHandler.UpdateRole)
+				r.Delete("/{role_id}", rolesHandler.DeleteRole)
 			})
 
 			// Teams routes

@@ -65,3 +65,16 @@ INSERT INTO roles (
     $1, $2
 )
 RETURNING *;
+
+-- name: UpdateRole :one
+UPDATE roles
+SET
+    name = COALESCE($2, name),
+    permissions = COALESCE($3, permissions),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteRole :exec
+DELETE FROM roles
+WHERE id = $1;
