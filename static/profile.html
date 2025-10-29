@@ -91,7 +91,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input v-if="editMode" type="text" x-model="employee.full_name"
+                        <input x-show="editMode" type="text" x-model="employee.full_name"
                                :disabled="!editMode"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md">
                         <p x-show="!editMode" class="text-gray-900" x-text="employee.full_name || 'N/A'"></p>
@@ -318,17 +318,27 @@
                 <!-- Change Password -->
                 <div>
                     <h3 class="text-md font-medium text-gray-900 mb-3">Change Password</h3>
-                    <div class="space-y-3 max-w-md">
-                        <input type="password" placeholder="Current Password"
+                    <form @submit.prevent="updatePassword" class="space-y-3 max-w-md">
+                        <input type="password"
+                               name="current_password"
+                               placeholder="Current Password"
+                               x-model="passwordForm.currentPassword"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        <input type="password" placeholder="New Password"
+                        <input type="password"
+                               name="new_password"
+                               placeholder="New Password"
+                               x-model="passwordForm.newPassword"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        <input type="password" placeholder="Confirm New Password"
+                        <input type="password"
+                               name="confirm_password"
+                               placeholder="Confirm New Password"
+                               x-model="passwordForm.confirmPassword"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                             Update Password
                         </button>
-                    </div>
+                    </form>
                 </div>
 
                 <!-- Active Sessions -->
@@ -409,6 +419,11 @@
                     budget_percent: 58
                 },
                 preferencesJson: '',
+                passwordForm: {
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                },
                 loading: false,
                 editMode: false,
                 editPreferences: false,
@@ -555,6 +570,54 @@
 
                 viewDetailedReports() {
                     this.activeTab = 'usage';
+                },
+
+                async updatePassword() {
+                    // Validate passwords match
+                    if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+                        alert('New passwords do not match');
+                        return;
+                    }
+
+                    // Validate password strength (basic check)
+                    if (this.passwordForm.newPassword.length < 8) {
+                        alert('New password must be at least 8 characters long');
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/auth/change-password`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                current_password: this.passwordForm.currentPassword,
+                                new_password: this.passwordForm.newPassword
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.message || 'Failed to update password');
+                        }
+
+                        // Clear form
+                        this.passwordForm = {
+                            currentPassword: '',
+                            newPassword: '',
+                            confirmPassword: ''
+                        };
+
+                        alert('Password updated successfully!');
+
+                    } catch (error) {
+                        console.error('Error updating password:', error);
+                        alert('Failed to update password: ' + error.message);
+                    }
                 },
 
                 formatDate(dateString) {

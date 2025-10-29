@@ -166,6 +166,24 @@ SELECT email, full_name, status, 'password123' AS password
 FROM employees
 ORDER BY org_id, email;
 
+-- ============================================================================
+-- ACTIVITY LOGS (Sample Data)
+-- ============================================================================
+
+INSERT INTO activity_logs (org_id, employee_id, event_type, event_category, payload, created_at) VALUES
+-- Acme Corporation activities
+('11111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', 'employee.created', 'admin', '{"employee_name": "Bob Developer"}'::jsonb, NOW() - INTERVAL '2 hours'),
+('11111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', 'agent.installed', 'agent', '{"agent_name": "Claude Code"}'::jsonb, NOW() - INTERVAL '3 hours'),
+('11111111-1111-1111-1111-111111111111', 'e2222222-2222-2222-2222-222222222222', 'mcp.configured', 'mcp', '{"mcp_name": "Filesystem"}'::jsonb, NOW() - INTERVAL '5 hours'),
+('11111111-1111-1111-1111-111111111111', 'e3333333-3333-3333-3333-333333333333', 'team.created', 'admin', '{"team_name": "Engineering"}'::jsonb, NOW() - INTERVAL '1 day'),
+('11111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', 'agent.updated', 'agent', '{"agent_name": "Claude Code", "setting": "max_tokens"}'::jsonb, NOW() - INTERVAL '1 day'),
+('11111111-1111-1111-1111-111111111111', 'e2222222-2222-2222-2222-222222222222', 'employee.updated', 'admin', '{"employee_name": "Bob Developer", "field": "permissions"}'::jsonb, NOW() - INTERVAL '2 days'),
+
+-- Tech Startup activities
+('22222222-2222-2222-2222-222222222222', 'e7777777-7777-7777-7777-777777777777', 'auth.login', 'auth', '{}'::jsonb, NOW() - INTERVAL '30 minutes'),
+('22222222-2222-2222-2222-222222222222', 'e8888888-8888-8888-8888-888888888888', 'agent.installed', 'agent', '{"agent_name": "Cursor"}'::jsonb, NOW() - INTERVAL '4 hours'),
+('22222222-2222-2222-2222-222222222222', 'e9999999-9999-9999-9999-999999999999', 'mcp.configured', 'mcp', '{"mcp_name": "Git"}'::jsonb, NOW() - INTERVAL '6 hours');
+
 -- Re-enable Row-Level Security
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;

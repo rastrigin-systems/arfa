@@ -1,4 +1,4 @@
-.PHONY: help install-tools db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage dev build clean
+.PHONY: help install-tools db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev build build-cli build-server clean
 
 # Default target
 help:
@@ -22,12 +22,15 @@ help:
 	@echo "  make test            Run all tests with coverage"
 	@echo "  make test-unit       Run unit tests only (fast)"
 	@echo "  make test-integration Run integration tests (requires Docker)"
+	@echo "  make test-cli        Run CLI tests only"
 	@echo "  make test-coverage   Generate HTML coverage report"
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make check-drift     Check for OpenAPI ↔ DB schema drift"
 	@echo "  make dev             Start development server with live reload"
-	@echo "  make build           Build production binaries"
+	@echo "  make build           Build all binaries (server + CLI)"
+	@echo "  make build-server    Build server binary only"
+	@echo "  make build-cli       Build CLI binary only"
 	@echo "  make clean           Clean generated files and build artifacts"
 
 # Configuration
@@ -165,6 +168,10 @@ test-integration:
 	@echo "🔄 Running integration tests (requires Docker)..."
 	go test -v -run Integration ./tests/integration/...
 
+test-cli:
+	@echo "🧪 Running CLI tests..."
+	go test -v -race ./internal/cli/...
+
 test-coverage:
 	@echo "📊 Generating HTML coverage report..."
 	go test -v -race -coverprofile=coverage.out ./...
@@ -182,13 +189,26 @@ dev:
 	air -c .air.toml
 
 # Build
-build:
-	@echo "🔨 Building production binaries..."
-	@mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/pivot-server cmd/server/main.go
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/pivot-cli cmd/cli/main.go
-	@echo "✅ Binaries built:"
+build: build-server build-cli
+	@echo ""
+	@echo "✅ All binaries built:"
 	@ls -lh bin/
+
+build-server:
+	@echo "🔨 Building server binary..."
+	@mkdir -p bin
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/pivot-server cmd/server/main.go
+	@echo "✅ Server built: bin/pivot-server"
+
+build-cli:
+	@echo "🔨 Building CLI binary..."
+	@mkdir -p bin
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/ubik-cli cmd/cli/main.go
+	@echo "✅ CLI built: bin/ubik-cli"
+	@echo ""
+	@echo "Try it out:"
+	@echo "  ./bin/ubik-cli --help"
+	@echo "  ./bin/ubik-cli --version"
 
 # Cleanup
 clean:

@@ -508,27 +508,47 @@ See **[docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md)** for complete release 
 - `internal/middleware`: 82.2%
 - `internal/service`: 77.8%
 
-### Phase 3 - Next Steps 🎯
+### Phase 3 - CLI Development 🎯 (In Progress)
 
-**Next Focus:** Employee CLI Client (v0.2.0)
+**Current Focus:** Employee CLI Client (v0.2.0)
 
-**Primary Feature:**
-- **ubik CLI** - Container-orchestrated agent management
-  - Employee types `ubik login`, `ubik sync`, `ubik` → agent ready
-  - Docker containers for agents (Claude Code initially)
-  - Separate MCP server containers (filesystem, git)
-  - Transparent I/O proxy (feels like native CLI)
-  - Central config injection
-  - Usage tracking (design TBD)
-  - Workspace: ask user, default to current directory
+**✅ Phase 0 - Docker Images (Complete)**
+- Docker images for Claude Code and MCP servers built
+- See [docker/README.md](./docker/README.md)
+
+**✅ CLI Phase 1 - Foundation (Complete)**
+- CLI project structure with cobra
+- Authentication (`ubik login`, `ubik logout`)
+- Platform API client
+- Config management (`~/.ubik/config.json`)
+- Sync service (`ubik sync` - fetch configs)
+- 13 unit tests passing (100%)
+- See **[docs/CLI_PHASE1_COMPLETE.md](./docs/CLI_PHASE1_COMPLETE.md)** for details
+
+**✅ CLI Phase 2 - Docker Integration (Complete)**
+- Docker SDK integration & client wrapper
+- Container lifecycle management (start/stop/status)
+- Network management (`ubik-network`)
+- MCP server orchestration
+- Enhanced `ubik sync --start-containers`
+- New commands: `ubik start`, `ubik stop`
+- 24 tests passing (15 unit + 9 integration)
+- See **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** for details
+
+**🎯 CLI Phase 3 - Interactive Mode (Next)**
+- Interactive workspace selection
+- I/O proxying to agent container
+- TTY mode for interactive sessions
+- Agent switching on-the-fly
+- Session management
 
 **See [docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md) for complete architecture.**
 
-**Future Features (v0.3+):**
-- System prompts API
-- MCP server management
-- Approval workflows UI
-- Web admin console
+**Future Phases:**
+- Phase 3: Interactive mode & I/O proxying
+- Phase 4: Agent management & approvals
+- Phase 5: Polish & telemetry
+- v0.3+: System prompts, MCP management, Web UI
 
 **See [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for detailed plan.**
 

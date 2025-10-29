@@ -54,6 +54,7 @@ func main() {
 	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
 	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
+	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -209,6 +210,11 @@ func main() {
 			r.Route("/agents", func(r chi.Router) {
 				r.Get("/", agentsHandler.ListAgents)
 				r.Get("/{agent_id}", agentsHandler.GetAgent)
+			})
+
+			// Activity logs routes
+			r.Route("/activity-logs", func(r chi.Router) {
+				r.Get("/", activityLogsHandler.ListActivityLogs)
 			})
 		})
 

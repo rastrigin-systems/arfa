@@ -269,13 +269,16 @@
                             tokens: 45.2
                         };
 
-                        // Mock activity (TODO: Get from activity_logs API)
-                        this.recentActivity = [
-                            { id: 1, message: 'Alice created agent config for Engineering team', time: '10:23' },
-                            { id: 2, message: 'Bob requested access to Claude Code', time: '09:45' },
-                            { id: 3, message: 'Carol updated employee permissions', time: '09:12' },
-                            { id: 4, message: 'Dave added 5 new employees', time: 'Yesterday' }
-                        ];
+                        // Load activity logs from API
+                        const activityRes = await fetch(`${API_BASE}/activity-logs?limit=10`, { headers });
+                        if (activityRes.ok) {
+                            const data = await activityRes.json();
+                            this.recentActivity = data.activity_logs.map(log => ({
+                                id: log.id,
+                                message: log.employee_name ? `${log.employee_name} ${log.message}` : log.message,
+                                time: log.time
+                            }));
+                        }
 
                     } catch (error) {
                         console.error('Failed to load stats:', error);

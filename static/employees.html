@@ -225,8 +225,14 @@
                     try {
                         let url = `${API_BASE}/employees?page=${this.pagination.page}&per_page=${this.pagination.perPage}`;
 
+                        if (this.filters.search) {
+                            url += `&search=${encodeURIComponent(this.filters.search)}`;
+                        }
                         if (this.filters.status) {
                             url += `&status=${this.filters.status}`;
+                        }
+                        if (this.filters.team) {
+                            url += `&team_id=${this.filters.team}`;
                         }
 
                         const response = await fetch(url, {
