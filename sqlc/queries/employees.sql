@@ -2,11 +2,11 @@
 
 -- name: GetEmployee :one
 SELECT * FROM employees
-WHERE id = $1 AND deleted_at IS NULL;
+WHERE id = $1;
 
 -- name: GetEmployeeByEmail :one
 SELECT * FROM employees
-WHERE email = $1 AND deleted_at IS NULL;
+WHERE email = $1;
 
 -- name: ListEmployees :many
 SELECT
@@ -15,7 +15,6 @@ SELECT
 FROM employees e
 LEFT JOIN teams t ON e.team_id = t.id
 WHERE e.org_id = sqlc.arg(org_id)
-  AND e.deleted_at IS NULL
   AND (sqlc.narg(status)::text IS NULL OR e.status = sqlc.narg(status)::text)
   AND (sqlc.narg(team_id)::uuid IS NULL OR e.team_id = sqlc.narg(team_id)::uuid)
 ORDER BY e.created_at DESC
@@ -24,7 +23,6 @@ LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 -- name: CountEmployees :one
 SELECT COUNT(*) FROM employees
 WHERE org_id = sqlc.arg(org_id)
-  AND deleted_at IS NULL
   AND (sqlc.narg(status)::text IS NULL OR status = sqlc.narg(status)::text)
   AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid);
 
@@ -52,7 +50,7 @@ SET
     status = COALESCE($5, status),
     preferences = COALESCE($6, preferences),
     updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1
 RETURNING *;
 
 -- name: UpdateEmployeeLastLogin :exec
@@ -60,15 +58,13 @@ UPDATE employees
 SET last_login_at = NOW()
 WHERE id = $1;
 
--- name: SoftDeleteEmployee :exec
-UPDATE employees
-SET deleted_at = NOW()
+-- name: DeleteEmployee :exec
+DELETE FROM employees
 WHERE id = $1;
 
 -- name: GetEmployeesByTeam :many
 SELECT * FROM employees
-WHERE team_id = $1 
-  AND deleted_at IS NULL
+WHERE team_id = $1
 ORDER BY full_name;
 
 -- name: GetEmployeeWithRole :one
@@ -78,14 +74,14 @@ SELECT
     r.permissions as role_permissions
 FROM employees e
 JOIN roles r ON e.role_id = r.id
-WHERE e.id = $1 AND e.deleted_at IS NULL;
+WHERE e.id = $1;
 
 -- name: CountEmployeesByTeam :one
 SELECT COUNT(*) as count
 FROM employees
-WHERE team_id = $1 AND deleted_at IS NULL;
+WHERE team_id = $1;
 
 -- name: CountEmployeesByRole :one
 SELECT COUNT(*) as count
 FROM employees
-WHERE role_id = $1 AND deleted_at IS NULL;
+WHERE role_id = $1;

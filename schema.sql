@@ -67,8 +67,7 @@ CREATE TABLE employees (
     personal_claude_token TEXT, -- Employee personal Claude token (takes precedence over org token)
     last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMP -- Soft delete timestamp
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE sessions (
@@ -632,8 +631,7 @@ BEGIN
         e.org_id
     FROM employees e
     JOIN organizations o ON e.org_id = o.id
-    WHERE e.id = emp_id
-    AND e.deleted_at IS NULL;
+    WHERE e.id = emp_id;
 END;
 $$ LANGUAGE plpgsql STABLE;
 

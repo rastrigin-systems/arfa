@@ -439,8 +439,8 @@ func (h *EmployeesHandler) DeleteEmployee(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Soft delete employee
-	if err := h.db.SoftDeleteEmployee(ctx, employeeID); err != nil {
+	// Hard delete employee
+	if err := h.db.DeleteEmployee(ctx, employeeID); err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to delete employee")
 		return
 	}

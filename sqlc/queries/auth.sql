@@ -51,5 +51,4 @@ FROM sessions s
 JOIN employees e ON s.employee_id = e.id
 WHERE s.token_hash = $1
   AND s.expires_at > NOW()
-  AND e.deleted_at IS NULL
   AND e.status = 'active';

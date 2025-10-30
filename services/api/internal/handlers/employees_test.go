@@ -999,9 +999,9 @@ func TestDeleteEmployee_Success(t *testing.T) {
 			Status:   "active",
 		}, nil)
 
-	// Then expect soft delete
+	// Then expect hard delete
 	mockDB.EXPECT().
-		SoftDeleteEmployee(gomock.Any(), empID).
+		DeleteEmployee(gomock.Any(), empID).
 		Return(nil)
 
 	handler := handlers.NewEmployeesHandler(mockDB)
