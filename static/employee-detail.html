@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -314,7 +324,7 @@
                     this.employeeId = urlParams.get('id');
 
                     if (!this.employeeId) {
-                        alert('No employee ID provided');
+                        Toast.warning('No employee ID provided');
                         window.location.href = '/employees.html';
                         return;
                     }
@@ -341,7 +351,7 @@
 
                     } catch (error) {
                         console.error('Error loading employee:', error);
-                        alert('Failed to load employee details');
+                        Toast.error('Failed to load employee details');
                         window.location.href = '/employees.html';
                     } finally {
                         this.loading = false;
@@ -447,16 +457,23 @@
 
                         this.employee = await response.json();
                         this.editMode = false;
-                        alert('Employee updated successfully!');
+                        Toast.success('Employee updated successfully!');
 
                     } catch (error) {
                         console.error('Error saving employee:', error);
-                        alert('Failed to save changes');
+                        Toast.error('Failed to save changes');
                     }
                 },
 
                 async deleteEmployee() {
-                    if (!confirm(`Are you sure you want to delete ${this.employee.full_name || this.employee.email}?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Delete Employee',
+                        message: `Are you sure you want to delete ${this.employee.full_name || this.employee.email}?`,
+                        confirmText: 'Delete Employee',
+                        variant: 'danger'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -470,25 +487,32 @@
 
                         if (!response.ok) throw new Error('Failed to delete employee');
 
-                        alert('Employee deleted successfully');
+                        Toast.success('Employee deleted successfully');
                         window.location.href = '/employees.html';
 
                     } catch (error) {
                         console.error('Error deleting employee:', error);
-                        alert('Failed to delete employee');
+                        Toast.error('Failed to delete employee');
                     }
                 },
 
                 addAgentConfig() {
-                    alert('Add Agent Configuration\nTODO: Open agent selection and configuration form');
+                    Toast.info('Add Agent Configuration\n\nTODO: Open agent selection and configuration form');
                 },
 
                 editAgentConfig(config) {
-                    alert(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
+                    Toast.info(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
                 },
 
                 async removeAgentConfig(config) {
-                    if (!confirm(`Remove ${config.agent_name} configuration?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Remove Agent Configuration',
+                        message: `Remove ${config.agent_name} configuration?`,
+                        confirmText: 'Remove Configuration',
+                        variant: 'warning'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -503,16 +527,16 @@
                         if (!response.ok) throw new Error('Failed to remove config');
 
                         await this.loadAgentConfigs();
-                        alert('Configuration removed successfully');
+                        Toast.success('Configuration removed successfully');
 
                     } catch (error) {
                         console.error('Error removing config:', error);
-                        alert('Failed to remove configuration');
+                        Toast.error('Failed to remove configuration');
                     }
                 },
 
                 viewResolvedConfigs() {
-                    alert('View Resolved Configs\nTODO: Show merged configs from org → team → employee');
+                    Toast.info('View Resolved Configs\n\nTODO: Show merged configs from org → team → employee');
                 },
 
                 formatDate(dateString) {

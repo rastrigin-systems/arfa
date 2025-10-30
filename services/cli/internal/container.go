@@ -166,8 +166,9 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 	}
 
 	// Add Claude token (hybrid auth - prioritize ClaudeToken over APIKey)
+	// Both use ANTHROPIC_API_KEY since that's what Claude Code expects
 	if spec.ClaudeToken != "" {
-		env = append(env, fmt.Sprintf("CLAUDE_API_TOKEN=%s", spec.ClaudeToken))
+		env = append(env, fmt.Sprintf("ANTHROPIC_API_KEY=%s", spec.ClaudeToken))
 	} else if spec.APIKey != "" {
 		// Fallback to legacy APIKey for backward compatibility
 		env = append(env, fmt.Sprintf("ANTHROPIC_API_KEY=%s", spec.APIKey))

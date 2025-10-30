@@ -339,9 +339,9 @@
                         // Show temporary password to user
                         Modal.showPassword(data.temporary_password, this.form.full_name || this.form.email);
 
-                        // Redirect to employee detail page after modal closes
+                        // Redirect to employees list after modal closes
                         setTimeout(() => {
-                            window.location.href = `/employee-detail.html?id=${data.employee.id}`;
+                            window.location.href = '/employees.html';
                         }, 1000);
 
                     } catch (error) {

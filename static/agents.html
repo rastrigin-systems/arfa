@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -280,6 +290,83 @@
                 </button>
             </div>
         </div>
+
+        <!-- Team Overrides Modal -->
+        <div x-show="showTeamOverridesModal" x-cloak
+             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+             @click.self="showTeamOverridesModal = false">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4 pb-4 border-b">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        Team Overrides for <span x-text="selectedAgentName"></span>
+                    </h3>
+                    <button @click="showTeamOverridesModal = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div x-show="loadingTeamOverrides" class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p class="mt-2 text-gray-600">Loading team configurations...</p>
+                </div>
+
+                <!-- Team Overrides List -->
+                <div x-show="!loadingTeamOverrides" class="space-y-4">
+                    <template x-if="teamOverrides.length === 0">
+                        <div class="text-center py-8 bg-gray-50 rounded-lg">
+                            <p class="text-gray-500">No team overrides configured for this agent</p>
+                            <p class="text-sm text-gray-400 mt-2">Teams will use the organization-level configuration</p>
+                        </div>
+                    </template>
+
+                    <template x-for="override in teamOverrides" :key="override.team_id">
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900" x-text="override.team_name"></h4>
+                                    <p class="text-sm text-gray-500" x-text="`${override.member_count || 0} members`"></p>
+                                </div>
+                                <span :class="override.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                      class="px-2 py-1 text-xs rounded-full"
+                                      x-text="override.is_enabled ? 'Enabled' : 'Disabled'"></span>
+                            </div>
+
+                            <!-- Configuration Details -->
+                            <template x-if="override.config">
+                                <div class="bg-gray-50 rounded p-3 mt-2">
+                                    <p class="text-xs font-medium text-gray-600 mb-1">Override Configuration:</p>
+                                    <pre class="text-xs text-gray-800 overflow-x-auto" x-text="JSON.stringify(override.config, null, 2)"></pre>
+                                </div>
+                            </template>
+
+                            <!-- Actions -->
+                            <div class="flex space-x-2 mt-3">
+                                <button @click="editTeamOverride(override)"
+                                        class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                                    Edit
+                                </button>
+                                <button @click="deleteTeamOverride(override)"
+                                        class="px-3 py-1 text-sm border border-red-300 text-red-700 rounded hover:bg-red-50">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="mt-6 pt-4 border-t flex justify-end">
+                    <button @click="showTeamOverridesModal = false"
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -347,6 +434,11 @@
                     json_config: ''
                 },
                 configError: '',
+                showTeamOverridesModal: false,
+                loadingTeamOverrides: false,
+                teamOverrides: [],
+                selectedAgentId: null,
+                selectedAgentName: '',
                 submitting: false,
 
                 async init() {
@@ -501,7 +593,7 @@
                         await this.loadAgents();
 
                         this.closeConfigModal();
-                        alert(isEditing ? 'Agent configuration updated successfully!' : 'Agent configured successfully! Employees can now use this agent.');
+                        Toast.success(isEditing ? 'Agent configuration updated successfully!' : 'Agent configured successfully! Employees can now use this agent.');
 
                     } catch (error) {
                         console.error('Error saving config:', error);
@@ -552,24 +644,132 @@
 
                         this.editingConfigId = null;
                         this.editingConfig = '';
-                        alert('Configuration updated successfully!');
+                        Toast.success('Configuration updated successfully!');
 
                     } catch (error) {
                         console.error('Error saving config:', error);
                         if (error instanceof SyntaxError) {
-                            alert('Invalid JSON format. Please check your configuration.');
+                            Toast.error('Invalid JSON format. Please check your configuration.');
                         } else {
-                            alert('Failed to save configuration: ' + error.message);
+                            Toast.error('Failed to save configuration: ' + error.message);
                         }
                     }
                 },
 
-                viewTeamOverrides(config) {
-                    alert(`View team overrides for ${config.agent_name}\nTODO: Show list of team-level configs`);
+                async viewTeamOverrides(config) {
+                    this.selectedAgentId = config.agent_id;
+                    this.selectedAgentName = config.agent_name;
+                    this.showTeamOverridesModal = true;
+                    this.loadingTeamOverrides = true;
+                    this.teamOverrides = [];
+
+                    const token = getToken();
+
+                    try {
+                        // First, get all teams
+                        const teamsResponse = await fetch(`${API_BASE}/teams`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!teamsResponse.ok) {
+                            throw new Error('Failed to load teams');
+                        }
+
+                        const teamsData = await teamsResponse.json();
+                        const teams = teamsData.teams || [];
+
+                        // For each team, fetch their agent configs and filter by our agent
+                        const overrides = [];
+                        for (const team of teams) {
+                            try {
+                                const configsResponse = await fetch(`${API_BASE}/teams/${team.id}/agent-configs`, {
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+
+                                if (configsResponse.ok) {
+                                    const configsData = await configsResponse.json();
+                                    const teamConfigs = configsData.configs || [];
+
+                                    // Find config for this specific agent
+                                    const agentConfig = teamConfigs.find(c => c.agent_id === this.selectedAgentId);
+                                    if (agentConfig) {
+                                        overrides.push({
+                                            team_id: team.id,
+                                            team_name: team.name,
+                                            member_count: team.member_count,
+                                            config_id: agentConfig.id,
+                                            is_enabled: agentConfig.is_enabled,
+                                            config: agentConfig.config
+                                        });
+                                    }
+                                }
+                            } catch (error) {
+                                console.error(`Error loading configs for team ${team.name}:`, error);
+                            }
+                        }
+
+                        this.teamOverrides = overrides;
+
+                    } catch (error) {
+                        console.error('Error loading team overrides:', error);
+                        Toast.error('Failed to load team overrides: ' + error.message);
+                    } finally {
+                        this.loadingTeamOverrides = false;
+                    }
+                },
+
+                editTeamOverride(override) {
+                    // Navigate to team detail page or open edit modal
+                    window.location.href = `/team-detail.html?id=${override.team_id}`;
+                },
+
+                async deleteTeamOverride(override) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Delete Team Override',
+                        message: `Delete team override for ${override.team_name}?\n\nThe team will fall back to the organization-level configuration.`,
+                        confirmText: 'Delete Override',
+                        variant: 'danger'
+                    });
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/teams/${override.team_id}/agent-configs/${override.config_id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to delete team override');
+                        }
+
+                        // Refresh the list
+                        const currentConfig = this.orgConfigs.find(c => c.agent_id === this.selectedAgentId);
+                        if (currentConfig) {
+                            await this.viewTeamOverrides(currentConfig);
+                        }
+
+                        Toast.success('Team override deleted successfully');
+
+                    } catch (error) {
+                        console.error('Error deleting team override:', error);
+                        Toast.error('Failed to delete team override: ' + error.message);
+                    }
                 },
 
                 async deleteConfig(config) {
-                    if (!confirm(`Delete configuration for ${config.agent_name}?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Delete Agent Configuration',
+                        message: `Delete configuration for ${config.agent_name}?`,
+                        confirmText: 'Delete Configuration',
+                        variant: 'danger'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -584,11 +784,11 @@
                         if (!response.ok) throw new Error('Failed to delete config');
 
                         await this.loadOrgConfigs();
-                        alert('Configuration deleted successfully');
+                        Toast.success('Configuration deleted successfully');
 
                     } catch (error) {
                         console.error('Error deleting config:', error);
-                        alert('Failed to delete configuration: ' + error.message);
+                        Toast.error('Failed to delete configuration: ' + error.message);
                     }
                 }
             }

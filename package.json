@@ -1,0 +1,24 @@
+{
+  "name": "ubik-enterprise",
+  "version": "1.0.0",
+  "description": "**Multi-tenant SaaS for centralized AI agent and MCP configuration management**",
+  "main": "test-agents.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergei-rastrigin/ubik-enterprise.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sergei-rastrigin/ubik-enterprise/issues"
+  },
+  "homepage": "https://github.com/sergei-rastrigin/ubik-enterprise#readme"
+}

@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -474,16 +484,23 @@
 
                         this.team = await response.json();
                         this.editMode = false;
-                        alert('Team updated successfully!');
+                        Toast.success('Team updated successfully!');
 
                     } catch (error) {
                         console.error('Error saving team:', error);
-                        alert('Failed to save changes');
+                        Toast.error('Failed to save changes');
                     }
                 },
 
                 async deleteTeam() {
-                    if (!confirm(`Are you sure you want to delete team "${this.team.name}"?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Delete Team',
+                        message: `Are you sure you want to delete team "${this.team.name}"?`,
+                        confirmText: 'Delete Team',
+                        variant: 'danger'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -497,21 +514,28 @@
 
                         if (!response.ok) throw new Error('Failed to delete team');
 
-                        alert('Team deleted successfully');
+                        Toast.success('Team deleted successfully');
                         window.location.href = '/teams.html';
 
                     } catch (error) {
                         console.error('Error deleting team:', error);
-                        alert('Failed to delete team');
+                        Toast.error('Failed to delete team');
                     }
                 },
 
                 addMember() {
-                    alert('Add Member\nTODO: Open member selection form');
+                    Toast.info('Add Member\n\nTODO: Open member selection form');
                 },
 
                 async removeMember(member) {
-                    if (!confirm(`Remove ${member.full_name || member.email} from this team?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Remove Team Member',
+                        message: `Remove ${member.full_name || member.email} from this team?`,
+                        confirmText: 'Remove Member',
+                        variant: 'warning'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -533,24 +557,31 @@
                         if (!response.ok) throw new Error('Failed to remove member');
 
                         await this.loadMembers();
-                        alert('Member removed from team');
+                        Toast.success('Member removed from team');
 
                     } catch (error) {
                         console.error('Error removing member:', error);
-                        alert('Failed to remove member');
+                        Toast.error('Failed to remove member');
                     }
                 },
 
                 addAgentOverride() {
-                    alert('Add Agent Override\nTODO: Open agent override form');
+                    Toast.info('Add Agent Override\n\nTODO: Open agent override form');
                 },
 
                 editAgentConfig(config) {
-                    alert(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
+                    Toast.info(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
                 },
 
                 async removeAgentConfig(config) {
-                    if (!confirm(`Remove ${config.agent_name} override for this team?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Remove Agent Override',
+                        message: `Remove ${config.agent_name} override for this team?`,
+                        confirmText: 'Remove Override',
+                        variant: 'warning'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -565,11 +596,11 @@
                         if (!response.ok) throw new Error('Failed to remove config');
 
                         await this.loadAgentConfigs();
-                        alert('Configuration removed successfully');
+                        Toast.success('Configuration removed successfully');
 
                     } catch (error) {
                         console.error('Error removing config:', error);
-                        alert('Failed to remove configuration');
+                        Toast.error('Failed to remove configuration');
                     }
                 },
 

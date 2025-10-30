@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -442,11 +452,11 @@
 
                         this.org = await response.json();
                         this.editMode = false;
-                        alert('Settings saved successfully!');
+                        Toast.success('Settings saved successfully!');
 
                     } catch (error) {
                         console.error('Error saving settings:', error);
-                        alert('Failed to save settings: ' + error.message);
+                        Toast.error('Failed to save settings: ' + error.message);
                     }
                 },
 
@@ -468,11 +478,11 @@
 
                         this.org = await response.json();
                         this.editSettings = false;
-                        alert('Custom settings saved successfully!');
+                        Toast.success('Custom settings saved successfully!');
 
                     } catch (error) {
                         console.error('Error saving settings:', error);
-                        alert('Failed to save settings: ' + error.message);
+                        Toast.error('Failed to save settings: ' + error.message);
                     }
                 },
 
@@ -504,7 +514,7 @@
 
                 async saveClaudeToken() {
                     if (!this.claudeToken || !this.claudeToken.startsWith('sk-ant-')) {
-                        alert('Please enter a valid Anthropic API key (starts with sk-ant-)');
+                        Toast.warning('Please enter a valid Anthropic API key (starts with sk-ant-)');
                         return;
                     }
 
@@ -535,16 +545,23 @@
 
                         this.claudeToken = '';
                         this.editClaudeToken = false;
-                        alert('Claude API token saved successfully! All employees can now use Claude agents.');
+                        Toast.success('Claude API token saved successfully! All employees can now use Claude agents.');
 
                     } catch (error) {
                         console.error('Error saving Claude token:', error);
-                        alert('Failed to save token: ' + error.message);
+                        Toast.error('Failed to save token: ' + error.message);
                     }
                 },
 
                 async deleteClaudeToken() {
-                    if (!confirm('Are you sure you want to delete the Claude API token? Employees will not be able to use Claude agents until a new token is configured.')) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Delete Claude API Token',
+                        message: 'Are you sure you want to delete the Claude API token?\n\nEmployees will not be able to use Claude agents until a new token is configured.',
+                        confirmText: 'Delete Token',
+                        variant: 'danger'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -570,11 +587,11 @@
                         await this.loadClaudeTokenStatus();
 
                         this.editClaudeToken = false;
-                        alert('Claude API token deleted successfully.');
+                        Toast.success('Claude API token deleted successfully.');
 
                     } catch (error) {
                         console.error('Error deleting Claude token:', error);
-                        alert('Failed to delete token: ' + error.message);
+                        Toast.error('Failed to delete token: ' + error.message);
                     }
                 }
             }

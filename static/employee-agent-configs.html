@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -249,7 +259,7 @@
                     this.employeeId = urlParams.get('employee_id');
 
                     if (!this.employeeId) {
-                        alert('No employee ID provided');
+                        Toast.warning('No employee ID provided');
                         window.location.href = '/employees.html';
                         return;
                     }
@@ -308,7 +318,7 @@
                     try {
                         parsedConfig = JSON.parse(config.config_json);
                     } catch (error) {
-                        alert('Invalid JSON format. Please check the configuration.');
+                        Toast.error('Invalid JSON format. Please check the configuration.');
                         return;
                     }
 
@@ -329,17 +339,24 @@
 
                         if (!response.ok) throw new Error('Failed to save configuration');
 
-                        alert('Configuration saved successfully!');
+                        Toast.success('Configuration saved successfully!');
                         await this.loadAgentConfigs();
 
                     } catch (error) {
                         console.error('Error saving config:', error);
-                        alert('Failed to save configuration: ' + error.message);
+                        Toast.error('Failed to save configuration: ' + error.message);
                     }
                 },
 
                 async removeOverride(config) {
-                    if (!confirm(`Remove configuration override for ${config.agent_name}?`)) {
+                    const confirmed = await Modal.confirm({
+                        title: 'Remove Configuration Override',
+                        message: `Remove configuration override for ${config.agent_name}?`,
+                        confirmText: 'Remove Override',
+                        variant: 'warning'
+                    });
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -353,29 +370,29 @@
 
                         if (!response.ok) throw new Error('Failed to remove configuration');
 
-                        alert('Configuration override removed');
+                        Toast.success('Configuration override removed');
                         await this.loadAgentConfigs();
 
                     } catch (error) {
                         console.error('Error removing config:', error);
-                        alert('Failed to remove configuration: ' + error.message);
+                        Toast.error('Failed to remove configuration: ' + error.message);
                     }
                 },
 
                 viewResolvedConfig(config) {
-                    alert(`View Resolved Configuration for ${config.agent_name}\n\nThis would show the final merged config from:\n- Organization settings\n- Team settings\n- Employee overrides\n\nTODO: Implement resolved config viewer`);
+                    Toast.info(`View Resolved Configuration for ${config.agent_name}\n\nThis would show the final merged config from:\n- Organization settings\n- Team settings\n- Employee overrides\n\nTODO: Implement resolved config viewer`);
                 },
 
                 addConfiguration() {
-                    alert('Add New Agent Configuration\n\nTODO: Open agent selection form');
+                    Toast.info('Add New Agent Configuration\n\nTODO: Open agent selection form');
                 },
 
                 downloadAllConfigs() {
-                    alert('Download All Configurations\n\nThis would download a JSON file with all resolved configs for CLI sync.\n\nTODO: Implement download');
+                    Toast.info('Download All Configurations\n\nThis would download a JSON file with all resolved configs for CLI sync.\n\nTODO: Implement download');
                 },
 
                 forceSync() {
-                    alert('Force Sync\n\nThis would trigger an immediate sync to the CLI client.\n\nTODO: Implement force sync');
+                    Toast.info('Force Sync\n\nThis would trigger an immediate sync to the CLI client.\n\nTODO: Implement force sync');
                 },
 
                 formatDate(dateString) {
