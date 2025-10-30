@@ -103,11 +103,18 @@ db-seed:
 	@echo "✅ Seed data loaded successfully"
 	@echo ""
 	@echo "Test credentials (all passwords: 'password123'):"
-	@echo "  alice@acme.com         (Super Admin at Acme Corp)"
-	@echo "  bob@acme.com           (Admin at Acme Corp)"
-	@echo "  charlie@acme.com       (Developer at Acme Corp)"
-	@echo "  grace@techstartup.com  (Admin at Tech Startup)"
-	@echo "  iris@smallbiz.com      (Super Admin at Small Business)"
+	@echo ""
+	@echo "Acme Corp (Mature Enterprise):"
+	@echo "  sarah.cto@acme.com      (Owner/CTO)"
+	@echo "  alex.manager@acme.com   (Manager)"
+	@echo "  maria.senior@acme.com   (Developer - has agents)"
+	@echo "  emma.frontend@acme.com  (Developer)"
+	@echo ""
+	@echo "Other Companies:"
+	@echo "  jane.founder@techco.com (TechCo Owner)"
+	@echo "  tom.dev@techco.com      (TechCo Developer)"
+	@echo "  owner@newcorp.com       (NewCorp Owner)"
+	@echo "  john@solostartup.com    (Solo Startup Owner)"
 
 # Code generation
 generate-erd:
