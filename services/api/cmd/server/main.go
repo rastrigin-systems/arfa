@@ -95,6 +95,7 @@ func main() {
 	fileServer := http.FileServer(http.Dir("./static"))
 	router.Handle("/static/*", http.StripPrefix("/static", fileServer))
 	router.Get("/", serveStaticFile("./static/login.html"))
+	router.Get("/components.html", serveStaticFile("./static/components.html"))
 	router.Get("/login.html", serveStaticFile("./static/login.html"))
 	router.Get("/dashboard.html", serveStaticFile("./static/dashboard.html"))
 	router.Get("/employees.html", serveStaticFile("./static/employees.html"))

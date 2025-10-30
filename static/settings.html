@@ -352,9 +352,12 @@
                 },
 
                 async init() {
+                    console.log('Settings page initializing...');
                     await this.loadOrganization();
                     await this.loadStats();
+                    console.log('Loading initial Claude token status...');
                     await this.loadClaudeTokenStatus();
+                    console.log('Settings page initialized');
                 },
 
                 async loadOrganization() {
@@ -482,7 +485,17 @@
                         });
 
                         if (response.ok) {
-                            this.claudeTokenStatus = await response.json();
+                            const data = await response.json();
+                            console.log('Claude token status loaded:', data);
+
+                            // Update status fields explicitly for reactivity
+                            this.claudeTokenStatus.hasCompanyToken = data.hasCompanyToken || data.has_company_token || false;
+                            this.claudeTokenStatus.hasPersonalToken = data.hasPersonalToken || data.has_personal_token || false;
+                            this.claudeTokenStatus.activeTokenSource = data.activeTokenSource || data.active_token_source || 'none';
+
+                            console.log('Updated claudeTokenStatus:', this.claudeTokenStatus);
+                        } else {
+                            console.error('Failed to load Claude token status:', response.status, await response.text());
                         }
                     } catch (error) {
                         console.error('Error loading Claude token status:', error);
@@ -498,6 +511,7 @@
                     const token = getToken();
 
                     try {
+                        console.log('Saving Claude API token...');
                         const response = await fetch(`${API_BASE}/organizations/current/claude-token`, {
                             method: 'PUT',
                             headers: {
@@ -509,10 +523,16 @@
 
                         if (!response.ok) {
                             const error = await response.json();
+                            console.error('Failed to save token:', error);
                             throw new Error(error.message || 'Failed to save token');
                         }
 
+                        const result = await response.json();
+                        console.log('Token saved successfully:', result);
+
+                        console.log('Reloading Claude token status...');
                         await this.loadClaudeTokenStatus();
+
                         this.claudeToken = '';
                         this.editClaudeToken = false;
                         alert('Claude API token saved successfully! All employees can now use Claude agents.');
@@ -531,6 +551,7 @@
                     const token = getToken();
 
                     try {
+                        console.log('Deleting Claude API token...');
                         const response = await fetch(`${API_BASE}/organizations/current/claude-token`, {
                             method: 'DELETE',
                             headers: { 'Authorization': `Bearer ${token}` }
@@ -538,10 +559,16 @@
 
                         if (!response.ok) {
                             const error = await response.json();
+                            console.error('Failed to delete token:', error);
                             throw new Error(error.message || 'Failed to delete token');
                         }
 
+                        const result = await response.json();
+                        console.log('Token deleted successfully:', result);
+
+                        console.log('Reloading Claude token status...');
                         await this.loadClaudeTokenStatus();
+
                         this.editClaudeToken = false;
                         alert('Claude API token deleted successfully.');
 

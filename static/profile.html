@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -461,7 +471,7 @@
 
                     } catch (error) {
                         console.error('Error loading profile:', error);
-                        alert('Failed to load profile');
+                        Toast.error('Failed to load profile');
                     } finally {
                         this.loading = false;
                     }
@@ -538,11 +548,11 @@
 
                         this.employee = await response.json();
                         this.editMode = false;
-                        alert('Profile updated successfully!');
+                        Toast.success('Profile updated successfully!');
 
                     } catch (error) {
                         console.error('Error saving profile:', error);
-                        alert('Failed to save profile');
+                        Toast.error('Failed to save profile');
                     }
                 },
 
@@ -568,28 +578,28 @@
 
                         this.employee = await response.json();
                         this.editPreferences = false;
-                        alert('Preferences saved successfully!');
+                        Toast.success('Preferences saved successfully!');
 
                     } catch (error) {
                         console.error('Error saving preferences:', error);
                         if (error instanceof SyntaxError) {
-                            alert('Invalid JSON format. Please check your preferences.');
+                            Toast.error('Invalid JSON format. Please check your preferences.');
                         } else {
-                            alert('Failed to save preferences');
+                            Toast.error('Failed to save preferences');
                         }
                     }
                 },
 
                 configureAgent(config) {
-                    alert(`Configure ${config.agent_name}\nTODO: Open configuration form`);
+                    Toast.info(`Configure ${config.agent_name}\n\nTODO: Open configuration form`);
                 },
 
                 viewConfig(config) {
-                    alert(`View configuration for ${config.agent_name}\n\n${JSON.stringify(config.config, null, 2)}`);
+                    Modal.showCode(config.config, `${config.agent_name} Configuration`);
                 },
 
                 syncAgent(config) {
-                    alert(`Sync ${config.agent_name}\nTODO: Trigger sync to local machine`);
+                    Toast.info(`Sync ${config.agent_name}\n\nTODO: Trigger sync to local machine`);
                 },
 
                 viewDetailedReports() {
@@ -599,13 +609,13 @@
                 async updatePassword() {
                     // Validate passwords match
                     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-                        alert('New passwords do not match');
+                        Toast.warning('New passwords do not match');
                         return;
                     }
 
                     // Validate password strength (basic check)
                     if (this.passwordForm.newPassword.length < 8) {
-                        alert('New password must be at least 8 characters long');
+                        Toast.warning('New password must be at least 8 characters long');
                         return;
                     }
 
@@ -636,11 +646,11 @@
                             confirmPassword: ''
                         };
 
-                        alert('Password updated successfully!');
+                        Toast.success('Password updated successfully!');
 
                     } catch (error) {
                         console.error('Error updating password:', error);
-                        alert('Failed to update password: ' + error.message);
+                        Toast.error('Failed to update password: ' + error.message);
                     }
                 },
 

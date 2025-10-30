@@ -9,6 +9,16 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        fetch('/components.html')
+            .then(r => r.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.insertBefore(temp, document.body.firstChild);
+            });
+    </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -283,7 +293,7 @@
                 async submitForm() {
                     // Validate form
                     if (!this.form.full_name || !this.form.email || !this.form.role_id) {
-                        alert('Please fill in all required fields');
+                        Toast.warning('Please fill in all required fields');
                         return;
                     }
 
@@ -293,7 +303,7 @@
                         try {
                             preferences = JSON.parse(this.form.preferences_json);
                         } catch (error) {
-                            alert('Invalid JSON in preferences field. Please check the format.');
+                            Toast.error('Invalid JSON in preferences field. Please check the format.');
                             return;
                         }
                     }
@@ -327,14 +337,16 @@
                         const data = await response.json();
 
                         // Show temporary password to user
-                        alert(`Employee created successfully!\n\nTemporary Password: ${data.temporary_password}\n\nPlease save this password - it won't be shown again.`);
+                        Modal.showPassword(data.temporary_password, this.form.full_name || this.form.email);
 
-                        // Redirect to employee detail page
-                        window.location.href = `/employee-detail.html?id=${data.employee.id}`;
+                        // Redirect to employee detail page after modal closes
+                        setTimeout(() => {
+                            window.location.href = `/employee-detail.html?id=${data.employee.id}`;
+                        }, 1000);
 
                     } catch (error) {
                         console.error('Error creating employee:', error);
-                        alert('Failed to create employee: ' + error.message);
+                        Toast.error('Failed to create employee: ' + error.message);
                     } finally {
                         this.submitting = false;
                     }
