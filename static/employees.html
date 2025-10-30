@@ -58,13 +58,13 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                    <input type="text" x-model="filters.search" @input="loadEmployees"
+                    <input type="text" x-model="filters.search" @input="debouncedSearch"
                            placeholder="Search by name or email..."
                            class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select x-model="filters.status" @change="loadEmployees"
+                    <select x-model="filters.status" @change="filterChanged"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md">
                         <option value="">All</option>
                         <option value="active">Active</option>
@@ -74,10 +74,12 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Team</label>
-                    <select x-model="filters.team" @change="loadEmployees"
+                    <select x-model="filters.team" @change="filterChanged"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md">
                         <option value="">All Teams</option>
-                        <!-- Teams loaded dynamically -->
+                        <template x-for="team in teams" :key="team.id">
+                            <option :value="team.id" x-text="team.name"></option>
+                        </template>
                     </select>
                 </div>
             </div>
@@ -202,7 +204,9 @@
         function employeesList() {
             return {
                 employees: [],
+                teams: [],
                 loading: false,
+                searchTimeout: null,
                 pagination: {
                     page: 1,
                     perPage: 20,
@@ -215,7 +219,36 @@
                 },
 
                 async init() {
+                    await this.loadTeams();
                     await this.loadEmployees();
+                },
+
+                async loadTeams() {
+                    const token = getToken();
+                    try {
+                        const response = await fetch(`${API_BASE}/teams`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.teams = data.teams || [];
+                        }
+                    } catch (error) {
+                        console.error('Error loading teams:', error);
+                    }
+                },
+
+                debouncedSearch() {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.filterChanged();
+                    }, 300);
+                },
+
+                filterChanged() {
+                    this.pagination.page = 1;
+                    this.loadEmployees();
                 },
 
                 async loadEmployees() {

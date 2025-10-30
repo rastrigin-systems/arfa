@@ -17,6 +17,7 @@ LEFT JOIN teams t ON e.team_id = t.id
 WHERE e.org_id = sqlc.arg(org_id)
   AND (sqlc.narg(status)::text IS NULL OR e.status = sqlc.narg(status)::text)
   AND (sqlc.narg(team_id)::uuid IS NULL OR e.team_id = sqlc.narg(team_id)::uuid)
+  AND (sqlc.narg(search)::text IS NULL OR e.full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR e.email ILIKE '%' || sqlc.narg(search)::text || '%')
 ORDER BY e.created_at DESC
 LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 
@@ -24,7 +25,8 @@ LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 SELECT COUNT(*) FROM employees
 WHERE org_id = sqlc.arg(org_id)
   AND (sqlc.narg(status)::text IS NULL OR status = sqlc.narg(status)::text)
-  AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid);
+  AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id)::uuid)
+  AND (sqlc.narg(search)::text IS NULL OR full_name ILIKE '%' || sqlc.narg(search)::text || '%' OR email ILIKE '%' || sqlc.narg(search)::text || '%');
 
 -- name: CreateEmployee :one
 INSERT INTO employees (

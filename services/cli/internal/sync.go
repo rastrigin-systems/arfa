@@ -268,6 +268,19 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			}
 		}
 
+		// Use Claude token from organization/employee (hybrid auth)
+		// This is centrally managed in the Settings page
+		agentAPIKey := claudeToken
+		if agentAPIKey != "" {
+			fmt.Printf("  Using centralized Claude API token (organization/employee)\n")
+		} else if apiKey != "" {
+			// Fallback to legacy API key parameter (for backward compatibility)
+			agentAPIKey = apiKey
+			fmt.Printf("  Using legacy API key parameter\n")
+		} else {
+			fmt.Printf("  ⚠ Warning: No API token configured. Configure via Settings → Security tab\n")
+		}
+
 		// Start agent
 		agentSpec := AgentSpec{
 			AgentID:       config.AgentID,
@@ -276,7 +289,7 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			Image:         fmt.Sprintf("ubik/%s:latest", config.AgentType),
 			Configuration: config.Configuration,
 			MCPServers:    convertMCPServers(config.MCPServers),
-			ClaudeToken:   claudeToken, // Use token from hybrid auth
+			ClaudeToken:   agentAPIKey, // Use centralized token
 			APIKey:        apiKey,      // Fallback for backward compatibility
 		}
 

@@ -528,6 +528,32 @@ Use Row-Level Security (RLS) policies as safety net.
 
 **See [docs/TESTING.md](./docs/TESTING.md) for complete testing guide with TDD workflow.**
 
+### UI Development Workflow
+
+**⚠️ CRITICAL: Wireframes Required for All UI Changes**
+
+**Mandatory UI Workflow:**
+```
+✅ 1. Create wireframe FIRST (for new pages)
+✅ 2. Update wireframes (for page changes)
+✅ 3. Implement UI matching wireframe
+✅ 4. Keep wireframes in sync with implementation
+❌ NEVER implement new pages without wireframes
+❌ NEVER modify pages without updating wireframes
+```
+
+**Why Wireframes are Mandatory:**
+- Ensures design consistency across the platform
+- Provides visual documentation of the UI
+- Facilitates design review before implementation
+- Prevents rework from design changes
+- Serves as reference for future modifications
+
+**Wireframe Location:**
+- Store wireframes in `docs/wireframes/` directory
+- Use descriptive names (e.g., `settings-page.png`, `employee-detail.png`)
+- Include wireframes in pull requests with UI changes
+
 ---
 
 # STATUS & ROADMAP

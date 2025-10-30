@@ -80,48 +80,33 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// Helper function to serve static files with no-cache in dev mode
+	serveStaticFile := func(filepath string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			// Disable caching for development
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+			http.ServeFile(w, r, filepath)
+		}
+	}
+
 	// Serve static files (HTML prototype)
 	fileServer := http.FileServer(http.Dir("./static"))
 	router.Handle("/static/*", http.StripPrefix("/static", fileServer))
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/login.html")
-	})
-	router.Get("/login.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/login.html")
-	})
-	router.Get("/dashboard.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/dashboard.html")
-	})
-	router.Get("/employees.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/employees.html")
-	})
-	router.Get("/teams.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/teams.html")
-	})
-	router.Get("/agents.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/agents.html")
-	})
-	router.Get("/settings.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/settings.html")
-	})
-	router.Get("/profile.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/profile.html")
-	})
-	router.Get("/employee-detail.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/employee-detail.html")
-	})
-	router.Get("/team-detail.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/team-detail.html")
-	})
-	router.Get("/create-employee.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/create-employee.html")
-	})
-	router.Get("/roles.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/roles.html")
-	})
-	router.Get("/employee-agent-configs.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/employee-agent-configs.html")
-	})
+	router.Get("/", serveStaticFile("./static/login.html"))
+	router.Get("/login.html", serveStaticFile("./static/login.html"))
+	router.Get("/dashboard.html", serveStaticFile("./static/dashboard.html"))
+	router.Get("/employees.html", serveStaticFile("./static/employees.html"))
+	router.Get("/teams.html", serveStaticFile("./static/teams.html"))
+	router.Get("/agents.html", serveStaticFile("./static/agents.html"))
+	router.Get("/settings.html", serveStaticFile("./static/settings.html"))
+	router.Get("/profile.html", serveStaticFile("./static/profile.html"))
+	router.Get("/employee-detail.html", serveStaticFile("./static/employee-detail.html"))
+	router.Get("/team-detail.html", serveStaticFile("./static/team-detail.html"))
+	router.Get("/create-employee.html", serveStaticFile("./static/create-employee.html"))
+	router.Get("/roles.html", serveStaticFile("./static/roles.html"))
+	router.Get("/employee-agent-configs.html", serveStaticFile("./static/employee-agent-configs.html"))
 
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {

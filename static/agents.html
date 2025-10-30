@@ -116,7 +116,7 @@
                         <div class="ml-6">
                             <button @click="configureAgent(agent)"
                                     class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap">
-                                <span x-text="agent.is_configured ? 'Manage Config' : 'Configure'"></span>
+                                Configure
                             </button>
                         </div>
                     </div>
@@ -130,6 +130,74 @@
             <div x-show="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <p class="mt-2 text-sm text-gray-500">Loading agents...</p>
+            </div>
+        </div>
+
+        <!-- Configuration Modal -->
+        <div x-show="showConfigModal" x-cloak class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+             @click.self="closeConfigModal">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            <span x-text="editingConfigId ? 'Edit' : 'Configure'"></span>
+                            <span x-text="configuring?.name || ''"></span>
+                        </h2>
+                        <button @click="closeConfigModal" class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Form -->
+                    <form @submit.prevent="saveAgentConfig">
+                        <!-- Agent Name (Read-only) -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Agent Name</label>
+                            <input type="text" :value="configuring?.name" readonly
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600">
+                        </div>
+
+                        <!-- Enable Toggle -->
+                        <div class="mb-4 flex items-center">
+                            <input type="checkbox" x-model="configForm.is_enabled" id="enable-agent"
+                                   class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="enable-agent" class="ml-2 text-sm text-gray-700">
+                                Enable this agent for organization
+                            </label>
+                        </div>
+
+                        <!-- Advanced Configuration -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Advanced Configuration (JSON)
+                            </label>
+                            <textarea x-model="configForm.json_config" rows="8"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-xs focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder='{\n  "model": "claude-sonnet-4.5",\n  "max_tokens": 4096\n}'></textarea>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Optional: Configure agent-specific settings (model, max_tokens, etc.).
+                                API keys are managed in <a href="/settings.html" class="text-blue-600 hover:text-blue-700">Organization Settings</a>.
+                            </p>
+                            <p x-show="configError" x-text="configError" class="mt-1 text-xs text-red-600"></p>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" @click="closeConfigModal"
+                                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" :disabled="submitting"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!submitting">Save Configuration</span>
+                                <span x-show="submitting">Saving...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -272,10 +340,18 @@
                 activeTab: 'catalog',
                 editingConfigId: null,
                 editingConfig: '',
+                showConfigModal: false,
+                configuring: null,
+                configForm: {
+                    is_enabled: true,
+                    json_config: ''
+                },
+                configError: '',
+                submitting: false,
 
                 async init() {
-                    await this.loadAgents();
                     await this.loadOrgConfigs();
+                    await this.loadAgents();
                 },
 
                 async loadAgents() {
@@ -292,9 +368,9 @@
                         const data = await response.json();
                         this.agents = data.agents || [];
 
-                        // Mark which agents are configured (TODO: get from API)
+                        // Mark which agents are configured based on org configs
                         this.agents.forEach(agent => {
-                            agent.is_configured = Math.random() > 0.5;
+                            agent.is_configured = this.orgConfigs.some(config => config.agent_id === agent.id);
                         });
 
                     } catch (error) {
@@ -323,7 +399,116 @@
                 },
 
                 configureAgent(agent) {
-                    alert(`Configure ${agent.name}\nTODO: Open configuration form with JSON editor`);
+                    // Check if this agent already has a config
+                    const existingConfig = this.orgConfigs.find(c => c.agent_id === agent.id);
+
+                    this.configuring = agent;
+                    this.configError = '';
+
+                    if (existingConfig) {
+                        // Edit existing config - pre-populate form
+                        const config = existingConfig.config || {};
+
+                        this.configForm = {
+                            is_enabled: existingConfig.is_enabled,
+                            json_config: Object.keys(config).length > 0
+                                ? JSON.stringify(config, null, 2)
+                                : ''
+                        };
+                        this.editingConfigId = existingConfig.id; // Track that we're editing
+                    } else {
+                        // Create new config
+                        this.configForm = {
+                            is_enabled: true,
+                            json_config: ''
+                        };
+                        this.editingConfigId = null;
+                    }
+
+                    this.showConfigModal = true;
+                },
+
+                closeConfigModal() {
+                    this.showConfigModal = false;
+                    this.configuring = null;
+                    this.editingConfigId = null;
+                    this.configForm = {
+                        is_enabled: true,
+                        json_config: ''
+                    };
+                    this.configError = '';
+                },
+
+                async saveAgentConfig() {
+                    this.configError = '';
+
+                    // Build config object from JSON
+                    let configObj = {};
+
+                    // Parse JSON config if provided
+                    if (this.configForm.json_config.trim()) {
+                        try {
+                            configObj = JSON.parse(this.configForm.json_config);
+                        } catch (error) {
+                            this.configError = 'Invalid JSON in configuration';
+                            return;
+                        }
+                    }
+
+                    this.submitting = true;
+                    const token = getToken();
+
+                    try {
+                        let response;
+                        const isEditing = this.editingConfigId !== null;
+
+                        if (isEditing) {
+                            // Update existing config with PATCH
+                            response = await fetch(`${API_BASE}/organizations/current/agent-configs/${this.editingConfigId}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    config: configObj,
+                                    is_enabled: this.configForm.is_enabled
+                                })
+                            });
+                        } else {
+                            // Create new config with POST
+                            response = await fetch(`${API_BASE}/organizations/current/agent-configs`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    agent_id: this.configuring.id,
+                                    config: configObj,
+                                    is_enabled: this.configForm.is_enabled
+                                })
+                            });
+                        }
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to save configuration');
+                        }
+
+                        // Reload configs and agents
+                        await this.loadOrgConfigs();
+                        await this.loadAgents();
+
+                        this.closeConfigModal();
+                        alert(isEditing ? 'Agent configuration updated successfully!' : 'Agent configured successfully! Employees can now use this agent.');
+
+                    } catch (error) {
+                        console.error('Error saving config:', error);
+                        this.configError = error.message;
+                    } finally {
+                        this.submitting = false;
+                    }
                 },
 
                 editConfig(config) {

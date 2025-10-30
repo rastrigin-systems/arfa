@@ -205,9 +205,78 @@
 
         <!-- Security Tab -->
         <div x-show="activeTab === 'security'" x-cloak class="space-y-6">
+            <!-- Claude API Token -->
             <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Security Settings</h2>
-                <p class="text-gray-500">Security settings coming soon...</p>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Claude API Token</h2>
+                        <p class="text-sm text-gray-500 mt-1">Company-wide API key for all Claude agents</p>
+                    </div>
+                    <button @click="editClaudeToken = !editClaudeToken"
+                            class="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                            x-text="editClaudeToken ? 'Cancel' : (claudeTokenStatus.hasCompanyToken ? 'Update' : 'Configure')">
+                    </button>
+                </div>
+
+                <!-- Token Status Display -->
+                <div x-show="!editClaudeToken" class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-700">Status:</span>
+                        <span x-show="claudeTokenStatus.hasCompanyToken"
+                              class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            Configured
+                        </span>
+                        <span x-show="!claudeTokenStatus.hasCompanyToken"
+                              class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                            Not Configured
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-gray-600" x-show="claudeTokenStatus.hasCompanyToken">
+                        Your organization has a Claude API token configured. All employees will use this token automatically.
+                    </p>
+                    <p class="text-sm text-gray-600" x-show="!claudeTokenStatus.hasCompanyToken">
+                        No company token configured. Configure one to enable Claude agents for all employees.
+                    </p>
+
+                    <div class="flex space-x-2 mt-4">
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank"
+                           class="text-sm text-blue-600 hover:text-blue-700">
+                            Get API Key from Anthropic →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Token Edit Form -->
+                <div x-show="editClaudeToken" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            API Key <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" x-model="claudeToken" required
+                               placeholder="sk-ant-api03-..."
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">
+                            Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-blue-600 hover:text-blue-700">Anthropic Console</a>
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end space-x-2">
+                        <button @click="editClaudeToken = false; claudeToken = ''"
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button @click="saveClaudeToken"
+                                :disabled="!claudeToken || !claudeToken.startsWith('sk-ant-')"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-text="claudeTokenStatus.hasCompanyToken ? 'Update Token' : 'Save Token'"></span>
+                        </button>
+                        <button x-show="claudeTokenStatus.hasCompanyToken" @click="deleteClaudeToken"
+                                class="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50">
+                            Delete Token
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -267,8 +336,14 @@
                 activeTab: 'general',
                 editMode: false,
                 editSettings: false,
+                editClaudeToken: false,
                 org: {},
                 settingsJson: '{}',
+                claudeToken: '',
+                claudeTokenStatus: {
+                    hasCompanyToken: false,
+                    hasPersonalToken: false
+                },
                 stats: {
                     activeEmployees: 0,
                     teams: 0,
@@ -279,6 +354,7 @@
                 async init() {
                     await this.loadOrganization();
                     await this.loadStats();
+                    await this.loadClaudeTokenStatus();
                 },
 
                 async loadOrganization() {
@@ -394,6 +470,84 @@
                     } catch (error) {
                         console.error('Error saving settings:', error);
                         alert('Failed to save settings: ' + error.message);
+                    }
+                },
+
+                async loadClaudeTokenStatus() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/me/claude-token/status`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (response.ok) {
+                            this.claudeTokenStatus = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error loading Claude token status:', error);
+                    }
+                },
+
+                async saveClaudeToken() {
+                    if (!this.claudeToken || !this.claudeToken.startsWith('sk-ant-')) {
+                        alert('Please enter a valid Anthropic API key (starts with sk-ant-)');
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/organizations/current/claude-token`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ token: this.claudeToken })
+                        });
+
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.message || 'Failed to save token');
+                        }
+
+                        await this.loadClaudeTokenStatus();
+                        this.claudeToken = '';
+                        this.editClaudeToken = false;
+                        alert('Claude API token saved successfully! All employees can now use Claude agents.');
+
+                    } catch (error) {
+                        console.error('Error saving Claude token:', error);
+                        alert('Failed to save token: ' + error.message);
+                    }
+                },
+
+                async deleteClaudeToken() {
+                    if (!confirm('Are you sure you want to delete the Claude API token? Employees will not be able to use Claude agents until a new token is configured.')) {
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/organizations/current/claude-token`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.message || 'Failed to delete token');
+                        }
+
+                        await this.loadClaudeTokenStatus();
+                        this.editClaudeToken = false;
+                        alert('Claude API token deleted successfully.');
+
+                    } catch (error) {
+                        console.error('Error deleting Claude token:', error);
+                        alert('Failed to delete token: ' + error.message);
                     }
                 }
             }

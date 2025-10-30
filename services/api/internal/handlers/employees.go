@@ -62,6 +62,12 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	// Search filter (optional)
+	var search *string
+	if searchParam := query.Get("search"); searchParam != "" {
+		search = &searchParam
+	}
+
 	// Pagination: limit (default 50, max 100)
 	limit := 50
 	if limitParam := query.Get("limit"); limitParam != "" {
@@ -87,6 +93,7 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 		OrgID:       orgID,
 		Status:      status,
 		TeamID:      teamID,
+		Search:      search,
 		QueryLimit:  int32(limit),
 		QueryOffset: int32(offset),
 	})
@@ -100,6 +107,7 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 		OrgID:  orgID,
 		Status: status,
 		TeamID: teamID,
+		Search: search,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to count employees")
