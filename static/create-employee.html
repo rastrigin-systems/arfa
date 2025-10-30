@@ -324,12 +324,13 @@
                             throw new Error(errorData.message || 'Failed to create employee');
                         }
 
-                        const newEmployee = await response.json();
+                        const data = await response.json();
 
-                        alert('Employee created successfully!');
+                        // Show temporary password to user
+                        alert(`Employee created successfully!\n\nTemporary Password: ${data.temporary_password}\n\nPlease save this password - it won't be shown again.`);
 
                         // Redirect to employee detail page
-                        window.location.href = `/employee-detail.html?id=${newEmployee.id}`;
+                        window.location.href = `/employee-detail.html?id=${data.employee.id}`;
 
                     } catch (error) {
                         console.error('Error creating employee:', error);
