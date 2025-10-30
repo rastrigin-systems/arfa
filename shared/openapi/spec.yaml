@@ -186,6 +186,21 @@ components:
           additionalProperties: true
           default: {}
 
+    CreateEmployeeResponse:
+      type: object
+      required:
+        - employee
+        - temporary_password
+      properties:
+        employee:
+          $ref: '#/components/schemas/Employee'
+        temporary_password:
+          type: string
+          description: Temporary password for the new employee (only returned on creation)
+          example: "aB3$xY9#mK2@pL7!"
+          minLength: 16
+          maxLength: 32
+
     UpdateEmployeeRequest:
       type: object
       properties:
@@ -1072,11 +1087,11 @@ paths:
               $ref: '#/components/schemas/CreateEmployeeRequest'
       responses:
         '201':
-          description: Employee created
+          description: Employee created with temporary password
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Employee'
+                $ref: '#/components/schemas/CreateEmployeeResponse'
         '401':
           description: Unauthorized
           content:

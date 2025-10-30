@@ -269,11 +269,15 @@ func (h *EmployeesHandler) CreateEmployee(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Convert to API type and return
+	// Convert to API type and return with temporary password
 	apiEmployee := dbEmployeeToAPI(employee)
+	response := api.CreateEmployeeResponse{
+		Employee:          apiEmployee,
+		TemporaryPassword: tempPassword,
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(apiEmployee)
+	json.NewEncoder(w).Encode(response)
 }
 
 // generateTempPassword generates a cryptographically secure random password

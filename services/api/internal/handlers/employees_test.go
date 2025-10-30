@@ -507,14 +507,19 @@ func TestCreateEmployee_Success(t *testing.T) {
 	// Verify response
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var response api.Employee
+	var response api.CreateEmployeeResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Equal(t, "newuser@example.com", string(response.Email))
-	assert.Equal(t, "New User", response.FullName)
-	assert.Equal(t, roleID, response.RoleId)
-	assert.Equal(t, api.EmployeeStatusActive, response.Status)
+	// Verify employee details
+	assert.Equal(t, "newuser@example.com", string(response.Employee.Email))
+	assert.Equal(t, "New User", response.Employee.FullName)
+	assert.Equal(t, roleID, response.Employee.RoleId)
+	assert.Equal(t, api.EmployeeStatusActive, response.Employee.Status)
+
+	// Verify temporary password is returned
+	assert.NotEmpty(t, response.TemporaryPassword)
+	assert.GreaterOrEqual(t, len(response.TemporaryPassword), 16, "Temporary password should be at least 16 characters")
 }
 
 // TDD Lesson: Test creating employee with team_id
