@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Agent Configuration - Ubik Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Include UI Components -->
+    <script>
+        // Load components synchronously before Alpine initializes
+        (async function() {
+            try {
+                const response = await fetch('/components.html');
+                const html = await response.text();
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                // Extract and execute script tags (innerHTML doesn't execute them)
+                const scripts = temp.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    if (oldScript.src) {
+                        newScript.src = oldScript.src;
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                    }
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+                document.body.insertBefore(temp, document.body.firstChild);
+
+                // Dispatch event to signal components are loaded
+                window.dispatchEvent(new Event('componentsLoaded'));
+            } catch (error) {
+                console.error('Failed to load components:', error);
+            }
+        })();
+    </script>
+
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-8">
+                    <span class="text-xl font-bold text-blue-600">Ubik Enterprise</span>
+                    <span id="org-name" class="text-gray-600">[Loading...]</span>
+                </div>
+                <div class="flex items-center space-x-4" x-data="{ open: false }">
+                    <span id="user-email" class="text-gray-700">Loading...</span>
+                    <button @click="open = !open" class="text-gray-600 hover:text-gray-900">▼</button>
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-4 top-14 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                        <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8 h-12">
+                <a href="/dashboard.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Dashboard</a>
+                <a href="/employees.html" class="border-b-2 border-blue-500 text-blue-600 px-1 py-3 text-sm font-medium">Employees</a>
+                <a href="/teams.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Teams</a>
+                <a href="/agents.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Agents</a>
+                <a href="/settings.html" class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 px-1 py-3 text-sm font-medium">Settings</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="editAgentConfig()">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a :href="`/employee-detail.html?id=${employeeId}`" class="text-blue-600 hover:text-blue-700 text-sm">
+                ← Back to Employee Details
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Edit Agent Configuration</h1>
+            <p class="text-gray-600">For: <span x-text="employee.full_name || employee.email"></span></p>
+        </div>
+
+        <!-- Agent Display (Read-only) -->
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Agent</label>
+            <div class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                <span x-text="agentName"></span>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">Agent cannot be changed after creation</p>
+        </div>
+
+        <!-- Configuration Editor -->
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Configuration Override (JSON)
+            </label>
+            <p class="text-sm text-gray-500 mb-3">
+                Leave empty to use default configuration
+            </p>
+            <textarea x-model="configJson"
+                      rows="12"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder='{\n  "temperature": 0.7,\n  "max_tokens": 8000\n}'></textarea>
+            <div x-show="configError" class="mt-2 text-sm text-red-600" x-text="configError"></div>
+        </div>
+
+        <!-- Enable Checkbox -->
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox"
+                       x-model="isEnabled"
+                       class="rounded text-blue-600 focus:ring-blue-500">
+                <span class="text-sm font-medium text-gray-700">Enable this configuration</span>
+            </label>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3">
+            <button @click="cancel"
+                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Cancel
+            </button>
+            <button @click="submit"
+                    :disabled="loading"
+                    :class="loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-md">
+                <span x-show="!loading">Save Changes</span>
+                <span x-show="loading">Saving...</span>
+            </button>
+        </div>
+
+        <div x-show="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-sm text-gray-500">Loading...</p>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        function getToken() {
+            return localStorage.getItem('auth_token');
+        }
+
+        function logout() {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            }).finally(() => {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
+            });
+        }
+
+        async function loadCurrentUser() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Unauthorized');
+
+                const employee = await response.json();
+                document.getElementById('user-email').textContent = employee.email;
+
+                const orgResponse = await fetch(`${API_BASE}/organizations/current`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (orgResponse.ok) {
+                    const org = await orgResponse.json();
+                    document.getElementById('org-name').textContent = `[${org.name}]`;
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        loadCurrentUser();
+
+        function editAgentConfig() {
+            return {
+                employeeId: null,
+                configId: null,
+                employee: {},
+                config: {},
+                agentName: '',
+                configJson: '',
+                configError: '',
+                isEnabled: true,
+                loading: false,
+
+                async init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    this.employeeId = urlParams.get('employee_id');
+                    this.configId = urlParams.get('config_id');
+
+                    if (!this.employeeId || !this.configId) {
+                        Toast.warning('Missing employee ID or config ID');
+                        window.location.href = '/employees.html';
+                        return;
+                    }
+
+                    await this.loadEmployee();
+                    await this.loadConfig();
+                },
+
+                async loadEmployee() {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load employee');
+
+                        this.employee = await response.json();
+                    } catch (error) {
+                        console.error('Error loading employee:', error);
+                        Toast.error('Failed to load employee');
+                        window.location.href = '/employees.html';
+                    }
+                },
+
+                async loadConfig() {
+                    this.loading = true;
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs/${this.configId}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load config');
+
+                        this.config = await response.json();
+
+                        // Set agent name
+                        this.agentName = `${this.config.agent_name} (${this.config.agent_provider})`;
+
+                        // Set config JSON (pretty print)
+                        if (this.config.config_override && Object.keys(this.config.config_override).length > 0) {
+                            this.configJson = JSON.stringify(this.config.config_override, null, 2);
+                        }
+
+                        // Set enabled status
+                        this.isEnabled = this.config.is_enabled;
+
+                    } catch (error) {
+                        console.error('Error loading config:', error);
+                        Toast.error('Failed to load agent configuration');
+                        window.location.href = `/employee-detail.html?id=${this.employeeId}`;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                validateConfig() {
+                    this.configError = '';
+
+                    if (!this.configJson.trim()) {
+                        return true;
+                    }
+
+                    try {
+                        JSON.parse(this.configJson);
+                        return true;
+                    } catch (e) {
+                        this.configError = 'Invalid JSON: ' + e.message;
+                        return false;
+                    }
+                },
+
+                async submit() {
+                    if (!this.validateConfig()) {
+                        return;
+                    }
+
+                    this.loading = true;
+                    const token = getToken();
+
+                    try {
+                        let config = {};
+                        if (this.configJson.trim()) {
+                            config = JSON.parse(this.configJson);
+                        }
+
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs/${this.configId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                config_override: config,
+                                is_enabled: this.isEnabled
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to update config');
+                        }
+
+                        Toast.success('Agent configuration updated successfully!');
+                        setTimeout(() => {
+                            window.location.href = `/employee-detail.html?id=${this.employeeId}`;
+                        }, 1000);
+
+                    } catch (error) {
+                        console.error('Error updating config:', error);
+                        Toast.error(error.message || 'Failed to update agent configuration');
+                        this.loading = false;
+                    }
+                },
+
+                cancel() {
+                    window.location.href = `/employee-detail.html?id=${this.employeeId}`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

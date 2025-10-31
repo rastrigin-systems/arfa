@@ -522,7 +522,7 @@
                 },
 
                 editAgentConfig(config) {
-                    Toast.info(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
+                    window.location.href = `/edit-employee-agent-config.html?employee_id=${this.employeeId}&config_id=${config.id}`;
                 },
 
                 async removeAgentConfig(config) {
