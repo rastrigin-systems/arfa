@@ -362,7 +362,7 @@
                             },
                             body: JSON.stringify({
                                 agent_id: this.selectedAgent.id,
-                                config: Object.keys(config).length > 0 ? config : null,
+                                config_override: config,
                                 is_enabled: this.isEnabled
                             })
                         });
