@@ -10,14 +10,25 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Include UI Components -->
+    <div id="components-loading"></div>
     <script>
-        fetch('/components.html')
-            .then(r => r.text())
-            .then(html => {
-                const temp = document.createElement('div');
-                temp.innerHTML = html;
-                document.body.insertBefore(temp, document.body.firstChild);
+        // Load components before anything else
+        (async function loadComponents() {
+            const response = await fetch('/components.html');
+            const html = await response.text();
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const loading = document.getElementById('components-loading');
+            loading.parentNode.replaceChild(temp, loading);
+
+            // Execute scripts in the components
+            const scripts = temp.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                newScript.textContent = script.textContent;
+                document.head.appendChild(newScript);
             });
+        })();
     </script>
     <!-- Header -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
