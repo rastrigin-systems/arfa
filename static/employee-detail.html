@@ -496,8 +496,99 @@
                     }
                 },
 
-                addAgentConfig() {
-                    Toast.info('Add Agent Configuration\n\nTODO: Open agent selection and configuration form');
+                async addAgentConfig() {
+                    const token = getToken();
+
+                    try {
+                        // Fetch available agents
+                        const response = await fetch(`${API_BASE}/agents`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load agents');
+
+                        const data = await response.json();
+                        const agents = data.agents || [];
+
+                        if (agents.length === 0) {
+                            Toast.warning('No agents available');
+                            return;
+                        }
+
+                        // Build agent selection HTML
+                        const agentOptions = agents.map(agent => `
+                            <div class="agent-option" style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s;"
+                                 onclick="selectAgent('${agent.id}')"
+                                 onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';"
+                                 onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent';">
+                                <div style="font-weight: 600; color: #111827;">${agent.name}</div>
+                                <div style="font-size: 14px; color: #6b7280;">${agent.provider}</div>
+                                <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">${agent.description}</div>
+                            </div>
+                        `).join('');
+
+                        // Show modal with agent selection
+                        const modalContent = `
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                <p style="margin-bottom: 16px; color: #6b7280;">Select an agent to configure for this employee:</p>
+                                ${agentOptions}
+                            </div>
+                        `;
+
+                        // Store reference for selectAgent callback
+                        window.addAgentConfigCallback = async (agentId) => {
+                            Modal.close();
+                            await this.createAgentConfig(agentId);
+                        };
+
+                        // Define selectAgent function
+                        window.selectAgent = (agentId) => {
+                            if (window.addAgentConfigCallback) {
+                                window.addAgentConfigCallback(agentId);
+                            }
+                        };
+
+                        Modal.show({
+                            title: 'Add Agent Configuration',
+                            content: modalContent,
+                            showCloseButton: true
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading agents:', error);
+                        Toast.error('Failed to load available agents');
+                    }
+                },
+
+                async createAgentConfig(agentId) {
+                    const token = getToken();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/employees/${this.employeeId}/agent-configs`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                agent_id: agentId,
+                                is_enabled: true,
+                                config: {}
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to create config');
+                        }
+
+                        await this.loadAgentConfigs();
+                        Toast.success('Agent configuration added successfully!');
+
+                    } catch (error) {
+                        console.error('Error creating agent config:', error);
+                        Toast.error(error.message || 'Failed to add agent configuration');
+                    }
                 },
 
                 editAgentConfig(config) {
