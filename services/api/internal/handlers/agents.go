@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
@@ -96,8 +97,8 @@ func dbAgentToAPI(agent db.Agent) api.Agent {
 // GetAgent handles GET /agents/{agent_id}
 // Returns a specific agent by ID
 func (h *AgentsHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
-	// Extract agent_id from URL path
-	agentIDStr := r.PathValue("agent_id")
+	// Extract agent_id from URL path using Chi's URLParam
+	agentIDStr := chi.URLParam(r, "agent_id")
 	if agentIDStr == "" {
 		writeError(w, http.StatusBadRequest, "Missing agent_id")
 		return
