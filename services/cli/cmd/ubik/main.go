@@ -487,7 +487,7 @@ func newAgentsListCommand() *cobra.Command {
 
 				w.Flush()
 				fmt.Println()
-				fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see detailed configuration")
+				fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see configuration for your agents")
 				fmt.Println()
 
 				return nil
@@ -531,7 +531,8 @@ func newAgentsListCommand() *cobra.Command {
 
 			w.Flush()
 			fmt.Println()
-			fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see detailed configuration")
+			fmt.Println("💡 Tip: Use 'ubik agents info <id>' to see agent details")
+			fmt.Println("        Use 'ubik agents show <name>' to see configuration for assigned agents")
 			fmt.Println()
 
 			return nil
