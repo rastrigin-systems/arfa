@@ -6,7 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
 	"github.com/spf13/cobra"
 )
 
@@ -437,6 +438,7 @@ func newAgentsCommand() *cobra.Command {
 	cmd.AddCommand(newAgentsListCommand())
 	cmd.AddCommand(newAgentsInfoCommand())
 	cmd.AddCommand(newAgentsRequestCommand())
+	cmd.AddCommand(commands.NewAgentsShowCommand())
 
 	return cmd
 }

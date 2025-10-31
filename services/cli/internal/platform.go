@@ -72,10 +72,11 @@ func (pc *PlatformClient) Login(email, password string) (*LoginResponse, error) 
 
 // GetEmployeeInfo gets information about the current employee
 type EmployeeInfo struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	FullName string `json:"full_name"`
-	OrgID    string `json:"org_id"`
+	ID       string  `json:"id"`
+	Email    string  `json:"email"`
+	FullName string  `json:"full_name"`
+	OrgID    string  `json:"org_id"`
+	TeamID   *string `json:"team_id"` // nullable
 }
 
 func (pc *PlatformClient) GetEmployeeInfo(employeeID string) (*EmployeeInfo, error) {
@@ -105,6 +106,7 @@ type AgentConfig struct {
 	AgentID       string                 `json:"agent_id"`
 	AgentName     string                 `json:"agent_name"`
 	AgentType     string                 `json:"agent_type"`
+	Provider      string                 `json:"provider"`
 	IsEnabled     bool                   `json:"is_enabled"`
 	Configuration map[string]interface{} `json:"configuration"`
 	MCPServers    []MCPServerConfig      `json:"mcp_servers"`
@@ -140,6 +142,7 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentCon
 			AgentID:       apiConfig.AgentID,
 			AgentName:     apiConfig.AgentName,
 			AgentType:     apiConfig.AgentType,
+			Provider:      apiConfig.Provider,
 			IsEnabled:     apiConfig.IsEnabled,
 			Configuration: apiConfig.Config,
 			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
@@ -193,6 +196,77 @@ func (pc *PlatformClient) GetEffectiveClaudeTokenInfo() (*EffectiveClaudeTokenRe
 	endpoint := "/employees/me/claude-token/effective"
 	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
+	}
+	return &resp, nil
+}
+
+// OrgAgentConfigResponse represents an org-level agent config
+type OrgAgentConfigResponse struct {
+	ID        string                 `json:"id"`
+	AgentID   string                 `json:"agent_id"`
+	AgentName string                 `json:"agent_name"`
+	Config    map[string]interface{} `json:"config"`
+	IsEnabled bool                   `json:"is_enabled"`
+}
+
+// TeamAgentConfigResponse represents a team-level agent config
+type TeamAgentConfigResponse struct {
+	ID             string                 `json:"id"`
+	AgentID        string                 `json:"agent_id"`
+	AgentName      string                 `json:"agent_name"`
+	ConfigOverride map[string]interface{} `json:"config_override"`
+	IsEnabled      bool                   `json:"is_enabled"`
+}
+
+// EmployeeAgentConfigResponse represents an employee-level agent config
+type EmployeeAgentConfigResponse struct {
+	ID             string                 `json:"id"`
+	AgentID        string                 `json:"agent_id"`
+	AgentName      string                 `json:"agent_name"`
+	ConfigOverride map[string]interface{} `json:"config_override"`
+	IsEnabled      bool                   `json:"is_enabled"`
+}
+
+// GetOrgAgentConfigs fetches organization-level agent configs
+func (pc *PlatformClient) GetOrgAgentConfigs() ([]OrgAgentConfigResponse, error) {
+	var resp struct {
+		Configs []OrgAgentConfigResponse `json:"configs"`
+	}
+	if err := pc.doRequest("GET", "/organizations/current/agent-configs", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get org agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// GetTeamAgentConfigs fetches team-level agent configs
+func (pc *PlatformClient) GetTeamAgentConfigs(teamID string) ([]TeamAgentConfigResponse, error) {
+	var resp struct {
+		Configs []TeamAgentConfigResponse `json:"configs"`
+	}
+	endpoint := fmt.Sprintf("/teams/%s/agent-configs", teamID)
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get team agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// GetEmployeeAgentConfigs fetches employee-level agent configs
+func (pc *PlatformClient) GetEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfigResponse, error) {
+	var resp struct {
+		Configs []EmployeeAgentConfigResponse `json:"configs"`
+	}
+	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get employee agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// GetCurrentEmployee fetches information about the currently authenticated employee
+func (pc *PlatformClient) GetCurrentEmployee() (*EmployeeInfo, error) {
+	var resp EmployeeInfo
+	if err := pc.doRequest("GET", "/auth/me", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get current employee: %w", err)
 	}
 	return &resp, nil
 }
