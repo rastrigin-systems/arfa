@@ -482,7 +482,7 @@ func newAgentsListCommand() *cobra.Command {
 					if !agent.IsEnabled {
 						enabledStatus = "✗ disabled"
 					}
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.AgentName, agent.AgentType, enabledStatus, agent.AgentID[:8]+"...")
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.AgentName, agent.AgentType, enabledStatus, agent.AgentID)
 				}
 
 				w.Flush()
@@ -526,7 +526,7 @@ func newAgentsListCommand() *cobra.Command {
 				if len(description) > 60 {
 					description = description[:57] + "..."
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.Name, agent.Provider, agent.ID[:8]+"...", description)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.Name, agent.Provider, agent.ID, description)
 			}
 
 			w.Flush()
