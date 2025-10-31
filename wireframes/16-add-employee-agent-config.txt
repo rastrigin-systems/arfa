@@ -1,0 +1,79 @@
++----------------------------------------------------------+
+|  Ubik Enterprise    [Acme Corp]         alice@acme  [v] |
++----------------------------------------------------------+
+|  Dashboard | Employees | Teams | Agents | Settings      |
++----------------------------------------------------------+
+|                                                          |
+|  < Back to Employee Agent Configurations                 |
+|                                                          |
+|  Add Agent Configuration                                 |
+|  For: Bob Jones (bob@acme.com)                           |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  Step 1: Select Agent                                    |
+|                                                          |
+|  +------------------------------------------------------+|
+|  | [ ] Aider                                     [ICON] ||
+|  |     Aider                                            ||
+|  |     AI pair programming in your terminal             ||
+|  |                                                      ||
+|  | [x] Claude Code                               [ICON] ||
+|  |     Anthropic                                        ||
+|  |     AI-powered coding assistant with deep codebase   ||
+|  |     understanding                                    ||
+|  |                                                      ||
+|  | [ ] Continue                                  [ICON] ||
+|  |     Continue.dev                                     ||
+|  |     Open source AI code assistant                    ||
+|  |                                                      ||
+|  | [ ] Cursor                                    [ICON] ||
+|  |     Anysphere                                        ||
+|  |     AI-first code editor with pair programming       ||
+|  |                                                      ||
+|  | [ ] GitHub Copilot                            [ICON] ||
+|  |     GitHub                                           ||
+|  |     AI pair programmer from GitHub                   ||
+|  |                                                      ||
+|  | [ ] Windsurf                                  [ICON] ||
+|  |     Codeium                                          ||
+|  |     AI-powered coding with flow state                ||
+|  +------------------------------------------------------+|
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  Step 2: Configuration (Optional)                        |
+|                                                          |
+|  [ ] Use default configuration                           |
+|  [x] Customize configuration                             |
+|                                                          |
+|  Configuration (JSON):                                   |
+|  +------------------------------------------------------+|
+|  | {                                                    ||
+|  |   "temperature": 0.7,                                ||
+|  |   "max_tokens": 8000                                 ||
+|  | }                                                    ||
+|  +------------------------------------------------------+|
+|                                                          |
+|  Note: Leave empty to inherit from team/org settings     |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  Step 3: Status                                          |
+|                                                          |
+|  [x] Enable immediately                                  |
+|  [ ] Add as disabled (enable later)                      |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  ( Cancel )                    ( Add Configuration )     |
+|                                                          |
++----------------------------------------------------------+
+|  API Endpoint:                                           |
+|  - POST /employees/{id}/agent-configs                    |
+|    Body: {                                               |
+|      "agent_id": "uuid",                                 |
+|      "config": { /* optional override */ },              |
+|      "is_enabled": true                                  |
+|    }                                                     |
++----------------------------------------------------------+

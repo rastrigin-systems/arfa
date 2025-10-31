@@ -108,6 +108,7 @@ func main() {
 	router.Get("/create-employee.html", serveStaticFile("./static/create-employee.html"))
 	router.Get("/roles.html", serveStaticFile("./static/roles.html"))
 	router.Get("/employee-agent-configs.html", serveStaticFile("./static/employee-agent-configs.html"))
+	router.Get("/add-employee-agent-config.html", serveStaticFile("./static/add-employee-agent-config.html"))
 
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {
