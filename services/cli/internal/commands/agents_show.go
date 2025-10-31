@@ -41,7 +41,7 @@ func NewAgentsShowCommand() *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
-		Use:   "show <agent-name>",
+		Use:   "show <agent-name|agent-id>",
 		Short: "Show detailed agent configuration with cascade breakdown",
 		Long: `Show detailed configuration for a specific agent, including:
 - Organization-level base configuration
@@ -49,7 +49,10 @@ func NewAgentsShowCommand() *cobra.Command {
 - Personal (employee-level) overrides (if applicable)
 - Final resolved configuration
 
-This helps you understand where each configuration value comes from.`,
+This helps you understand where each configuration value comes from.
+
+You can specify the agent by name (e.g., "Claude Code"), type (e.g., "ide_assistant"),
+or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			agentName := args[0]
@@ -107,17 +110,19 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
 
-	// Find matching agent by name
+	// Find matching agent by name, type, or ID
 	var targetAgent *cli.AgentConfig
 	for i := range resolvedConfigs {
-		if resolvedConfigs[i].AgentName == agentName || resolvedConfigs[i].AgentType == agentName {
+		if resolvedConfigs[i].AgentName == agentName ||
+			resolvedConfigs[i].AgentType == agentName ||
+			resolvedConfigs[i].AgentID == agentName {
 			targetAgent = &resolvedConfigs[i]
 			break
 		}
 	}
 
 	if targetAgent == nil {
-		return nil, fmt.Errorf("agent %q not found", agentName)
+		return nil, fmt.Errorf("agent %q not found (tried matching by name, type, and ID)", agentName)
 	}
 
 	// 3. Get org-level config

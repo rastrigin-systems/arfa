@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/tabwriter"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
@@ -470,15 +471,27 @@ func newAgentsListCommand() *cobra.Command {
 				}
 
 				fmt.Printf("\nConfigured Agents (%d):\n\n", len(agents))
+
+				// Create table writer
+				w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+				fmt.Fprintln(w, "NAME\tTYPE\tSTATUS\tID")
+				fmt.Fprintln(w, "────\t────\t──────\t──")
+
 				for _, agent := range agents {
 					enabledStatus := "✓ enabled"
 					if !agent.IsEnabled {
 						enabledStatus = "✗ disabled"
 					}
-					fmt.Printf("  • %s (%s) - %s\n", agent.AgentName, agent.AgentType, enabledStatus)
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.AgentName, agent.AgentType, enabledStatus, agent.AgentID[:8]+"...")
 				}
+
+				w.Flush()
 				fmt.Println()
+				fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see detailed configuration")
+				fmt.Println()
+
 				return nil
+
 			}
 
 			// For platform agents, require authentication
@@ -502,14 +515,24 @@ func newAgentsListCommand() *cobra.Command {
 			}
 
 			fmt.Printf("\nAvailable Agents (%d):\n\n", len(agents))
+
+			// Create table writer
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "NAME\tPROVIDER\tID\tDESCRIPTION")
+			fmt.Fprintln(w, "────\t────────\t──\t───────────")
+
 			for _, agent := range agents {
-				fmt.Printf("  • %s (%s)\n", agent.Name, agent.Provider)
-				if agent.Description != "" {
-					fmt.Printf("    %s\n", agent.Description)
+				description := agent.Description
+				if len(description) > 60 {
+					description = description[:57] + "..."
 				}
-				fmt.Printf("    ID: %s | Pricing: %s\n", agent.ID, agent.PricingTier)
-				fmt.Println()
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.Name, agent.Provider, agent.ID[:8]+"...", description)
 			}
+
+			w.Flush()
+			fmt.Println()
+			fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see detailed configuration")
+			fmt.Println()
 
 			return nil
 		},
