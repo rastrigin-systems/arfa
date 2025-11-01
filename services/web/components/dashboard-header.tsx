@@ -1,9 +1,10 @@
 'use client';
 
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { logoutAction } from '@/app/(dashboard)/actions';
+import Link from 'next/link';
 
 type Employee = {
   id: string;
@@ -16,8 +17,23 @@ export function DashboardHeader({ employee }: { employee: Employee }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <h1 className="text-xl font-bold">Ubik Enterprise</h1>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/agents"
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Bot className="h-4 w-4" />
+              Agents
+            </Link>
+          </nav>
         </div>
 
         <div className="flex items-center gap-4">
