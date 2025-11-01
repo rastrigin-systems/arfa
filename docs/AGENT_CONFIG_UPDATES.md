@@ -67,7 +67,27 @@ git worktree remove ../ubik-issue-13
 
 ### Standard Workflow for Every Task
 
-1. ✅ Create feature branch (with optional worktree for parallel work)
+**⚠️ STEP 1: Update Project Status FIRST - MANDATORY!**
+
+```bash
+# This MUST be the FIRST command you run when starting ANY task
+./scripts/update-project-status.sh --issue <issue-number> --status "In Progress"
+
+# Example:
+./scripts/update-project-status.sh --issue 13 --status "In Progress"
+```
+
+**WHY THIS IS CRITICAL:**
+- ✅ Immediate visibility that work has started
+- ✅ Prevents duplicate work (others see it's "In Progress")
+- ✅ Required for accurate project tracking
+- ✅ Shows real-time progress to stakeholders
+
+**If you skip this step, the task is considered NOT STARTED.**
+
+---
+
+2. ✅ Create feature branch (with optional worktree for parallel work)
    ```bash
    # Option A: Traditional branch (single task)
    git checkout main && git pull origin main
@@ -78,9 +98,9 @@ git worktree remove ../ubik-issue-13
    cd ../ubik-<issue-number>
    ```
 
-2. ✅ Update GitHub Project status to "In Progress"
+3. ✅ Verify project status was updated (double-check)
    ```bash
-   # Move issue from Backlog to In Progress when starting work
+   # Confirm the issue is now "In Progress" on the board
    gh api graphql -f query='
      mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
        updateProjectV2ItemFieldValue(input: {
@@ -98,12 +118,12 @@ git worktree remove ../ubik-issue-13
    ./scripts/update-project-status.sh --issue <issue-number> --status "In Progress"
    ```
 
-3. ✅ Implement changes following TDD
+4. ✅ Implement changes following TDD
    - Write failing tests FIRST
    - Implement code to pass tests
    - Refactor with tests passing
 
-4. ✅ Run tests locally
+5. ✅ Run tests locally
    ```bash
    # Backend
    make test
@@ -112,7 +132,7 @@ git worktree remove ../ubik-issue-13
    npm run type-check && npm run lint && npm run build && npm run test:e2e
    ```
 
-5. ✅ Commit with descriptive message
+6. ✅ Commit with descriptive message
    ```bash
    git add .
    git commit -m "$(cat <<'EOF'
@@ -132,12 +152,12 @@ git worktree remove ../ubik-issue-13
    )"
    ```
 
-6. ✅ Push to remote
+7. ✅ Push to remote
    ```bash
    git push -u origin <branch-name>
    ```
 
-7. ✅ Create Pull Request
+8. ✅ Create Pull Request
    ```bash
    gh pr create \
      --title "<type>: <Title> (#<issue-number>)" \
@@ -160,24 +180,24 @@ git worktree remove ../ubik-issue-13
      --head <branch-name>
    ```
 
-8. ✅ Update GitHub Project status to "In Review"
+9. ✅ Update GitHub Project status to "In Review"
    ```bash
    # After PR is created, move to In Review
    ./scripts/update-project-status.sh --issue <issue-number> --status "In Review"
    ```
 
-9. ✅ Wait for CI/CD checks to pass
-   ```bash
-   gh pr checks <PR-number> --watch --interval 10
-   ```
+10. ✅ Wait for CI/CD checks to pass
+    ```bash
+    gh pr checks <PR-number> --watch --interval 10
+    ```
 
-10. ✅ Verify checks passed
+11. ✅ Verify checks passed
     ```bash
     # Check if all checks passed
     gh pr checks <PR-number>
     ```
 
-11. ✅ Report completion to user
+12. ✅ Report completion to user
    ```
    ✅ Task complete!
 
@@ -191,7 +211,7 @@ git worktree remove ../ubik-issue-13
    - Delete feature branch after merge
    ```
 
-12. ✅ Cleanup worktree (if used)
+13. ✅ Cleanup worktree (if used)
     ```bash
     # After PR is merged, cleanup the worktree
     cd /path/to/main/repo
@@ -200,7 +220,7 @@ git worktree remove ../ubik-issue-13
     git push origin --delete <branch-name>  # Delete remote (if needed)
     ```
 
-13. ✅ Update GitHub Project status to "Done" (after PR merge)
+14. ✅ Update GitHub Project status to "Done" (after PR merge)
     ```bash
     # After PR is successfully merged
     ./scripts/update-project-status.sh --issue <issue-number> --status "Done"
@@ -442,8 +462,39 @@ If any agent skips steps, review and update their configuration.
 ## See Also
 
 - **[docs/DEV_WORKFLOW.md](./DEV_WORKFLOW.md)** - Complete workflow guide
+- **[docs/PR_REVIEWER_AGENT.md](./PR_REVIEWER_AGENT.md)** - PR review, merge, and cleanup agent
 - **[CLAUDE.md](../CLAUDE.md)** - Development workflow section
 - **[docs/TESTING.md](./TESTING.md)** - TDD methodology
+
+---
+
+## Additional Agent: PR Reviewer
+
+**Purpose:** Automated PR review, conflict resolution, merge, and cleanup
+
+**Configuration File:** `~/.claude/agents/pr-reviewer.md`
+
+**See [docs/PR_REVIEWER_AGENT.md](./PR_REVIEWER_AGENT.md) for complete configuration.**
+
+**Usage:**
+```
+User: "Review and merge PR #20"
+```
+
+**What It Does:**
+1. Reviews code changes
+2. Resolves merge conflicts (if any)
+3. Waits for CI/CD checks to pass
+4. Merges PR to main
+5. Deletes feature branch
+6. Updates GitHub Project status to "Done"
+7. Cleans up worktree
+
+**This completes the full development cycle:**
+- `go-backend-developer` / `frontend-developer` → Implement & Create PR
+- `pr-reviewer` → Review, Merge, Clean up
+
+**Full automation from task start to completion!**
 
 ---
 
