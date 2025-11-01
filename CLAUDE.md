@@ -427,6 +427,73 @@ go run cmd/server/main.go
 git commit --no-verify -m "your message"
 ```
 
+### CI-Aware Development Workflow
+
+**IMPORTANT:** Both `go-backend-developer` and `frontend-developer` agents now automatically wait for CI checks before completing tasks.
+
+**Complete Workflow (Automated by Agents):**
+
+```bash
+# 1. Pick task from GitHub Projects
+gh issue list --label="backend,status/ready"
+
+# 2. Create branch + workspace
+git checkout -b issue-123-feature
+git worktree add ../ubik-issue-123 issue-123-feature
+cd ../ubik-issue-123
+
+# 3. Implement feature (TDD)
+# - Write failing tests
+# - Implement code
+# - All tests pass locally
+
+# 4. Create PR
+gh pr create --title "..." --body "..." --label "backend"
+PR_NUM=$(gh pr view --json number -q .number)
+
+# 5. Wait for CI checks (CRITICAL!)
+gh pr checks $PR_NUM --watch --interval 10
+
+# 6. Verify CI passed
+CI_STATUS=$(gh pr checks $PR_NUM --json state -q 'map(select(.state == "FAILURE" or .state == "CANCELLED")) | length')
+
+if [ "$CI_STATUS" -eq 0 ]; then
+  # All checks passed!
+  ./scripts/update-project-status.sh --issue 123 --status "In Review"
+  gh issue edit 123 --add-label "status/waiting-for-review"
+  gh issue comment 123 --body "✅ All CI checks passed. PR #${PR_NUM} ready for review."
+else
+  # Checks failed - investigate and fix
+  gh pr checks $PR_NUM
+  gh issue comment 123 --body "❌ CI checks failed for PR #${PR_NUM}. Investigating..."
+  # Fix failures and push again
+fi
+```
+
+**Why This Matters:**
+
+- ✅ **Quality Gate**: All tests must pass in CI before moving to review
+- ✅ **Automated**: Agents handle the entire workflow without manual intervention
+- ✅ **Visibility**: GitHub Project status auto-updates to "In Review" when ready
+- ✅ **Fast Feedback**: Failures caught immediately, not during code review
+- ✅ **Clean Pipeline**: No broken PRs waiting for review
+
+**Helper Script:**
+
+```bash
+# Update GitHub Project status for an issue
+./scripts/update-project-status.sh --issue 123 --status "In Review"
+./scripts/update-project-status.sh --issue 123 --status "Done"
+./scripts/update-project-status.sh --issue 123 --status "In Progress"
+
+# For marketing board
+./scripts/update-project-status.sh --issue 124 --status "Launched" --project marketing
+```
+
+**See agent configurations:**
+- `~/.claude/agents/go-backend-developer.md` - Backend workflow
+- `~/.claude/agents/frontend-developer.md` - Frontend workflow
+
 ### Code Generation Pipeline
 
 ```
