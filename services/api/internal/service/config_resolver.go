@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 )
@@ -92,7 +92,7 @@ func (r *ConfigResolver) ResolveAgentConfig(ctx context.Context, employeeID, age
 		AgentID: agentID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			// No org config = agent not enabled for this org
 			return nil, fmt.Errorf("agent not configured at org level")
 		}
@@ -121,7 +121,7 @@ func (r *ConfigResolver) ResolveAgentConfig(ctx context.Context, employeeID, age
 			}
 			mergedConfig = deepMerge(mergedConfig, teamOverride)
 			isEnabled = isEnabled && teamConfig.IsEnabled
-		} else if err != sql.ErrNoRows {
+		} else if err != pgx.ErrNoRows {
 			return nil, fmt.Errorf("failed to get team config: %w", err)
 		}
 	}
@@ -151,7 +151,7 @@ func (r *ConfigResolver) ResolveAgentConfig(ctx context.Context, employeeID, age
 			timestamp := employeeConfig.LastSyncedAt.Time.Format("2006-01-02T15:04:05Z07:00")
 			lastSyncedAt = &timestamp
 		}
-	} else if err != sql.ErrNoRows {
+	} else if err != pgx.ErrNoRows {
 		return nil, fmt.Errorf("failed to get employee config: %w", err)
 	}
 

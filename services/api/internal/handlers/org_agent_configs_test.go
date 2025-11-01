@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -260,7 +260,7 @@ func TestCreateOrgAgentConfig_AgentNotFound(t *testing.T) {
 	// Expect agent verification - returns not found
 	mockDB.EXPECT().
 		GetAgentByID(gomock.Any(), agentID).
-		Return(db.Agent{}, sql.ErrNoRows)
+		Return(db.Agent{}, pgx.ErrNoRows)
 
 	reqBody := map[string]interface{}{
 		"agent_id": agentID.String(),
@@ -374,7 +374,7 @@ func TestUpdateOrgAgentConfig_NotFound(t *testing.T) {
 	// Expect config update - returns not found
 	mockDB.EXPECT().
 		UpdateOrgAgentConfig(gomock.Any(), gomock.Any()).
-		Return(db.OrgAgentConfig{}, sql.ErrNoRows)
+		Return(db.OrgAgentConfig{}, pgx.ErrNoRows)
 
 	reqBody := map[string]interface{}{
 		"config": map[string]interface{}{
@@ -505,7 +505,7 @@ func TestGetEmployeeResolvedAgentConfigs_Success(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent1ID,
-	}).Return(db.EmployeeAgentConfig{}, sql.ErrNoRows)
+	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Mock agent 2 resolution
@@ -531,7 +531,7 @@ func TestGetEmployeeResolvedAgentConfigs_Success(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent2ID,
-	}).Return(db.EmployeeAgentConfig{}, sql.ErrNoRows)
+	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Use chi router to properly set URL params
@@ -571,7 +571,7 @@ func TestGetEmployeeResolvedAgentConfigs_EmployeeNotFound(t *testing.T) {
 	// Mock employee verification - returns not found
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), employeeID).
-		Return(db.Employee{}, sql.ErrNoRows)
+		Return(db.Employee{}, pgx.ErrNoRows)
 
 	// Use chi router to properly set URL params
 	r := chi.NewRouter()

@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -91,7 +91,7 @@ func (h *OrgAgentConfigsHandler) CreateOrgAgentConfig(w http.ResponseWriter, r *
 	// Check if agent exists
 	_, err = h.db.GetAgentByID(ctx, agentID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Agent not found")
 			return
 		}
@@ -242,7 +242,7 @@ func (h *OrgAgentConfigsHandler) UpdateOrgAgentConfig(w http.ResponseWriter, r *
 		IsEnabled: isEnabled,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Config not found")
 			return
 		}
@@ -303,7 +303,7 @@ func (h *OrgAgentConfigsHandler) GetEmployeeResolvedAgentConfigs(w http.Response
 	// Verify employee exists
 	_, err = h.db.GetEmployee(ctx, employeeID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			writeError(w, http.StatusNotFound, "Employee not found")
 			return
 		}
