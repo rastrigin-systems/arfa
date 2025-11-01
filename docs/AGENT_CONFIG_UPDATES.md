@@ -462,8 +462,39 @@ If any agent skips steps, review and update their configuration.
 ## See Also
 
 - **[docs/DEV_WORKFLOW.md](./DEV_WORKFLOW.md)** - Complete workflow guide
+- **[docs/PR_REVIEWER_AGENT.md](./PR_REVIEWER_AGENT.md)** - PR review, merge, and cleanup agent
 - **[CLAUDE.md](../CLAUDE.md)** - Development workflow section
 - **[docs/TESTING.md](./TESTING.md)** - TDD methodology
+
+---
+
+## Additional Agent: PR Reviewer
+
+**Purpose:** Automated PR review, conflict resolution, merge, and cleanup
+
+**Configuration File:** `~/.claude/agents/pr-reviewer.md`
+
+**See [docs/PR_REVIEWER_AGENT.md](./PR_REVIEWER_AGENT.md) for complete configuration.**
+
+**Usage:**
+```
+User: "Review and merge PR #20"
+```
+
+**What It Does:**
+1. Reviews code changes
+2. Resolves merge conflicts (if any)
+3. Waits for CI/CD checks to pass
+4. Merges PR to main
+5. Deletes feature branch
+6. Updates GitHub Project status to "Done"
+7. Cleans up worktree
+
+**This completes the full development cycle:**
+- `go-backend-developer` / `frontend-developer` → Implement & Create PR
+- `pr-reviewer` → Review, Merge, Clean up
+
+**Full automation from task start to completion!**
 
 ---
 
