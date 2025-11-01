@@ -379,6 +379,30 @@ docker exec ubik-postgres psql -U ubik -d ubik
 
 ## Development Workflow
 
+### ⚠️ MANDATORY: Standard PR Workflow
+
+**ALL code changes MUST follow the standard Git workflow.**
+
+**See [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) for the complete workflow guide.**
+
+**Quick summary - Required steps for EVERY change:**
+1. ✅ Create feature branch from `main`
+2. ✅ Implement changes (following TDD)
+3. ✅ Run tests locally
+4. ✅ Commit with descriptive message
+5. ✅ Push to remote
+6. ✅ Create Pull Request
+7. ✅ Wait for CI/CD checks to pass
+8. ✅ Review and merge
+9. ✅ Delete feature branch
+
+**No exceptions.** This applies to:
+- Backend API changes (go-backend-developer agent)
+- Frontend web changes (frontend-developer agent)
+- CLI changes
+- Documentation changes
+- Database migrations
+
 ### First-Time Setup
 
 ```bash
@@ -389,37 +413,48 @@ make install-tools
 make install-hooks
 ```
 
-### Making Changes
+### Making Changes (Example)
 
 ```bash
-# 1. Update database schema
+# 1. Create feature branch
+git checkout main && git pull
+git checkout -b feature/my-feature
+
+# 2. Update database schema (if needed)
 vim schema.sql
 
-# 2. Apply to database
+# 3. Apply to database
 make db-reset
 
-# 3. Update OpenAPI spec (if API changes)
+# 4. Update OpenAPI spec (if API changes)
 vim openapi/spec.yaml
 
-# 4. Update SQL queries (if needed)
+# 5. Update SQL queries (if needed)
 vim sqlc/queries/employees.sql
 
-# 5. Implement handlers
+# 6. Implement handlers
 vim internal/handlers/employees.go
 
-# 6. Run tests
+# 7. Run tests
 make test
 
-# 7. Commit changes (Git hook auto-generates code!)
+# 8. Commit changes (Git hook auto-generates code!)
 git add .
-git commit -m "feat: Add new feature"
+git commit -m "feat: Add new feature (#<issue>)
+
+Details here...
+
+Closes #<issue>"
 # 🪝 Pre-commit hook will:
 #   - Detect changes to source models (schema.sql, openapi/spec.yaml, sqlc queries)
 #   - Run `make generate` automatically
 #   - Add generated files to your commit
 
-# 8. Build and test locally
-go run cmd/server/main.go
+# 9. Push and create PR (see DEV_WORKFLOW.md for full PR workflow)
+git push -u origin feature/my-feature
+gh pr create --title "feat: My Feature (#<issue>)" --body "..."
+
+# 10. Wait for CI/CD checks, then merge
 ```
 
 **Note:** If you need to skip code generation (not recommended):
