@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
 import { Button } from '@/components/ui/button';
 import { getServerToken } from '@/lib/auth';
@@ -60,9 +61,9 @@ export default async function EmployeesPage() {
             Manage employees in your organization
           </p>
         </div>
-        <Button onClick={() => { /* TODO: Navigate to create page */ }}>
-          Create Employee
-        </Button>
+        <Link href="/employees/new">
+          <Button>Create Employee</Button>
+        </Link>
       </div>
 
       {/* Error Message */}
