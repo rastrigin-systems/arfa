@@ -31,8 +31,8 @@ type OrgAgentConfig = {
   agent_provider?: string;
   config: Record<string, unknown>;
   is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 type OrgAgentConfigsClientProps = {
