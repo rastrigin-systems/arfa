@@ -541,20 +541,25 @@ func TestCreateEmployee_Integration_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var response api.Employee
+	// TDD Fix: Unmarshal into correct response type (CreateEmployeeResponse, not Employee)
+	var response api.CreateEmployeeResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
+	// Verify temporary password is returned
+	assert.NotEmpty(t, response.TemporaryPassword)
+	assert.Greater(t, len(response.TemporaryPassword), 10) // Should be at least 10 chars
+
 	// Verify employee data
-	assert.NotNil(t, response.Id)
-	assert.Equal(t, "newuser@example.com", string(response.Email))
-	assert.Equal(t, "New Employee", response.FullName)
-	assert.Equal(t, role.ID, response.RoleId)
-	assert.Equal(t, api.EmployeeStatusActive, response.Status)
-	assert.Equal(t, org.ID, response.OrgId)
+	assert.NotNil(t, response.Employee.Id)
+	assert.Equal(t, "newuser@example.com", string(response.Employee.Email))
+	assert.Equal(t, "New Employee", response.Employee.FullName)
+	assert.Equal(t, role.ID, response.Employee.RoleId)
+	assert.Equal(t, api.EmployeeStatusActive, response.Employee.Status)
+	assert.Equal(t, org.ID, response.Employee.OrgId)
 
 	// Verify employee was created in database
-	createdEmployee, err := queries.GetEmployee(ctx, *response.Id)
+	createdEmployee, err := queries.GetEmployee(ctx, *response.Employee.Id)
 	require.NoError(t, err)
 	assert.Equal(t, "newuser@example.com", createdEmployee.Email)
 	assert.Equal(t, org.ID, createdEmployee.OrgID)
@@ -610,19 +615,97 @@ func TestCreateEmployee_Integration_WithTeam(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var response api.Employee
+	// TDD Fix: Unmarshal into correct response type (CreateEmployeeResponse, not Employee)
+	var response api.CreateEmployeeResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
+	// Verify temporary password is returned
+	assert.NotEmpty(t, response.TemporaryPassword)
+
 	// Verify team_id is set
-	assert.NotNil(t, response.TeamId)
-	assert.Equal(t, team.ID, uuid.UUID(*response.TeamId))
+	assert.NotNil(t, response.Employee.TeamId)
+	assert.Equal(t, team.ID, uuid.UUID(*response.Employee.TeamId))
 
 	// Verify in database
-	createdEmployee, err := queries.GetEmployee(ctx, *response.Id)
+	createdEmployee, err := queries.GetEmployee(ctx, *response.Employee.Id)
 	require.NoError(t, err)
 	assert.True(t, createdEmployee.TeamID.Valid)
 	assert.Equal(t, team.ID[:], createdEmployee.TeamID.Bytes[:])
+}
+
+// TDD Lesson: Verify CreateEmployeeResponse structure (Issue #3 fix)
+// This test documents the fix for the JSON unmarshaling issue where
+// CreateEmployee returns CreateEmployeeResponse (with Employee + TemporaryPassword)
+// not just Employee directly
+func TestCreateEmployee_Integration_ResponseStructure(t *testing.T) {
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+	ctx := testutil.GetContext(t)
+
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "developer")
+
+	// Create admin for authentication
+	admin := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:    org.ID,
+		RoleID:   role.ID,
+		Email:    "admin@example.com",
+		FullName: "Admin User",
+		Status:   "active",
+	})
+
+	// Create session
+	token, _ := auth.GenerateJWT(admin.ID, org.ID, 24*time.Hour)
+	tokenHash := auth.HashToken(token)
+	_, err := queries.CreateSession(ctx, testutil.CreateSessionParams(admin.ID, tokenHash))
+	require.NoError(t, err)
+
+	// Setup handler
+	handler := handlers.NewEmployeesHandler(queries)
+	router := chi.NewRouter()
+	router.Use(middleware.JWTAuth(queries))
+	router.Post("/employees", handler.CreateEmployee)
+
+	// Create employee
+	reqBody := `{
+		"email": "newuser@example.com",
+		"full_name": "New User",
+		"role_id": "` + role.ID.String() + `"
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/employees", strings.NewReader(reqBody))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// ✅ CRITICAL: Response must be CreateEmployeeResponse, not Employee directly
+	var response api.CreateEmployeeResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err, "Response should unmarshal to CreateEmployeeResponse")
+
+	// Verify response structure
+	assert.NotEmpty(t, response.TemporaryPassword, "TemporaryPassword should be returned")
+	assert.Greater(t, len(response.TemporaryPassword), 10, "TemporaryPassword should be strong")
+	assert.NotNil(t, response.Employee.Id, "Employee.Id should be set")
+	assert.NotEqual(t, uuid.Nil, response.Employee.RoleId, "Employee.RoleId should be set")
+	assert.NotEmpty(t, response.Employee.Status, "Employee.Status should be set")
+	assert.Equal(t, api.EmployeeStatusActive, response.Employee.Status)
+
+	// Verify attempting to unmarshal directly into Employee would fail silently
+	// (fields would be zero values, causing the bug in Issue #3)
+	var wrongResponse api.Employee
+	err = json.Unmarshal(rec.Body.Bytes(), &wrongResponse)
+	require.NoError(t, err, "JSON unmarshals without error, but into wrong type")
+
+	// This is the bug - fields are zero values when unmarshaling wrong type
+	assert.Empty(t, wrongResponse.Email, "Email is empty when unmarshaling to wrong type")
+	assert.Empty(t, wrongResponse.Status, "Status is empty when unmarshaling to wrong type")
+	assert.Equal(t, uuid.Nil, wrongResponse.RoleId, "RoleId is nil UUID when unmarshaling to wrong type")
 }
 
 // TDD Lesson: Test duplicate email returns 409 Conflict
