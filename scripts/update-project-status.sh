@@ -105,7 +105,7 @@ fi
 
 # Find the project item ID for this issue
 ITEM_ID=$(gh api graphql -f query='
-  query($projectId: ID!, $issueId: ID!) {
+  query($projectId: ID!) {
     node(id: $projectId) {
       ... on ProjectV2 {
         items(first: 100) {
@@ -121,7 +121,7 @@ ITEM_ID=$(gh api graphql -f query='
       }
     }
   }
-' -f projectId="$PROJECT_ID" -f issueId="$ISSUE_NODE_ID" -q ".data.node.items.nodes[] | select(.content.id == \"$ISSUE_NODE_ID\") | .id")
+' -f projectId="$PROJECT_ID" -q ".data.node.items.nodes[] | select(.content.id == \"$ISSUE_NODE_ID\") | .id")
 
 if [ "$ITEM_ID" == "null" ] || [ -z "$ITEM_ID" ]; then
   echo "Error: Issue #${ISSUE_NUM} not found in project '${PROJECT}'"
