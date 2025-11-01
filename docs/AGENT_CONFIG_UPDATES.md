@@ -30,12 +30,52 @@ Add the following section to **BOTH** agent configuration files:
 
 **CRITICAL: ALL code changes MUST follow this workflow - NO EXCEPTIONS**
 
+### Parallel Development with Git Worktrees
+
+**When working on multiple tasks in parallel, use git worktrees to avoid conflicts:**
+
+```bash
+# Create worktree for Issue #13 (in separate directory)
+git worktree add ../ubik-issue-13 -b feature/agent-catalog-page
+
+# Create worktree for Issue #14 (in another separate directory)
+git worktree add ../ubik-issue-14 -b feature/org-agent-config
+
+# Now you can work in both directories independently:
+# - Terminal 1: cd ../ubik-issue-13 (frontend work)
+# - Terminal 2: cd ../ubik-issue-14 (backend work)
+
+# List all worktrees
+git worktree list
+
+# Remove worktree after PR is merged
+git worktree remove ../ubik-issue-13
+```
+
+**Benefits of Worktrees:**
+- ✅ Work on multiple features simultaneously without conflicts
+- ✅ Each worktree has its own branch and working directory
+- ✅ No need to stash/commit incomplete work when switching tasks
+- ✅ Perfect for parallel agent work (frontend + backend agents)
+- ✅ Cleaner workflow than juggling branches in one directory
+
+**When to Use Worktrees:**
+- Multiple agents working in parallel (e.g., frontend + backend)
+- Long-running features that need periodic updates from main
+- Testing changes against different branches
+- Code review while continuing other work
+
 ### Standard Workflow for Every Task
 
-1. ✅ Create feature branch from `main`
+1. ✅ Create feature branch (with optional worktree for parallel work)
    ```bash
+   # Option A: Traditional branch (single task)
    git checkout main && git pull origin main
    git checkout -b <type>/<short-description>
+
+   # Option B: Worktree (parallel tasks)
+   git worktree add ../ubik-<issue-number> -b <type>/<short-description>
+   cd ../ubik-<issue-number>
    ```
 
 2. ✅ Implement changes following TDD
@@ -124,6 +164,15 @@ Add the following section to **BOTH** agent configuration files:
    - Merge when approved
    - Delete feature branch after merge
    ```
+
+10. ✅ Cleanup worktree (if used)
+    ```bash
+    # After PR is merged, cleanup the worktree
+    cd /path/to/main/repo
+    git worktree remove ../ubik-<issue-number>
+    git branch -d <branch-name>  # Delete local branch
+    git push origin --delete <branch-name>  # Delete remote (if needed)
+    ```
 
 ### DO NOT Skip Any Steps
 

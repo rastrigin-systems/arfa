@@ -120,6 +120,8 @@ updated files
 
 ### 1. Create Feature Branch
 
+**Option A: Traditional Branch (Single Task)**
+
 ```bash
 # Start from main
 git checkout main
@@ -127,6 +129,54 @@ git pull origin main
 
 # Create feature branch
 git checkout -b feature/your-feature-name
+```
+
+**Option B: Git Worktree (Parallel Tasks) ⭐ RECOMMENDED for parallel work**
+
+```bash
+# Create a new worktree in a separate directory
+git worktree add ../ubik-issue-<number> -b feature/your-feature-name
+
+# Move to the new worktree directory
+cd ../ubik-issue-<number>
+
+# Now you can work independently from the main repo
+# Multiple worktrees = Multiple agents working in parallel!
+```
+
+**Why Use Worktrees for Parallel Development?**
+
+- ✅ **No Conflicts**: Each worktree has its own working directory
+- ✅ **Parallel Agents**: Frontend + backend agents can work simultaneously
+- ✅ **No Stashing**: Switch between tasks without committing incomplete work
+- ✅ **Independent State**: Each worktree has its own branch checkout
+- ✅ **Easy Cleanup**: Remove worktree after PR merge
+
+**Example: Running 2 Agents in Parallel**
+
+```bash
+# Agent 1: Frontend work on Issue #13
+git worktree add ../ubik-issue-13 -b feature/agent-catalog-page
+# Frontend agent works in ../ubik-issue-13
+
+# Agent 2: Backend work on Issue #3
+git worktree add ../ubik-issue-3 -b fix/employee-integration-test
+# Backend agent works in ../ubik-issue-3
+
+# Both agents can commit, push, and create PRs independently!
+```
+
+**Cleanup After PR Merge:**
+
+```bash
+# Return to main repo
+cd /path/to/ubik-enterprise
+
+# Remove worktree
+git worktree remove ../ubik-issue-13
+
+# Delete branch (if needed)
+git branch -d feature/agent-catalog-page
 ```
 
 ### 2. Make Changes & Commit
