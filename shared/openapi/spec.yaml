@@ -22,6 +22,8 @@ servers:
     description: Production
 
 tags:
+  - name: health
+    description: Health check endpoint
   - name: auth
     description: Authentication and session management
   - name: employees
@@ -62,6 +64,21 @@ components:
         details:
           type: object
           additionalProperties: true
+
+    # Health check
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-01T20:15:30Z"
 
     # Auth schemas
     LoginRequest:
@@ -970,6 +987,25 @@ components:
       description: Filter by status
 
 paths:
+  # ============================================================================
+  # Health Check
+  # ============================================================================
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health Check
+      description: Returns API health status for monitoring
+      operationId: healthCheck
+      security: []  # No auth required for health check
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
   # ============================================================================
   # Authentication
   # ============================================================================
