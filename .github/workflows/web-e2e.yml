@@ -1,0 +1,97 @@
+name: Web E2E Tests
+
+on:
+  pull_request:
+    paths:
+      - 'services/web/**'
+      - '.github/workflows/web-e2e.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/web/**'
+
+jobs:
+  e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: services/web
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2] # Run tests in 2 shards for faster execution
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: services/web/playwright-report/
+          retention-days: 7
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ matrix.shard }}
+          path: services/web/test-results/
+          retention-days: 7
+
+  merge-reports:
+    name: Merge Test Reports
+    if: always()
+    needs: [e2e]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-reports
+          pattern: playwright-report-*
+
+      - name: Merge reports
+        run: |
+          npx playwright merge-reports --reporter html all-reports/playwright-report-*
+
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-merged
+          path: playwright-report/
+          retention-days: 30
