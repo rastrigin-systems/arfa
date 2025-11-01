@@ -24,19 +24,43 @@ type OrgAgentConfig = {
   is_enabled: boolean;
 };
 
+type EmployeeAgentConfig = {
+  id: string;
+  agent_id: string;
+  config_override: Record<string, unknown>;
+  is_enabled: boolean;
+};
+
+type AgentConfig = OrgAgentConfig | EmployeeAgentConfig;
+
 type ConfigEditorModalProps = {
   agent: Agent;
-  existingConfig: OrgAgentConfig | null;
+  existingConfig: AgentConfig | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  employeeId?: string; // Optional: for employee-level configs
+  scope?: 'org' | 'employee'; // Default: 'org'
 };
 
-export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, onSuccess }: ConfigEditorModalProps) {
+export function ConfigEditorModal({
+  agent,
+  existingConfig,
+  open,
+  onOpenChange,
+  onSuccess,
+  employeeId,
+  scope = 'org',
+}: ConfigEditorModalProps) {
   const { toast } = useToast();
 
-  // Initialize config value
-  const initialConfig = existingConfig?.config || agent.default_config || {};
+  // Initialize config value - handle both org and employee configs
+  const initialConfig =
+    existingConfig && 'config_override' in existingConfig
+      ? existingConfig.config_override
+      : existingConfig && 'config' in existingConfig
+        ? existingConfig.config
+        : agent.default_config || {};
   const [configValue, setConfigValue] = useState(JSON.stringify(initialConfig, null, 2));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,15 +81,29 @@ export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, o
     setIsSubmitting(true);
 
     try {
-      const url = isEditing
-        ? `/api/v1/organizations/current/agent-configs/${existingConfig.id}`
-        : '/api/v1/organizations/current/agent-configs';
+      // Build URL based on scope
+      let url: string;
+      if (scope === 'employee' && employeeId) {
+        url = isEditing
+          ? `/api/v1/employees/${employeeId}/agent-configs/${existingConfig.id}`
+          : `/api/v1/employees/${employeeId}/agent-configs`;
+      } else {
+        url = isEditing
+          ? `/api/v1/organizations/current/agent-configs/${existingConfig.id}`
+          : '/api/v1/organizations/current/agent-configs';
+      }
 
       const method = isEditing ? 'PATCH' : 'POST';
 
-      const body = isEditing
-        ? { config: parsedConfig, is_enabled: true }
-        : { agent_id: agent.id, config: parsedConfig, is_enabled: true };
+      // Build request body - employee scope uses config_override
+      const body =
+        scope === 'employee'
+          ? isEditing
+            ? { config_override: parsedConfig, is_enabled: true }
+            : { agent_id: agent.id, config_override: parsedConfig, is_enabled: true }
+          : isEditing
+            ? { config: parsedConfig, is_enabled: true }
+            : { agent_id: agent.id, config: parsedConfig, is_enabled: true };
 
       const response = await fetch(url, {
         method,
@@ -107,9 +145,13 @@ export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, o
         <DialogHeader>
           <DialogTitle id="dialog-title">Configure {agent.name}</DialogTitle>
           <DialogDescription id="dialog-description">
-            {isEditing
-              ? `Update the configuration for ${agent.name}. Changes will apply to all employees in your organization.`
-              : `Create a new configuration for ${agent.name}. This will make the agent available to all employees.`}
+            {scope === 'employee'
+              ? isEditing
+                ? `Update the employee-level override for ${agent.name}. This will override team and org settings for this employee.`
+                : `Create an employee-level override for ${agent.name}. This will override team and org settings for this employee.`
+              : isEditing
+                ? `Update the configuration for ${agent.name}. Changes will apply to all employees in your organization.`
+                : `Create a new configuration for ${agent.name}. This will make the agent available to all employees.`}
           </DialogDescription>
         </DialogHeader>
 
