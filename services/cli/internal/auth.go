@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/term"
 )
@@ -66,11 +67,18 @@ func (as *AuthService) LoginInteractive() error {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
+	// Parse expiration time
+	expiresAt, err := parseExpiresAt(loginResp.ExpiresAt)
+	if err != nil {
+		return fmt.Errorf("failed to parse token expiration: %w", err)
+	}
+
 	// Save config
 	config := &Config{
-		PlatformURL: platformURL,
-		Token:       loginResp.Token,
-		EmployeeID:  loginResp.Employee.ID,
+		PlatformURL:  platformURL,
+		Token:        loginResp.Token,
+		TokenExpires: expiresAt,
+		EmployeeID:   loginResp.Employee.ID,
 	}
 
 	if err := as.configManager.Save(config); err != nil {
@@ -94,11 +102,18 @@ func (as *AuthService) Login(platformURL, email, password string) error {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
+	// Parse expiration time
+	expiresAt, err := parseExpiresAt(loginResp.ExpiresAt)
+	if err != nil {
+		return fmt.Errorf("failed to parse token expiration: %w", err)
+	}
+
 	// Save config
 	config := &Config{
-		PlatformURL: platformURL,
-		Token:       loginResp.Token,
-		EmployeeID:  loginResp.Employee.ID,
+		PlatformURL:  platformURL,
+		Token:        loginResp.Token,
+		TokenExpires: expiresAt,
+		EmployeeID:   loginResp.Employee.ID,
 	}
 
 	if err := as.configManager.Save(config); err != nil {
@@ -138,6 +153,16 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 		return nil, fmt.Errorf("not authenticated. Please run 'ubik login' first")
 	}
 
+	// Check if token is still valid (not expired)
+	tokenValid, err := as.configManager.IsTokenValid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to check token validity: %w", err)
+	}
+
+	if !tokenValid {
+		return nil, fmt.Errorf("authentication token has expired. Please run 'ubik login' again")
+	}
+
 	config, err := as.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
@@ -148,4 +173,26 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 	as.platformClient.baseURL = config.PlatformURL
 
 	return config, nil
+}
+
+// parseExpiresAt parses the expiration timestamp from the API
+func parseExpiresAt(expiresAt string) (time.Time, error) {
+	if expiresAt == "" {
+		// If no expiration provided, default to 24 hours from now
+		return time.Now().Add(24 * time.Hour), nil
+	}
+
+	// Try RFC3339 format first
+	t, err := time.Parse(time.RFC3339, expiresAt)
+	if err == nil {
+		return t, nil
+	}
+
+	// Try RFC3339Nano format
+	t, err = time.Parse(time.RFC3339Nano, expiresAt)
+	if err == nil {
+		return t, nil
+	}
+
+	return time.Time{}, fmt.Errorf("invalid timestamp format: %s", expiresAt)
 }

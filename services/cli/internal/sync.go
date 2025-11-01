@@ -106,9 +106,9 @@ func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 			return fmt.Errorf("failed to create agent directory: %w", err)
 		}
 
-		// Save agent config
+		// Save agent config (only the configuration map, not the whole struct)
 		configPath := filepath.Join(agentDir, "config.json")
-		configData, err := json.MarshalIndent(config, "", "  ")
+		configData, err := json.MarshalIndent(config.Configuration, "", "  ")
 		if err != nil {
 			return fmt.Errorf("failed to marshal config: %w", err)
 		}

@@ -364,6 +364,9 @@
                 },
 
                 async init() {
+                    // Expose instance globally for modal callbacks
+                    window.teamDetailInstance = this;
+
                     // Get team ID from URL query parameter
                     const urlParams = new URLSearchParams(window.location.search);
                     this.teamId = urlParams.get('id');
@@ -534,8 +537,105 @@
                     }
                 },
 
-                addMember() {
-                    Toast.info('Add Member\n\nTODO: Open member selection form');
+                async addMember() {
+                    const token = getToken();
+
+                    try {
+                        // Fetch employees who are not in this team
+                        const response = await fetch(`${API_BASE}/employees?status=active`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load employees');
+
+                        const data = await response.json();
+                        const allEmployees = data.employees || [];
+
+                        // Filter out employees already in this team
+                        const memberIds = this.members.map(m => m.id);
+                        const availableEmployees = allEmployees.filter(e => !memberIds.includes(e.id));
+
+                        if (availableEmployees.length === 0) {
+                            Toast.warning('No available employees to add. All active employees are already members of this team.');
+                            return;
+                        }
+
+                        // Build employee selection dropdown
+                        const options = availableEmployees.map(emp =>
+                            `<option value="${emp.id}">${emp.full_name || emp.email} (${emp.email})</option>`
+                        ).join('');
+
+                        const body = `
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                                    Select Employee
+                                </label>
+                                <select id="employee-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                                    <option value="">Choose an employee...</option>
+                                    ${options}
+                                </select>
+                            </div>
+                            <p style="color: #6b7280; font-size: 14px;">
+                                The employee will be assigned to this team and will inherit team-level agent configurations.
+                            </p>
+                        `;
+
+                        const footer = `
+                            <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50" onclick="Modal.close()">
+                                Cancel
+                            </button>
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" onclick="teamDetailInstance.confirmAddMember()">
+                                Add to Team
+                            </button>
+                        `;
+
+                        Modal.show({
+                            title: 'Add Team Member',
+                            body,
+                            footer,
+                            closeOnOverlayClick: true
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading employees:', error);
+                        Toast.error('Failed to load employees');
+                    }
+                },
+
+                async confirmAddMember() {
+                    const select = document.getElementById('employee-select');
+                    const employeeId = select.value;
+
+                    if (!employeeId) {
+                        Toast.warning('Please select an employee');
+                        return;
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        // Update employee to assign to this team
+                        const response = await fetch(`${API_BASE}/employees/${employeeId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                team_id: this.teamId
+                            })
+                        });
+
+                        if (!response.ok) throw new Error('Failed to add member');
+
+                        Modal.close();
+                        await this.loadMembers();
+                        Toast.success('Member added to team successfully');
+
+                    } catch (error) {
+                        console.error('Error adding member:', error);
+                        Toast.error('Failed to add member to team');
+                    }
                 },
 
                 async removeMember(member) {
@@ -576,12 +676,225 @@
                     }
                 },
 
-                addAgentOverride() {
-                    Toast.info('Add Agent Override\n\nTODO: Open agent override form');
+                async addAgentOverride() {
+                    const token = getToken();
+
+                    try {
+                        // Fetch available agents from the platform
+                        const response = await fetch(`${API_BASE}/agents`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to load agents');
+
+                        const data = await response.json();
+                        const allAgents = data.agents || [];
+
+                        if (allAgents.length === 0) {
+                            Toast.warning('No agents available to configure');
+                            return;
+                        }
+
+                        // Build agent selection dropdown
+                        const options = allAgents.map(agent =>
+                            `<option value="${agent.id}">${agent.name} (${agent.provider})</option>`
+                        ).join('');
+
+                        const body = `
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                                    Select Agent
+                                </label>
+                                <select id="agent-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                                    <option value="">Choose an agent...</option>
+                                    ${options}
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                                    Configuration Override (JSON)
+                                </label>
+                                <textarea id="config-json" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-family: monospace;" placeholder='{\n  "key": "value"\n}'></textarea>
+                                <p style="color: #6b7280; font-size: 12px; margin-top: 4px;">
+                                    Optional: Team-specific configuration that overrides organization defaults
+                                </p>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="enabled-checkbox" checked style="width: 16px; height: 16px;">
+                                    <span style="color: #374151; font-weight: 500;">Enable this agent for team</span>
+                                </label>
+                            </div>
+                        `;
+
+                        const footer = `
+                            <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50" onclick="Modal.close()">
+                                Cancel
+                            </button>
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" onclick="teamDetailInstance.confirmAddAgentOverride()">
+                                Add Override
+                            </button>
+                        `;
+
+                        Modal.show({
+                            title: 'Add Agent Override',
+                            body,
+                            footer,
+                            closeOnOverlayClick: true
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading agents:', error);
+                        Toast.error('Failed to load agents');
+                    }
                 },
 
-                editAgentConfig(config) {
-                    Toast.info(`Edit configuration for ${config.agent_name}\nTODO: Open edit form`);
+                async confirmAddAgentOverride() {
+                    const agentSelect = document.getElementById('agent-select');
+                    const configJson = document.getElementById('config-json');
+                    const enabledCheckbox = document.getElementById('enabled-checkbox');
+
+                    const agentId = agentSelect.value;
+
+                    if (!agentId) {
+                        Toast.warning('Please select an agent');
+                        return;
+                    }
+
+                    // Parse and validate JSON config (required by API)
+                    let configOverride = {};
+                    const configText = configJson.value.trim();
+                    if (configText) {
+                        try {
+                            configOverride = JSON.parse(configText);
+                        } catch (e) {
+                            Toast.error('Invalid JSON configuration');
+                            return;
+                        }
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        // Create team agent config
+                        const response = await fetch(`${API_BASE}/teams/${this.teamId}/agent-configs`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                agent_id: agentId,
+                                config_override: configOverride,
+                                is_enabled: enabledCheckbox.checked
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Failed to add agent override');
+                        }
+
+                        Modal.close();
+                        await this.loadAgentConfigs();
+                        Toast.success('Agent override added successfully');
+
+                    } catch (error) {
+                        console.error('Error adding agent override:', error);
+                        Toast.error(error.message || 'Failed to add agent override');
+                    }
+                },
+
+                async editAgentConfig(config) {
+                    // Pre-populate the form with existing config
+                    const configJson = JSON.stringify(config.config_override || {}, null, 2);
+
+                    const body = `
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                                Agent
+                            </label>
+                            <input type="text" value="${config.agent_name} (${config.agent_provider})" disabled class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; background-color: #f9fafb;">
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                                Configuration Override (JSON)
+                            </label>
+                            <textarea id="edit-config-json" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-family: monospace;">${configJson}</textarea>
+                            <p style="color: #6b7280; font-size: 12px; margin-top: 4px;">
+                                Team-specific configuration that overrides organization defaults
+                            </p>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="edit-enabled-checkbox" ${config.is_enabled ? 'checked' : ''} style="width: 16px; height: 16px;">
+                                <span style="color: #374151; font-weight: 500;">Enable this agent for team</span>
+                            </label>
+                        </div>
+                    `;
+
+                    const footer = `
+                        <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50" onclick="Modal.close()">
+                            Cancel
+                        </button>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" onclick="teamDetailInstance.confirmEditAgentConfig('${config.id}')">
+                            Save Changes
+                        </button>
+                    `;
+
+                    Modal.show({
+                        title: `Edit ${config.agent_name} Configuration`,
+                        body,
+                        footer,
+                        closeOnOverlayClick: true
+                    });
+                },
+
+                async confirmEditAgentConfig(configId) {
+                    const configJson = document.getElementById('edit-config-json');
+                    const enabledCheckbox = document.getElementById('edit-enabled-checkbox');
+
+                    // Parse and validate JSON config
+                    let configOverride = {};
+                    const configText = configJson.value.trim();
+                    if (configText) {
+                        try {
+                            configOverride = JSON.parse(configText);
+                        } catch (e) {
+                            Toast.error('Invalid JSON configuration');
+                            return;
+                        }
+                    }
+
+                    const token = getToken();
+
+                    try {
+                        // Update team agent config
+                        const response = await fetch(`${API_BASE}/teams/${this.teamId}/agent-configs/${configId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                config_override: configOverride,
+                                is_enabled: enabledCheckbox.checked
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Failed to update agent configuration');
+                        }
+
+                        Modal.close();
+                        await this.loadAgentConfigs();
+                        Toast.success('Agent configuration updated successfully');
+
+                    } catch (error) {
+                        console.error('Error updating agent configuration:', error);
+                        Toast.error(error.message || 'Failed to update agent configuration');
+                    }
                 },
 
                 async removeAgentConfig(config) {

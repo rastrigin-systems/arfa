@@ -147,3 +147,102 @@ func TestNewConfigManager(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, info.IsDir())
 }
+
+func TestConfigManager_IsTokenValid(t *testing.T) {
+	tempDir := t.TempDir()
+
+	cm := &ConfigManager{
+		configPath: filepath.Join(tempDir, "config.json"),
+	}
+
+	t.Run("no token", func(t *testing.T) {
+		// No config saved
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.False(t, valid)
+	})
+
+	t.Run("valid token with no expiration", func(t *testing.T) {
+		// Save config without expiration time (backwards compatibility)
+		config := &Config{
+			PlatformURL: "https://test.example.com",
+			Token:       "test-token",
+			EmployeeID:  "employee-id",
+		}
+		err := cm.Save(config)
+		require.NoError(t, err)
+
+		// Should be considered valid for backwards compatibility
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.True(t, valid)
+	})
+
+	t.Run("valid token not expired", func(t *testing.T) {
+		// Save config with future expiration
+		config := &Config{
+			PlatformURL:  "https://test.example.com",
+			Token:        "test-token",
+			TokenExpires: time.Now().Add(1 * time.Hour),
+			EmployeeID:   "employee-id",
+		}
+		err := cm.Save(config)
+		require.NoError(t, err)
+
+		// Should be valid
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.True(t, valid)
+	})
+
+	t.Run("expired token", func(t *testing.T) {
+		// Save config with past expiration
+		config := &Config{
+			PlatformURL:  "https://test.example.com",
+			Token:        "test-token",
+			TokenExpires: time.Now().Add(-1 * time.Hour),
+			EmployeeID:   "employee-id",
+		}
+		err := cm.Save(config)
+		require.NoError(t, err)
+
+		// Should be invalid
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.False(t, valid)
+	})
+
+	t.Run("token expiring soon within buffer", func(t *testing.T) {
+		// Save config expiring in 3 minutes (within 5 minute buffer)
+		config := &Config{
+			PlatformURL:  "https://test.example.com",
+			Token:        "test-token",
+			TokenExpires: time.Now().Add(3 * time.Minute),
+			EmployeeID:   "employee-id",
+		}
+		err := cm.Save(config)
+		require.NoError(t, err)
+
+		// Should be invalid (within 5 minute buffer)
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.False(t, valid)
+	})
+
+	t.Run("token expiring outside buffer", func(t *testing.T) {
+		// Save config expiring in 10 minutes (outside 5 minute buffer)
+		config := &Config{
+			PlatformURL:  "https://test.example.com",
+			Token:        "test-token",
+			TokenExpires: time.Now().Add(10 * time.Minute),
+			EmployeeID:   "employee-id",
+		}
+		err := cm.Save(config)
+		require.NoError(t, err)
+
+		// Should be valid
+		valid, err := cm.IsTokenValid()
+		require.NoError(t, err)
+		assert.True(t, valid)
+	})
+}

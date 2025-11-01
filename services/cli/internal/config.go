@@ -12,6 +12,7 @@ import (
 type Config struct {
 	PlatformURL  string    `json:"platform_url"`
 	Token        string    `json:"token"`
+	TokenExpires time.Time `json:"token_expires"`
 	EmployeeID   string    `json:"employee_id"`
 	DefaultAgent string    `json:"default_agent"`
 	LastSync     time.Time `json:"last_sync"`
@@ -83,6 +84,27 @@ func (cm *ConfigManager) IsAuthenticated() (bool, error) {
 	}
 
 	return config.Token != "" && config.EmployeeID != "", nil
+}
+
+// IsTokenValid checks if the stored token is valid (not expired)
+func (cm *ConfigManager) IsTokenValid() (bool, error) {
+	config, err := cm.Load()
+	if err != nil {
+		return false, err
+	}
+
+	// No token means not authenticated
+	if config.Token == "" {
+		return false, nil
+	}
+
+	// No expiration time means we can't validate (assume valid for backwards compatibility)
+	if config.TokenExpires.IsZero() {
+		return true, nil
+	}
+
+	// Check if token has expired (with 5 minute buffer)
+	return time.Now().Add(5 * time.Minute).Before(config.TokenExpires), nil
 }
 
 // Clear removes the config file (logout)
