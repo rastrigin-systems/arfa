@@ -1,9 +1,9 @@
 import { apiClient } from '@/lib/api/client';
 import { getServerToken } from '@/lib/auth';
-import { AgentCatalogClient } from './AgentCatalogClient';
+import { OrgAgentConfigsClient } from './OrgAgentConfigsClient';
 
 export default async function AgentsPage() {
-  // Fetch agents from API
+  // Fetch data from API
   const token = await getServerToken();
 
   if (!token) {
@@ -21,26 +21,26 @@ export default async function AgentsPage() {
     throw new Error('Failed to load agents');
   }
 
-  // Fetch enabled agents for the organization
+  // Fetch organization agent configs
   const { data: orgConfigsData } = await apiClient.GET('/organizations/current/agent-configs', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  // Build set of enabled agent IDs
-  const enabledAgentIds = new Set(orgConfigsData?.configs?.map((config) => config.agent_id) || []);
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Agent Catalog</h1>
+        <h1 className="text-3xl font-bold">Organization Agent Configuration</h1>
         <p className="text-muted-foreground">
-          Browse and configure AI agents for your organization. Enable agents to make them available to your teams.
+          Manage AI agents available to your organization
         </p>
       </div>
 
-      <AgentCatalogClient initialAgents={agentsData?.agents || []} initialEnabledAgentIds={enabledAgentIds} />
+      <OrgAgentConfigsClient
+        initialAgents={agentsData?.agents || []}
+        initialOrgConfigs={orgConfigsData?.configs || []}
+      />
     </div>
   );
 }

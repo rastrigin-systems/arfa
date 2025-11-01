@@ -36,17 +36,24 @@ export function AgentCard({ agent, isEnabled, onEnable, onConfigure }: AgentCard
     <article
       className="flex flex-col gap-4 rounded-lg border bg-card p-6 text-card-foreground shadow-sm transition-shadow hover:shadow-md"
       aria-label={`${agent.name} agent card`}
+      data-testid="agent-card"
     >
       {/* Header with name and provider */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <h3 className="text-xl font-semibold">{agent.name}</h3>
-          <p className="text-sm text-muted-foreground">{agent.provider}</p>
+          <h3 className="text-xl font-semibold" data-testid="agent-name">
+            {agent.name}
+          </h3>
+          <p className="text-sm text-muted-foreground" data-testid="agent-provider">
+            {agent.provider}
+          </p>
         </div>
       </div>
 
       {/* Description */}
-      <p className="text-sm text-muted-foreground">{agent.description}</p>
+      <p className="text-sm text-muted-foreground" data-testid="agent-description">
+        {agent.description}
+      </p>
 
       {/* Capabilities */}
       {agent.capabilities && agent.capabilities.length > 0 && (
@@ -61,7 +68,11 @@ export function AgentCard({ agent, isEnabled, onEnable, onConfigure }: AgentCard
 
       {/* Action button */}
       <div className="mt-auto flex justify-end">
-        <Button onClick={handleAction} variant={isEnabled ? 'outline' : 'default'}>
+        <Button
+          onClick={handleAction}
+          variant={isEnabled ? 'outline' : 'default'}
+          aria-label={isEnabled ? `Configure ${agent.name}` : `Enable ${agent.name} for organization`}
+        >
           {isEnabled ? 'Configure' : 'Enable for Org'}
         </Button>
       </div>

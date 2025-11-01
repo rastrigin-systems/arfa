@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Power, PowerOff } from 'lucide-react';
 
 type OrgAgentConfig = {
   id: string;
@@ -13,14 +13,15 @@ type OrgAgentConfig = {
   agent_provider?: string;
   config: Record<string, unknown>;
   is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 type OrgAgentConfigTableProps = {
   configs: OrgAgentConfig[];
   onEdit: (config: OrgAgentConfig) => void;
   onDelete: (config: OrgAgentConfig) => void;
+  onToggleEnabled?: (config: OrgAgentConfig) => void;
 };
 
 function EmptyState() {
@@ -36,7 +37,7 @@ function EmptyState() {
   );
 }
 
-export function OrgAgentConfigTable({ configs, onEdit, onDelete }: OrgAgentConfigTableProps) {
+export function OrgAgentConfigTable({ configs, onEdit, onDelete, onToggleEnabled }: OrgAgentConfigTableProps) {
   if (configs.length === 0) {
     return <EmptyState />;
   }
@@ -64,13 +65,13 @@ export function OrgAgentConfigTable({ configs, onEdit, onDelete }: OrgAgentConfi
                 <div className="text-sm">{config.agent_provider}</div>
               </td>
               <td className="p-4 align-middle">
-                <Badge variant={config.is_enabled ? 'default' : 'outline'}>
+                <Badge variant={config.is_enabled ? 'default' : 'outline'} data-testid="status-badge">
                   {config.is_enabled ? 'Enabled' : 'Disabled'}
                 </Badge>
               </td>
               <td className="p-4 align-middle">
                 <div className="text-sm text-muted-foreground">
-                  {new Date(config.updated_at).toLocaleDateString()}
+                  {config.updated_at ? new Date(config.updated_at).toLocaleDateString() : 'N/A'}
                 </div>
               </td>
               <td className="p-4 align-middle text-right">
@@ -79,6 +80,17 @@ export function OrgAgentConfigTable({ configs, onEdit, onDelete }: OrgAgentConfi
                     <Edit className="h-4 w-4" />
                     <span className="ml-2">Edit</span>
                   </Button>
+                  {onToggleEnabled && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onToggleEnabled(config)}
+                      aria-label={config.is_enabled ? 'Disable agent' : 'Enable agent'}
+                    >
+                      {config.is_enabled ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                      <span className="ml-2">{config.is_enabled ? 'Disable' : 'Enable'}</span>
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
