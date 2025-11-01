@@ -37,3 +37,6 @@ docs/schema/
 # Temporary files
 tmp/
 temp/
+
+# GitHub token (never commit!)
+.env.github
