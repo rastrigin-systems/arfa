@@ -78,12 +78,32 @@ git worktree remove ../ubik-issue-13
    cd ../ubik-<issue-number>
    ```
 
-2. ✅ Implement changes following TDD
+2. ✅ Update GitHub Project status to "In Progress"
+   ```bash
+   # Move issue from Backlog to In Progress when starting work
+   gh api graphql -f query='
+     mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+       updateProjectV2ItemFieldValue(input: {
+         projectId: $projectId
+         itemId: $itemId
+         fieldId: $fieldId
+         value: {singleSelectOptionId: $optionId}
+       }) {
+         projectV2Item { id }
+       }
+     }
+   ' -f projectId="<project-id>" -f itemId="<item-id>" -f fieldId="<status-field-id>" -f optionId="<in-progress-option-id>"
+
+   # Or use helper script (if available)
+   ./scripts/update-project-status.sh --issue <issue-number> --status "In Progress"
+   ```
+
+3. ✅ Implement changes following TDD
    - Write failing tests FIRST
    - Implement code to pass tests
    - Refactor with tests passing
 
-3. ✅ Run tests locally
+4. ✅ Run tests locally
    ```bash
    # Backend
    make test
@@ -92,7 +112,7 @@ git worktree remove ../ubik-issue-13
    npm run type-check && npm run lint && npm run build && npm run test:e2e
    ```
 
-4. ✅ Commit with descriptive message
+5. ✅ Commit with descriptive message
    ```bash
    git add .
    git commit -m "$(cat <<'EOF'
@@ -112,12 +132,12 @@ git worktree remove ../ubik-issue-13
    )"
    ```
 
-5. ✅ Push to remote
+6. ✅ Push to remote
    ```bash
    git push -u origin <branch-name>
    ```
 
-6. ✅ Create Pull Request
+7. ✅ Create Pull Request
    ```bash
    gh pr create \
      --title "<type>: <Title> (#<issue-number>)" \
@@ -140,18 +160,24 @@ git worktree remove ../ubik-issue-13
      --head <branch-name>
    ```
 
-7. ✅ Wait for CI/CD checks to pass
+8. ✅ Update GitHub Project status to "In Review"
+   ```bash
+   # After PR is created, move to In Review
+   ./scripts/update-project-status.sh --issue <issue-number> --status "In Review"
+   ```
+
+9. ✅ Wait for CI/CD checks to pass
    ```bash
    gh pr checks <PR-number> --watch --interval 10
    ```
 
-8. ✅ Verify checks passed
-   ```bash
-   # Check if all checks passed
-   gh pr checks <PR-number>
-   ```
+10. ✅ Verify checks passed
+    ```bash
+    # Check if all checks passed
+    gh pr checks <PR-number>
+    ```
 
-9. ✅ Report completion to user
+11. ✅ Report completion to user
    ```
    ✅ Task complete!
 
@@ -165,7 +191,7 @@ git worktree remove ../ubik-issue-13
    - Delete feature branch after merge
    ```
 
-10. ✅ Cleanup worktree (if used)
+12. ✅ Cleanup worktree (if used)
     ```bash
     # After PR is merged, cleanup the worktree
     cd /path/to/main/repo
@@ -173,6 +199,40 @@ git worktree remove ../ubik-issue-13
     git branch -d <branch-name>  # Delete local branch
     git push origin --delete <branch-name>  # Delete remote (if needed)
     ```
+
+13. ✅ Update GitHub Project status to "Done" (after PR merge)
+    ```bash
+    # After PR is successfully merged
+    ./scripts/update-project-status.sh --issue <issue-number> --status "Done"
+    ```
+
+### GitHub Project Status Lifecycle
+
+**CRITICAL: Update project board status at EVERY stage**
+
+| Stage | Status | When to Update |
+|-------|--------|----------------|
+| Start work | **Backlog → In Progress** | Immediately when starting implementation |
+| Create PR | **In Progress → In Review** | After PR is created and pushed |
+| PR merged | **In Review → Done** | After PR is successfully merged |
+
+**Status Update Commands:**
+
+```bash
+# Get project and field IDs (one-time lookup)
+gh api graphql -f query='{ repository(owner: "sergei-rastrigin", name: "ubik-enterprise") { projectsV2(first: 5) { nodes { id title } } } }'
+
+# Update status (replace IDs with actual values)
+./scripts/update-project-status.sh --issue <issue-number> --status "In Progress"
+./scripts/update-project-status.sh --issue <issue-number> --status "In Review"
+./scripts/update-project-status.sh --issue <issue-number> --status "Done"
+```
+
+**Why This Matters:**
+- ✅ Provides real-time visibility into what agents are working on
+- ✅ Prevents duplicate work (others see issue is "In Progress")
+- ✅ Accurate project tracking and velocity metrics
+- ✅ Clear handoff points (In Review = ready for merge)
 
 ### DO NOT Skip Any Steps
 
@@ -183,15 +243,19 @@ git worktree remove ../ubik-issue-13
 - ❌ Skip the PR process
 - ❌ Merge before checks pass
 - ❌ Use vague commit messages
+- ❌ **Forget to update GitHub Project status**
 
 **ALWAYS:**
 - ✅ Create feature branch
+- ✅ **Update status to "In Progress" when starting**
 - ✅ Follow TDD (tests first!)
 - ✅ Run tests before committing
 - ✅ Write descriptive commit messages
 - ✅ Link commits/PRs to issues
+- ✅ **Update status to "In Review" after creating PR**
 - ✅ Wait for CI/CD checks
 - ✅ Report completion with PR details
+- ✅ **Update status to "Done" after PR merge**
 
 ### Reference Documentation
 
