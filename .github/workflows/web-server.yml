@@ -95,6 +95,11 @@ jobs:
         working-directory: ./services/web
         run: npm ci
 
+      - name: Install Playwright browsers
+        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: npx playwright install --with-deps chromium
+
       - name: Run linter
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
