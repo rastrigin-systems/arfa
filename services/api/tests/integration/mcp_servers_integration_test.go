@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -27,6 +28,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 		configTemplateJSON := json.RawMessage(`{"token": "${API_TOKEN}"}`)
 		requiredEnvVarsJSON := json.RawMessage(`["API_TOKEN"]`)
 
+		dockerImg := "test-provider/server:latest"
 		mcp, err := queries.CreateMCPServer(ctx, db.CreateMCPServerParams{
 			Name:              "test-mcp-server",
 			Provider:          "test-provider",
@@ -35,8 +37,8 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 			ConnectionSchema:  connSchemaJSON,
 			Capabilities:      capabilitiesJSON,
 			RequiresCredentials: false,
-			IsApproved:        testutil.ToNullBool(true),
-			DockerImage:       testutil.ToNullString("test-provider/server:latest"),
+			IsApproved:        true,
+			DockerImage:       &dockerImg,
 			ConfigTemplate:    configTemplateJSON,
 			RequiredEnvVars:   requiredEnvVarsJSON,
 		})
@@ -46,7 +48,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 		assert.Equal(t, "test-mcp-server", mcp.Name)
 		assert.Equal(t, "test-provider", mcp.Provider)
 		assert.Equal(t, "1.0.0", mcp.Version)
-		assert.True(t, mcp.IsApproved.Bool)
+		assert.True(t, mcp.IsApproved)
 	})
 
 	t.Run("GetMCPServer_Success", func(t *testing.T) {
@@ -74,7 +76,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 
 		// All returned MCPs should be approved
 		for _, mcp := range mcps {
-			assert.True(t, mcp.IsApproved.Bool, "ListMCPServers should only return approved MCPs")
+			assert.True(t, mcp.IsApproved, "ListMCPServers should only return approved MCPs")
 		}
 	})
 
@@ -91,7 +93,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 			ConnectionSchema:  connSchemaJSON,
 			Capabilities:      capabilitiesJSON,
 			RequiresCredentials: false,
-			IsApproved:        testutil.ToNullBool(false),
+			IsApproved:        false,
 		})
 		require.NoError(t, err)
 
@@ -103,7 +105,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 		for _, mcp := range allMCPs {
 			if mcp.ID == unapproved.ID {
 				found = true
-				assert.False(t, mcp.IsApproved.Bool)
+				assert.False(t, mcp.IsApproved)
 			}
 		}
 		assert.True(t, found, "ListAllMCPServers should include unapproved MCPs")
@@ -122,23 +124,26 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 			ConnectionSchema:  connSchemaJSON,
 			Capabilities:      capabilitiesJSON,
 			RequiresCredentials: false,
-			IsApproved:        testutil.ToNullBool(true),
+			IsApproved:        true,
 		})
 		require.NoError(t, err)
 
 		// Update MCP
+		desc := "Updated description"
+		ver := "2.0.0"
+		docker := "test/updated:latest"
 		updated, err := queries.UpdateMCPServer(ctx, db.UpdateMCPServerParams{
 			ID:          mcp.ID,
-			Description: testutil.ToNullString("Updated description"),
-			Version:     testutil.ToNullString("2.0.0"),
-			DockerImage: testutil.ToNullString("test/updated:latest"),
+			Description: &desc,
+			Version:     &ver,
+			DockerImage: &docker,
 		})
 		require.NoError(t, err)
 
 		assert.Equal(t, mcp.ID, updated.ID)
 		assert.Equal(t, "Updated description", updated.Description)
 		assert.Equal(t, "2.0.0", updated.Version)
-		assert.Equal(t, "test/updated:latest", updated.DockerImage.String)
+		assert.Equal(t, "test/updated:latest", *updated.DockerImage)
 	})
 
 	t.Run("ApproveMCPServer_Success", func(t *testing.T) {
@@ -154,7 +159,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 			ConnectionSchema:  connSchemaJSON,
 			Capabilities:      capabilitiesJSON,
 			RequiresCredentials: false,
-			IsApproved:        testutil.ToNullBool(false),
+			IsApproved:        false,
 		})
 		require.NoError(t, err)
 
@@ -165,7 +170,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 		// Verify approval
 		approved, err := queries.GetMCPServer(ctx, mcp.ID)
 		require.NoError(t, err)
-		assert.True(t, approved.IsApproved.Bool)
+		assert.True(t, approved.IsApproved)
 	})
 
 	t.Run("DisapproveMCPServer_Success", func(t *testing.T) {
@@ -181,7 +186,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 			ConnectionSchema:  connSchemaJSON,
 			Capabilities:      capabilitiesJSON,
 			RequiresCredentials: false,
-			IsApproved:        testutil.ToNullBool(true),
+			IsApproved:        true,
 		})
 		require.NoError(t, err)
 
@@ -192,7 +197,7 @@ func TestMCPCatalog_Integration_CRUD(t *testing.T) {
 		// Verify disapproval
 		disapproved, err := queries.GetMCPServer(ctx, mcp.ID)
 		require.NoError(t, err)
-		assert.False(t, disapproved.IsApproved.Bool)
+		assert.False(t, disapproved.IsApproved)
 	})
 }
 
@@ -222,18 +227,19 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		configJSON := json.RawMessage(`{"token": "ghp_test123"}`)
+		enabled := true
 		config, err := queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 			EmployeeID:       employee.ID,
 			McpCatalogID:     mcp.ID,
 			ConnectionConfig: configJSON,
-			IsEnabled:        testutil.ToNullBool(true),
+			IsEnabled:        &enabled,
 		})
 
 		require.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, config.ID)
 		assert.Equal(t, employee.ID, config.EmployeeID)
 		assert.Equal(t, mcp.ID, config.McpCatalogID)
-		assert.True(t, config.IsEnabled.Bool)
+		assert.True(t, *config.IsEnabled)
 	})
 
 	t.Run("ListEmployeeMCPConfigs_Success", func(t *testing.T) {
@@ -251,13 +257,14 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, len(mcps), 2)
 
+		enabled := true
 		for i := 0; i < 2; i++ {
 			configJSON := json.RawMessage(`{}`)
 			_, err := queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 				EmployeeID:       emp.ID,
 				McpCatalogID:     mcps[i].ID,
 				ConnectionConfig: configJSON,
-				IsEnabled:        testutil.ToNullBool(true),
+				IsEnabled:        &enabled,
 			})
 			require.NoError(t, err)
 		}
@@ -281,12 +288,13 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		mcp, err := queries.GetMCPServerByName(ctx, "Filesystem")
 		require.NoError(t, err)
 
+		enabled := true
 		configJSON := json.RawMessage(`{"paths": ["/home/user"]}`)
 		_, err = queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 			EmployeeID:       emp.ID,
 			McpCatalogID:     mcp.ID,
 			ConnectionConfig: configJSON,
-			IsEnabled:        testutil.ToNullBool(true),
+			IsEnabled:        &enabled,
 		})
 		require.NoError(t, err)
 
@@ -297,7 +305,7 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, mcp.Name, empMCP.Name)
-		assert.True(t, empMCP.IsEnabled.Bool)
+		assert.True(t, *empMCP.IsEnabled)
 	})
 
 	t.Run("UpdateEmployeeMCPConfig_Success", func(t *testing.T) {
@@ -313,25 +321,27 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		mcp, err := queries.GetMCPServerByName(ctx, "PostgreSQL")
 		require.NoError(t, err)
 
+		enabled := true
 		configJSON := json.RawMessage(`{"connection": "old"}`)
 		_, err = queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 			EmployeeID:       emp.ID,
 			McpCatalogID:     mcp.ID,
 			ConnectionConfig: configJSON,
-			IsEnabled:        testutil.ToNullBool(true),
+			IsEnabled:        &enabled,
 		})
 		require.NoError(t, err)
 
 		// Update employee MCP config
+		disabled := false
 		newConfigJSON := json.RawMessage(`{"connection": "new"}`)
 		updated, err := queries.UpdateEmployeeMCPConfig(ctx, db.UpdateEmployeeMCPConfigParams{
 			EmployeeID:       emp.ID,
 			McpCatalogID:     mcp.ID,
-			IsEnabled:        testutil.ToNullBool(false),
+			IsEnabled:        &disabled,
 			ConnectionConfig: newConfigJSON,
 		})
 		require.NoError(t, err)
-		assert.False(t, updated.IsEnabled.Bool)
+		assert.False(t, *updated.IsEnabled)
 	})
 
 	t.Run("DeleteEmployeeMCPConfig_Success", func(t *testing.T) {
@@ -347,12 +357,13 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		mcp, err := queries.GetMCPServerByName(ctx, "Slack")
 		require.NoError(t, err)
 
+		enabled := true
 		configJSON := json.RawMessage(`{}`)
 		_, err = queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 			EmployeeID:       emp.ID,
 			McpCatalogID:     mcp.ID,
 			ConnectionConfig: configJSON,
-			IsEnabled:        testutil.ToNullBool(true),
+			IsEnabled:        &enabled,
 		})
 		require.NoError(t, err)
 
@@ -383,13 +394,14 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		// Assign 3 MCPs
+		enabled := true
 		for i := 0; i < 3; i++ {
 			configJSON := json.RawMessage(`{}`)
 			_, err := queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 				EmployeeID:       emp.ID,
 				McpCatalogID:     mcps[i].ID,
 				ConnectionConfig: configJSON,
-				IsEnabled:        testutil.ToNullBool(true),
+				IsEnabled:        &enabled,
 			})
 			require.NoError(t, err)
 		}
@@ -405,11 +417,12 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		// Assign MCP to multiple employees
+		enabled := true
 		for i := 0; i < 3; i++ {
 			emp := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
 				OrgID:    org.ID,
 				RoleID:   role.ID,
-				Email:    testutil.RandomEmail(),
+				Email:    fmt.Sprintf("usage-test-%d@example.com", i),
 				FullName: "Usage Test User",
 				Status:   "active",
 			})
@@ -419,7 +432,7 @@ func TestEmployeeMCPConfigs_Integration_CRUD(t *testing.T) {
 				EmployeeID:       emp.ID,
 				McpCatalogID:     mcp.ID,
 				ConnectionConfig: configJSON,
-				IsEnabled:        testutil.ToNullBool(true),
+				IsEnabled:        &enabled,
 			})
 			require.NoError(t, err)
 		}
@@ -467,12 +480,13 @@ func TestEmployeeMCPConfigs_Integration_MultiTenancy(t *testing.T) {
 	require.NoError(t, err)
 
 	// Assign MCP to both employees
+	enabled := true
 	configJSON := json.RawMessage(`{}`)
 	_, err = queries.CreateEmployeeMCPConfig(ctx, db.CreateEmployeeMCPConfigParams{
 		EmployeeID:       emp1.ID,
 		McpCatalogID:     mcp.ID,
 		ConnectionConfig: configJSON,
-		IsEnabled:        testutil.ToNullBool(true),
+		IsEnabled:        &enabled,
 	})
 	require.NoError(t, err)
 
@@ -480,7 +494,7 @@ func TestEmployeeMCPConfigs_Integration_MultiTenancy(t *testing.T) {
 		EmployeeID:       emp2.ID,
 		McpCatalogID:     mcp.ID,
 		ConnectionConfig: configJSON,
-		IsEnabled:        testutil.ToNullBool(true),
+		IsEnabled:        &enabled,
 	})
 	require.NoError(t, err)
 
