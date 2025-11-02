@@ -226,7 +226,7 @@ func TestCreateEmployeeAgentConfig_Success(t *testing.T) {
 		Provider: "anthropic",
 	}
 
-	createdConfig := db.CreateEmployeeAgentConfigRow{
+	createdConfig := db.EmployeeAgentConfig{
 		ID:             configID,
 		EmployeeID:     employeeID,
 		AgentID:        agentID,
@@ -588,7 +588,7 @@ func TestUpdateEmployeeAgentConfig_Success(t *testing.T) {
 		Provider: "anthropic",
 	}
 
-	updatedConfig := db.UpdateEmployeeAgentConfigRow{
+	updatedConfig := db.EmployeeAgentConfig{
 		ID:             configID,
 		EmployeeID:     employeeID,
 		AgentID:        agentID,
@@ -668,7 +668,7 @@ func TestUpdateEmployeeAgentConfig_NotFound(t *testing.T) {
 
 	mockDB.EXPECT().
 		UpdateEmployeeAgentConfig(gomock.Any(), gomock.Any()).
-		Return(db.UpdateEmployeeAgentConfigRow{}, pgx.ErrNoRows)
+		Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
 
 	isEnabled := false
 	reqBody := api.UpdateEmployeeAgentConfigRequest{

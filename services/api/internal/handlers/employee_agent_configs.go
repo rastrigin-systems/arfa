@@ -514,34 +514,12 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 }
 
 
-// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow to api format
-func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
-	config := db.EmployeeAgentConfig{
-		ID:             row.ID,
-		EmployeeID:     row.EmployeeID,
-		AgentID:        row.AgentID,
-		ConfigOverride: row.ConfigOverride,
-		IsEnabled:      row.IsEnabled,
-		SyncToken:      row.SyncToken,
-		LastSyncedAt:   row.LastSyncedAt,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
-	}
+// dbCreateEmployeeAgentConfigRowToAPI converts EmployeeAgentConfig (from Create) to api format
+func dbCreateEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent) api.EmployeeAgentConfig {
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
 
-// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow to api format
-func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
-	config := db.EmployeeAgentConfig{
-		ID:             row.ID,
-		EmployeeID:     row.EmployeeID,
-		AgentID:        row.AgentID,
-		ConfigOverride: row.ConfigOverride,
-		IsEnabled:      row.IsEnabled,
-		SyncToken:      row.SyncToken,
-		LastSyncedAt:   row.LastSyncedAt,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
-	}
+// dbUpdateEmployeeAgentConfigRowToAPI converts EmployeeAgentConfig (from Update) to api format
+func dbUpdateEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent) api.EmployeeAgentConfig {
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
