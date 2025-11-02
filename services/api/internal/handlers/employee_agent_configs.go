@@ -514,8 +514,9 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 }
 
 
-// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow to api format
+// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow (from Create) to api format
 func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	// Convert Row type to EmployeeAgentConfig for API response
 	config := db.EmployeeAgentConfig{
 		ID:             row.ID,
 		EmployeeID:     row.EmployeeID,
@@ -526,12 +527,14 @@ func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, ag
 		LastSyncedAt:   row.LastSyncedAt,
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
+		Content:        nil, // Create query doesn't return content
 	}
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
 
-// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow to api format
+// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow (from Update) to api format
 func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	// Convert Row type to EmployeeAgentConfig for API response
 	config := db.EmployeeAgentConfig{
 		ID:             row.ID,
 		EmployeeID:     row.EmployeeID,
@@ -542,6 +545,7 @@ func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, ag
 		LastSyncedAt:   row.LastSyncedAt,
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
+		Content:        nil, // Update query doesn't return content
 	}
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
