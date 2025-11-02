@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -45,6 +44,7 @@ func main() {
 	queries := db.New(dbPool)
 
 	// Create handlers
+	healthHandler := handlers.NewHealthHandler()
 	authHandler := handlers.NewAuthHandler(queries)
 	employeesHandler := handlers.NewEmployeesHandler(queries)
 	rolesHandler := handlers.NewRolesHandler(queries)
@@ -115,11 +115,7 @@ func main() {
 	router.Route("/api/v1", func(r chi.Router) {
 		// Public routes (no auth required)
 		// Health check
-		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, `{"status":"ok","timestamp":"%s"}`, time.Now().Format(time.RFC3339))
-		})
+		r.Get("/health", healthHandler.HealthCheck)
 
 		// Auth routes (login is public, others need auth)
 		r.Route("/auth", func(r chi.Router) {

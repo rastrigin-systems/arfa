@@ -76,13 +76,13 @@ describe('AgentCatalog', () => {
   it('should pass correct isEnabled state to AgentCard components', () => {
     render(<AgentCatalog agents={mockAgents} enabledAgentIds={mockEnabledAgentIds} />);
 
-    // Claude Code is enabled - should show "Configure"
+    // Claude Code is enabled - should show "Configure Claude Code"
     const claudeCard = screen.getByLabelText('Claude Code agent card');
-    expect(within(claudeCard).getByRole('button', { name: /Configure Claude Code/i })).toBeInTheDocument();
+    expect(within(claudeCard).getByRole('button', { name: 'Configure Claude Code' })).toBeInTheDocument();
 
-    // Cursor is not enabled - should show "Enable for Org"
+    // Cursor is not enabled - should show "Enable Cursor for organization"
     const cursorCard = screen.getByLabelText('Cursor agent card');
-    expect(within(cursorCard).getByRole('button', { name: /Enable Cursor for organization/i })).toBeInTheDocument();
+    expect(within(cursorCard).getByRole('button', { name: 'Enable Cursor for organization' })).toBeInTheDocument();
   });
 
   it('should call onEnable when Enable button is clicked', async () => {
@@ -91,9 +91,9 @@ describe('AgentCatalog', () => {
 
     render(<AgentCatalog agents={mockAgents} enabledAgentIds={mockEnabledAgentIds} onEnable={onEnable} />);
 
-    // Click "Enable for Org" on Cursor (not enabled)
+    // Click "Enable Cursor for organization" on Cursor (not enabled)
     const cursorCard = screen.getByLabelText('Cursor agent card');
-    const enableButton = within(cursorCard).getByRole('button', { name: /Enable Cursor for organization/i });
+    const enableButton = within(cursorCard).getByRole('button', { name: 'Enable Cursor for organization' });
     await user.click(enableButton);
 
     expect(onEnable).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174001');
@@ -105,9 +105,9 @@ describe('AgentCatalog', () => {
 
     render(<AgentCatalog agents={mockAgents} enabledAgentIds={mockEnabledAgentIds} onConfigure={onConfigure} />);
 
-    // Click "Configure" on Claude Code (enabled)
+    // Click "Configure Claude Code" on Claude Code (enabled)
     const claudeCard = screen.getByLabelText('Claude Code agent card');
-    const configureButton = within(claudeCard).getByRole('button', { name: /Configure Claude Code/i });
+    const configureButton = within(claudeCard).getByRole('button', { name: 'Configure Claude Code' });
     await user.click(configureButton);
 
     expect(onConfigure).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
@@ -131,7 +131,7 @@ describe('AgentCatalog', () => {
 
     // Tab through to the button
     await user.tab();
-    const button = screen.getByRole('button', { name: /Enable Cursor for organization/i });
+    const button = screen.getByRole('button', { name: 'Enable Cursor for organization' });
     expect(button).toHaveFocus();
 
     // Activate with Enter

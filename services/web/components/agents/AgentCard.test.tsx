@@ -38,7 +38,7 @@ describe('AgentCard', () => {
 
     const button = screen.getByRole('button', { name: /Configure Claude Code/i });
     expect(button).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Enable Claude Code for organization/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Enable.*for organization/i })).not.toBeInTheDocument();
   });
 
   it('should call onEnable when Enable button is clicked', async () => {
