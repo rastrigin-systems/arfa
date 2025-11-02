@@ -31,6 +31,11 @@ func (pc *PlatformClient) SetToken(token string) {
 	pc.token = token
 }
 
+// SetHTTPClient sets a custom HTTP client (for testing)
+func (pc *PlatformClient) SetHTTPClient(client *http.Client) {
+	pc.httpClient = client
+}
+
 // LoginRequest represents a login request
 type LoginRequest struct {
 	Email    string `json:"email"`
