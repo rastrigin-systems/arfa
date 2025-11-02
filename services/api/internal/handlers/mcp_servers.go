@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
@@ -55,27 +55,18 @@ func (h *MCPServersHandler) ListMCPServers(w http.ResponseWriter, r *http.Reques
 
 // GetMCPServer handles GET /mcp-servers/{id}
 // Returns a specific MCP server by ID
-func (h *MCPServersHandler) GetMCPServer(w http.ResponseWriter, r *http.Request) {
+// The ID is passed as a parameter by the oapi-codegen generated wrapper
+func (h *MCPServersHandler) GetMCPServer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	ctx := r.Context()
 
-	// Extract id from URL path using Chi's URLParam
-	serverIDStr := chi.URLParam(r, "id")
-	if serverIDStr == "" {
-		writeError(w, http.StatusBadRequest, "Missing server id")
-		return
-	}
-
-	// Parse UUID
-	serverID, err := uuid.Parse(serverIDStr)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid server id format")
-		return
-	}
-
 	// Query database
-	server, err := h.db.GetMCPServer(ctx, serverID)
+	server, err := h.db.GetMCPServer(ctx, uuid.UUID(id))
 	if err != nil {
-		writeError(w, http.StatusNotFound, "MCP server not found")
+		if err == pgx.ErrNoRows {
+			writeError(w, http.StatusNotFound, "MCP server not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Failed to fetch MCP server")
 		return
 	}
 
