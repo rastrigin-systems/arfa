@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Employee List Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -29,24 +29,23 @@ test.describe('Employee List Page', () => {
     await expect(page.getByRole('columnheader', { name: /actions/i })).toBeVisible();
   });
 
-  test.skip('should display employee data in table rows', async ({ page }) => {
-    // Skip this test as it requires backend API with seed data
-    // This test will be enabled once we have API integration
-    await page.goto('/dashboard/employees');
+  test('should display employee data in table rows', async ({ mockEmployees }) => {
+    // Now using mocked employee data!
+    await mockEmployees.goto('/dashboard/employees');
 
     // Wait for data to load
-    await page.waitForSelector('table tbody tr', { timeout: 5000 });
+    await mockEmployees.waitForSelector('table tbody tr', { timeout: 5000 });
 
-    // Check at least one row exists
-    const rows = page.locator('table tbody tr');
-    await expect(rows).not.toHaveCount(0);
+    // Check we have the expected number of rows (5 mock employees)
+    const rows = mockEmployees.locator('table tbody tr');
+    await expect(rows).toHaveCount(5);
 
-    // Check first row has expected cells
+    // Check first row has expected data (Alice Johnson)
     const firstRow = rows.first();
-    await expect(firstRow.locator('td').nth(0)).toBeVisible(); // Name
-    await expect(firstRow.locator('td').nth(1)).toBeVisible(); // Email
-    await expect(firstRow.locator('td').nth(2)).toBeVisible(); // Team
-    await expect(firstRow.locator('td').nth(3)).toBeVisible(); // Status
+    await expect(firstRow).toContainText('Alice Johnson');
+    await expect(firstRow).toContainText('alice@acme.com');
+    await expect(firstRow).toContainText('Engineering');
+    await expect(firstRow).toContainText('active');
   });
 
   test('should have a search input field', async ({ page }) => {
@@ -58,23 +57,26 @@ test.describe('Employee List Page', () => {
     await expect(searchInput).toHaveAttribute('type', 'text');
   });
 
-  test.skip('should filter employees by search term', async ({ page }) => {
-    // Skip - requires backend API
-    await page.goto('/dashboard/employees');
+  test('should filter employees by search term', async ({ mockEmployees }) => {
+    // Now using mocked employee data with search filtering!
+    await mockEmployees.goto('/dashboard/employees');
 
-    // Get initial row count
-    const initialRows = await page.locator('table tbody tr').count();
-    expect(initialRows).toBeGreaterThan(0);
+    // Get initial row count (5 employees)
+    const initialRows = await mockEmployees.locator('table tbody tr').count();
+    expect(initialRows).toBe(5);
 
     // Enter search term
-    await page.getByPlaceholder(/search employees/i).fill('alice');
+    await mockEmployees.getByPlaceholder(/search employees/i).fill('alice');
 
     // Wait for filtering
-    await page.waitForTimeout(500);
+    await mockEmployees.waitForTimeout(500);
 
-    // Check rows are filtered
-    const filteredRows = await page.locator('table tbody tr').count();
+    // Check rows are filtered (should only show Alice Johnson)
+    const filteredRows = await mockEmployees.locator('table tbody tr').count();
     expect(filteredRows).toBeLessThanOrEqual(initialRows);
+
+    // Verify Alice is shown
+    await expect(mockEmployees.locator('table tbody')).toContainText('Alice Johnson');
   });
 
   test('should have status filter dropdown', async ({ page }) => {
@@ -85,18 +87,22 @@ test.describe('Employee List Page', () => {
     await expect(statusFilter).toBeVisible();
   });
 
-  test.skip('should filter employees by status', async ({ page }) => {
-    // Skip - requires backend API
-    await page.goto('/dashboard/employees');
+  test('should filter employees by status', async ({ mockEmployees }) => {
+    // Now using mocked employee data with status filtering!
+    await mockEmployees.goto('/dashboard/employees');
 
     // Select "active" status
-    await page.getByRole('combobox', { name: /status/i }).selectOption('active');
+    await mockEmployees.getByRole('combobox', { name: /status/i }).selectOption('active');
 
     // Wait for filtering
-    await page.waitForTimeout(500);
+    await mockEmployees.waitForTimeout(500);
+
+    // Should only show active employees (4 out of 5)
+    const rows = await mockEmployees.locator('table tbody tr').count();
+    expect(rows).toBe(4);
 
     // All visible status badges should show "active"
-    const statusBadges = page.locator('table tbody tr td').filter({ hasText: /active/i });
+    const statusBadges = mockEmployees.locator('table tbody tr td').filter({ hasText: /active/i });
     await expect(statusBadges.first()).toBeVisible();
   });
 
