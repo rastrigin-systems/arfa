@@ -35,10 +35,8 @@ jobs:
             go.work.sum
             services/*/go.sum
 
-      - name: Install code generation tools
-        run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+      - name: Setup Go code generation tools (with cache)
+        uses: ./.github/actions/setup-go-tools
 
       - name: Generate code
         run: |
@@ -84,10 +82,8 @@ jobs:
             go.work.sum
             services/*/go.sum
 
-      - name: Install code generation tools
-        run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+      - name: Setup Go code generation tools (with cache)
+        uses: ./.github/actions/setup-go-tools
 
       - name: Generate code
         run: |
