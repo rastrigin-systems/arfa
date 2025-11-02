@@ -285,8 +285,21 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 
 ### 🤖 AI Agent Configurations
 
-- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend development workflow
-- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend development workflow
+**Development Agents:**
+- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend API development
+- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend/Next.js development
+
+**Management & Coordination:**
+- **[.claude/agents/coordinator.md](./.claude/agents/coordinator.md)** - Autonomous team orchestration
+- **[.claude/agents/tech-lead.md](./.claude/agents/tech-lead.md)** - Architecture & technical leadership
+
+**Product & Strategy:**
+- **[.claude/agents/product-strategist.md](./.claude/agents/product-strategist.md)** - Feature prioritization & business value
+
+**Quality & Review:**
+- **[.claude/agents/pr-reviewer.md](./.claude/agents/pr-reviewer.md)** - Code review & quality assurance
+
+See **[.claude/agents/README.md](./.claude/agents/README.md)** for complete agent documentation.
 
 ### 🔧 Configuration Files
 

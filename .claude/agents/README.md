@@ -4,7 +4,9 @@ This directory contains project-specific AI agent configurations for autonomous 
 
 ## Agent Types
 
-### `go-backend-developer.md`
+### Development Agents
+
+#### `go-backend-developer.md`
 **Purpose:** Backend API development, database queries, and Go code implementation
 
 **Responsibilities:**
@@ -20,7 +22,7 @@ This directory contains project-specific AI agent configurations for autonomous 
 - Updates GitHub Project status automatically
 - Breaks down large tasks into subtasks
 
-### `frontend-developer.md`
+#### `frontend-developer.md`
 **Purpose:** Next.js web UI development and frontend testing
 
 **Responsibilities:**
@@ -35,6 +37,72 @@ This directory contains project-specific AI agent configurations for autonomous 
 - Follows wireframe-first development
 - Auto-waits for CI checks before completion
 - Implements TDD for frontend code
+
+### Management & Coordination
+
+#### `coordinator.md`
+**Purpose:** Orchestrates autonomous AI development team
+
+**Responsibilities:**
+- Monitors GitHub Projects for tasks
+- Assigns work to specialized agents
+- Enables agent-to-agent communication
+- Ensures continuous progress on milestones
+
+**Key Features:**
+- Fully autonomous development workflow
+- Cross-agent task coordination
+- Milestone tracking and reporting
+
+#### `tech-lead.md`
+**Purpose:** Architecture decisions and technical leadership
+
+**Responsibilities:**
+- Major technical decisions affecting system design
+- Cross-team coordination (frontend, backend, CLI)
+- Product-technical alignment
+- High-level project planning
+- Technical governance and standards
+
+**Key Features:**
+- Reviews architectural changes
+- Translates business requirements to technical specs
+- Breaks down epics into work packages
+- Maintains technical standards
+
+### Product & Strategy
+
+#### `product-strategist.md`
+**Purpose:** Strategic guidance on feature prioritization and product direction
+
+**Responsibilities:**
+- Feature prioritization based on business value
+- Product direction and MVP scope
+- Business value assessment
+- Sprint planning recommendations
+
+**Key Features:**
+- Proactive guidance after milestones
+- Evaluates technical approaches by business impact
+- Tracks MVP requirements
+- Aligns features with business priorities
+
+### Quality & Review
+
+#### `pr-reviewer.md`
+**Purpose:** Code review and quality assurance
+
+**Responsibilities:**
+- Review pull requests for quality
+- Verify test coverage and TDD compliance
+- Check architectural consistency
+- Ensure documentation is updated
+
+**Key Features:**
+- Automated code quality checks
+- Standards enforcement
+- Security review
+- Performance analysis
 
 ## Usage
 
