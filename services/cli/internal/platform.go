@@ -271,6 +271,62 @@ func (pc *PlatformClient) GetCurrentEmployee() (*EmployeeInfo, error) {
 	return &resp, nil
 }
 
+// ClaudeCodeSyncResponse represents the complete Claude Code configuration bundle
+type ClaudeCodeSyncResponse struct {
+	Agents     []AgentConfigSync     `json:"agents"`
+	Skills     []SkillConfigSync     `json:"skills"`
+	MCPServers []MCPServerConfigSync `json:"mcp_servers"`
+	Version    string                `json:"version"`
+	SyncedAt   string                `json:"synced_at"`
+}
+
+// AgentConfigSync represents an agent configuration in the sync response
+type AgentConfigSync struct {
+	ID        string                 `json:"id"`
+	Name      string                 `json:"name"`
+	Type      string                 `json:"type"`
+	Filename  string                 `json:"filename"`
+	Content   string                 `json:"content,omitempty"`
+	Config    map[string]interface{} `json:"config"`
+	Provider  string                 `json:"provider"`
+	IsEnabled bool                   `json:"is_enabled"`
+	Version   string                 `json:"version"`
+}
+
+// SkillConfigSync represents a skill configuration in the sync response
+type SkillConfigSync struct {
+	ID           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description,omitempty"`
+	Category     string                 `json:"category,omitempty"`
+	Version      string                 `json:"version"`
+	Files        []map[string]string    `json:"files,omitempty"`
+	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
+	IsEnabled    bool                   `json:"is_enabled"`
+}
+
+// MCPServerConfigSync represents an MCP server configuration in the sync response
+type MCPServerConfigSync struct {
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	Provider        string                 `json:"provider"`
+	Version         string                 `json:"version"`
+	Description     string                 `json:"description,omitempty"`
+	DockerImage     string                 `json:"docker_image"`
+	Config          map[string]interface{} `json:"config"`
+	RequiredEnvVars []string               `json:"required_env_vars,omitempty"`
+	IsEnabled       bool                   `json:"is_enabled"`
+}
+
+// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle
+func (pc *PlatformClient) GetClaudeCodeConfig() (*ClaudeCodeSyncResponse, error) {
+	var resp ClaudeCodeSyncResponse
+	if err := pc.doRequest("GET", "/sync/claude-code", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get Claude Code config: %w", err)
+	}
+	return &resp, nil
+}
+
 // doRequest is a helper method to perform HTTP requests
 func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
 	// Add /api/v1 prefix to all API calls

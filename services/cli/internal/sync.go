@@ -88,6 +88,82 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 	}, nil
 }
 
+// SyncClaudeCode fetches and installs complete Claude Code configuration
+func (ss *SyncService) SyncClaudeCode(targetDir string) error {
+	// Ensure user is authenticated
+	_, err := ss.authService.RequireAuth()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("🔄 Syncing Claude Code configuration...")
+	fmt.Println()
+
+	// Fetch complete Claude Code config
+	fmt.Println("📥 Downloading configurations...")
+	config, err := ss.platformClient.GetClaudeCodeConfig()
+	if err != nil {
+		return fmt.Errorf("failed to fetch Claude Code config: %w", err)
+	}
+
+	// Create directory structure
+	claudeDir := filepath.Join(targetDir, ".claude")
+	agentsDir := filepath.Join(claudeDir, "agents")
+	skillsDir := filepath.Join(claudeDir, "skills")
+
+	// Write agent files
+	if len(config.Agents) > 0 {
+		if err := WriteAgentFiles(agentsDir, config.Agents); err != nil {
+			return fmt.Errorf("failed to write agent files: %w", err)
+		}
+		fmt.Printf("  ✓ %d agents (.claude/agents/)\n", len(config.Agents))
+		for _, agent := range config.Agents {
+			if agent.IsEnabled {
+				fmt.Printf("    - %s\n", agent.Filename)
+			}
+		}
+		fmt.Println()
+	}
+
+	// Write skill files
+	if len(config.Skills) > 0 {
+		if err := WriteSkillFiles(skillsDir, config.Skills); err != nil {
+			return fmt.Errorf("failed to write skill files: %w", err)
+		}
+		fmt.Printf("  ✓ %d skills (.claude/skills/)\n", len(config.Skills))
+		for _, skill := range config.Skills {
+			if skill.IsEnabled {
+				fmt.Printf("    - %s/\n", skill.Name)
+			}
+		}
+		fmt.Println()
+	}
+
+	// Configure MCP servers
+	if len(config.MCPServers) > 0 {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+
+		claudeConfigPath := filepath.Join(homeDir, ".claude.json")
+		if err := MergeMCPConfig(claudeConfigPath, config.MCPServers); err != nil {
+			return fmt.Errorf("failed to configure MCP servers: %w", err)
+		}
+		fmt.Printf("  ✓ %d MCP servers (configured in ~/.claude.json)\n", len(config.MCPServers))
+		for _, mcp := range config.MCPServers {
+			if mcp.IsEnabled {
+				fmt.Printf("    - %s\n", mcp.Name)
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Println("✅ Claude Code ready! Run 'claude' to start.")
+
+	return nil
+}
+
 // saveAgentConfigs saves agent configs to ~/.ubik/agents/
 func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
