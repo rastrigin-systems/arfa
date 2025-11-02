@@ -59,6 +59,7 @@ func main() {
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
+	skillsHandler := handlers.NewSkillsHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -208,6 +209,18 @@ func main() {
 			r.Route("/agents", func(r chi.Router) {
 				r.Get("/", agentsHandler.ListAgents)
 				r.Get("/{agent_id}", agentsHandler.GetAgent)
+			})
+
+			// Skills catalog routes
+			r.Route("/skills", func(r chi.Router) {
+				r.Get("/", skillsHandler.ListSkills)
+				r.Get("/{skill_id}", skillsHandler.GetSkill)
+			})
+
+			// Employee skills routes
+			r.Route("/employees/me/skills", func(r chi.Router) {
+				r.Get("/", skillsHandler.ListEmployeeSkills)
+				r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
 			})
 
 			// Activity logs routes
