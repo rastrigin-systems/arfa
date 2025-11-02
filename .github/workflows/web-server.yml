@@ -42,7 +42,10 @@ jobs:
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci
+        run: |
+          # Fix for npm optional dependency bug with Rollup
+          # See: https://github.com/npm/cli/issues/4828
+          npm ci || (rm -rf node_modules package-lock.json && npm install)
 
       - name: Build application
         if: steps.check_web.outputs.exists == 'true'
@@ -93,7 +96,10 @@ jobs:
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci
+        run: |
+          # Fix for npm optional dependency bug with Rollup
+          # See: https://github.com/npm/cli/issues/4828
+          npm ci || (rm -rf node_modules package-lock.json && npm install)
 
       - name: Install Playwright browsers
         if: steps.check_web.outputs.exists == 'true'
