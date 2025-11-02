@@ -133,6 +133,14 @@ func GetSessionData(ctx context.Context) (*db.GetSessionWithEmployeeRow, error) 
 	return sessionData, nil
 }
 
+// WithTestAuth creates a context with auth data for testing
+// This is only for unit tests - in production, use JWTAuth middleware
+func WithTestAuth(ctx context.Context, employeeID, orgID uuid.UUID) context.Context {
+	ctx = context.WithValue(ctx, employeeIDKey, employeeID)
+	ctx = context.WithValue(ctx, orgIDKey, orgID)
+	return ctx
+}
+
 // writeError writes a JSON error response
 //
 // TDD Lesson: Centralized error handling for middleware

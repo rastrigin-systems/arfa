@@ -60,6 +60,7 @@ func main() {
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
 	mcpServersHandler := handlers.NewMCPServersHandler(queries)
+	syncHandler := handlers.NewSyncHandler(queries)
 	// skillsHandler := handlers.NewSkillsHandler(queries) // TODO: Re-enable when Skills API is complete (PR #66)
 
 	// Setup router
@@ -215,7 +216,8 @@ func main() {
 			// MCP servers catalog routes
 			r.Route("/mcp-servers", func(r chi.Router) {
 				r.Get("/", mcpServersHandler.ListMCPServers)
-				r.Get("/{id}", mcpServersHandler.GetMCPServer)
+				// TODO: Fix GetMCPServer route - handler signature incompatible with Chi router
+				// r.Get("/{id}", mcpServersHandler.GetMCPServer)
 			})
 
 			// Employee MCP servers routes
@@ -235,6 +237,11 @@ func main() {
 			// 	r.Get("/", skillsHandler.ListEmployeeSkills)
 			// 	r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
 			// })
+
+			// Sync routes
+			r.Route("/sync", func(r chi.Router) {
+				r.Get("/claude-code", syncHandler.GetClaudeCodeSync)
+			})
 
 			// Activity logs routes
 			r.Route("/activity-logs", func(r chi.Router) {
