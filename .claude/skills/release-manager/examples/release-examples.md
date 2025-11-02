@@ -487,6 +487,252 @@ echo "**Full Changelog:** https://github.com/sergei-rastrigin/ubik-enterprise/co
 - Keep RELEASES.md updated
 - Release from main branch only
 
+## Example 7: Complete Milestone Transition (Release + Archive + Start New)
+
+**Scenario:** v0.3.0 is released and complete. Now archive it and start v0.4.0 milestone.
+
+```bash
+# ========================================
+# PART 1: Release v0.3.0 (if not done yet)
+# ========================================
+
+VERSION="v0.3.0"
+PREV_VERSION="v0.2.0"
+
+# Pre-release checks
+gh run list --limit 1
+gh issue list --milestone "$VERSION" --state open
+make test && cd services/web && npm test && cd ../..
+
+# Create tag and release
+git tag -a $VERSION -m "Release v0.3.0 - Complete Web UI
+
+🎉 Production-ready web interface with 11 pages!
+
+[... full release notes ...]"
+
+git push origin $VERSION
+
+gh release create $VERSION \
+  --title "Release v0.3.0 - Complete Web UI" \
+  --notes "..."
+
+echo "✅ v0.3.0 released!"
+
+# ========================================
+# PART 2: Archive Completed Milestone
+# ========================================
+
+echo -e "\n=== Archiving v0.3.0 Milestone ==="
+
+# Run archive script
+./scripts/archive-milestone.sh --milestone v0.3.0
+
+# What this does:
+# - Labels all 15 issues as "archived"
+# - Closes any remaining open issues
+# - Closes the milestone
+# - Updates docs/MILESTONES_ARCHIVE.md
+
+echo "✅ v0.3.0 milestone archived!"
+
+# Verify archival
+gh issue list --label "archived" --milestone "v0.3.0" | wc -l
+# Should show 15 issues
+
+# Check milestone is closed
+gh api /repos/sergei-rastrigin/ubik-enterprise/milestones \
+  --jq '.[] | select(.title=="v0.3.0") | .state'
+# Should output: "closed"
+
+# ========================================
+# PART 3: Start New Milestone (v0.4.0)
+# ========================================
+
+echo -e "\n=== Starting v0.4.0 Milestone ==="
+
+# Review and update backlog priorities first
+gh issue list --label "priority/p0,priority/p1" --state open --json number,title
+
+# Start new milestone
+./scripts/start-milestone.sh \
+  --version v0.4.0 \
+  --description "Analytics Dashboard & Approval Workflows" \
+  --due-date "2026-01-31" \
+  --auto-split
+
+# What this does:
+# 1. Creates milestone v0.4.0 with due date
+# 2. Queries backlog for p0/p1 issues (finds 8 issues)
+# 3. Shows issues for review
+# 4. Adds confirmed issues to milestone
+# 5. Moves issues to "Todo" status
+# 6. Flags large tasks (#51, #53) for splitting
+# 7. Creates kickoff issue
+
+echo "✅ v0.4.0 milestone created with 8 issues!"
+
+# ========================================
+# PART 4: Split Large Tasks
+# ========================================
+
+echo -e "\n=== Splitting Large Tasks ==="
+
+# Find tasks flagged for splitting
+LARGE_TASKS=$(gh issue list \
+  --label "needs-splitting" \
+  --milestone "v0.4.0" \
+  --json number -q '.[].number')
+
+echo "Large tasks to split: $LARGE_TASKS"
+
+# Split each large task
+for issue in $LARGE_TASKS; do
+  echo -e "\nSplitting issue #$issue..."
+
+  # Option 1: Manual split with guidance
+  ./scripts/split-large-tasks.sh --issue $issue
+
+  # Option 2: Auto-split with github-task-manager
+  # ./scripts/split-large-tasks.sh --issue $issue --auto
+done
+
+# Example: Manually split issue #51 (Analytics Dashboard)
+# This creates 3 subtasks:
+#   - #54: Analytics data API endpoint (size/m)
+#   - #55: Dashboard UI components (size/s)
+#   - #56: Charts and visualizations (size/m)
+
+# Update parent issue #51 with subtask checklist
+gh issue edit 51 --body "# Analytics Dashboard
+
+Complete analytics dashboard for tracking agent usage.
+
+## Subtasks
+
+- [ ] #54 - Analytics data API endpoint
+- [ ] #55 - Dashboard UI components
+- [ ] #56 - Charts and visualizations
+
+## Acceptance Criteria
+
+- [ ] Real-time usage metrics
+- [ ] Cost tracking per employee
+- [ ] Filterable date ranges
+- [ ] Exportable reports
+
+---
+
+Part of milestone v0.4.0
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+
+# Remove needs-splitting label
+gh issue edit 51 --remove-label "needs-splitting"
+
+echo "✅ Large tasks split!"
+
+# ========================================
+# PART 5: Verify New Milestone Ready
+# ========================================
+
+echo -e "\n=== Verifying v0.4.0 Milestone ==="
+
+# Count total issues (parent + subtasks)
+TOTAL_ISSUES=$(gh issue list --milestone "v0.4.0" --json number -q 'length')
+echo "Total issues in v0.4.0: $TOTAL_ISSUES"
+
+# Check issue breakdown
+echo -e "\nIssue breakdown:"
+gh issue list --milestone "v0.4.0" --json number,title,labels \
+  --jq 'group_by(.labels[] | select(.name | startswith("size/")) | .name) |
+        map({size: .[0].labels[] | select(.name | startswith("size/")) | .name,
+             count: length}) | .[]'
+
+# Show issues by priority
+echo -e "\nPriority breakdown:"
+echo "P0 issues:"
+gh issue list --milestone "v0.4.0" --label "priority/p0" --json number,title -q '.[] | "#\(.number): \(.title)"'
+echo -e "\nP1 issues:"
+gh issue list --milestone "v0.4.0" --label "priority/p1" --json number,title -q '.[] | "#\(.number): \(.title)"'
+
+# View on project board
+echo -e "\n📊 View on project board:"
+echo "https://github.com/users/sergei-rastrigin/projects/3"
+
+# ========================================
+# PART 6: Start Working on v0.4.0
+# ========================================
+
+echo -e "\n=== Ready to Start v0.4.0! ==="
+
+# Pick first task (highest priority, unassigned)
+FIRST_TASK=$(gh issue list \
+  --milestone "v0.4.0" \
+  --label "priority/p0" \
+  --assignee "" \
+  --limit 1 \
+  --json number -q '.[0].number')
+
+echo "Recommended first task: #$FIRST_TASK"
+gh issue view $FIRST_TASK
+
+# Create feature branch and start work
+git checkout -b issue-$FIRST_TASK-feature
+./scripts/update-project-status.sh --issue $FIRST_TASK --status "In Progress"
+
+echo "✅ Started work on #$FIRST_TASK!"
+echo ""
+echo "📋 Milestone transition complete!"
+echo "   v0.3.0: Released and archived ✓"
+echo "   v0.4.0: Created with $TOTAL_ISSUES issues ✓"
+echo "   Ready to build! 🚀"
+```
+
+### Milestone Transition Timeline
+
+```
+Day 1 (Release Day):
+  09:00 - Final pre-release checks
+  10:00 - Create tag and GitHub Release
+  11:00 - Announce release
+  14:00 - Archive completed milestone (v0.3.0)
+
+Day 2 (Planning Day):
+  09:00 - Review backlog and update priorities
+  10:00 - Start new milestone (v0.4.0)
+  11:00 - Review and confirm issue selection
+  14:00 - Split large tasks
+  16:00 - Verify milestone ready
+
+Day 3 (Sprint Start):
+  09:00 - Team picks first tasks
+  10:00 - Development begins on v0.4.0
+```
+
+### Key Metrics to Track
+
+```bash
+# After milestone transition, track these metrics:
+
+# 1. Milestone velocity (issues per day)
+START_DATE=$(gh api /repos/sergei-rastrigin/ubik-enterprise/milestones \
+  --jq '.[] | select(.title=="v0.4.0") | .created_at')
+DAYS_ELAPSED=$(( ($(date +%s) - $(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$START_DATE" +%s)) / 86400 ))
+COMPLETED=$(gh issue list --milestone "v0.4.0" --state closed --json number -q 'length')
+echo "Velocity: $(echo "scale=2; $COMPLETED / $DAYS_ELAPSED" | bc) issues/day"
+
+# 2. Burndown (remaining work)
+REMAINING=$(gh issue list --milestone "v0.4.0" --state open --json number -q 'length')
+echo "Remaining: $REMAINING issues"
+
+# 3. Size distribution
+echo "Size distribution:"
+gh issue list --milestone "v0.4.0" --state open --json labels \
+  --jq '[.[] | .labels[] | select(.name | startswith("size/")) | .name] |
+        group_by(.) | map({size: .[0], count: length}) | .[]'
+```
+
 ---
 
 **These examples cover 95% of release scenarios you'll encounter.**

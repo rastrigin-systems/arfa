@@ -417,6 +417,308 @@ gh release compare v0.2.0..v0.3.0
 6. **Keep changelog updated** - don't rely on git log alone
 7. **Link to issues/PRs** - use #123 syntax in release notes
 
+## Milestone Transition Workflow
+
+**Complete workflow for transitioning between milestones after a release.**
+
+### Overview
+
+After successfully releasing a milestone (e.g., v0.3.0), follow this process to:
+1. Archive completed milestone issues
+2. Plan and start the next milestone (e.g., v0.4.0)
+3. Prioritize backlog and split large tasks
+
+### Phase 1: Archive Completed Milestone
+
+**Purpose:** Clean up completed work and preserve history
+
+```bash
+# Archive all issues from completed milestone
+./scripts/archive-milestone.sh --milestone v0.3.0
+```
+
+**What this does:**
+- Labels all milestone issues as "archived"
+- Closes any remaining open issues
+- Closes the milestone
+- Updates `docs/MILESTONES_ARCHIVE.md` with completion record
+
+**Example output:**
+```
+📦 Archiving Milestone: v0.3.0
+==================================
+
+📋 Fetching issues in milestone...
+✓ Found 15 issues:
+  - Closed: 14
+  - Open: 1
+
+⚠️  WARNING: Milestone has 1 open issues:
+  #42: Polish E2E test output
+
+Continue archiving? (y/N): y
+
+📦 Archiving issues...
+  #32: ✓ Labeled as archived
+  #33: ✓ Labeled as archived
+  ...
+
+🎯 Closing milestone...
+✓ Milestone closed
+
+📝 Updating documentation...
+✓ Updated docs/MILESTONES_ARCHIVE.md
+
+✅ Milestone v0.3.0 archived successfully!
+```
+
+### Phase 2: Start New Milestone
+
+**Purpose:** Create new milestone and populate with prioritized backlog
+
+```bash
+# Start new milestone
+./scripts/start-milestone.sh \
+  --version v0.4.0 \
+  --description "Analytics & Approvals" \
+  --due-date "2026-01-31" \
+  --auto-split
+```
+
+**What this does:**
+1. Creates GitHub milestone with description and due date
+2. Queries backlog for `priority/p0` and `priority/p1` issues
+3. Displays issues for review
+4. Adds confirmed issues to milestone
+5. Moves issues to "Todo" status on project board
+6. Flags large tasks (size/l, size/xl) for splitting
+7. Creates milestone kickoff issue
+
+**Example output:**
+```
+🚀 Starting Milestone: v0.4.0
+=================================
+
+📅 Creating milestone...
+✓ Milestone 'v0.4.0' created
+
+📋 Querying backlog...
+✓ Found 8 backlog issues
+
+🎯 Backlog Issues (priority/p0, p1):
+-----------------------------------
+  #50 [size/m]: Add approval workflow UI
+  #51 [size/l]: Analytics dashboard
+  #52 [size/s]: Cost tracking per employee
+  #53 [size/xl]: Usage trends visualization
+  ...
+
+⚠️  Found 2 large tasks (size/l or size/xl)
+   Will automatically split after adding to milestone
+
+Add these 8 issues to milestone v0.4.0? (Y/n): y
+
+📌 Adding issues to milestone...
+  ✓ Added #50
+  ✓ Added #51
+  ...
+
+📊 Updating project board...
+  ✓ Moved #50 to Todo
+  ✓ Moved #51 to Todo
+  ...
+
+✂️  Splitting large tasks...
+  Splitting #51... ✓ Flagged for splitting
+  Splitting #53... ✓ Flagged for splitting
+
+✓ Large tasks flagged (manual splitting required)
+  Tip: Use .claude/skills/github-task-manager to split tasks
+
+📝 Creating milestone kickoff issue...
+✓ Kickoff issue created
+
+✅ Milestone v0.4.0 ready!
+
+Summary:
+  - Milestone created: v0.4.0
+  - Issues added: 8
+  - Todo status: 8 issues
+  - Large tasks: 2 (flagged for splitting)
+
+🎯 Start working on issues:
+   gh issue list --milestone 'v0.4.0' --assignee ''
+
+📊 View on project board:
+   https://github.com/users/sergei-rastrigin/projects/3
+```
+
+### Phase 3: Split Large Tasks
+
+**Purpose:** Break down size/xl and size/l tasks into manageable subtasks
+
+```bash
+# Split a large task manually
+./scripts/split-large-tasks.sh --issue 51
+
+# Or use auto-split with github-task-manager skill
+./scripts/split-large-tasks.sh --issue 51 --auto
+```
+
+**What this does:**
+1. Analyzes the large task
+2. Provides guidance on task breakdown
+3. Creates subtasks with parent-child relationship
+4. Updates parent with subtask checklist
+5. Removes `needs-splitting` label when complete
+
+**Example workflow:**
+```
+✂️  Splitting Large Task: #51
+==================================
+
+📋 Fetching issue details...
+✓ Issue: Analytics dashboard
+  Size: size/l
+  Milestone: v0.4.0
+
+🧠 Task Breakdown Workflow:
+-----------------------------------
+
+1. Analyze the task and identify logical components
+2. Break into subtasks (size/s or size/m each)
+3. Ensure subtasks are independent and testable
+4. Create sub-issues with parent-child relationship
+5. Update parent issue with subtask checklist
+
+📝 Manual Workflow:
+
+Step 1: Identify subtasks (example breakdown)
+  - Subtask 1: [Component A] - size/s
+  - Subtask 2: [Component B] - size/m
+  - Subtask 3: [Component C] - size/s
+
+Step 2: Create sub-issues
+  Run: ./scripts/create-sub-issue.sh --parent 51 --title "Subtask title" --size s
+
+Step 3: Update parent with checklist
+  Add to issue body:
+  ## Subtasks
+  - [ ] #XX - Subtask 1
+  - [ ] #YY - Subtask 2
+  - [ ] #ZZ - Subtask 3
+
+Or use github-task-manager skill for automated workflow:
+  .claude/skills/github-task-manager/SKILL.md
+
+Create first subtask now? (y/N):
+```
+
+### Complete Milestone Transition Example
+
+**Scenario:** Just released v0.3.0 (Web UI), starting v0.4.0 (Analytics)
+
+```bash
+# 1. Archive completed milestone
+./scripts/archive-milestone.sh --milestone v0.3.0
+# → Closes milestone, archives 15 issues
+
+# 2. Start new milestone
+./scripts/start-milestone.sh \
+  --version v0.4.0 \
+  --description "Analytics Dashboard & Approvals" \
+  --due-date "2026-01-31" \
+  --auto-split
+# → Creates milestone, adds 8 backlog issues, flags 2 large tasks
+
+# 3. Split large tasks (if flagged)
+gh issue list --label "needs-splitting" --milestone "v0.4.0"
+# → Shows #51 and #53 need splitting
+
+./scripts/split-large-tasks.sh --issue 51 --auto
+# → Uses github-task-manager to split into 3 subtasks
+
+./scripts/split-large-tasks.sh --issue 53 --auto
+# → Uses github-task-manager to split into 4 subtasks
+
+# 4. Verify milestone ready
+gh issue list --milestone "v0.4.0" --label "status/todo"
+# → Shows 8 parent issues + 7 subtasks = 15 total tasks
+
+# 5. Start working!
+gh issue list --milestone "v0.4.0" --label "priority/p0" --assignee ""
+# → Pick highest priority unassigned task
+```
+
+### Milestone Planning Best Practices
+
+**Before Starting New Milestone:**
+- ✅ Review backlog and update priorities
+- ✅ Ensure issue descriptions are clear
+- ✅ Verify all issues have size labels
+- ✅ Check for dependencies between issues
+- ✅ Set realistic due date (4-6 weeks typical)
+
+**When Populating Milestone:**
+- ✅ Focus on p0/p1 priority issues
+- ✅ Aim for mix of sizes (not all large tasks)
+- ✅ Balance features vs bug fixes vs tech debt
+- ✅ Include testing and documentation tasks
+- ✅ Leave buffer for unexpected work (70-80% capacity)
+
+**Task Splitting Guidelines:**
+- ✅ Each subtask should be independently testable
+- ✅ Subtasks should be size/s or size/m (1-3 days each)
+- ✅ Use parent-child relationship (blockedBy in GitHub)
+- ✅ Update parent with checklist of subtasks
+- ✅ Close parent only when all subtasks complete
+
+### Integration with GitHub Project
+
+The milestone transition scripts automatically update the GitHub Project board:
+
+- **Archive script**: Leaves issues in "Done" status with "archived" label
+- **Start script**: Moves new milestone issues to "Todo" status
+- **Status updates**: Use `./scripts/update-project-status.sh` for manual updates
+
+```bash
+# Move issue to different status
+./scripts/update-project-status.sh --issue 51 --status "In Progress"
+./scripts/update-project-status.sh --issue 51 --status "Done"
+```
+
+### Troubleshooting
+
+**Issue: Milestone has open issues when archiving**
+- Review each open issue
+- Close or move to next milestone as appropriate
+- Script will warn and ask for confirmation
+
+**Issue: Backlog query returns no results**
+- Ensure issues have `priority/p0` or `priority/p1` labels
+- Check that issues don't already have milestones
+- Verify issues are in "open" state
+
+**Issue: Large tasks not splitting automatically**
+- Use `--auto` flag with split-large-tasks.sh
+- Or use github-task-manager skill for AI-assisted splitting
+- Manual splitting always available as fallback
+
+### Related Scripts
+
+- `archive-milestone.sh` - Archive completed milestone
+- `start-milestone.sh` - Start new milestone
+- `split-large-tasks.sh` - Split large tasks into subtasks
+- `create-sub-issue.sh` - Create subtask with parent link
+- `update-project-status.sh` - Update issue status on project board
+
+### Related Skills
+
+- `.claude/skills/github-task-manager/SKILL.md` - Task management and splitting
+- `.claude/skills/development-workflow/SKILL.md` - Complete dev workflow
+
+---
+
 ## Automation (Future)
 
 **Potential automations to add:**
@@ -426,6 +728,7 @@ gh release compare v0.2.0..v0.3.0
 - Version bump automation (read last tag, increment)
 - Automated GitHub Release creation in CI/CD
 - Release announcement to Slack/Discord
+- Full milestone transition automation (archive → start → split)
 
 ## Examples
 
