@@ -92,15 +92,7 @@ db-reset:
 
 db-seed:
 	@echo "🌱 Loading seed data into database..."
-	@if [ -f seed.sql ]; then \
-		docker-compose exec -T postgres psql -U ubik -d ubik < seed.sql; \
-	elif [ -f shared/schema/seed.sql ]; then \
-		docker-compose exec -T postgres psql -U ubik -d ubik < shared/schema/seed.sql; \
-	else \
-		echo "❌ Error: seed.sql not found"; \
-		exit 1; \
-	fi
-	@echo "✅ Seed data loaded successfully"
+	@./scripts/seed-claude-config.sh
 	@echo ""
 	@echo "Test credentials (all passwords: 'password123'):"
 	@echo ""

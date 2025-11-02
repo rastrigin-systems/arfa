@@ -505,7 +505,7 @@ func TestGetEmployeeResolvedAgentConfigs_Success(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent1ID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Mock agent 2 resolution
@@ -531,7 +531,7 @@ func TestGetEmployeeResolvedAgentConfigs_Success(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent2ID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Use chi router to properly set URL params
