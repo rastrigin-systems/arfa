@@ -283,6 +283,11 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** ⭐ - Development workflow and best practices
 - **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** ⭐⭐⭐ - **PRIORITY ORDER** for next endpoints
 
+### 🤖 AI Agent Configurations
+
+- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend development workflow
+- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend development workflow
+
 ### 🔧 Configuration Files
 
 - **[openapi/spec.yaml](./openapi/spec.yaml)** - OpenAPI 3.0 specification
@@ -526,8 +531,8 @@ fi
 ```
 
 **See agent configurations:**
-- `~/.claude/agents/go-backend-developer.md` - Backend workflow
-- `~/.claude/agents/frontend-developer.md` - Frontend workflow
+- `.claude/agents/go-backend-developer.md` - Backend workflow (versioned in project)
+- `.claude/agents/frontend-developer.md` - Frontend workflow (versioned in project)
 
 ### Code Generation Pipeline
 
