@@ -138,3 +138,8 @@ func CreateUpdateOrgParams(id uuid.UUID, name string, maxEmployees int32, maxAge
 		Settings:             settings,
 	}
 }
+
+// RandomEmail generates a random email address for testing
+func RandomEmail() string {
+	return "test-" + uuid.NewString()[:8] + "@example.com"
+}

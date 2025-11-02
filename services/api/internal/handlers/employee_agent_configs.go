@@ -189,8 +189,21 @@ func (h *EmployeeAgentConfigsHandler) CreateEmployeeAgentConfig(w http.ResponseW
 	// Get agent details for response
 	agent, _ := h.db.GetAgentByID(ctx, agentID)
 
+	// Convert Row to model
+	configModel := db.EmployeeAgentConfig{
+		ID:             config.ID,
+		EmployeeID:     config.EmployeeID,
+		AgentID:        config.AgentID,
+		ConfigOverride: config.ConfigOverride,
+		IsEnabled:      config.IsEnabled,
+		SyncToken:      config.SyncToken,
+		LastSyncedAt:   config.LastSyncedAt,
+		CreatedAt:      config.CreatedAt,
+		UpdatedAt:      config.UpdatedAt,
+	}
+
 	// Build response
-	response := dbEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbEmployeeAgentConfigRowToAPI(configModel, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -367,8 +380,21 @@ func (h *EmployeeAgentConfigsHandler) UpdateEmployeeAgentConfig(w http.ResponseW
 	// Get agent details for response
 	agent, _ := h.db.GetAgentByID(ctx, config.AgentID)
 
+	// Convert Row to model
+	configModel := db.EmployeeAgentConfig{
+		ID:             config.ID,
+		EmployeeID:     config.EmployeeID,
+		AgentID:        config.AgentID,
+		ConfigOverride: config.ConfigOverride,
+		IsEnabled:      config.IsEnabled,
+		SyncToken:      config.SyncToken,
+		LastSyncedAt:   config.LastSyncedAt,
+		CreatedAt:      config.CreatedAt,
+		UpdatedAt:      config.UpdatedAt,
+	}
+
 	// Build response
-	response := dbEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbEmployeeAgentConfigRowToAPI(configModel, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")

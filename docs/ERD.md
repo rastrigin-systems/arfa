@@ -366,6 +366,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-11-02 19:18:54
+**Generated**: 2025-11-02 19:37:33
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+
