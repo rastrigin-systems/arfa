@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { OrgAgentConfigTable } from '@/components/agents/OrgAgentConfigTable';
 import { ConfigEditorModal } from '@/components/agents/ConfigEditorModal';
+import { TeamAgentConfigsTab } from '@/components/agents/TeamAgentConfigsTab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
@@ -121,6 +122,7 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
         <TabsList>
           <TabsTrigger value="configured">Configured Agents ({configs.length})</TabsTrigger>
           <TabsTrigger value="available">Available Agents ({initialAgents.length})</TabsTrigger>
+          <TabsTrigger value="teams">Team Configs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="configured" className="space-y-4">
@@ -147,6 +149,10 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
             }}
             onConfigure={handleConfigureAgent}
           />
+        </TabsContent>
+
+        <TabsContent value="teams" className="space-y-4">
+          <TeamAgentConfigsTab orgConfigs={configs} agents={initialAgents} />
         </TabsContent>
       </Tabs>
 
