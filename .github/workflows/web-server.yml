@@ -36,18 +36,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: services/web/package-lock.json
-
-      - name: Clean npm cache
-        if: steps.check_web.outputs.exists == 'true'
-        working-directory: ./services/web
-        run: npm cache clean --force
 
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci
+        run: |
+          # Fix for npm optional dependency bug with Rollup
+          # See: https://github.com/npm/cli/issues/4828
+          rm -rf node_modules
+          npm ci --no-optional
+          npm install --save-optional @rollup/rollup-linux-x64-gnu || true
 
       - name: Build application
         if: steps.check_web.outputs.exists == 'true'
@@ -92,18 +90,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: services/web/package-lock.json
-
-      - name: Clean npm cache
-        if: steps.check_web.outputs.exists == 'true'
-        working-directory: ./services/web
-        run: npm cache clean --force
 
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci
+        run: |
+          # Fix for npm optional dependency bug with Rollup
+          # See: https://github.com/npm/cli/issues/4828
+          rm -rf node_modules
+          npm ci --no-optional
+          npm install --save-optional @rollup/rollup-linux-x64-gnu || true
 
       - name: Install Playwright browsers
         if: steps.check_web.outputs.exists == 'true'
