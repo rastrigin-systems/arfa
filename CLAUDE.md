@@ -612,6 +612,114 @@ fi
 - `.claude/agents/go-backend-developer.md` - Backend workflow (versioned in project)
 - `.claude/agents/frontend-developer.md` - Frontend workflow (versioned in project)
 
+### Milestone Planning and Transitions
+
+**Complete workflow for planning milestones and transitioning between releases.**
+
+#### After Releasing a Milestone
+
+**1. Archive Completed Milestone**
+
+```bash
+# Archive all issues from completed milestone
+./scripts/archive-milestone.sh --milestone v0.3.0
+```
+
+This will:
+- Label all milestone issues as "archived"
+- Close any remaining open issues
+- Close the milestone
+- Update `docs/MILESTONES_ARCHIVE.md` with completion record
+
+**2. Start New Milestone**
+
+```bash
+# Create new milestone and populate from backlog
+./scripts/start-milestone.sh \
+  --version v0.4.0 \
+  --description "Analytics Dashboard & Approval Workflows" \
+  --due-date "2026-01-31" \
+  --auto-split
+```
+
+This will:
+1. Create GitHub milestone with description and due date
+2. Query backlog for `priority/p0` and `priority/p1` issues
+3. Display issues for review and confirmation
+4. Add confirmed issues to milestone
+5. Move issues to "Todo" status on project board
+6. Flag large tasks (size/l, size/xl) for splitting
+7. Create milestone kickoff issue
+
+**3. Split Large Tasks**
+
+```bash
+# Find tasks flagged for splitting
+gh issue list --label "needs-splitting" --milestone "v0.4.0"
+
+# Split a large task
+./scripts/split-large-tasks.sh --issue 51
+
+# Or use auto-split with github-task-manager skill
+./scripts/split-large-tasks.sh --issue 51 --auto
+```
+
+This helps break down size/xl and size/l tasks into manageable subtasks (size/s or size/m).
+
+#### Milestone Planning Best Practices
+
+**Before Starting New Milestone:**
+- ✅ Review backlog and update priorities
+- ✅ Ensure issue descriptions are clear
+- ✅ Verify all issues have size labels
+- ✅ Check for dependencies between issues
+- ✅ Set realistic due date (4-6 weeks typical)
+
+**When Populating Milestone:**
+- ✅ Focus on p0/p1 priority issues
+- ✅ Aim for mix of sizes (not all large tasks)
+- ✅ Balance features vs bug fixes vs tech debt
+- ✅ Include testing and documentation tasks
+- ✅ Leave buffer for unexpected work (70-80% capacity)
+
+**Task Splitting Guidelines:**
+- ✅ Each subtask should be independently testable
+- ✅ Subtasks should be size/s or size/m (1-3 days each)
+- ✅ Use parent-child relationship (blockedBy in GitHub)
+- ✅ Update parent with checklist of subtasks
+- ✅ Close parent only when all subtasks complete
+
+**Complete Workflow Example:**
+
+```bash
+# After releasing v0.3.0, transition to v0.4.0
+
+# 1. Archive completed milestone
+./scripts/archive-milestone.sh --milestone v0.3.0
+
+# 2. Start new milestone
+./scripts/start-milestone.sh \
+  --version v0.4.0 \
+  --description "Analytics & Approvals" \
+  --due-date "2026-01-31" \
+  --auto-split
+
+# 3. Split flagged large tasks
+for issue in $(gh issue list --label "needs-splitting" --milestone "v0.4.0" --json number -q '.[].number'); do
+  ./scripts/split-large-tasks.sh --issue $issue
+done
+
+# 4. Verify milestone ready
+gh issue list --milestone "v0.4.0" --json number,title,labels
+
+# 5. Start working on first task
+FIRST_TASK=$(gh issue list --milestone "v0.4.0" --label "priority/p0" --assignee "" --limit 1 --json number -q '.[0].number')
+git checkout -b issue-$FIRST_TASK-feature
+./scripts/update-project-status.sh --issue $FIRST_TASK --status "In Progress"
+```
+
+**See [Release Manager Skill](./.claude/skills/release-manager/SKILL.md) for complete release and milestone transition workflows.**
+
 ### Code Generation Pipeline
 
 ```
