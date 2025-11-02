@@ -39,10 +39,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: services/web/package-lock.json
 
+      - name: Clean npm cache (workaround for rollup optional deps bug)
+        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: rm -rf node_modules package-lock.json
+
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci --include=optional
+        run: npm install
 
       - name: Build application
         if: steps.check_web.outputs.exists == 'true'
@@ -90,10 +95,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: services/web/package-lock.json
 
+      - name: Clean npm cache (workaround for rollup optional deps bug)
+        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: rm -rf node_modules package-lock.json
+
       - name: Install dependencies
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
-        run: npm ci --include=optional
+        run: npm install
 
       - name: Install Playwright browsers
         if: steps.check_web.outputs.exists == 'true'
