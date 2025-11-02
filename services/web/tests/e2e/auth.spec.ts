@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Authentication Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -49,45 +49,42 @@ test.describe('Authentication Flow', () => {
     expect(isInvalid).toBe(true);
   });
 
-  test.skip('should login with valid credentials and redirect to dashboard', async ({ page }) => {
-    // This test requires a running API backend with test data
-    // Skip for now as we don't have the backend running
-    await page.goto('/login');
+  test('should login with valid credentials and redirect to dashboard', async ({ mockApi }) => {
+    // Now using mocked API - no backend required!
+    await mockApi.goto('/login');
 
-    await page.getByLabel('Email').fill('alice@acme.com');
-    await page.getByLabel('Password').fill('password123');
-    await page.getByRole('button', { name: /login/i }).click();
+    await mockApi.getByLabel('Email').fill('alice@acme.com');
+    await mockApi.getByLabel('Password').fill('password123');
+    await mockApi.getByRole('button', { name: /login/i }).click();
 
     // Should redirect to dashboard
-    await expect(page).toHaveURL('/dashboard');
-    await expect(page.getByText(/welcome back/i)).toBeVisible();
+    await expect(mockApi).toHaveURL('/dashboard');
+    await expect(mockApi.getByText(/welcome back/i)).toBeVisible();
   });
 
-  test.skip('should show error for invalid credentials', async ({ page }) => {
-    // This test requires a running API backend
-    // Skip for now as we don't have the backend running
-    await page.goto('/login');
+  test('should show error for invalid credentials', async ({ mockApi }) => {
+    // Now using mocked API - returns 401 for invalid credentials
+    await mockApi.goto('/login');
 
-    await page.getByLabel('Email').fill('wrong@example.com');
-    await page.getByLabel('Password').fill('wrongpassword');
-    await page.getByRole('button', { name: /login/i }).click();
+    await mockApi.getByLabel('Email').fill('wrong@example.com');
+    await mockApi.getByLabel('Password').fill('wrongpassword');
+    await mockApi.getByRole('button', { name: /login/i }).click();
 
     // Should show error message
-    await expect(page.getByRole('alert')).toContainText(/invalid credentials/i);
+    await expect(mockApi.getByRole('alert')).toContainText(/invalid credentials/i);
   });
 
-  test.skip('should logout and redirect to login page', async ({ page }) => {
-    // This test requires a running API backend and authenticated session
-    // Skip for now as we don't have the backend running
+  test('should logout and redirect to login page', async ({ authenticatedPage }) => {
+    // Using authenticatedPage fixture - already logged in with mocked session
 
-    // Assume we're logged in and on dashboard
-    await page.goto('/dashboard');
+    // Navigate to dashboard (already authenticated)
+    await authenticatedPage.goto('/dashboard');
 
     // Click logout button
-    await page.getByRole('button', { name: /logout/i }).click();
+    await authenticatedPage.getByRole('button', { name: /logout/i }).click();
 
     // Should redirect to login
-    await expect(page).toHaveURL('/login');
+    await expect(authenticatedPage).toHaveURL('/login');
   });
 
   test('should redirect authenticated users away from login page', async ({ page }) => {
