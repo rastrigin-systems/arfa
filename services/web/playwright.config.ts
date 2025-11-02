@@ -17,6 +17,8 @@ export default defineConfig({
     // Changed from 'on-first-retry' to 'retain-on-failure'
     // Only keep traces when tests actually fail, not on first retry
     trace: 'retain-on-failure',
+    // Run headless in CI, headed locally for debugging
+    headless: !!process.env.CI,
   },
 
   projects: [
@@ -35,5 +37,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     // Reduced from 120000 to 60000 - build should be cached in CI
     timeout: 60000,
+    // Pass E2E_TEST env var to enable MSW in Next.js server
+    env: {
+      E2E_TEST: 'true',
+    },
   },
 });
