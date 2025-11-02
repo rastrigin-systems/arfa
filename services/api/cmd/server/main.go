@@ -60,6 +60,7 @@ func main() {
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
 	mcpServersHandler := handlers.NewMCPServersHandler(queries)
+	// skillsHandler := handlers.NewSkillsHandler(queries) // TODO: Re-enable when Skills API is complete (PR #66)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -221,6 +222,19 @@ func main() {
 			r.Route("/employees/me/mcp-servers", func(r chi.Router) {
 				r.Get("/", mcpServersHandler.ListEmployeeMCPServers)
 			})
+
+			// TODO: Re-enable when Skills API is complete (PR #66)
+			// Skills catalog routes
+			// r.Route("/skills", func(r chi.Router) {
+			// 	r.Get("/", skillsHandler.ListSkills)
+			// 	r.Get("/{skill_id}", skillsHandler.GetSkill)
+			// })
+
+			// Employee skills routes
+			// r.Route("/employees/me/skills", func(r chi.Router) {
+			// 	r.Get("/", skillsHandler.ListEmployeeSkills)
+			// 	r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
+			// })
 
 			// Activity logs routes
 			r.Route("/activity-logs", func(r chi.Router) {

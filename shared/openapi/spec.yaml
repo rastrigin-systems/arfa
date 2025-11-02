@@ -34,6 +34,8 @@ tags:
     description: Agent catalog and configuration
   - name: mcps
     description: MCP catalog and configuration
+  - name: skills
+    description: Skills catalog and management
   - name: approvals
     description: Approval workflows
 
@@ -896,6 +898,170 @@ components:
         total:
           type: integer
 
+    # Skills schemas
+    Skill:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - version
+        - files
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: "github-task-manager"
+        description:
+          type: string
+          example: "Manages GitHub issues and project tasks"
+        category:
+          type: string
+          example: "workflow"
+        version:
+          type: string
+          example: "1.0.0"
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                example: "SKILL.md"
+              content:
+                type: string
+                example: "# GitHub Task Manager\\n\\nManages GitHub issues..."
+        dependencies:
+          type: object
+          nullable: true
+          properties:
+            mcp_servers:
+              type: array
+              items:
+                type: string
+              example: ["github"]
+            skills:
+              type: array
+              items:
+                type: string
+              example: []
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    EmployeeSkill:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - version
+        - files
+        - is_active
+        - is_enabled
+        - installed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: "github-task-manager"
+        description:
+          type: string
+          example: "Manages GitHub issues and project tasks"
+        category:
+          type: string
+          example: "workflow"
+        version:
+          type: string
+          example: "1.0.0"
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                example: "SKILL.md"
+              content:
+                type: string
+                example: "# GitHub Task Manager\\n\\nManages GitHub issues..."
+        dependencies:
+          type: object
+          nullable: true
+          properties:
+            mcp_servers:
+              type: array
+              items:
+                type: string
+              example: ["github"]
+            skills:
+              type: array
+              items:
+                type: string
+              example: []
+        is_active:
+          type: boolean
+          description: "Whether skill is active in catalog"
+        is_enabled:
+          type: boolean
+          description: "Whether skill is enabled for this employee"
+        config:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: "Employee-specific skill configuration"
+        installed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "When skill was assigned to employee"
+
+    ListSkillsResponse:
+      type: object
+      required:
+        - skills
+        - total
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        total:
+          type: integer
+          example: 10
+
+    ListEmployeeSkillsResponse:
+      type: object
+      required:
+        - skills
+        - total
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeSkill'
+        total:
+          type: integer
+          example: 3
+
     # Pagination
     PaginationMeta:
       type: object
@@ -1115,6 +1281,15 @@ components:
         type: string
         format: uuid
       description: Agent configuration UUID
+
+    SkillId:
+      name: skill_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Skill UUID
 
     Page:
       name: page
@@ -2414,6 +2589,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListMCPServersResponse'
+  # Skills Catalog
+  # ============================================================================
+  /skills:
+    get:
+      tags:
+        - skills
+      summary: List all available skills
+      description: Get list of all skills in the catalog
+      operationId: listSkills
+      responses:
+        '200':
+          description: List of available skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSkillsResponse'
         '401':
           description: Unauthorized
           content:
@@ -2444,6 +2635,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MCPServer'
+  /skills/{skill_id}:
+    parameters:
+      - $ref: '#/components/parameters/SkillId'
+
+    get:
+      tags:
+        - skills
+      summary: Get skill details
+      description: Get details of a specific skill from the catalog
+      operationId: getSkill
+      responses:
+        '200':
+          description: Skill details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
         '401':
           description: Unauthorized
           content:
@@ -2452,6 +2660,7 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: MCP server not found
+          description: Skill not found
           content:
             application/json:
               schema:
@@ -2474,8 +2683,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListEmployeeMCPServersResponse'
+  # Employee Skills
+  # ============================================================================
+  /employees/me/skills:
+    get:
+      tags:
+        - skills
+      summary: List employee's installed skills
+      description: Get list of skills installed for the authenticated employee
+      operationId: listEmployeeSkills
+      responses:
+        '200':
+          description: List of employee's skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEmployeeSkillsResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees/me/skills/{skill_id}:
+    parameters:
+      - $ref: '#/components/parameters/SkillId'
+
+    get:
+      tags:
+        - skills
+      summary: Get employee's specific skill
+      description: Get details of a specific skill installed for the authenticated employee
+      operationId: getEmployeeSkill
+      responses:
+        '200':
+          description: Employee skill details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSkill'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Skill not found or not installed for employee
           content:
             application/json:
               schema:
