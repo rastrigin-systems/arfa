@@ -513,84 +513,35 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 	return result
 }
 
-// dbCreateEmployeeAgentConfigRowToAPI converts a CreateEmployeeAgentConfigRow and agent to API response
-func dbCreateEmployeeAgentConfigRowToAPI(config db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
-	var cfg map[string]interface{}
-	if len(config.ConfigOverride) > 0 {
-		json.Unmarshal(config.ConfigOverride, &cfg)
+
+// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow to api format
+func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
 	}
-
-	agentName := agent.Name
-	agentType := agent.Type
-	agentProvider := agent.Provider
-
-	id := openapi_types.UUID(config.ID)
-	employeeID := openapi_types.UUID(config.EmployeeID)
-	agentID := openapi_types.UUID(config.AgentID)
-
-	result := api.EmployeeAgentConfig{
-		Id:             &id,
-		EmployeeId:     employeeID,
-		AgentId:        agentID,
-		AgentName:      &agentName,
-		AgentType:      &agentType,
-		AgentProvider:  &agentProvider,
-		ConfigOverride: cfg,
-		IsEnabled:      config.IsEnabled,
-		CreatedAt:      &config.CreatedAt.Time,
-		UpdatedAt:      &config.UpdatedAt.Time,
-	}
-
-	// Handle nullable fields
-	if config.SyncToken != nil {
-		result.SyncToken = config.SyncToken
-	}
-
-	if config.LastSyncedAt.Valid {
-		t := config.LastSyncedAt.Time
-		result.LastSyncedAt = &t
-	}
-
-	return result
+	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
 
-// dbUpdateEmployeeAgentConfigRowToAPI converts an UpdateEmployeeAgentConfigRow and agent to API response
-func dbUpdateEmployeeAgentConfigRowToAPI(config db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
-	var cfg map[string]interface{}
-	if len(config.ConfigOverride) > 0 {
-		json.Unmarshal(config.ConfigOverride, &cfg)
+// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow to api format
+func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
 	}
-
-	agentName := agent.Name
-	agentType := agent.Type
-	agentProvider := agent.Provider
-
-	id := openapi_types.UUID(config.ID)
-	employeeID := openapi_types.UUID(config.EmployeeID)
-	agentID := openapi_types.UUID(config.AgentID)
-
-	result := api.EmployeeAgentConfig{
-		Id:             &id,
-		EmployeeId:     employeeID,
-		AgentId:        agentID,
-		AgentName:      &agentName,
-		AgentType:      &agentType,
-		AgentProvider:  &agentProvider,
-		ConfigOverride: cfg,
-		IsEnabled:      config.IsEnabled,
-		CreatedAt:      &config.CreatedAt.Time,
-		UpdatedAt:      &config.UpdatedAt.Time,
-	}
-
-	// Handle nullable fields
-	if config.SyncToken != nil {
-		result.SyncToken = config.SyncToken
-	}
-
-	if config.LastSyncedAt.Valid {
-		t := config.LastSyncedAt.Time
-		result.LastSyncedAt = &t
-	}
-
-	return result
+	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
