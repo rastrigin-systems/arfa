@@ -515,10 +515,10 @@ export async function mockUserSession(
   page: Page,
   employee = mockEmployees[0]
 ): Promise<void> {
-  // Set auth cookie
+  // Set auth cookie (must match middleware TOKEN_COOKIE_NAME)
   await page.context().addCookies([
     {
-      name: 'auth_token',
+      name: 'ubik_token',
       value: 'mock-jwt-token-12345',
       domain: 'localhost',
       path: '/',

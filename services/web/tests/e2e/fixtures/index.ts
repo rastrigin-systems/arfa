@@ -80,18 +80,22 @@ export const test = base.extend<Fixtures>({
   },
 
   /**
-   * Employee feature mocking
+   * Employee feature mocking (with authentication)
    */
   mockEmployees: async ({ page }, use) => {
     await setupEmployeeMocks(page);
+    // Add authenticated session so tests don't redirect to login
+    await mockUserSession(page, mockEmployees[0]);
     await use(page);
   },
 
   /**
-   * Agent feature mocking
+   * Agent feature mocking (with authentication)
    */
   mockAgents: async ({ page }, use) => {
     await setupAgentMocks(page);
+    // Add authenticated session so tests don't redirect to login
+    await mockUserSession(page, mockEmployees[0]);
     await use(page);
   },
 
