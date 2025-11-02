@@ -283,6 +283,13 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 - **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** ⭐ - Development workflow and best practices
 - **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** ⭐⭐⭐ - **PRIORITY ORDER** for next endpoints
 
+### 🚀 Release Management
+
+- **[.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md)** ⭐ - Release workflow and versioning
+- **[docs/RELEASES.md](./docs/RELEASES.md)** - Complete release history and notes
+- **[Release Manager Examples](./.claude/skills/release-manager/examples/release-examples.md)** - Real-world release workflows
+- **[Release Templates](./.claude/skills/release-manager/templates/)** - Tag and release note templates
+
 ### 🤖 AI Agent Configurations
 
 **Development Agents:**
@@ -731,6 +738,47 @@ Use Row-Level Security (RLS) policies as safety net.
 - Store wireframes in `docs/wireframes/` directory
 - Use descriptive names (e.g., `settings-page.png`, `employee-detail.png`)
 - Include wireframes in pull requests with UI changes
+
+### Release Management
+
+**⚠️ CRITICAL: Follow Standardized Release Process**
+
+**Use the Release Manager Skill for all releases** - ensures consistency across all agents.
+
+**Quick Release Checklist:**
+```
+✅ 1. All CI/CD checks passing
+✅ 2. All tests passing (make test)
+✅ 3. Milestone issues closed
+✅ 4. On main branch, clean working tree
+✅ 5. Documentation updated
+✅ 6. Create annotated git tag
+✅ 7. Push tag to remote
+✅ 8. Create GitHub Release
+✅ 9. Update CLAUDE.md and docs/RELEASES.md
+```
+
+**Versioning Strategy:**
+- **v0.x.0** - New milestone features (Web UI, Analytics, etc.)
+- **v0.x.y** - Bug fixes and polish within a milestone
+- **v1.0.0+** - Production releases (post-launch)
+
+**Key Commands:**
+```bash
+# Check release readiness
+gh run list --limit 1  # Verify CI green
+make test              # Run all tests
+gh issue list --milestone "v0.X.0" --state open  # Check milestone
+
+# Create release
+git tag -a v0.X.0 -m "Release v0.X.0 - [Description]"
+git push origin v0.X.0
+gh release create v0.X.0 --title "..." --notes "..."
+```
+
+**See [Release Manager Skill](./.claude/skills/release-manager/SKILL.md) for complete workflow.**
+
+**Release History:** See [docs/RELEASES.md](./docs/RELEASES.md)
 
 ---
 
