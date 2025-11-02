@@ -30,9 +30,11 @@ type ConfigEditorModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  mode?: 'org' | 'team'; // Defaults to 'org'
+  teamId?: string; // Required when mode is 'team'
 };
 
-export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, onSuccess }: ConfigEditorModalProps) {
+export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, onSuccess, mode = 'org', teamId }: ConfigEditorModalProps) {
   const { toast } = useToast();
 
   // Initialize config value
@@ -57,15 +59,30 @@ export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, o
     setIsSubmitting(true);
 
     try {
-      const url = isEditing
-        ? `/api/v1/organizations/current/agent-configs/${existingConfig.id}`
-        : '/api/v1/organizations/current/agent-configs';
-
+      let url: string;
+      let body: Record<string, unknown>;
       const method = isEditing ? 'PATCH' : 'POST';
 
-      const body = isEditing
-        ? { config: parsedConfig, is_enabled: true }
-        : { agent_id: agent.id, config: parsedConfig, is_enabled: true };
+      if (mode === 'team') {
+        if (!teamId) {
+          throw new Error('Team ID is required for team mode');
+        }
+        url = isEditing
+          ? `/api/v1/teams/${teamId}/agent-configs/${existingConfig.id}`
+          : `/api/v1/teams/${teamId}/agent-configs`;
+
+        body = isEditing
+          ? { config_override: parsedConfig, is_enabled: true }
+          : { agent_id: agent.id, config_override: parsedConfig, is_enabled: true };
+      } else {
+        url = isEditing
+          ? `/api/v1/organizations/current/agent-configs/${existingConfig.id}`
+          : '/api/v1/organizations/current/agent-configs';
+
+        body = isEditing
+          ? { config: parsedConfig, is_enabled: true }
+          : { agent_id: agent.id, config: parsedConfig, is_enabled: true };
+      }
 
       const response = await fetch(url, {
         method,
@@ -107,9 +124,13 @@ export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, o
         <DialogHeader>
           <DialogTitle id="dialog-title">Configure {agent.name}</DialogTitle>
           <DialogDescription id="dialog-description">
-            {isEditing
-              ? `Update the configuration for ${agent.name}. Changes will apply to all employees in your organization.`
-              : `Create a new configuration for ${agent.name}. This will make the agent available to all employees.`}
+            {mode === 'team'
+              ? isEditing
+                ? `Update the team-level configuration override for ${agent.name}. This will override the organization-level settings for this team.`
+                : `Create a team-level configuration override for ${agent.name}. This will customize the agent for this specific team.`
+              : isEditing
+                ? `Update the configuration for ${agent.name}. Changes will apply to all employees in your organization.`
+                : `Create a new configuration for ${agent.name}. This will make the agent available to all employees.`}
           </DialogDescription>
         </DialogHeader>
 
