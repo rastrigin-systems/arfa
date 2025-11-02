@@ -44,6 +44,8 @@ erDiagram
     organizations ||--o{ usage_records : "has"
     employees ||--o{ usage_records : "has"
     employee_agent_configs ||--o{ usage_records : "has"
+    employees ||--o{ employee_skills : "has"
+    skill_catalog ||--o{ employee_skills : "has"
 
     %% Table Definitions
     organizations {
@@ -169,6 +171,7 @@ erDiagram
         timestamp last_synced_at
         timestamp created_at
         timestamp updated_at
+        text content
     }
     
     mcp_categories {
@@ -191,6 +194,9 @@ erDiagram
         uuid category_id FK
         timestamp created_at
         timestamp updated_at
+        varchar255 docker_image
+        jsonb config_template
+        jsonb required_env_vars
     }
     
     employee_mcp_configs {
@@ -204,6 +210,7 @@ erDiagram
         timestamp last_sync_at
         timestamp created_at
         timestamp updated_at
+        boolean is_enabled
     }
     
     agent_requests {
@@ -342,12 +349,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 24
+- **Total Tables**: 26
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~188
-- **Foreign Keys**: 32+
-- **Indexes**: 75+
+- **Total Columns**: ~210
+- **Foreign Keys**: 34+
+- **Indexes**: 86+
 
 ## Legend
 
@@ -359,6 +366,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-10-30 18:31:20
+**Generated**: 2025-11-02 19:18:54
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

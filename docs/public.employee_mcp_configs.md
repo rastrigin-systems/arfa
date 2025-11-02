@@ -10,12 +10,13 @@
 | employee_id | uuid |  | false |  | [public.employees](public.employees.md) |  |
 | mcp_catalog_id | uuid |  | false |  | [public.mcp_catalog](public.mcp_catalog.md) |  |
 | status | varchar(50) | 'pending'::character varying | false |  |  |  |
-| connection_config | jsonb | '{}'::jsonb | false |  |  |  |
+| connection_config | jsonb | '{}'::jsonb | false |  |  | Actual configuration with secrets |
 | credentials_encrypted | text |  | true |  |  |  |
 | sync_token | varchar(255) |  | true |  |  |  |
 | last_sync_at | timestamp without time zone |  | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
+| is_enabled | boolean | true | true |  |  |  |
 
 ## Constraints
 
@@ -38,6 +39,7 @@
 | idx_employee_mcp_configs_mcp_catalog_id | CREATE INDEX idx_employee_mcp_configs_mcp_catalog_id ON public.employee_mcp_configs USING btree (mcp_catalog_id) |
 | idx_employee_mcp_configs_status | CREATE INDEX idx_employee_mcp_configs_status ON public.employee_mcp_configs USING btree (status) |
 | idx_employee_mcp_configs_sync_token | CREATE INDEX idx_employee_mcp_configs_sync_token ON public.employee_mcp_configs USING btree (sync_token) WHERE (sync_token IS NOT NULL) |
+| idx_employee_mcp_configs_is_enabled | CREATE INDEX idx_employee_mcp_configs_is_enabled ON public.employee_mcp_configs USING btree (is_enabled) |
 
 ## Triggers
 
@@ -65,6 +67,7 @@ erDiagram
   timestamp_without_time_zone last_sync_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  boolean is_enabled
 }
 "public.employees" {
   uuid id
@@ -95,6 +98,9 @@ erDiagram
   uuid category_id FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  varchar_255_ docker_image
+  jsonb config_template
+  jsonb required_env_vars
 }
 ```
 

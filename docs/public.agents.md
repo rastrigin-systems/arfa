@@ -104,6 +104,7 @@ erDiagram
   timestamp_without_time_zone last_synced_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  text content
 }
 "public.system_prompts" {
   uuid id
