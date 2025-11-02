@@ -61,9 +61,15 @@ gh project item-add 3 --owner sergei-rastrigin --url "$ISSUE_URL"
 - `In Review` - PR created, awaiting review
 - `Done` - Completed and merged
 
-### 2. Create Subtask
+### 2. Create Sub-Issue
 
-Create a child task properly linked to a parent issue.
+Create a child task properly linked to a parent issue using GitHub's sub-issue feature.
+
+**Important:** This creates a **proper sub-issue** (not just a checklist item):
+- **Sub-issues**: Proper parent-child relationship in GitHub's database (appears in "Sub-issues" section)
+- **Subtasks** (checklist): Just text references like `- [ ] #39` (appears in "Subtasks" section)
+
+Always use sub-issues for proper tracking!
 
 **Step 1: Get Parent Issue Node ID**
 ```bash
@@ -98,20 +104,31 @@ EOF
 )" | grep -oE '#[0-9]+' | cut -c2-)
 ```
 
-**Step 3: Link to Parent (GitHub Issue Relationship)**
+**Step 3: Link to Parent (GitHub Sub-Issue API)**
 ```bash
-# Link via GraphQL API
-gh api graphql -f query='
-mutation($parentId: ID!, $childId: ID!) {
-  updateIssue(input: {
-    id: $childId,
-    trackedInIssues: [$parentId]
-  }) {
-    issue {
+# Get subtask node ID
+SUB_NODE_ID=$(gh api graphql -f query='
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    issue(number: $number) {
       id
     }
   }
-}' -f parentId="$PARENT_NODE_ID" -f childId="$SUB_NODE_ID"
+}' -f owner='sergei-rastrigin' -f repo='ubik-enterprise' -F number=$SUB_ISSUE -q .data.repository.issue.id)
+
+# Link via GitHub's addSubIssue mutation (creates proper sub-issue relationship)
+gh api graphql -f query='
+mutation {
+  addSubIssue(input: {
+    issueId: "'"$PARENT_NODE_ID"'",
+    subIssueId: "'"$SUB_NODE_ID"'"
+  }) {
+    issue {
+      id
+      number
+    }
+  }
+}'
 ```
 
 **Step 4: Add to Project**
@@ -136,11 +153,11 @@ EOF
 ```
 
 **Key Principles:**
-- Subtasks inherit area labels from parent
-- Add `subtask` label to all child issues
+- Sub-issues inherit area labels from parent
+- Add `subtask` label to all child issues (optional)
 - Reference parent in body: `Part of #PARENT_NUM`
-- Update parent issue with checklist of subtasks
-- Link via GraphQL for proper GitHub tracking
+- Use `addSubIssue` mutation to create proper parent-child relationship
+- This creates a real sub-issue (not just a checklist reference)
 
 ### 3. Split Large Task
 

@@ -125,18 +125,19 @@ EOF
     }
   }' -f owner='sergei-rastrigin' -f repo='ubik-enterprise' -F number=$SUB_NUM -q .data.repository.issue.id)
 
-  # Link to parent via GraphQL
+  # Link to parent as proper sub-issue using addSubIssue mutation
   gh api graphql -f query='
-  mutation($parentId: ID!, $childId: ID!) {
-    updateIssue(input: {
-      id: $childId,
-      trackedInIssues: [$parentId]
+  mutation {
+    addSubIssue(input: {
+      issueId: "'"$PARENT_NODE_ID"'",
+      subIssueId: "'"$SUB_NODE_ID"'"
     }) {
       issue {
         id
+        number
       }
     }
-  }' -f parentId="$PARENT_NODE_ID" -f childId="$SUB_NODE_ID"
+  }'
 
   echo "Created subtask #$SUB_NUM"
 done
