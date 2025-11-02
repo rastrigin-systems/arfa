@@ -283,11 +283,48 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 git push
 ```
 
-### 8. Close Milestone
+### 8. Archive Milestone
 
 ```bash
-# Close completed milestone (via web UI)
-# https://github.com/sergei-rastrigin/ubik-enterprise/milestones
+# Archive milestone and remove items from project board
+./scripts/archive-milestone.sh --milestone $VERSION
+
+# This will:
+# - Add "archived" label to all milestone issues
+# - Close any remaining open issues
+# - Archive all items from project board (GraphQL API)
+# - Close the milestone on GitHub
+# - Update docs/MILESTONES_ARCHIVE.md
+```
+
+**What Gets Archived:**
+- All issues in the milestone are labeled "archived"
+- All project board items are archived (removed from active view)
+- Milestone is closed on GitHub
+- Documentation updated in `docs/MILESTONES_ARCHIVE.md`
+
+**Note:** Archived project items can still be viewed via:
+```bash
+# View archived items (requires GraphQL)
+gh api graphql -f query='
+query {
+  node(id: "PVT_kwHOAGhClM4BG_A3") {
+    ... on ProjectV2 {
+      items(first: 100) {
+        nodes {
+          id
+          isArchived
+          content {
+            ... on Issue {
+              number
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+}'
 ```
 
 ### 9. Announce Release

@@ -26,3 +26,10 @@ After releasing a milestone:
 
 <!-- New entries are appended below by archive-milestone.sh script -->
 
+
+## v0.3.0 - Web UI MVP (Completed: 2025-11-02)
+
+- Issues: 17 (17 closed, 0 remaining)
+- Status: Archived
+- Release: https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.3.0
+

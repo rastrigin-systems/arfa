@@ -6,6 +6,8 @@ set -e
 # Usage: ./scripts/archive-milestone.sh --milestone v0.3.0
 
 MILESTONE=""
+PROJECT_ID="PVT_kwHOAGhClM4BG_A3"  # Ubik Engineering Roadmap
+PROJECT_NUMBER=3
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -53,8 +55,10 @@ fi
 
 # Count issues
 TOTAL=$(echo "$ISSUES" | wc -l | tr -d ' ')
-CLOSED=$(echo "$ISSUES" | grep -c "|CLOSED" || echo "0")
-OPEN=$(echo "$ISSUES" | grep -c "|OPEN" || echo "0")
+CLOSED=$(echo "$ISSUES" | grep -c "|CLOSED" || true)
+OPEN=$(echo "$ISSUES" | grep -c "|OPEN" || true)
+OPEN=${OPEN:-0}
+CLOSED=${CLOSED:-0}
 
 echo "✓ Found $TOTAL issues:"
 echo "  - Closed: $CLOSED"
@@ -95,6 +99,53 @@ while IFS='|' read -r issue_num title state; do
   fi
 done <<< "$ISSUES"
 
+# Archive items from project board
+echo -e "\n📦 Archiving items from project board..."
+
+while IFS='|' read -r issue_num title state; do
+  echo -n "  #$issue_num: "
+
+  # Get project item ID for this issue
+  ITEM_ID=$(gh api graphql -f query="
+    query {
+      node(id: \"$PROJECT_ID\") {
+        ... on ProjectV2 {
+          items(first: 100) {
+            nodes {
+              id
+              content {
+                ... on Issue {
+                  number
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  " 2>/dev/null | jq -r ".data.node.items.nodes[] | select(.content.number == $issue_num) | .id" 2>/dev/null)
+
+  if [ -n "$ITEM_ID" ] && [ "$ITEM_ID" != "null" ]; then
+    # Archive the item
+    if gh api graphql -f query="
+      mutation {
+        archiveProjectV2Item(input: {
+          projectId: \"$PROJECT_ID\"
+          itemId: \"$ITEM_ID\"
+        }) {
+          item { id }
+        }
+      }
+    " > /dev/null 2>&1; then
+      echo "✓ Archived from board"
+    else
+      echo "⚠️  Failed to archive from board"
+    fi
+  else
+    echo "⊘ Not on board (skipped)"
+  fi
+done <<< "$ISSUES"
+
 # Close milestone
 echo -e "\n🎯 Closing milestone..."
 MILESTONE_NUMBER=$(gh api "/repos/sergei-rastrigin/ubik-enterprise/milestones" \
@@ -125,6 +176,7 @@ echo -e "\n✅ Milestone $MILESTONE archived successfully!"
 echo ""
 echo "Summary:"
 echo "  - $TOTAL issues archived"
+echo "  - Items removed from project board"
 echo "  - Milestone closed"
 echo "  - Documentation updated"
 echo ""

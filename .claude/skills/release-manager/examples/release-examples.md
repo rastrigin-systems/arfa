@@ -733,6 +733,157 @@ gh issue list --milestone "v0.4.0" --state open --json labels \
         group_by(.) | map({size: .[0], count: length}) | .[]'
 ```
 
+## Example 6: Archiving Milestone and Cleaning Project Board
+
+**Scenario:** v0.3.0 is released and all items need to be archived from the project board.
+
+```bash
+# 1. Verify milestone is ready to archive
+VERSION="v0.3.0"
+
+# Check release exists
+gh release view $VERSION
+
+# Check all issues are closed
+OPEN_COUNT=$(gh issue list --milestone "$VERSION" --state open --json number -q 'length')
+if [ "$OPEN_COUNT" -eq 0 ]; then
+  echo "✓ All issues closed"
+else
+  echo "⚠️  Warning: $OPEN_COUNT issues still open"
+  gh issue list --milestone "$VERSION" --state open
+fi
+
+# 2. Run archive script
+./scripts/archive-milestone.sh --milestone $VERSION
+
+# Output will show:
+# 📦 Archiving Milestone: v0.3.0
+# ==================================
+#
+# 📋 Fetching issues in milestone...
+# ✓ Found 17 issues:
+#   - Closed: 17
+#   - Open: 0
+#
+# 📦 Archiving issues...
+#   #42: ✓ Labeled as archived
+#   #43: ✓ Labeled as archived
+#   ...
+#
+# 📦 Archiving items from project board...
+#   #42: ✓ Archived from board
+#   #43: ✓ Archived from board
+#   ...
+#
+# 🎯 Closing milestone...
+# ✓ Milestone closed
+#
+# 📝 Updating documentation...
+# ✓ Updated docs/MILESTONES_ARCHIVE.md
+#
+# ✅ Milestone v0.3.0 archived successfully!
+#
+# Summary:
+#   - 17 issues archived
+#   - Items removed from project board
+#   - Milestone closed
+#   - Documentation updated
+
+# 3. Verify project board is clean
+gh api graphql -f query='
+query {
+  node(id: "PVT_kwHOAGhClM4BG_A3") {
+    ... on ProjectV2 {
+      items(first: 10) {
+        totalCount
+        nodes {
+          content {
+            ... on Issue {
+              number
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+}' | jq '.data.node.items | "Active items: \(.totalCount)"'
+
+# 4. Verify documentation updated
+tail -20 docs/MILESTONES_ARCHIVE.md
+
+# 5. View archived items (if needed)
+gh issue list --label "archived" --milestone "$VERSION"
+```
+
+### What Gets Archived
+
+The `archive-milestone.sh` script performs these operations:
+
+1. **Labels Issues**: Adds "archived" label to all milestone issues
+2. **Closes Issues**: Closes any remaining open issues with comment
+3. **Archives Board Items**: Uses GitHub GraphQL API to archive project board items
+4. **Closes Milestone**: Marks milestone as closed on GitHub
+5. **Updates Docs**: Appends entry to `docs/MILESTONES_ARCHIVE.md`
+
+### Technical Details
+
+**GraphQL Archiving:**
+```bash
+# The script uses this mutation to archive each item:
+gh api graphql -f query='
+mutation {
+  archiveProjectV2Item(input: {
+    projectId: "PVT_kwHOAGhClM4BG_A3"
+    itemId: "PVTI_..."
+  }) {
+    item { id }
+  }
+}'
+```
+
+**Finding Item IDs:**
+```bash
+# Script queries for item IDs by issue number:
+ITEM_ID=$(gh api graphql -f query="
+query {
+  node(id: \"$PROJECT_ID\") {
+    ... on ProjectV2 {
+      items(first: 100) {
+        nodes {
+          id
+          content {
+            ... on Issue {
+              number
+            }
+          }
+        }
+      }
+    }
+  }
+}" | jq -r ".data.node.items.nodes[] | select(.content.number == $ISSUE_NUM) | .id")
+```
+
+### Best Practices
+
+1. **Before Archiving:**
+   - ✅ Verify release is published
+   - ✅ Ensure all issues are closed
+   - ✅ Check CI/CD is passing
+   - ✅ Confirm no pending work
+
+2. **After Archiving:**
+   - ✅ Verify project board is clean
+   - ✅ Check `MILESTONES_ARCHIVE.md` updated
+   - ✅ Confirm milestone closed on GitHub
+   - ✅ Ready to start next milestone
+
+3. **Recovery:**
+   - Archived items are **not deleted**
+   - Can be un-archived via GraphQL API if needed
+   - Issues retain "archived" label (can be removed)
+   - Milestone can be reopened if necessary
+
 ---
 
 **These examples cover 95% of release scenarios you'll encounter.**
