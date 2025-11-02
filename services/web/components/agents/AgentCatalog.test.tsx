@@ -78,11 +78,11 @@ describe('AgentCatalog', () => {
 
     // Claude Code is enabled - should show "Configure"
     const claudeCard = screen.getByLabelText('Claude Code agent card');
-    expect(within(claudeCard).getByRole('button', { name: /Configure/i })).toBeInTheDocument();
+    expect(within(claudeCard).getByRole('button', { name: /Configure Claude Code/i })).toBeInTheDocument();
 
     // Cursor is not enabled - should show "Enable for Org"
     const cursorCard = screen.getByLabelText('Cursor agent card');
-    expect(within(cursorCard).getByRole('button', { name: /Enable for Org/i })).toBeInTheDocument();
+    expect(within(cursorCard).getByRole('button', { name: /Enable Cursor for organization/i })).toBeInTheDocument();
   });
 
   it('should call onEnable when Enable button is clicked', async () => {
@@ -93,7 +93,7 @@ describe('AgentCatalog', () => {
 
     // Click "Enable for Org" on Cursor (not enabled)
     const cursorCard = screen.getByLabelText('Cursor agent card');
-    const enableButton = within(cursorCard).getByRole('button', { name: /Enable for Org/i });
+    const enableButton = within(cursorCard).getByRole('button', { name: /Enable Cursor for organization/i });
     await user.click(enableButton);
 
     expect(onEnable).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174001');
@@ -107,7 +107,7 @@ describe('AgentCatalog', () => {
 
     // Click "Configure" on Claude Code (enabled)
     const claudeCard = screen.getByLabelText('Claude Code agent card');
-    const configureButton = within(claudeCard).getByRole('button', { name: /Configure/i });
+    const configureButton = within(claudeCard).getByRole('button', { name: /Configure Claude Code/i });
     await user.click(configureButton);
 
     expect(onConfigure).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
@@ -131,7 +131,7 @@ describe('AgentCatalog', () => {
 
     // Tab through to the button
     await user.tab();
-    const button = screen.getByRole('button', { name: /Enable for Org/i });
+    const button = screen.getByRole('button', { name: /Enable Cursor for organization/i });
     expect(button).toHaveFocus();
 
     // Activate with Enter
