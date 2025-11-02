@@ -59,7 +59,7 @@ describe('AgentCard', () => {
 
     render(<AgentCard agent={mockAgent} isEnabled={true} onConfigure={onConfigure} />);
 
-    const button = screen.getByRole('button', { name: /Configure/i });
+    const button = screen.getByRole('button', { name: /Configure Claude Code/i });
     await user.click(button);
 
     expect(onConfigure).toHaveBeenCalledWith(mockAgent.id);
