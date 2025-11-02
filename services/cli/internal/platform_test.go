@@ -200,3 +200,181 @@ func TestPlatformClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, configs, 0)
 }
+
+func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
+	// Setup mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/api/v1/sync/claude-code", r.URL.Path)
+		assert.Equal(t, "GET", r.Method)
+		assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+
+		// Return Claude Code sync response
+		resp := ClaudeCodeSyncResponse{
+			Agents: []AgentConfigSync{
+				{
+					ID:       "agent-1",
+					Name:     "go-backend-developer",
+					Type:     "claude-code",
+					Filename: "go-backend-developer.md",
+					Content:  "# Go Backend Developer\n\nYou are an expert Go developer...",
+					Config: map[string]interface{}{
+						"model": "claude-3-5-sonnet",
+					},
+					Provider:  "anthropic",
+					IsEnabled: true,
+					Version:   "1.0.0",
+				},
+				{
+					ID:       "agent-2",
+					Name:     "frontend-developer",
+					Type:     "claude-code",
+					Filename: "frontend-developer.md",
+					Content:  "# Frontend Developer\n\nYou are an expert frontend developer...",
+					Config: map[string]interface{}{
+						"model": "claude-3-5-sonnet",
+					},
+					Provider:  "anthropic",
+					IsEnabled: true,
+					Version:   "1.0.0",
+				},
+			},
+			Skills: []SkillConfigSync{
+				{
+					ID:          "skill-1",
+					Name:        "release-manager",
+					Description: "Manage releases",
+					Category:    "devops",
+					Version:     "1.0.0",
+					Files: []map[string]string{
+						{
+							"path":    "SKILL.md",
+							"content": "# Release Manager Skill\n\nManages releases...",
+						},
+						{
+							"path":    "examples/example.md",
+							"content": "# Example\n\nExample usage...",
+						},
+					},
+					Dependencies: map[string]interface{}{
+						"gh": ">=2.0.0",
+					},
+					IsEnabled: true,
+				},
+			},
+			MCPServers: []MCPServerConfigSync{
+				{
+					ID:          "mcp-1",
+					Name:        "playwright",
+					Provider:    "playwright",
+					Version:     "1.0.0",
+					Description: "Browser automation",
+					DockerImage: "ubik/mcp-playwright:latest",
+					Config: map[string]interface{}{
+						"port": 8001,
+					},
+					RequiredEnvVars: []string{"PLAYWRIGHT_TOKEN"},
+					IsEnabled:       true,
+				},
+				{
+					ID:          "mcp-2",
+					Name:        "github-mcp-server",
+					Provider:    "github",
+					Version:     "1.0.0",
+					Description: "GitHub integration",
+					DockerImage: "ubik/mcp-github:latest",
+					Config: map[string]interface{}{
+						"port": 8002,
+					},
+					RequiredEnvVars: []string{"GITHUB_TOKEN"},
+					IsEnabled:       true,
+				},
+			},
+			Version:  "1.0.0",
+			SyncedAt: "2024-11-02T12:00:00Z",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("test-token")
+
+	config, err := client.GetClaudeCodeConfig()
+
+	require.NoError(t, err)
+	assert.NotNil(t, config)
+
+	// Verify agents
+	assert.Len(t, config.Agents, 2)
+	assert.Equal(t, "go-backend-developer", config.Agents[0].Name)
+	assert.Equal(t, "go-backend-developer.md", config.Agents[0].Filename)
+	assert.Contains(t, config.Agents[0].Content, "expert Go developer")
+	assert.Equal(t, "claude-3-5-sonnet", config.Agents[0].Config["model"])
+	assert.True(t, config.Agents[0].IsEnabled)
+
+	// Verify skills
+	assert.Len(t, config.Skills, 1)
+	assert.Equal(t, "release-manager", config.Skills[0].Name)
+	assert.Len(t, config.Skills[0].Files, 2)
+	assert.Equal(t, "SKILL.md", config.Skills[0].Files[0]["path"])
+	assert.Contains(t, config.Skills[0].Files[0]["content"], "Release Manager Skill")
+	assert.True(t, config.Skills[0].IsEnabled)
+
+	// Verify MCP servers
+	assert.Len(t, config.MCPServers, 2)
+	assert.Equal(t, "playwright", config.MCPServers[0].Name)
+	assert.Equal(t, "ubik/mcp-playwright:latest", config.MCPServers[0].DockerImage)
+	assert.Equal(t, float64(8001), config.MCPServers[0].Config["port"])
+	assert.Contains(t, config.MCPServers[0].RequiredEnvVars, "PLAYWRIGHT_TOKEN")
+	assert.True(t, config.MCPServers[0].IsEnabled)
+
+	// Verify metadata
+	assert.Equal(t, "1.0.0", config.Version)
+	assert.Equal(t, "2024-11-02T12:00:00Z", config.SyncedAt)
+}
+
+func TestPlatformClient_GetClaudeCodeConfig_Empty(t *testing.T) {
+	// Setup mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := ClaudeCodeSyncResponse{
+			Agents:     []AgentConfigSync{},
+			Skills:     []SkillConfigSync{},
+			MCPServers: []MCPServerConfigSync{},
+			Version:    "1.0.0",
+			SyncedAt:   "2024-11-02T12:00:00Z",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("test-token")
+
+	config, err := client.GetClaudeCodeConfig()
+
+	require.NoError(t, err)
+	assert.NotNil(t, config)
+	assert.Len(t, config.Agents, 0)
+	assert.Len(t, config.Skills, 0)
+	assert.Len(t, config.MCPServers, 0)
+}
+
+func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
+	// Setup mock server that returns 401
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error":"Unauthorized"}`))
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("invalid-token")
+
+	config, err := client.GetClaudeCodeConfig()
+
+	require.Error(t, err)
+	assert.Nil(t, config)
+	assert.Contains(t, err.Error(), "failed to get Claude Code config")
+}
