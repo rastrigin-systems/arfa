@@ -190,7 +190,7 @@ func (h *EmployeeAgentConfigsHandler) CreateEmployeeAgentConfig(w http.ResponseW
 	agent, _ := h.db.GetAgentByID(ctx, agentID)
 
 	// Build response
-	response := dbEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbCreateEmployeeAgentConfigRowToAPI(config, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -368,7 +368,7 @@ func (h *EmployeeAgentConfigsHandler) UpdateEmployeeAgentConfig(w http.ResponseW
 	agent, _ := h.db.GetAgentByID(ctx, config.AgentID)
 
 	// Build response
-	response := dbEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbUpdateEmployeeAgentConfigRowToAPI(config, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -511,4 +511,37 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 	}
 
 	return result
+}
+
+
+// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow to api format
+func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+	}
+	return dbEmployeeAgentConfigRowToAPI(config, agent)
+}
+
+// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow to api format
+func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+	}
+	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
