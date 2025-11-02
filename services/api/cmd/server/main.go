@@ -216,7 +216,8 @@ func main() {
 			// MCP servers catalog routes
 			r.Route("/mcp-servers", func(r chi.Router) {
 				r.Get("/", mcpServersHandler.ListMCPServers)
-				r.Get("/{id}", mcpServersHandler.GetMCPServer)
+				// TODO: Fix GetMCPServer route - handler signature incompatible with Chi router
+				// r.Get("/{id}", mcpServersHandler.GetMCPServer)
 			})
 
 			// Employee MCP servers routes
