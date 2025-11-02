@@ -46,7 +46,7 @@ export async function withMockHandler<T>(
 export function createSlowHandler(
   method: 'get' | 'post' | 'patch' | 'delete',
   path: string,
-  response: unknown,
+  response: Record<string, any>,
   delayMs: number = 2000
 ) {
   const httpMethod = http[method];

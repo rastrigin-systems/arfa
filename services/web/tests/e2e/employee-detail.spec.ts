@@ -63,7 +63,7 @@ test.describe('Employee Detail Page', () => {
     await editButton.click();
 
     // Should navigate to edit page
-    await expect(page).toHaveURL(/\/employees\/employee-id-123\/edit/);
+    await expect(mockEmployees).toHaveURL(/\/employees\/employee-id-123\/edit/);
   });
 
   test.skip('should have delete button with confirmation modal', async ({ mockEmployees }) => {
@@ -94,7 +94,7 @@ test.describe('Employee Detail Page', () => {
 
     // Modal should close, still on employee detail page
     await expect(mockEmployees.getByRole('dialog')).not.toBeVisible();
-    await expect(page).toHaveURL(/\/employees\/employee-id-123/);
+    await expect(mockEmployees).toHaveURL(/\/employees\/employee-id-123/);
   });
 
   test.skip('should show loading state while fetching employee data', async ({ mockEmployees }) => {
@@ -228,6 +228,6 @@ test.describe('Employee Detail Page', () => {
 
     // Clicking should navigate back
     await backButton.click();
-    await expect(page).toHaveURL(/\/employees$/);
+    await expect(mockEmployees).toHaveURL(/\/employees$/);
   });
 });

@@ -70,7 +70,7 @@ test.describe('Employee Form - Create', () => {
     await expect(mockEmployees.getByText(/employee created|created successfully/i)).toBeVisible({ timeout: 5000 });
 
     // Should redirect to employee detail or list page
-    await expect(page).toHaveURL(/\/employees\/[a-f0-9-]+|\/employees$/);
+    await expect(mockEmployees).toHaveURL(/\/employees\/[a-f0-9-]+|\/employees$/);
   });
 
   test.skip('should show temporary password after creation', async ({ mockEmployees }) => {
@@ -95,7 +95,7 @@ test.describe('Employee Form - Create', () => {
     await mockEmployees.getByRole('button', { name: /cancel/i }).click();
 
     // Should navigate back to employees list
-    await expect(page).toHaveURL(/\/employees$/);
+    await expect(mockEmployees).toHaveURL(/\/employees$/);
   });
 
   test.skip('should handle duplicate email error', async ({ mockEmployees }) => {
@@ -201,7 +201,7 @@ test.describe('Employee Form - Edit', () => {
     await expect(mockEmployees.getByText(/employee updated|updated successfully/i)).toBeVisible({ timeout: 5000 });
 
     // Should redirect back to employee detail
-    await expect(page).toHaveURL(/\/employees\/[a-f0-9-]+$/);
+    await expect(mockEmployees).toHaveURL(/\/employees\/[a-f0-9-]+$/);
   });
 
   test('should cancel and return to employee detail', async ({ mockEmployees }) => {
@@ -209,7 +209,7 @@ test.describe('Employee Form - Edit', () => {
     await mockEmployees.getByRole('button', { name: /cancel/i }).click();
 
     // Should navigate back to employee detail
-    await expect(page).toHaveURL(/\/employees\/[a-f0-9-]+$/);
+    await expect(mockEmployees).toHaveURL(/\/employees\/[a-f0-9-]+$/);
   });
 
   test.skip('should show 404 for non-existent employee', async ({ mockEmployees }) => {

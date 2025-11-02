@@ -133,7 +133,7 @@ test.describe('Employee List Page', () => {
       await nextButton.click();
 
       // URL should update with page param
-      await expect(page).toHaveURL(/page=2/);
+      await expect(mockEmployees).toHaveURL(/page=2/);
     }
   });
 
@@ -153,7 +153,7 @@ test.describe('Employee List Page', () => {
     await mockEmployees.locator('table tbody tr').first().getByRole('button', { name: /view/i }).click();
 
     // Should navigate to employee detail page
-    await expect(page).toHaveURL(/\/dashboard\/employees\/[a-f0-9-]+/);
+    await expect(mockEmployees).toHaveURL(/\/dashboard\/employees\/[a-f0-9-]+/);
   });
 
   test.skip('should show loading state while fetching data', async ({ mockEmployees }) => {
@@ -239,6 +239,6 @@ test.describe('Employee List Page', () => {
     await mockEmployees.getByRole('button', { name: /create employee|add employee|new employee/i }).click();
 
     // Should navigate to create page
-    await expect(page).toHaveURL(/\/dashboard\/employees\/new/);
+    await expect(mockEmployees).toHaveURL(/\/dashboard\/employees\/new/);
   });
 });
