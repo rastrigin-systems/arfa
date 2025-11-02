@@ -162,44 +162,47 @@
 <!-- public.employee_agent_configs -->
 <g id="node4" class="node">
 <title>public.employee_agent_configs</title>
-<polygon fill="#efefef" stroke="none" points="818.72,-397.4 818.72,-433 1186.63,-433 1186.63,-397.4 818.72,-397.4"/>
-<polygon fill="none" stroke="black" points="818.72,-397.4 818.72,-433 1186.63,-433 1186.63,-397.4 818.72,-397.4"/>
-<text text-anchor="start" x="825.72" y="-410.8" font-family="Arial Bold" font-size="18.00">public.employee_agent_configs</text>
-<text text-anchor="start" x="1055.15" y="-410.8" font-family="Arial" font-size="14.00">    </text>
-<text text-anchor="start" x="1086.26" y="-410.8" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="black" points="818.72,-366.6 818.72,-397.4 1186.63,-397.4 1186.63,-366.6 818.72,-366.6"/>
-<text text-anchor="start" x="825.72" y="-378.8" font-family="Arial" font-size="14.00">id </text>
-<text text-anchor="start" x="840.5" y="-378.8" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="818.72,-335.8 818.72,-366.6 1186.63,-366.6 1186.63,-335.8 818.72,-335.8"/>
-<text text-anchor="start" x="825.72" y="-348" font-family="Arial" font-size="14.00">employee_id </text>
-<text text-anchor="start" x="908.99" y="-348" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="818.72,-305 818.72,-335.8 1186.63,-335.8 1186.63,-305 818.72,-305"/>
-<text text-anchor="start" x="825.72" y="-317.2" font-family="Arial" font-size="14.00">agent_id </text>
-<text text-anchor="start" x="883.32" y="-317.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="818.72,-274.2 818.72,-305 1186.63,-305 1186.63,-274.2 818.72,-274.2"/>
-<text text-anchor="start" x="825.72" y="-286.4" font-family="Arial" font-size="14.00">config_override </text>
-<text text-anchor="start" x="925.33" y="-286.4" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
-<polygon fill="none" stroke="black" points="818.72,-243.4 818.72,-274.2 1186.63,-274.2 1186.63,-243.4 818.72,-243.4"/>
-<text text-anchor="start" x="825.72" y="-255.6" font-family="Arial" font-size="14.00">is_enabled </text>
-<text text-anchor="start" x="897.33" y="-255.6" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
-<polygon fill="none" stroke="black" points="818.72,-212.6 818.72,-243.4 1186.63,-243.4 1186.63,-212.6 818.72,-212.6"/>
-<text text-anchor="start" x="825.72" y="-224.8" font-family="Arial" font-size="14.00">sync_token </text>
-<text text-anchor="start" x="900.43" y="-224.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
-<polygon fill="none" stroke="black" points="818.72,-181.8 818.72,-212.6 1186.63,-212.6 1186.63,-181.8 818.72,-181.8"/>
-<text text-anchor="start" x="825.72" y="-194" font-family="Arial" font-size="14.00">last_synced_at </text>
-<text text-anchor="start" x="923" y="-194" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
-<polygon fill="none" stroke="black" points="818.72,-151 818.72,-181.8 1186.63,-181.8 1186.63,-151 818.72,-151"/>
-<text text-anchor="start" x="825.72" y="-163.2" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="895.76" y="-163.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
-<polygon fill="none" stroke="black" points="818.72,-120.2 818.72,-151 1186.63,-151 1186.63,-120.2 818.72,-120.2"/>
-<text text-anchor="start" x="825.72" y="-132.4" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="899.67" y="-132.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="#efefef" stroke="none" points="818.72,-412.8 818.72,-448.4 1186.63,-448.4 1186.63,-412.8 818.72,-412.8"/>
+<polygon fill="none" stroke="black" points="818.72,-412.8 818.72,-448.4 1186.63,-448.4 1186.63,-412.8 818.72,-412.8"/>
+<text text-anchor="start" x="825.72" y="-426.2" font-family="Arial Bold" font-size="18.00">public.employee_agent_configs</text>
+<text text-anchor="start" x="1055.15" y="-426.2" font-family="Arial" font-size="14.00">    </text>
+<text text-anchor="start" x="1086.26" y="-426.2" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="black" points="818.72,-382 818.72,-412.8 1186.63,-412.8 1186.63,-382 818.72,-382"/>
+<text text-anchor="start" x="825.72" y="-394.2" font-family="Arial" font-size="14.00">id </text>
+<text text-anchor="start" x="840.5" y="-394.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="818.72,-351.2 818.72,-382 1186.63,-382 1186.63,-351.2 818.72,-351.2"/>
+<text text-anchor="start" x="825.72" y="-363.4" font-family="Arial" font-size="14.00">employee_id </text>
+<text text-anchor="start" x="908.99" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="818.72,-320.4 818.72,-351.2 1186.63,-351.2 1186.63,-320.4 818.72,-320.4"/>
+<text text-anchor="start" x="825.72" y="-332.6" font-family="Arial" font-size="14.00">agent_id </text>
+<text text-anchor="start" x="883.32" y="-332.6" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="818.72,-289.6 818.72,-320.4 1186.63,-320.4 1186.63,-289.6 818.72,-289.6"/>
+<text text-anchor="start" x="825.72" y="-301.8" font-family="Arial" font-size="14.00">config_override </text>
+<text text-anchor="start" x="925.33" y="-301.8" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
+<polygon fill="none" stroke="black" points="818.72,-258.8 818.72,-289.6 1186.63,-289.6 1186.63,-258.8 818.72,-258.8"/>
+<text text-anchor="start" x="825.72" y="-271" font-family="Arial" font-size="14.00">is_enabled </text>
+<text text-anchor="start" x="897.33" y="-271" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
+<polygon fill="none" stroke="black" points="818.72,-228 818.72,-258.8 1186.63,-258.8 1186.63,-228 818.72,-228"/>
+<text text-anchor="start" x="825.72" y="-240.2" font-family="Arial" font-size="14.00">sync_token </text>
+<text text-anchor="start" x="900.43" y="-240.2" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
+<polygon fill="none" stroke="black" points="818.72,-197.2 818.72,-228 1186.63,-228 1186.63,-197.2 818.72,-197.2"/>
+<text text-anchor="start" x="825.72" y="-209.4" font-family="Arial" font-size="14.00">last_synced_at </text>
+<text text-anchor="start" x="923" y="-209.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="none" stroke="black" points="818.72,-166.4 818.72,-197.2 1186.63,-197.2 1186.63,-166.4 818.72,-166.4"/>
+<text text-anchor="start" x="825.72" y="-178.6" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="895.76" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="none" stroke="black" points="818.72,-135.6 818.72,-166.4 1186.63,-166.4 1186.63,-135.6 818.72,-135.6"/>
+<text text-anchor="start" x="825.72" y="-147.8" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="899.67" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="none" stroke="black" points="818.72,-104.8 818.72,-135.6 1186.63,-135.6 1186.63,-104.8 818.72,-104.8"/>
+<text text-anchor="start" x="825.72" y="-117" font-family="Arial" font-size="14.00">content </text>
+<text text-anchor="start" x="875.53" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 </g>
 <!-- public.usage_records&#45;&gt;public.employee_agent_configs -->
 <g id="edge3" class="edge">
 <title>public.usage_records:agent_config_id&#45;&gt;public.employee_agent_configs:id</title>
-<path fill="none" stroke="black" d="M729.33,-892.43C776.51,-840.49 762.75,-382 817.72,-382"/>
-<polygon fill="black" stroke="black" points="729.31,-892.44 718.37,-893.05 724.58,-894.9 720.74,-896.89 720.74,-896.89 720.74,-896.89 724.58,-894.9 722.51,-901.04 729.31,-892.44"/>
+<path fill="none" stroke="black" d="M730.35,-895.68C825.26,-865.51 708.2,-397.4 817.72,-397.4"/>
+<polygon fill="black" stroke="black" points="730.36,-895.67 719.81,-892.7 725.09,-896.46 720.8,-897.1 720.8,-897.1 720.8,-897.1 725.09,-896.46 721.14,-901.6 730.36,-895.67"/>
 <text text-anchor="start" x="727.14" y="-907.2" font-family="Arial" font-size="10.00">FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL</text>
 </g>
 </g>

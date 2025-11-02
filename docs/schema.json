@@ -1583,6 +1583,12 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": true,
+          "comment": "Full .md file content for agent configuration"
         }
       ],
       "indexes": [
@@ -2082,6 +2088,24 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "docker_image",
+          "type": "varchar(255)",
+          "nullable": true,
+          "comment": "Docker image for MCP server (if containerized)"
+        },
+        {
+          "name": "config_template",
+          "type": "jsonb",
+          "nullable": true,
+          "comment": "Template configuration for MCP server"
+        },
+        {
+          "name": "required_env_vars",
+          "type": "jsonb",
+          "nullable": true,
+          "comment": "Required environment variables (e.g., [\"GITHUB_TOKEN\"])"
         }
       ],
       "indexes": [
@@ -2174,7 +2198,8 @@
           "name": "connection_config",
           "type": "jsonb",
           "nullable": false,
-          "default": "'{}'::jsonb"
+          "default": "'{}'::jsonb",
+          "comment": "Actual configuration with secrets"
         },
         {
           "name": "credentials_encrypted",
@@ -2202,6 +2227,12 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": true,
+          "default": "true"
         }
       ],
       "indexes": [
@@ -2260,6 +2291,14 @@
           "table": "public.employee_mcp_configs",
           "columns": [
             "sync_token"
+          ]
+        },
+        {
+          "name": "idx_employee_mcp_configs_is_enabled",
+          "def": "CREATE INDEX idx_employee_mcp_configs_is_enabled ON public.employee_mcp_configs USING btree (is_enabled)",
+          "table": "public.employee_mcp_configs",
+          "columns": [
+            "is_enabled"
           ]
         }
       ],
@@ -3050,6 +3089,284 @@
         "public.organizations",
         "public.teams"
       ]
+    },
+    {
+      "name": "public.skill_catalog",
+      "type": "BASE TABLE",
+      "comment": "Available skills for Claude Code agents",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "varchar(50)",
+          "nullable": true
+        },
+        {
+          "name": "version",
+          "type": "varchar(20)",
+          "nullable": false
+        },
+        {
+          "name": "files",
+          "type": "jsonb",
+          "nullable": false,
+          "comment": "Array of file objects with path and content"
+        },
+        {
+          "name": "dependencies",
+          "type": "jsonb",
+          "nullable": true,
+          "comment": "Required MCP servers and other skills"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": true,
+          "default": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "skill_catalog_pkey",
+          "def": "CREATE UNIQUE INDEX skill_catalog_pkey ON public.skill_catalog USING btree (id)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "skill_catalog_name_key",
+          "def": "CREATE UNIQUE INDEX skill_catalog_name_key ON public.skill_catalog USING btree (name)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "name"
+          ]
+        },
+        {
+          "name": "idx_skill_catalog_name",
+          "def": "CREATE INDEX idx_skill_catalog_name ON public.skill_catalog USING btree (name)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "name"
+          ]
+        },
+        {
+          "name": "idx_skill_catalog_category",
+          "def": "CREATE INDEX idx_skill_catalog_category ON public.skill_catalog USING btree (category)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "category"
+          ]
+        },
+        {
+          "name": "idx_skill_catalog_is_active",
+          "def": "CREATE INDEX idx_skill_catalog_is_active ON public.skill_catalog USING btree (is_active)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "is_active"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "skill_catalog_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.skill_catalog",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "skill_catalog_name_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE (name)",
+          "table": "public.skill_catalog",
+          "referenced_table": "",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "update_skill_catalog_updated_at",
+          "def": "CREATE TRIGGER update_skill_catalog_updated_at BEFORE UPDATE ON public.skill_catalog FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
+        }
+      ]
+    },
+    {
+      "name": "public.employee_skills",
+      "type": "BASE TABLE",
+      "comment": "Skills assigned to each employee",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "employee_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "skill_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": true,
+          "default": "true"
+        },
+        {
+          "name": "config",
+          "type": "jsonb",
+          "nullable": true,
+          "comment": "Employee-specific configuration overrides"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "employee_skills_pkey",
+          "def": "CREATE UNIQUE INDEX employee_skills_pkey ON public.employee_skills USING btree (id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_employee_skill",
+          "def": "CREATE UNIQUE INDEX unique_employee_skill ON public.employee_skills USING btree (employee_id, skill_id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "employee_id",
+            "skill_id"
+          ]
+        },
+        {
+          "name": "idx_employee_skills_employee_id",
+          "def": "CREATE INDEX idx_employee_skills_employee_id ON public.employee_skills USING btree (employee_id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "employee_id"
+          ]
+        },
+        {
+          "name": "idx_employee_skills_skill_id",
+          "def": "CREATE INDEX idx_employee_skills_skill_id ON public.employee_skills USING btree (skill_id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "skill_id"
+          ]
+        },
+        {
+          "name": "idx_employee_skills_is_enabled",
+          "def": "CREATE INDEX idx_employee_skills_is_enabled ON public.employee_skills USING btree (is_enabled)",
+          "table": "public.employee_skills",
+          "columns": [
+            "is_enabled"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "employee_skills_employee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
+          "table": "public.employee_skills",
+          "referenced_table": "employees",
+          "columns": [
+            "employee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_skill_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE",
+          "table": "public.employee_skills",
+          "referenced_table": "skill_catalog",
+          "columns": [
+            "skill_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.employee_skills",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "unique_employee_skill",
+          "type": "UNIQUE",
+          "def": "UNIQUE (employee_id, skill_id)",
+          "table": "public.employee_skills",
+          "referenced_table": "",
+          "columns": [
+            "employee_id",
+            "skill_id"
+          ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "update_employee_skills_updated_at",
+          "def": "CREATE TRIGGER update_employee_skills_updated_at BEFORE UPDATE ON public.employee_skills FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
+        }
+      ]
     }
   ],
   "relations": [
@@ -3468,6 +3785,32 @@
       ],
       "parent_cardinality": "zero_or_one",
       "def": "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.employee_skills",
+      "columns": [
+        "employee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.employee_skills",
+      "columns": [
+        "skill_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.skill_catalog",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
