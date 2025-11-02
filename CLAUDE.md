@@ -387,6 +387,64 @@ open http://localhost:8080
 docker exec ubik-postgres psql -U ubik -d ubik
 ```
 
+### MCP Servers
+
+**Claude Code** uses Model Context Protocol (MCP) servers for enhanced capabilities.
+
+**Currently Configured:**
+- ✅ **playwright** - Browser automation and web interaction
+- ✅ **github** - GitHub operations (issues, PRs, repos, code search)
+
+**Manage MCP Servers:**
+```bash
+# List configured servers
+claude mcp list
+
+# Get details about a server
+claude mcp get github
+
+# Add a new MCP server
+claude mcp add <name> -- <command>
+
+# Remove an MCP server
+claude mcp remove <name> -s local
+```
+
+**GitHub MCP Server:**
+```bash
+# Verify GitHub MCP is connected
+claude mcp list | grep github
+
+# If disconnected, restart Claude Code
+# The Docker container auto-starts with Claude Code
+
+# If container issue, check Docker
+docker ps | grep github-mcp-server
+docker images | grep github-mcp-server
+
+# Re-add if needed
+claude mcp add github \
+  -e GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token) \
+  -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
+```
+
+**Troubleshooting:**
+- **Container not running**: MCP containers auto-start when Claude Code needs them (not persistent)
+- **Connection failed**: Check Docker is running: `docker ps`
+- **Image missing**: Re-pull image: `docker pull ghcr.io/github/github-mcp-server`
+- **Token expired**: Update token: `gh auth refresh` then `claude mcp remove github -s local` and re-add
+- **Config location**: `~/.claude.json` (project-specific) or global config
+
+**Available GitHub MCP Operations:**
+- Create/update/list issues and PRs
+- Search code across repositories
+- Manage branches and files
+- View repository details
+- Monitor CI/CD workflows
+- Code security scanning
+
+**Note:** MCP servers are configured per-project in `~/.claude.json` (local scope) or globally. The GitHub MCP server uses the official Docker image `ghcr.io/github/github-mcp-server` maintained by GitHub.
+
 ---
 
 # DEVELOPMENT
