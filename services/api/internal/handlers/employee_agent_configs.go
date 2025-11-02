@@ -514,12 +514,38 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 }
 
 
-// dbCreateEmployeeAgentConfigRowToAPI converts EmployeeAgentConfig (from Create) to api format
-func dbCreateEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent) api.EmployeeAgentConfig {
+// dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow (from Create) to api format
+func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	// Convert Row type to EmployeeAgentConfig for API response
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+		Content:        nil, // Create query doesn't return content
+	}
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }
 
-// dbUpdateEmployeeAgentConfigRowToAPI converts EmployeeAgentConfig (from Update) to api format
-func dbUpdateEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent) api.EmployeeAgentConfig {
+// dbUpdateEmployeeAgentConfigRowToAPI converts UpdateEmployeeAgentConfigRow (from Update) to api format
+func dbUpdateEmployeeAgentConfigRowToAPI(row db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
+	// Convert Row type to EmployeeAgentConfig for API response
+	config := db.EmployeeAgentConfig{
+		ID:             row.ID,
+		EmployeeID:     row.EmployeeID,
+		AgentID:        row.AgentID,
+		ConfigOverride: row.ConfigOverride,
+		IsEnabled:      row.IsEnabled,
+		SyncToken:      row.SyncToken,
+		LastSyncedAt:   row.LastSyncedAt,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+		Content:        nil, // Update query doesn't return content
+	}
 	return dbEmployeeAgentConfigRowToAPI(config, agent)
 }

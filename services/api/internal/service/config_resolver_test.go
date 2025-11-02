@@ -63,7 +63,7 @@ func TestResolveAgentConfig_OrgOnly(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agentID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Execute
@@ -139,7 +139,7 @@ func TestResolveAgentConfig_TeamOverride(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agentID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Execute
@@ -199,7 +199,7 @@ func TestResolveAgentConfig_EmployeeOverride(t *testing.T) {
 	}
 
 	// Employee override (changes max_tokens)
-	employeeConfig := db.EmployeeAgentConfig{
+	employeeConfig := db.GetEmployeeAgentConfigByAgentRow{
 		ID:             uuid.New(),
 		EmployeeID:     employeeID,
 		AgentID:        agentID,
@@ -298,7 +298,7 @@ func TestResolveAgentConfig_DisabledAtTeam(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agentID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Execute
@@ -386,7 +386,7 @@ func TestResolveAgentConfig_SystemPrompts(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agentID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return(prompts, nil)
 
 	// Execute
@@ -528,7 +528,7 @@ func TestResolveEmployeeAgents(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent1ID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Agent 2 resolution
@@ -540,7 +540,7 @@ func TestResolveEmployeeAgents(t *testing.T) {
 	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(ctx, db.GetEmployeeAgentConfigByAgentParams{
 		EmployeeID: employeeID,
 		AgentID:    agent2ID,
-	}).Return(db.EmployeeAgentConfig{}, pgx.ErrNoRows)
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
 	mockDB.EXPECT().GetSystemPrompts(ctx, gomock.Any()).Return([]db.SystemPrompt{}, nil)
 
 	// Execute
