@@ -189,8 +189,21 @@ func (h *EmployeeAgentConfigsHandler) CreateEmployeeAgentConfig(w http.ResponseW
 	// Get agent details for response
 	agent, _ := h.db.GetAgentByID(ctx, agentID)
 
+	// Convert Row to model
+	configModel := db.EmployeeAgentConfig{
+		ID:             config.ID,
+		EmployeeID:     config.EmployeeID,
+		AgentID:        config.AgentID,
+		ConfigOverride: config.ConfigOverride,
+		IsEnabled:      config.IsEnabled,
+		SyncToken:      config.SyncToken,
+		LastSyncedAt:   config.LastSyncedAt,
+		CreatedAt:      config.CreatedAt,
+		UpdatedAt:      config.UpdatedAt,
+	}
+
 	// Build response
-	response := dbCreateEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbEmployeeAgentConfigRowToAPI(configModel, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -367,8 +380,21 @@ func (h *EmployeeAgentConfigsHandler) UpdateEmployeeAgentConfig(w http.ResponseW
 	// Get agent details for response
 	agent, _ := h.db.GetAgentByID(ctx, config.AgentID)
 
+	// Convert Row to model
+	configModel := db.EmployeeAgentConfig{
+		ID:             config.ID,
+		EmployeeID:     config.EmployeeID,
+		AgentID:        config.AgentID,
+		ConfigOverride: config.ConfigOverride,
+		IsEnabled:      config.IsEnabled,
+		SyncToken:      config.SyncToken,
+		LastSyncedAt:   config.LastSyncedAt,
+		CreatedAt:      config.CreatedAt,
+		UpdatedAt:      config.UpdatedAt,
+	}
+
 	// Build response
-	response := dbUpdateEmployeeAgentConfigRowToAPI(config, agent)
+	response := dbEmployeeAgentConfigRowToAPI(configModel, agent)
 
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -474,88 +500,6 @@ func dbEmployeeAgentConfigToAPI(config db.ListEmployeeAgentConfigsRow) api.Emplo
 }
 
 func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent) api.EmployeeAgentConfig {
-	var cfg map[string]interface{}
-	if len(config.ConfigOverride) > 0 {
-		json.Unmarshal(config.ConfigOverride, &cfg)
-	}
-
-	agentName := agent.Name
-	agentType := agent.Type
-	agentProvider := agent.Provider
-
-	id := openapi_types.UUID(config.ID)
-	employeeID := openapi_types.UUID(config.EmployeeID)
-	agentID := openapi_types.UUID(config.AgentID)
-
-	result := api.EmployeeAgentConfig{
-		Id:             &id,
-		EmployeeId:     employeeID,
-		AgentId:        agentID,
-		AgentName:      &agentName,
-		AgentType:      &agentType,
-		AgentProvider:  &agentProvider,
-		ConfigOverride: cfg,
-		IsEnabled:      config.IsEnabled,
-		CreatedAt:      &config.CreatedAt.Time,
-		UpdatedAt:      &config.UpdatedAt.Time,
-	}
-
-	// Handle nullable fields
-	if config.SyncToken != nil {
-		result.SyncToken = config.SyncToken
-	}
-
-	if config.LastSyncedAt.Valid {
-		t := config.LastSyncedAt.Time
-		result.LastSyncedAt = &t
-	}
-
-	return result
-}
-
-// dbCreateEmployeeAgentConfigRowToAPI converts a CreateEmployeeAgentConfigRow and agent to API response
-func dbCreateEmployeeAgentConfigRowToAPI(config db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
-	var cfg map[string]interface{}
-	if len(config.ConfigOverride) > 0 {
-		json.Unmarshal(config.ConfigOverride, &cfg)
-	}
-
-	agentName := agent.Name
-	agentType := agent.Type
-	agentProvider := agent.Provider
-
-	id := openapi_types.UUID(config.ID)
-	employeeID := openapi_types.UUID(config.EmployeeID)
-	agentID := openapi_types.UUID(config.AgentID)
-
-	result := api.EmployeeAgentConfig{
-		Id:             &id,
-		EmployeeId:     employeeID,
-		AgentId:        agentID,
-		AgentName:      &agentName,
-		AgentType:      &agentType,
-		AgentProvider:  &agentProvider,
-		ConfigOverride: cfg,
-		IsEnabled:      config.IsEnabled,
-		CreatedAt:      &config.CreatedAt.Time,
-		UpdatedAt:      &config.UpdatedAt.Time,
-	}
-
-	// Handle nullable fields
-	if config.SyncToken != nil {
-		result.SyncToken = config.SyncToken
-	}
-
-	if config.LastSyncedAt.Valid {
-		t := config.LastSyncedAt.Time
-		result.LastSyncedAt = &t
-	}
-
-	return result
-}
-
-// dbUpdateEmployeeAgentConfigRowToAPI converts an UpdateEmployeeAgentConfigRow and agent to API response
-func dbUpdateEmployeeAgentConfigRowToAPI(config db.UpdateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
 	var cfg map[string]interface{}
 	if len(config.ConfigOverride) > 0 {
 		json.Unmarshal(config.ConfigOverride, &cfg)

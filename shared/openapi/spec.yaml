@@ -931,6 +931,163 @@ components:
         meta:
           $ref: '#/components/schemas/PaginationMeta'
 
+    # ============================================================================
+    # MCP Server Schemas
+    # ============================================================================
+    MCPServer:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - version
+        - description
+        - is_approved
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+          example: "GitHub"
+        provider:
+          type: string
+          maxLength: 100
+          example: "Anthropic"
+        version:
+          type: string
+          maxLength: 50
+          example: "1.0.0"
+        description:
+          type: string
+          example: "GitHub integration MCP server"
+        connection_schema:
+          type: object
+          additionalProperties: true
+          example: {"token": "string"}
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: ["repository_access", "issue_management"]
+        requires_credentials:
+          type: boolean
+          default: false
+        is_approved:
+          type: boolean
+          default: false
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        docker_image:
+          type: string
+          nullable: true
+          example: "modelcontextprotocol/server-github:latest"
+        config_template:
+          type: object
+          additionalProperties: true
+          nullable: true
+          example: {"token": "${GITHUB_TOKEN}"}
+        required_env_vars:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: ["GITHUB_TOKEN"]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ListMCPServersResponse:
+      type: object
+      required:
+        - servers
+        - total
+      properties:
+        servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MCPServer'
+        total:
+          type: integer
+          example: 12
+
+    EmployeeMCPServer:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - version
+        - description
+        - is_enabled
+        - configured_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: MCP server catalog ID
+        name:
+          type: string
+          example: "GitHub"
+        provider:
+          type: string
+          example: "Anthropic"
+        version:
+          type: string
+          example: "1.0.0"
+        description:
+          type: string
+          example: "GitHub integration MCP server"
+        docker_image:
+          type: string
+          nullable: true
+          example: "modelcontextprotocol/server-github:latest"
+        config_template:
+          type: object
+          additionalProperties: true
+          nullable: true
+          example: {"token": "${GITHUB_TOKEN}"}
+        required_env_vars:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: ["GITHUB_TOKEN"]
+        connection_config:
+          type: object
+          additionalProperties: true
+          description: Employee's actual configuration (may contain credentials)
+          example: {"token": "ghp_xxxxxxxxxxxx"}
+        is_enabled:
+          type: boolean
+          default: true
+        configured_at:
+          type: string
+          format: date-time
+
+    ListEmployeeMCPServersResponse:
+      type: object
+      required:
+        - servers
+        - total
+      properties:
+        servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeMCPServer'
+        total:
+          type: integer
+          example: 5
+
   parameters:
     EmployeeId:
       name: employee_id
@@ -2235,6 +2392,90 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # MCP Server Catalog
+  # ============================================================================
+  /mcp-servers:
+    get:
+      tags:
+        - mcps
+      summary: List available MCP servers
+      description: Get catalog of approved MCP servers (Filesystem, GitHub, Playwright, etc.)
+      operationId: listMCPServers
+      responses:
+        '200':
+          description: MCP server catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMCPServersResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mcp-servers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: MCP Server UUID
+
+    get:
+      tags:
+        - mcps
+      summary: Get MCP server details
+      description: Get details for a specific MCP server from the catalog
+      operationId: getMCPServer
+      responses:
+        '200':
+          description: MCP server details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPServer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: MCP server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Employee MCP Configurations
+  # ============================================================================
+  /employees/me/mcp-servers:
+    get:
+      tags:
+        - mcps
+      summary: List employee's MCP servers
+      description: Get all MCP server configurations for the authenticated employee
+      operationId: listEmployeeMCPServers
+      responses:
+        '200':
+          description: Employee MCP server configurations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEmployeeMCPServersResponse'
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:

@@ -59,6 +59,7 @@ func main() {
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
+	mcpServersHandler := handlers.NewMCPServersHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -210,6 +211,17 @@ func main() {
 				r.Get("/{agent_id}", agentsHandler.GetAgent)
 			})
 
+			// MCP servers catalog routes
+			r.Route("/mcp-servers", func(r chi.Router) {
+				r.Get("/", mcpServersHandler.ListMCPServers)
+				r.Get("/{id}", mcpServersHandler.GetMCPServer)
+			})
+
+			// Employee MCP servers routes
+			r.Route("/employees/me/mcp-servers", func(r chi.Router) {
+				r.Get("/", mcpServersHandler.ListEmployeeMCPServers)
+			})
+
 			// Activity logs routes
 			r.Route("/activity-logs", func(r chi.Router) {
 				r.Get("/", activityLogsHandler.ListActivityLogs)
@@ -236,9 +248,6 @@ func main() {
 				r.Get("/pending/count", agentRequestsHandler.GetPendingCount)
 			})
 		})
-
-		// TODO: Add more routes as they are implemented
-		// - /mcps (catalog, configs)
 	})
 
 	// Create HTTP server
