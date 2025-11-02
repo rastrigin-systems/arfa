@@ -12,7 +12,7 @@ export type EmployeeAgentOverride = {
   agent_type?: string;
   agent_provider?: string;
   config_override: Record<string, unknown>;
-  override_reason: string;
+  override_reason?: string;
   is_enabled: boolean;
   created_at?: string;
   updated_at?: string;
@@ -112,7 +112,7 @@ export function EmployeeAgentOverridesTable({
               </td>
               <td className="p-4 align-middle">
                 <div className="text-sm max-w-xs truncate" title={override.override_reason}>
-                  {override.override_reason}
+                  {override.override_reason || 'No reason provided'}
                 </div>
               </td>
               <td className="p-4 align-middle">

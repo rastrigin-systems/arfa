@@ -30,13 +30,13 @@ export function EmployeeAgentOverridesClient({
   employee,
   agentOverrides,
 }: EmployeeAgentOverridesClientProps) {
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOverride, setSelectedOverride] = useState<EmployeeAgentOverride | null>(null);
 
   const handleEdit = (override: EmployeeAgentOverride) => {
-    setSelectedOverride(override);
-    setShowEditModal(true);
+    // TODO: Implement edit modal
+    console.log('Edit override:', override.id);
+    alert('Edit functionality coming soon');
   };
 
   const handleDelete = (override: EmployeeAgentOverride) => {

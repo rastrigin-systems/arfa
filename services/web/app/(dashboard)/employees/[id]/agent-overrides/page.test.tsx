@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import EmployeeAgentOverridesPage from './page';
 
 // Mock the Next.js navigation
@@ -79,7 +78,7 @@ describe('EmployeeAgentOverridesPage', () => {
     render(await EmployeeAgentOverridesPage({ params: { id: 'emp-001' } }));
 
     expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getAllByText(/agent overrides/i)).length > 0;
+    expect(screen.getAllByText(/agent overrides/i).length).toBeGreaterThan(0);
   });
 
   it('should display employee overrides table', async () => {
