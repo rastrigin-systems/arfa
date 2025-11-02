@@ -38,6 +38,8 @@ tags:
     description: Skills catalog and management
   - name: approvals
     description: Approval workflows
+  - name: sync
+    description: Configuration synchronization for CLI
 
 security:
   - bearerAuth: []
@@ -1253,6 +1255,175 @@ components:
         total:
           type: integer
           example: 5
+
+    # ============================================================================
+    # Sync Response Types
+    # ============================================================================
+    ClaudeCodeSyncResponse:
+      type: object
+      required:
+        - agents
+        - skills
+        - mcp_servers
+        - version
+        - synced_at
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncAgentConfig'
+          description: "All agent configurations for this employee"
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncSkillConfig'
+          description: "All assigned skills with files"
+        mcp_servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncMCPServerConfig'
+          description: "All MCP server configurations"
+        version:
+          type: string
+          example: "1.0.0"
+          description: "API version"
+        synced_at:
+          type: string
+          format: date-time
+          example: "2025-11-02T18:00:00Z"
+          description: "Timestamp of this sync"
+
+    SyncAgentConfig:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - filename
+        - config
+        - provider
+        - is_enabled
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "go-backend-developer"
+        type:
+          type: string
+          example: "claude-code"
+        filename:
+          type: string
+          example: "go-backend-developer.md"
+        content:
+          type: string
+          description: "Agent configuration file content (optional)"
+        config:
+          type: object
+          additionalProperties: true
+          example:
+            model: "claude-3-5-sonnet-20241022"
+            temperature: 0.7
+          description: "Merged agent configuration (org + team + employee)"
+        provider:
+          type: string
+          example: "anthropic"
+        is_enabled:
+          type: boolean
+          example: true
+        version:
+          type: string
+          example: "1.0.0"
+
+    SyncSkillConfig:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - is_enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "release-manager"
+        description:
+          type: string
+          example: "Release management skill"
+        category:
+          type: string
+          example: "project-management"
+        version:
+          type: string
+          example: "1.0.0"
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                example: "SKILL.md"
+              content:
+                type: string
+                example: "# Release Manager\n..."
+        dependencies:
+          type: object
+          additionalProperties: true
+          example:
+            mcp_servers: ["github-mcp-server"]
+        is_enabled:
+          type: boolean
+          example: true
+
+    SyncMCPServerConfig:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - version
+        - docker_image
+        - config
+        - is_enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "github-mcp-server"
+        provider:
+          type: string
+          example: "github"
+        version:
+          type: string
+          example: "1.0.0"
+        description:
+          type: string
+          example: "GitHub MCP server"
+        docker_image:
+          type: string
+          example: "ghcr.io/github/github-mcp-server"
+        config:
+          type: object
+          additionalProperties: true
+          example:
+            env:
+              GITHUB_PERSONAL_ACCESS_TOKEN: "ghp_xxx"
+        required_env_vars:
+          type: array
+          items:
+            type: string
+          example: ["GITHUB_PERSONAL_ACCESS_TOKEN"]
+        is_enabled:
+          type: boolean
+          example: true
 
   parameters:
     EmployeeId:
@@ -2660,7 +2831,6 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: MCP server not found
-          description: Skill not found
           content:
             application/json:
               schema:
@@ -2731,6 +2901,42 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Skill not found or not installed for employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Sync Endpoints
+  # ============================================================================
+  /sync/claude-code:
+    get:
+      tags:
+        - sync
+      summary: Get complete Claude Code configuration
+      description: |
+        Returns complete configuration bundle for Claude Code sync:
+        - All agent configurations
+        - All assigned skills (with files)
+        - All MCP server configurations
+
+        This is the primary endpoint used by the CLI to synchronize configurations.
+      operationId: getClaudeCodeSync
+      responses:
+        '200':
+          description: Complete Claude Code configuration bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaudeCodeSyncResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:

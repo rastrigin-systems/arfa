@@ -60,6 +60,7 @@ func main() {
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
 	mcpServersHandler := handlers.NewMCPServersHandler(queries)
+	syncHandler := handlers.NewSyncHandler(queries)
 	// skillsHandler := handlers.NewSkillsHandler(queries) // TODO: Re-enable when Skills API is complete (PR #66)
 
 	// Setup router
@@ -235,6 +236,11 @@ func main() {
 			// 	r.Get("/", skillsHandler.ListEmployeeSkills)
 			// 	r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
 			// })
+
+			// Sync routes
+			r.Route("/sync", func(r chi.Router) {
+				r.Get("/claude-code", syncHandler.GetClaudeCodeSync)
+			})
 
 			// Activity logs routes
 			r.Route("/activity-logs", func(r chi.Router) {
