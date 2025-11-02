@@ -59,6 +59,7 @@ func main() {
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
+	mcpServersHandler := handlers.NewMCPServersHandler(queries)
 	// skillsHandler := handlers.NewSkillsHandler(queries) // TODO: Re-enable when Skills API is complete (PR #66)
 
 	// Setup router
@@ -211,6 +212,17 @@ func main() {
 				r.Get("/{agent_id}", agentsHandler.GetAgent)
 			})
 
+			// MCP servers catalog routes
+			r.Route("/mcp-servers", func(r chi.Router) {
+				r.Get("/", mcpServersHandler.ListMCPServers)
+				r.Get("/{id}", mcpServersHandler.GetMCPServer)
+			})
+
+			// Employee MCP servers routes
+			r.Route("/employees/me/mcp-servers", func(r chi.Router) {
+				r.Get("/", mcpServersHandler.ListEmployeeMCPServers)
+			})
+
 			// TODO: Re-enable when Skills API is complete (PR #66)
 			// Skills catalog routes
 			// r.Route("/skills", func(r chi.Router) {
@@ -250,9 +262,6 @@ func main() {
 				r.Get("/pending/count", agentRequestsHandler.GetPendingCount)
 			})
 		})
-
-		// TODO: Add more routes as they are implemented
-		// - /mcps (catalog, configs)
 	})
 
 	// Create HTTP server
