@@ -28,17 +28,17 @@ describe('AgentCard', () => {
   it('should show "Enable for Org" button when agent is not enabled', () => {
     render(<AgentCard agent={mockAgent} isEnabled={false} />);
 
-    const button = screen.getByRole('button', { name: /Enable for Org/i });
+    const button = screen.getByRole('button', { name: /Enable Claude Code for organization/i });
     expect(button).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Configure/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Configure Claude Code/i })).not.toBeInTheDocument();
   });
 
   it('should show "Configure" button when agent is enabled', () => {
     render(<AgentCard agent={mockAgent} isEnabled={true} />);
 
-    const button = screen.getByRole('button', { name: /Configure/i });
+    const button = screen.getByRole('button', { name: /Configure Claude Code/i });
     expect(button).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Enable for Org/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Enable Claude Code for organization/i })).not.toBeInTheDocument();
   });
 
   it('should call onEnable when Enable button is clicked', async () => {
@@ -47,7 +47,7 @@ describe('AgentCard', () => {
 
     render(<AgentCard agent={mockAgent} isEnabled={false} onEnable={onEnable} />);
 
-    const button = screen.getByRole('button', { name: /Enable for Org/i });
+    const button = screen.getByRole('button', { name: /Enable Claude Code for organization/i });
     await user.click(button);
 
     expect(onEnable).toHaveBeenCalledWith(mockAgent.id);
@@ -79,7 +79,7 @@ describe('AgentCard', () => {
 
     render(<AgentCard agent={mockAgent} isEnabled={false} onEnable={onEnable} />);
 
-    const button = screen.getByRole('button', { name: /Enable for Org/i });
+    const button = screen.getByRole('button', { name: /Enable Claude Code for organization/i });
 
     // Tab to the button
     await user.tab();
