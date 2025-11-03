@@ -54,7 +54,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
+      # Server-side API URL (uses Docker network hostname)
+      API_URL: http://ubik-api:8080/api/v1
+      # Client-side API URL (uses host localhost)
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
       NODE_ENV: development
     volumes:
       # Mount source code for hot reload
