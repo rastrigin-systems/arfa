@@ -88,14 +88,17 @@ dev:
 	docker-compose up -d
 	@echo ""
 	@echo "✅ All services running:"
-	@echo "  🌐 API Server:  http://localhost:8080"
+	@echo "  🌐 Web UI:      http://localhost:3000"
+	@echo "  🔌 API Server:  http://localhost:8080"
 	@echo "  🗄️  Database:    localhost:5432"
 	@echo "  🔧 Adminer:     http://localhost:8081"
 	@echo ""
 	@echo "Useful commands:"
+	@echo "  docker-compose logs -f web      # View Web UI logs"
 	@echo "  docker-compose logs -f api      # View API logs"
 	@echo "  docker-compose logs -f postgres # View DB logs"
 	@echo "  docker-compose down             # Stop all services"
+	@echo "  docker-compose restart web      # Restart Web UI"
 	@echo "  docker-compose restart api      # Restart API"
 
 # Stop all Docker Compose services
@@ -104,12 +107,32 @@ dev-down:
 	docker-compose down
 	@echo "✅ All services stopped"
 
-# View API logs
+# View logs (defaults to all services)
 dev-logs:
+	docker-compose logs -f
+
+# View Web UI logs
+web-logs:
+	docker-compose logs -f web
+
+# View API logs
+api-logs:
 	docker-compose logs -f api
 
-# Rebuild and restart API
+# Rebuild and restart services
 dev-rebuild:
+	@echo "🔨 Rebuilding all services..."
+	docker-compose up -d --build
+	@echo "✅ All services rebuilt and restarted"
+
+# Rebuild and restart Web UI only
+web-rebuild:
+	@echo "🔨 Rebuilding Web UI service..."
+	docker-compose up -d --build web
+	@echo "✅ Web UI rebuilt and restarted"
+
+# Rebuild and restart API only
+api-rebuild:
 	@echo "🔨 Rebuilding API service..."
 	docker-compose up -d --build api
 	@echo "✅ API rebuilt and restarted"
