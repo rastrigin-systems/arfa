@@ -82,211 +82,119 @@ You work with two key advisors:
 ✅ Uncertain approach → Always ask before implementing
 ```
 
-## 3. TICKET MANAGEMENT (GitHub CLI)
+## 3. GITHUB PROJECT MANAGEMENT
 
-**GitHub is the source of truth for all development work.**
+**All GitHub operations are delegated to the `github-project-manager` agent.**
 
-Use `gh` CLI for all ticket operations:
+This agent owns all GitHub issue tracking, project boards, milestones, and task management. You focus on implementation - the GitHub PM agent handles all ticket operations.
 
-```bash
-# Fetch current issues
-gh issue list --label="backend" --state=open
+### When to Use GitHub Project Manager Agent
 
-# Get issue details
-gh issue view <issue-number>
+Use the Task tool to invoke the `github-project-manager` agent for:
 
-# Update issue status
-gh issue edit <issue-number> --add-label="status/in-progress"
+1. **Creating Issues** - New features, bugs, chores
+2. **Splitting Large Tasks** - Breaking down size/l or size/xl issues
+3. **Updating Status** - Moving tasks through workflow
+4. **Querying Tasks** - Finding work to do
+5. **Managing Sub-Issues** - Creating proper parent-child relationships
 
-# Close completed issues
-gh issue close <issue-number> --comment "Completed in PR #456"
+### How to Invoke
+
+Use the Task tool with `subagent_type: github-project-manager`:
+
+**Example 1: Create an Issue**
+```
+When you identify a new task that needs to be done, use Task tool:
+
+"Create a GitHub issue for implementing employee CRUD endpoints:
+- Title: Implement employee CRUD API endpoints
+- Area: area/api
+- Type: type/feature
+- Priority: priority/p1
+- Size: size/m
+- Milestone: v0.3.0
+- Description: Full CRUD operations with auth, validation, tests
+- Add to Engineering Roadmap and set status to Todo"
 ```
 
-**Ticket Breakdown Rules:**
-- If a ticket requires >4 hours work → Create sub-issues using GitHub's native sub-issue feature
-- Each sub-issue should be independently testable
-- Use GitHub's sub-issue API to link properly (NOT just labels or body text)
-- Update parent issue with progress
+**Example 2: Split a Large Task**
+```
+When you're assigned a size/l or size/xl task, delegate splitting:
 
-**CRITICAL: Creating Sub-Issues with GitHub API**
-
-When a task is too large (>4 hours), you MUST create proper GitHub sub-issues using the GitHub GraphQL API. DO NOT just write subtask lists in the issue body.
-
-**Step 1: Get Parent Issue Details**
-```bash
-# Get the parent issue's GraphQL node ID (required for linking)
-PARENT_NODE_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        id
-      }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=123 --jq '.data.repository.issue.id')
-
-echo "Parent issue node ID: $PARENT_NODE_ID"
+"Issue #50 'Implement Agent Management System' is size/xl.
+Split it into subtasks for:
+- Database schema (agent_catalog, agent_configs tables)
+- API CRUD endpoints
+- API configuration endpoints
+- Integration tests"
 ```
 
-**Step 2: Create Sub-Issues and Link to Parent**
-```bash
-# Create each sub-issue and link it to parent using GitHub's sub-issue feature
-# This creates a proper parent-child relationship in GitHub
+**Example 3: Update Status**
+```
+After creating a PR with passing CI:
 
-# Sub-issue 1
-SUB_ISSUE_1=$(gh issue create \
-  --title "Add approval database tables and migrations" \
-  --body "Part of #123
-
-## Scope
-- Create approval_requests table
-- Create approvals table
-- Write migration scripts
-- Test schema changes
-
-## Acceptance Criteria
-- [ ] Tables created with proper indexes
-- [ ] RLS policies applied
-- [ ] Migration runs successfully
-- [ ] Rollback tested" \
-  --label "backend,subtask,size/s" \
-  --milestone "v0.3.0" | grep -oE '#[0-9]+' | cut -c2-)
-
-# Link to parent using GitHub GraphQL API (creates sub-issue relationship)
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue {
-        number
-        trackedInIssues {
-          nodes {
-            number
-          }
-        }
-      }
-    }
-  }
-' -f subIssueId="$(gh api graphql -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { id } } }' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_ISSUE_1 --jq '.data.repository.issue.id')" -f parentIssueId="$PARENT_NODE_ID"
-
-# Sub-issue 2
-SUB_ISSUE_2=$(gh issue create \
-  --title "Implement CreateApprovalRequest endpoint" \
-  --body "Part of #123
-
-## Scope
-- Add POST /api/v1/approval-requests endpoint
-- Implement handler with validation
-- Write unit and integration tests
-- Update OpenAPI spec
-
-## Acceptance Criteria
-- [ ] Endpoint implemented with TDD
-- [ ] Multi-tenancy verified
-- [ ] 85%+ test coverage
-- [ ] OpenAPI spec updated" \
-  --label "backend,subtask,size/s" \
-  --milestone "v0.3.0" | grep -oE '#[0-9]+' | cut -c2-)
-
-# Link sub-issue 2 to parent
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue {
-        number
-      }
-    }
-  }
-' -f subIssueId="$(gh api graphql -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { id } } }' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_ISSUE_2 --jq '.data.repository.issue.id')" -f parentIssueId="$PARENT_NODE_ID"
-
-# Repeat for remaining sub-issues...
+"Update issue #75 status to 'In Review'.
+All CI checks passed on PR #77."
 ```
 
-**Step 3: Update Parent Issue**
-```bash
-# Add comment to parent issue with sub-issue links
-gh issue comment 123 --body "📋 **Task Breakdown**
+**Example 4: Query Next Task**
+```
+At start of work session:
 
-This task has been broken down into the following sub-issues:
-
-- #${SUB_ISSUE_1} - Add approval database tables and migrations
-- #${SUB_ISSUE_2} - Implement CreateApprovalRequest endpoint
-- #${SUB_ISSUE_3} - Implement ListPendingApprovals endpoint
-- #${SUB_ISSUE_4} - Implement ApproveRequest endpoint
-- #${SUB_ISSUE_5} - Add integration tests for approval workflow
-
-Each sub-issue is linked via GitHub's sub-issue feature and can be tracked independently."
+"Show me all open issues with area/api and priority/p0 or priority/p1.
+I want to pick the next task to work on."
 ```
 
-**Why Use GitHub's Native Sub-Issue Feature?**
-- ✅ Proper parent-child relationship in GitHub UI
-- ✅ Automatic progress tracking (GitHub shows "X of Y completed")
-- ✅ Sub-issues appear in parent issue's timeline
-- ✅ Better project board integration
-- ✅ Clear dependency visualization
-- ❌ Labels and body text don't create actual relationships
+### Your Responsibilities
 
-**Example Breakdown:**
-```
-Parent Issue #123: "Implement Agent Approval Workflow"
-├── Sub-issue #124: "Add approval database tables and migrations"
-├── Sub-issue #125: "Implement CreateApprovalRequest endpoint"
-├── Sub-issue #126: "Implement ListPendingApprovals endpoint"
-├── Sub-issue #127: "Implement ApproveRequest endpoint"
-└── Sub-issue #128: "Add integration tests for approval workflow"
+1. **Start of Session:**
+   - Invoke github-project-manager to query available tasks
+   - Select task to work on
+   - Invoke github-project-manager to update status to "In Progress"
 
-GitHub will automatically track: "2 of 5 sub-issues completed"
-```
+2. **During Implementation:**
+   - Focus on TDD and coding
+   - If task is too large, invoke github-project-manager to split it
+   - Implement, test, verify
 
-**Simplified Helper Script (Recommended)**
+3. **After PR Created:**
+   - Wait for CI checks to pass
+   - Invoke github-project-manager to update status to "In Review"
 
-Create a helper script for easier sub-issue creation:
+4. **After PR Merged:**
+   - Status auto-updates to "Done" (via "Closes #123" in PR)
+   - Move to next task
 
-```bash
-#!/bin/bash
-# scripts/create-sub-issue.sh
-PARENT_NUM=$1
-TITLE=$2
-BODY=$3
-LABELS=$4
+### GitHub PM Agent Handles
 
-# Get parent node ID
-PARENT_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) { id }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$PARENT_NUM --jq '.data.repository.issue.id')
+The github-project-manager agent takes care of:
+- ✅ Creating issues with proper labels and metadata
+- ✅ Adding issues to Engineering Roadmap project
+- ✅ Setting initial status (Backlog/Todo)
+- ✅ Creating sub-issues with GraphQL linking
+- ✅ Updating parent issues with checklists
+- ✅ Moving tasks through status workflow
+- ✅ Querying and filtering issues
+- ✅ Ensuring consistency across all operations
 
-# Create sub-issue
-SUB_NUM=$(gh issue create --title "$TITLE" --body "$BODY" --label "$LABELS" | grep -oE '#[0-9]+' | cut -c2-)
+### Label Standards (For Reference)
 
-# Get sub-issue node ID
-SUB_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) { id }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_NUM --jq '.data.repository.issue.id')
+The github-project-manager uses these labels:
 
-# Link to parent
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue { number }
-    }
-  }
-' -f subIssueId="$SUB_ID" -f parentIssueId="$PARENT_ID"
+**Area:** area/api, area/cli, area/web, area/db, area/infra, area/testing, area/docs, area/agents
 
-echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
-```
+**Type:** type/feature, type/bug, type/chore, type/refactor, type/research, type/epic
 
-**Usage:**
-```bash
-./scripts/create-sub-issue.sh 123 "Add approval tables" "Part of #123..." "backend,subtask,size/s"
-```
+**Priority:** priority/p0 (critical), priority/p1 (high), priority/p2 (medium), priority/p3 (low)
 
+**Size:** size/xs (<2h), size/s (2-4h), size/m (1-2d), size/l (3-5d, consider splitting), size/xl (>1w, MUST split)
+
+### Important Notes
+
+- **Never manipulate GitHub directly** - Always delegate to github-project-manager
+- **Provide clear context** - Describe what you need done, the agent handles the how
+- **Trust the agent** - It knows GitHub workflows and ensures consistency
+- **Focus on coding** - Your expertise is implementation, not ticket management
 ## 4. DEVELOPMENT WORKFLOW
 
 **CRITICAL: Use Git Branches + Workspaces for Parallel Development**
