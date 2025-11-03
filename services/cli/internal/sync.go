@@ -164,6 +164,15 @@ func (ss *SyncService) SyncClaudeCode(targetDir string) error {
 	return nil
 }
 
+// agentMetadata stores metadata about an agent (separate from config)
+type agentMetadata struct {
+	AgentID   string `json:"agent_id"`
+	AgentName string `json:"agent_name"`
+	AgentType string `json:"agent_type"`
+	Provider  string `json:"provider"`
+	IsEnabled bool   `json:"is_enabled"`
+}
+
 // saveAgentConfigs saves agent configs to ~/.ubik/agents/
 func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
@@ -180,6 +189,23 @@ func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 		agentDir := filepath.Join(agentsDir, config.AgentID)
 		if err := os.MkdirAll(agentDir, 0700); err != nil {
 			return fmt.Errorf("failed to create agent directory: %w", err)
+		}
+
+		// Save agent metadata (ID, name, type, etc.)
+		metadataPath := filepath.Join(agentDir, "metadata.json")
+		metadata := agentMetadata{
+			AgentID:   config.AgentID,
+			AgentName: config.AgentName,
+			AgentType: config.AgentType,
+			Provider:  config.Provider,
+			IsEnabled: config.IsEnabled,
+		}
+		metadataData, err := json.MarshalIndent(metadata, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		if err := os.WriteFile(metadataPath, metadataData, 0600); err != nil {
+			return fmt.Errorf("failed to write metadata file: %w", err)
 		}
 
 		// Save agent config (only the configuration map, not the whole struct)
@@ -233,16 +259,52 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 			continue
 		}
 
-		configPath := filepath.Join(agentsDir, entry.Name(), "config.json")
+		agentDir := filepath.Join(agentsDir, entry.Name())
+
+		// Load metadata
+		metadataPath := filepath.Join(agentDir, "metadata.json")
+		metadataData, err := os.ReadFile(metadataPath)
+		if err != nil {
+			// Skip if metadata file doesn't exist
+			continue
+		}
+
+		var metadata agentMetadata
+		if err := json.Unmarshal(metadataData, &metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+		}
+
+		// Load configuration
+		configPath := filepath.Join(agentDir, "config.json")
 		configData, err := os.ReadFile(configPath)
 		if err != nil {
 			// Skip if config file doesn't exist
 			continue
 		}
 
-		var config AgentConfig
-		if err := json.Unmarshal(configData, &config); err != nil {
+		var configuration map[string]interface{}
+		if err := json.Unmarshal(configData, &configuration); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+		}
+
+		// Load MCP servers if they exist
+		var mcpServers []MCPServerConfig
+		mcpPath := filepath.Join(agentDir, "mcp-servers.json")
+		if mcpData, err := os.ReadFile(mcpPath); err == nil {
+			if err := json.Unmarshal(mcpData, &mcpServers); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal MCP config: %w", err)
+			}
+		}
+
+		// Build full AgentConfig
+		config := AgentConfig{
+			AgentID:       metadata.AgentID,
+			AgentName:     metadata.AgentName,
+			AgentType:     metadata.AgentType,
+			Provider:      metadata.Provider,
+			IsEnabled:     metadata.IsEnabled,
+			Configuration: configuration,
+			MCPServers:    mcpServers,
 		}
 
 		configs = append(configs, config)
