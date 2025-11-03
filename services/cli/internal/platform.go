@@ -332,6 +332,95 @@ func (pc *PlatformClient) GetClaudeCodeConfig() (*ClaudeCodeSyncResponse, error)
 	return &resp, nil
 }
 
+// ============================================================================
+// Skills API Methods
+// ============================================================================
+
+// Skill represents a skill from the catalog
+type Skill struct {
+	ID           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	Category     string                 `json:"category"`
+	Version      string                 `json:"version"`
+	Files        []SkillFile            `json:"files"`
+	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
+	IsActive     bool                   `json:"is_active"`
+	CreatedAt    *time.Time             `json:"created_at,omitempty"`
+	UpdatedAt    *time.Time             `json:"updated_at,omitempty"`
+}
+
+// SkillFile represents a file in a skill
+type SkillFile struct {
+	Path    string `json:"path"`
+	Content string `json:"content,omitempty"`
+}
+
+// EmployeeSkill represents an employee's assigned skill
+type EmployeeSkill struct {
+	ID           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	Category     string                 `json:"category"`
+	Version      string                 `json:"version"`
+	Files        []SkillFile            `json:"files"`
+	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
+	Config       map[string]interface{} `json:"config,omitempty"`
+	IsActive     bool                   `json:"is_active"`
+	IsEnabled    bool                   `json:"is_enabled"`
+	InstalledAt  *time.Time             `json:"installed_at,omitempty"`
+}
+
+// ListSkillsResponse represents the response from list skills endpoint
+type ListSkillsResponse struct {
+	Skills []Skill `json:"skills"`
+	Total  int     `json:"total"`
+}
+
+// ListEmployeeSkillsResponse represents the response from list employee skills endpoint
+type ListEmployeeSkillsResponse struct {
+	Skills []EmployeeSkill `json:"skills"`
+	Total  int             `json:"total"`
+}
+
+// ListSkills fetches all available skills from the catalog
+func (pc *PlatformClient) ListSkills() (*ListSkillsResponse, error) {
+	var resp ListSkillsResponse
+	if err := pc.doRequest("GET", "/skills", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list skills: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetSkill fetches details for a specific skill by ID
+func (pc *PlatformClient) GetSkill(skillID string) (*Skill, error) {
+	var skill Skill
+	endpoint := fmt.Sprintf("/skills/%s", skillID)
+	if err := pc.doRequest("GET", endpoint, nil, &skill); err != nil {
+		return nil, fmt.Errorf("failed to get skill: %w", err)
+	}
+	return &skill, nil
+}
+
+// ListEmployeeSkills fetches skills assigned to the authenticated employee
+func (pc *PlatformClient) ListEmployeeSkills() (*ListEmployeeSkillsResponse, error) {
+	var resp ListEmployeeSkillsResponse
+	if err := pc.doRequest("GET", "/employees/me/skills", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list employee skills: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee
+func (pc *PlatformClient) GetEmployeeSkill(skillID string) (*EmployeeSkill, error) {
+	var skill EmployeeSkill
+	endpoint := fmt.Sprintf("/employees/me/skills/%s", skillID)
+	if err := pc.doRequest("GET", endpoint, nil, &skill); err != nil {
+		return nil, fmt.Errorf("failed to get employee skill: %w", err)
+	}
+	return &skill, nil
+}
+
 // doRequest is a helper method to perform HTTP requests
 func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
 	// Add /api/v1 prefix to all API calls

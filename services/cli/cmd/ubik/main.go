@@ -53,6 +53,7 @@ Claude Code and MCP servers with injected configs.`,
 	rootCmd.AddCommand(newStartCommand())
 	rootCmd.AddCommand(newStopCommand())
 	rootCmd.AddCommand(newAgentsCommand())
+	rootCmd.AddCommand(newSkillsCommand())
 	rootCmd.AddCommand(newUpdateCommand())
 	rootCmd.AddCommand(newCleanupCommand())
 
@@ -442,6 +443,19 @@ func newAgentsCommand() *cobra.Command {
 	cmd.AddCommand(commands.NewAgentsShowCommand())
 
 	return cmd
+}
+
+func newSkillsCommand() *cobra.Command {
+	configManager, err := cli.NewConfigManager()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to create config manager: %v\n", err)
+		os.Exit(1)
+	}
+
+	platformClient := cli.NewPlatformClient("")
+	authService := cli.NewAuthService(configManager, platformClient)
+
+	return commands.NewSkillsCommand(configManager, platformClient, authService)
 }
 
 func newAgentsListCommand() *cobra.Command {
