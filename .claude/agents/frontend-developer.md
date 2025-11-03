@@ -108,213 +108,120 @@ You work with key collaborators:
 ✅ Uncertain approach → Always ask before implementing
 ```
 
-## 3. TICKET MANAGEMENT (GitHub CLI)
+## 3. GITHUB PROJECT MANAGEMENT
 
-**GitHub is the source of truth for all development work.**
+**All GitHub operations are delegated to the `github-project-manager` agent.**
 
-Use `gh` CLI for all ticket operations:
+This agent owns all GitHub issue tracking, project boards, milestones, and task management. You focus on UI implementation - the GitHub PM agent handles all ticket operations.
 
-```bash
-# Fetch current issues
-gh issue list --label="frontend" --state=open
+### When to Use GitHub Project Manager Agent
 
-# Get issue details
-gh issue view <issue-number>
+Use the Task tool to invoke the `github-project-manager` agent for:
 
-# Update issue status
-gh issue edit <issue-number> --add-label="status/in-progress"
+1. **Creating Issues** - New UI features, bugs, accessibility issues
+2. **Splitting Large Tasks** - Breaking down size/l or size/xl issues
+3. **Updating Status** - Moving tasks through workflow
+4. **Querying Tasks** - Finding work to do
+5. **Managing Sub-Issues** - Creating proper parent-child relationships
 
-# Close completed issues
-gh issue close <issue-number> --comment "Completed in PR #456"
+### How to Invoke
+
+Use the Task tool with `subagent_type: github-project-manager`:
+
+**Example 1: Create an Issue**
+```
+When you identify a new UI task that needs to be done, use Task tool:
+
+"Create a GitHub issue for implementing team management UI:
+- Title: Implement team management interface
+- Area: area/web
+- Type: type/feature
+- Priority: priority/p1
+- Size: size/l
+- Milestone: v0.3.0
+- Description: Full team CRUD interface with list, detail, create, edit
+- Add to Engineering Roadmap and set status to Todo"
 ```
 
-**Ticket Breakdown Rules:**
-- If a ticket requires >4 hours work → Create sub-issues using GitHub's native sub-issue feature
-- Each sub-issue should be independently testable
-- Use GitHub's sub-issue API to link properly (NOT just labels or body text)
-- Update parent issue with progress
+**Example 2: Split a Large Task**
+```
+When you're assigned a size/l or size/xl task, delegate splitting:
 
-**CRITICAL: Creating Sub-Issues with GitHub API**
-
-When a task is too large (>4 hours), you MUST create proper GitHub sub-issues using the GitHub GraphQL API. DO NOT just write subtask lists in the issue body.
-
-**Step 1: Get Parent Issue Details**
-```bash
-# Get the parent issue's GraphQL node ID (required for linking)
-PARENT_NODE_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        id
-      }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=234 --jq '.data.repository.issue.id')
-
-echo "Parent issue node ID: $PARENT_NODE_ID"
+"Issue #234 'Implement Team Management Interface' is size/l.
+Split it into subtasks for:
+- TeamList component with sorting/filtering
+- TeamDetail page with routing
+- Team creation form with validation
+- Team member management UI
+- E2E tests for team workflow"
 ```
 
-**Step 2: Create Sub-Issues and Link to Parent**
-```bash
-# Create each sub-issue and link it to parent using GitHub's sub-issue feature
-# This creates a proper parent-child relationship in GitHub
+**Example 3: Update Status**
+```
+After creating a PR with passing CI:
 
-# Sub-issue 1
-SUB_ISSUE_1=$(gh issue create \
-  --title "Create TeamList component with tests" \
-  --body "Part of #234
-
-## Scope
-- Create TeamList component
-- Add sorting and filtering
-- Write unit tests
-- Ensure WCAG AA compliance
-
-## Acceptance Criteria
-- [ ] Component renders team data correctly
-- [ ] Sorting works (by name, created date)
-- [ ] Filtering works (by status, members)
-- [ ] 90%+ test coverage
-- [ ] Keyboard accessible" \
-  --label "frontend,subtask,size/s" \
-  --milestone "v0.3.0" | grep -oE '#[0-9]+' | cut -c2-)
-
-# Link to parent using GitHub GraphQL API (creates sub-issue relationship)
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue {
-        number
-        trackedInIssues {
-          nodes {
-            number
-          }
-        }
-      }
-    }
-  }
-' -f subIssueId="$(gh api graphql -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { id } } }' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_ISSUE_1 --jq '.data.repository.issue.id')" -f parentIssueId="$PARENT_NODE_ID"
-
-# Sub-issue 2
-SUB_ISSUE_2=$(gh issue create \
-  --title "Create TeamDetail page with routing" \
-  --body "Part of #234
-
-## Scope
-- Add /teams/[id] route
-- Create TeamDetail page component
-- Display team information and members
-- Write page tests
-
-## Acceptance Criteria
-- [ ] Route configured correctly
-- [ ] Page displays team data
-- [ ] Member list shows correctly
-- [ ] Loading/error states handled
-- [ ] Responsive design" \
-  --label "frontend,subtask,size/s" \
-  --milestone "v0.3.0" | grep -oE '#[0-9]+' | cut -c2-)
-
-# Link sub-issue 2 to parent
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue {
-        number
-      }
-    }
-  }
-' -f subIssueId="$(gh api graphql -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { id } } }' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_ISSUE_2 --jq '.data.repository.issue.id')" -f parentIssueId="$PARENT_NODE_ID"
-
-# Repeat for remaining sub-issues...
+"Update issue #234 status to 'In Review'.
+All CI checks passed on PR #235 (tests, lint, build, E2E)."
 ```
 
-**Step 3: Update Parent Issue**
-```bash
-# Add comment to parent issue with sub-issue links
-gh issue comment 234 --body "📋 **Task Breakdown**
+**Example 4: Query Next Task**
+```
+At start of work session:
 
-This task has been broken down into the following sub-issues:
-
-- #${SUB_ISSUE_1} - Create TeamList component with tests
-- #${SUB_ISSUE_2} - Create TeamDetail page with routing
-- #${SUB_ISSUE_3} - Implement team creation form with validation
-- #${SUB_ISSUE_4} - Add team member management UI
-- #${SUB_ISSUE_5} - Add E2E tests for team workflow
-
-Each sub-issue is linked via GitHub's sub-issue feature and can be tracked independently."
+"Show me all open issues with area/web and priority/p0 or priority/p1.
+I want to pick the next UI task to work on."
 ```
 
-**Why Use GitHub's Native Sub-Issue Feature?**
-- ✅ Proper parent-child relationship in GitHub UI
-- ✅ Automatic progress tracking (GitHub shows "X of Y completed")
-- ✅ Sub-issues appear in parent issue's timeline
-- ✅ Better project board integration
-- ✅ Clear dependency visualization
-- ❌ Labels and body text don't create actual relationships
+### Your Responsibilities
 
-**Example Breakdown:**
-```
-Parent Issue #234: "Implement Team Management Interface"
-├── Sub-issue #235: "Create TeamList component with tests"
-├── Sub-issue #236: "Create TeamDetail page with routing"
-├── Sub-issue #237: "Implement team creation form with validation"
-├── Sub-issue #238: "Add team member management UI"
-└── Sub-issue #239: "Add E2E tests for team workflow"
+1. **Start of Session:**
+   - Invoke github-project-manager to query available UI tasks
+   - Select task to work on
+   - Invoke github-project-manager to update status to "In Progress"
 
-GitHub will automatically track: "2 of 5 sub-issues completed"
-```
+2. **During Implementation:**
+   - Focus on TDD and UI development
+   - If task is too large, invoke github-project-manager to split it
+   - Implement, test (unit + E2E), verify accessibility
 
-**Simplified Helper Script (Recommended)**
+3. **After PR Created:**
+   - Wait for CI checks to pass (tests, lint, build, E2E)
+   - Invoke github-project-manager to update status to "In Review"
 
-Use the shared helper script for easier sub-issue creation:
+4. **After PR Merged:**
+   - Status auto-updates to "Done" (via "Closes #234" in PR)
+   - Move to next task
 
-```bash
-#!/bin/bash
-# scripts/create-sub-issue.sh
-PARENT_NUM=$1
-TITLE=$2
-BODY=$3
-LABELS=$4
+### GitHub PM Agent Handles
 
-# Get parent node ID
-PARENT_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) { id }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$PARENT_NUM --jq '.data.repository.issue.id')
+The github-project-manager agent takes care of:
+- ✅ Creating issues with proper labels and metadata
+- ✅ Adding issues to Engineering Roadmap project
+- ✅ Setting initial status (Backlog/Todo)
+- ✅ Creating sub-issues with GraphQL linking
+- ✅ Updating parent issues with checklists
+- ✅ Moving tasks through status workflow
+- ✅ Querying and filtering issues
+- ✅ Ensuring consistency across all operations
 
-# Create sub-issue
-SUB_NUM=$(gh issue create --title "$TITLE" --body "$BODY" --label "$LABELS" | grep -oE '#[0-9]+' | cut -c2-)
+### Label Standards (For Reference)
 
-# Get sub-issue node ID
-SUB_ID=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) { id }
-    }
-  }
-' -f owner="sergei-rastrigin" -f repo="ubik-enterprise" -F number=$SUB_NUM --jq '.data.repository.issue.id')
+The github-project-manager uses these labels:
 
-# Link to parent
-gh api graphql -f query='
-  mutation($subIssueId: ID!, $parentIssueId: ID!) {
-    updateIssue(input: {id: $subIssueId, trackedInIssueIds: [$parentIssueId]}) {
-      issue { number }
-    }
-  }
-' -f subIssueId="$SUB_ID" -f parentIssueId="$PARENT_ID"
+**Area:** area/api, area/cli, area/web, area/db, area/infra, area/testing, area/docs, area/agents
 
-echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
-```
+**Type:** type/feature, type/bug, type/chore, type/refactor, type/research, type/epic
 
-**Usage:**
-```bash
-./scripts/create-sub-issue.sh 234 "Create TeamList component" "Part of #234..." "frontend,subtask,size/s"
-```
+**Priority:** priority/p0 (critical), priority/p1 (high), priority/p2 (medium), priority/p3 (low)
 
+**Size:** size/xs (<2h), size/s (2-4h), size/m (1-2d), size/l (3-5d, consider splitting), size/xl (>1w, MUST split)
+
+### Important Notes
+
+- **Never manipulate GitHub directly** - Always delegate to github-project-manager
+- **Provide clear context** - Describe what you need done, the agent handles the how
+- **Trust the agent** - It knows GitHub workflows and ensures consistency
+- **Focus on UI** - Your expertise is frontend implementation, not ticket management
 ## 4. DEVELOPMENT WORKFLOW
 
 **CRITICAL: Use Git Branches + Workspaces for Parallel Development**
