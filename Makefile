@@ -80,7 +80,39 @@ db-up:
 	@echo ""
 	@echo "Database connection:"
 	@echo "  URL: $(DATABASE_URL)"
-	@echo "  Web UI: http://localhost:8080 (Adminer)"
+	@echo "  Web UI: http://localhost:8081 (Adminer)"
+
+# Start all services with Docker Compose
+dev:
+	@echo "🚀 Starting all services with Docker Compose..."
+	docker-compose up -d
+	@echo ""
+	@echo "✅ All services running:"
+	@echo "  🌐 API Server:  http://localhost:8080"
+	@echo "  🗄️  Database:    localhost:5432"
+	@echo "  🔧 Adminer:     http://localhost:8081"
+	@echo ""
+	@echo "Useful commands:"
+	@echo "  docker-compose logs -f api      # View API logs"
+	@echo "  docker-compose logs -f postgres # View DB logs"
+	@echo "  docker-compose down             # Stop all services"
+	@echo "  docker-compose restart api      # Restart API"
+
+# Stop all Docker Compose services
+dev-down:
+	@echo "🛑 Stopping all services..."
+	docker-compose down
+	@echo "✅ All services stopped"
+
+# View API logs
+dev-logs:
+	docker-compose logs -f api
+
+# Rebuild and restart API
+dev-rebuild:
+	@echo "🔨 Rebuilding API service..."
+	docker-compose up -d --build api
+	@echo "✅ API rebuilt and restarted"
 
 db-down:
 	@echo "🛑 Stopping PostgreSQL..."
