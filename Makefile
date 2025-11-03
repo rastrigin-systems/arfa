@@ -1,4 +1,4 @@
-.PHONY: help install-tools install-hooks install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli dev run-server build build-cli build-server clean
+.PHONY: help install-tools install-hooks install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli test-web test-web-e2e dev dev-api dev-web dev-all run-server build build-cli build-server build-web clean
 
 # Default target
 help:
@@ -20,19 +20,24 @@ help:
 	@echo "  make generate        Generate everything (ERD + API + DB + Mocks)"
 	@echo ""
 	@echo "Testing Commands:"
-	@echo "  make test            Run all tests with coverage"
-	@echo "  make test-unit       Run unit tests only (fast)"
-	@echo "  make test-integration Run integration tests (requires Docker)"
+	@echo "  make test            Run all tests (API + CLI + Web) with coverage"
+	@echo "  make test-unit       Run API unit tests only (fast)"
+	@echo "  make test-integration Run API integration tests (requires Docker)"
 	@echo "  make test-cli        Run CLI tests only"
+	@echo "  make test-web        Run Next.js tests (unit + integration)"
+	@echo "  make test-web-e2e    Run Next.js E2E tests with Playwright"
 	@echo "  make test-coverage   Generate HTML coverage report"
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make check-drift     Check for OpenAPI ↔ DB schema drift"
-	@echo "  make dev             Start development server with live reload"
-	@echo "  make run-server      Build and run server (no live reload)"
-	@echo "  make build           Build all binaries (server + CLI)"
+	@echo "  make dev-all         Start all services (API + Next.js) in parallel"
+	@echo "  make dev-api         Start API server with live reload"
+	@echo "  make dev-web         Start Next.js development server"
+	@echo "  make run-server      Build and run API server (no live reload)"
+	@echo "  make build           Build all artifacts (server + CLI + web)"
 	@echo "  make build-server    Build server binary only"
 	@echo "  make build-cli       Build CLI binary only"
+	@echo "  make build-web       Build Next.js production bundle"
 	@echo "  make install-cli     Install ubik CLI to /usr/local/bin (requires sudo)"
 	@echo "  make uninstall-cli   Uninstall ubik CLI from /usr/local/bin (requires sudo)"
 	@echo "  make clean           Clean generated files and build artifacts"
@@ -195,19 +200,31 @@ test:
 	@echo "Testing shared types..."
 	cd pkg/types && go test -v -race -coverprofile=../../coverage-types.out ./...
 	@echo ""
+	@echo "Testing Next.js web app..."
+	cd services/web && npm test
+	@echo ""
 	@echo "✅ All tests passed!"
 
 test-unit:
-	@echo "⚡ Running unit tests (fast)..."
+	@echo "⚡ Running API unit tests (fast)..."
 	cd services/api && go test -v -short -race ./internal/...
 
 test-integration:
-	@echo "🔄 Running integration tests (requires Docker)..."
+	@echo "🔄 Running API integration tests (requires Docker)..."
 	cd services/api && go test -v -run Integration ./tests/integration/...
 
 test-cli:
 	@echo "🧪 Running CLI tests..."
 	cd services/cli && go test -v -race ./internal/...
+
+test-web:
+	@echo "🧪 Running Next.js tests..."
+	cd services/web && npm test
+
+test-web-e2e:
+	@echo "🎭 Running Next.js E2E tests with Playwright..."
+	@echo "⚠️  Requires API server running on port 8080"
+	cd services/web && npm run test:e2e
 
 test-coverage:
 	@echo "📊 Generating HTML coverage report..."
@@ -217,8 +234,21 @@ test-coverage:
 	@open coverage.html || true
 
 # Development
-dev:
-	@echo "🚀 Starting development server with live reload..."
+dev-all:
+	@echo "🚀 Starting all development services..."
+	@echo ""
+	@echo "Starting services in parallel:"
+	@echo "  - API Server:  http://localhost:$(SERVER_PORT)"
+	@echo "  - Next.js Web: http://localhost:3000"
+	@echo ""
+	@echo "Press Ctrl+C to stop all services"
+	@echo ""
+	@trap 'kill 0' EXIT; \
+		(DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/ubik-server) & \
+		(cd services/web && npm run dev)
+
+dev-api:
+	@echo "🚀 Starting API development server with live reload..."
 	@echo "Server will run on http://localhost:$(SERVER_PORT)"
 	@echo ""
 	@if ! command -v air > /dev/null; then \
@@ -227,20 +257,34 @@ dev:
 	fi
 	PORT=$(SERVER_PORT) air -c .air.toml
 
+dev-web:
+	@echo "🚀 Starting Next.js development server..."
+	@echo "Web app will run on http://localhost:3000"
+	@echo "API URL: $${NEXT_PUBLIC_API_URL:-http://localhost:8080/api/v1}"
+	@echo ""
+	@echo "Press Ctrl+C to stop"
+	@echo ""
+	cd services/web && npm run dev
+
 run-server: build-server
-	@echo "🚀 Starting server..."
+	@echo "🚀 Starting API server..."
 	@echo "Server will run on http://localhost:$(SERVER_PORT)"
 	@echo "Press Ctrl+C to stop"
 	@echo ""
 	@echo "To use a different port: PORT=3002 make run-server"
 	@echo ""
-	PORT=$(SERVER_PORT) ./bin/ubik-server
+	DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/ubik-server
 
 # Build
-build: build-server build-cli
+build: build-server build-cli build-web
 	@echo ""
-	@echo "✅ All binaries built:"
+	@echo "✅ All artifacts built:"
+	@echo ""
+	@echo "Binaries:"
 	@ls -lh bin/
+	@echo ""
+	@echo "Next.js:"
+	@ls -lh services/web/.next/ 2>/dev/null | head -5 || echo "  (build output in services/web/.next/)"
 
 build-server: generate-api generate-db
 	@echo "🔨 Building server binary..."
@@ -260,6 +304,14 @@ build-cli: generate-api generate-db
 	@echo ""
 	@echo "To install system-wide:"
 	@echo "  make install-cli"
+
+build-web:
+	@echo "🔨 Building Next.js production bundle..."
+	cd services/web && npm run build
+	@echo "✅ Next.js built: services/web/.next/"
+	@echo ""
+	@echo "To run production build:"
+	@echo "  cd services/web && npm start"
 
 install-cli: build-cli
 	@echo "📦 Installing ubik CLI to /usr/local/bin..."
@@ -291,7 +343,9 @@ clean:
 	@echo "🧹 Cleaning generated files and build artifacts..."
 	rm -rf $(GENERATED_DIR)
 	rm -rf bin/
-	rm -f coverage.out coverage.html
+	rm -f coverage.out coverage.html coverage-*.out
+	rm -rf services/web/.next
+	rm -rf services/web/out
 	@echo "✅ Cleanup complete"
 
 # Development helpers

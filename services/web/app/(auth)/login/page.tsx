@@ -1,12 +1,11 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { loginAction, redirectToDashboard, type LoginFormState } from './actions';
+import { loginAction, type LoginFormState } from './actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -21,13 +20,6 @@ function SubmitButton() {
 export default function LoginPage() {
   const initialState: LoginFormState = {};
   const [state, formAction] = useFormState(loginAction, initialState);
-
-  // Redirect to dashboard on successful login
-  useEffect(() => {
-    if (state.success) {
-      redirectToDashboard();
-    }
-  }, [state.success]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

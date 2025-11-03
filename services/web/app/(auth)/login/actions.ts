@@ -64,8 +64,6 @@ export async function loginAction(
 
     // Store token in httpOnly cookie
     await setServerToken(data.token);
-
-    return { success: true };
   } catch (err) {
     console.error('Login error:', err);
     return {
@@ -74,9 +72,7 @@ export async function loginAction(
       },
     };
   }
-}
 
-// This function is called after successful login to redirect
-export async function redirectToDashboard() {
+  // Redirect outside try/catch so Next.js redirect error propagates correctly
   redirect('/dashboard');
 }
