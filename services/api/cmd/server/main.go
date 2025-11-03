@@ -83,37 +83,6 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// Helper function to serve static files with no-cache in dev mode
-	serveStaticFile := func(filepath string) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			// Disable caching for development
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Pragma", "no-cache")
-			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, filepath)
-		}
-	}
-
-	// Serve static files (HTML prototype)
-	fileServer := http.FileServer(http.Dir("./static"))
-	router.Handle("/static/*", http.StripPrefix("/static", fileServer))
-	router.Get("/", serveStaticFile("./static/login.html"))
-	router.Get("/components.html", serveStaticFile("./static/components.html"))
-	router.Get("/login.html", serveStaticFile("./static/login.html"))
-	router.Get("/dashboard.html", serveStaticFile("./static/dashboard.html"))
-	router.Get("/employees.html", serveStaticFile("./static/employees.html"))
-	router.Get("/teams.html", serveStaticFile("./static/teams.html"))
-	router.Get("/agents.html", serveStaticFile("./static/agents.html"))
-	router.Get("/settings.html", serveStaticFile("./static/settings.html"))
-	router.Get("/profile.html", serveStaticFile("./static/profile.html"))
-	router.Get("/employee-detail.html", serveStaticFile("./static/employee-detail.html"))
-	router.Get("/team-detail.html", serveStaticFile("./static/team-detail.html"))
-	router.Get("/create-employee.html", serveStaticFile("./static/create-employee.html"))
-	router.Get("/roles.html", serveStaticFile("./static/roles.html"))
-	router.Get("/employee-agent-configs.html", serveStaticFile("./static/employee-agent-configs.html"))
-	router.Get("/add-employee-agent-config.html", serveStaticFile("./static/add-employee-agent-config.html"))
-	router.Get("/edit-employee-agent-config.html", serveStaticFile("./static/edit-employee-agent-config.html"))
-
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {
 		// Public routes (no auth required)
@@ -282,13 +251,13 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
-		log.Printf("🚀 Server starting on http://localhost:%s", port)
-		log.Printf("🌐 Web UI: http://localhost:%s/", port)
-		log.Printf("📝 API Documentation: http://localhost:%s/api/v1/health", port)
+		log.Printf("🚀 API Server starting on http://localhost:%s", port)
+		log.Printf("📝 Health Check: http://localhost:%s/api/v1/health", port)
 		log.Printf("🔐 Auth endpoints:")
 		log.Printf("   POST http://localhost:%s/api/v1/auth/login", port)
 		log.Printf("   POST http://localhost:%s/api/v1/auth/logout", port)
 		log.Printf("   GET  http://localhost:%s/api/v1/auth/me", port)
+		log.Printf("🌐 Web UI available at http://localhost:3000 (Next.js app)")
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)

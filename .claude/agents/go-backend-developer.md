@@ -404,19 +404,38 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    make generate-api
    ```
 
-5. **Run All Tests:**
+5. **Run All Tests (MANDATORY GATE):**
    ```bash
    # Unit tests
    make test-unit
-   
+
    # Integration tests
    make test-integration
-   
+
+   # All tests combined
+   make test
+
+   # CRITICAL: ALL tests must pass before proceeding
+   # If any test fails, fix the issues before creating PR
+   # DO NOT create PR with failing tests
+
    # Coverage report
    make test-coverage
    ```
 
-6. **Commit, Push, and Create PR:**
+6. **Verify Tests Passed Before PR Creation:**
+   ```bash
+   # MANDATORY CHECK: Ensure all tests passed
+   # If make test returned non-zero exit code, STOP HERE
+   # Fix all test failures before proceeding to PR creation
+
+   # Only proceed if you see:
+   # ✅ All tests passing
+   # ✅ 85%+ test coverage
+   # ✅ No lint errors
+   ```
+
+7. **Commit, Push, and Create PR:**
    ```bash
    # Stage all changes
    git add .
@@ -462,7 +481,7 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    PR_NUM=$(gh pr view --json number -q .number)
    ```
 
-7. **Wait for CI Checks (CRITICAL!):**
+8. **Wait for CI Checks (CRITICAL!):**
    ```bash
    # Monitor CI checks until completion
    echo "⏳ Waiting for CI checks to complete..."
@@ -498,6 +517,10 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    fi
    ```
 
+**Why Run Tests Locally AND Wait for CI?**
+- **Local tests (Step 5-6)**: Catch issues early before creating PR, save time, prevent broken PRs
+- **CI checks (Step 8)**: Verify tests pass in clean environment, catch environment-specific issues
+
 **Why Wait for CI?**
 - Ensures all tests pass in clean environment
 - Catches environment-specific issues early
@@ -507,7 +530,7 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
 
 **CI Timeout:** If CI doesn't complete in 10 minutes, investigate infrastructure issues.
 
-8. **Clean Up Workspace (After PR Merged):**
+9. **Clean Up Workspace (After PR Merged):**
    ```bash
    # Return to main repo
    cd /Users/sergeirastrigin/Projects/ubik-enterprise
@@ -583,6 +606,19 @@ make generate-api
 
 # 12. Run all tests
 make test
+
+# ═══════════════════════════════════════════════════════
+# PHASE 2.5: MANDATORY LOCAL TEST GATE
+# ═══════════════════════════════════════════════════════
+
+# 12a. CRITICAL: Verify all tests passed before proceeding
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Fix all test failures before creating PR."
+  echo "Review test output above and fix the issues."
+  exit 1
+fi
+
+echo "✅ All local tests passed! Proceeding to commit and PR creation..."
 
 # ═══════════════════════════════════════════════════════
 # PHASE 3: COMMIT & PUSH
