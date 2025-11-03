@@ -61,7 +61,7 @@ func main() {
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
 	mcpServersHandler := handlers.NewMCPServersHandler(queries)
 	syncHandler := handlers.NewSyncHandler(queries)
-	// skillsHandler := handlers.NewSkillsHandler(queries) // TODO: Re-enable when Skills API is complete (PR #66)
+	skillsHandler := handlers.NewSkillsHandler(queries)
 
 	// Setup router
 	router := chi.NewRouter()
@@ -194,18 +194,17 @@ func main() {
 				r.Get("/", mcpServersHandler.ListEmployeeMCPServers)
 			})
 
-			// TODO: Re-enable when Skills API is complete (PR #66)
 			// Skills catalog routes
-			// r.Route("/skills", func(r chi.Router) {
-			// 	r.Get("/", skillsHandler.ListSkills)
-			// 	r.Get("/{skill_id}", skillsHandler.GetSkill)
-			// })
+			r.Route("/skills", func(r chi.Router) {
+				r.Get("/", skillsHandler.ListSkills)
+				r.Get("/{skill_id}", skillsHandler.GetSkill)
+			})
 
 			// Employee skills routes
-			// r.Route("/employees/me/skills", func(r chi.Router) {
-			// 	r.Get("/", skillsHandler.ListEmployeeSkills)
-			// 	r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
-			// })
+			r.Route("/employees/me/skills", func(r chi.Router) {
+				r.Get("/", skillsHandler.ListEmployeeSkills)
+				r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
+			})
 
 			// Sync routes
 			r.Route("/sync", func(r chi.Router) {
