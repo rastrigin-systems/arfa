@@ -438,7 +438,7 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    pnpm test:e2e
    ```
 
-6. **Run All Tests & Linting:**
+6. **Run All Tests & Linting (MANDATORY GATE):**
    ```bash
    # Unit tests
    pnpm test
@@ -454,9 +454,28 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
 
    # Build check
    pnpm build
+
+   # CRITICAL: ALL checks must pass before proceeding
+   # If any check fails, fix the issues before creating PR
+   # DO NOT create PR with failing tests, type errors, or lint errors
    ```
 
-7. **Commit, Push, and Create PR:**
+7. **Verify All Checks Passed Before PR Creation:**
+   ```bash
+   # MANDATORY CHECK: Ensure all quality checks passed
+   # If any command returned non-zero exit code, STOP HERE
+   # Fix all failures before proceeding to PR creation
+
+   # Only proceed if you see:
+   # ✅ All tests passing
+   # ✅ 90%+ test coverage
+   # ✅ No type errors
+   # ✅ No lint errors
+   # ✅ Build successful
+   # ✅ WCAG AA compliance
+   ```
+
+8. **Commit, Push, and Create PR:**
    ```bash
    # Stage all changes
    git add .
@@ -507,7 +526,7 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    PR_NUM=$(gh pr view --json number -q .number)
    ```
 
-8. **Wait for CI Checks (CRITICAL!):**
+9. **Wait for CI Checks (CRITICAL!):**
    ```bash
    # Monitor CI checks until completion
    echo "⏳ Waiting for CI checks to complete..."
@@ -543,6 +562,10 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
    fi
    ```
 
+**Why Run Tests Locally AND Wait for CI?**
+- **Local tests (Step 6-7)**: Catch issues early before creating PR, save time, prevent broken PRs
+- **CI checks (Step 9)**: Verify tests pass in clean environment, catch environment-specific issues, E2E tests in CI
+
 **Why Wait for CI?**
 - Ensures all tests pass in clean environment
 - Catches environment-specific issues early
@@ -553,7 +576,7 @@ echo "Created sub-issue #$SUB_NUM linked to parent #$PARENT_NUM"
 
 **CI Timeout:** If CI doesn't complete in 10 minutes, investigate infrastructure issues.
 
-9. **Clean Up Workspace (After PR Merged):**
+10. **Clean Up Workspace (After PR Merged):**
    ```bash
    # Return to main repo
    cd /Users/sergeirastrigin/Projects/ubik-enterprise
@@ -632,6 +655,23 @@ pnpm test:e2e
 
 # 13. Run all quality checks
 pnpm test && pnpm type-check && pnpm lint && pnpm build
+
+# ═══════════════════════════════════════════════════════
+# PHASE 2.5: MANDATORY LOCAL TEST GATE
+# ═══════════════════════════════════════════════════════
+
+# 13a. CRITICAL: Verify all checks passed before proceeding
+if [ $? -ne 0 ]; then
+  echo "❌ Quality checks failed! Fix all failures before creating PR."
+  echo "Review output above and fix:"
+  echo "  - Test failures"
+  echo "  - Type errors"
+  echo "  - Lint errors"
+  echo "  - Build errors"
+  exit 1
+fi
+
+echo "✅ All local quality checks passed! Proceeding to commit and PR creation..."
 
 # ═══════════════════════════════════════════════════════
 # PHASE 3: COMMIT & PUSH
