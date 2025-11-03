@@ -6,11 +6,42 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 
 ## Current Release
 
-**v0.3.0** - Complete Web UI (2025-11-02)
+**v0.4.0** - Beta Ready (2025-11-03)
 
 ---
 
 ## All Releases
+
+### v0.4.0 - Beta Ready (2025-11-03)
+
+**Milestone:** Docker Development + Skills/MCP Management
+
+**Major Features:**
+- Complete Docker Compose stack (API, Web, Database, Adminer)
+- Skills and MCP server management (API + CLI)
+- Enhanced Claude Code sync workflow
+- GitHub Project Manager agent
+- Streamlined developer experience
+
+**Components:**
+- Docker containerized API server with health checks
+- Docker containerized Next.js web UI with hot reload
+- Skills API endpoints (CRUD operations)
+- MCP server catalog and configuration
+- Enhanced `ubik sync` with Claude Code support
+- `ubik skills` command group (list/show/my)
+
+**Statistics:**
+- 11 issues closed in milestone
+- 17 commits since v0.3.0
+- Complete Docker development stack
+- Skills + MCP management fully implemented
+
+**Links:**
+- [Git Tag](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.4.0)
+- [Compare with v0.3.0](https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.3.0...v0.4.0)
+
+---
 
 ### v0.3.0 - Complete Web UI (2025-11-02)
 
@@ -145,16 +176,16 @@ See [Release Manager Skill](../.claude/skills/release-manager/SKILL.md) for comp
 
 ## Upcoming Releases
 
-### v0.4.0 - Analytics & Approvals (Planned)
+### v0.5.0 - Public Launch (Planned)
 
 **Target:** Q1 2026
 
 **Planned Features:**
-- Approval workflow UI
-- Analytics dashboard
-- Cost tracking and budgets
-- Usage trends visualization
-- Approval notifications
+- Public launch campaign and beta onboarding
+- Platform stabilization
+- Performance optimizations
+- Production deployment setup
+- User documentation and tutorials
 
 ### v1.0.0 - Production Launch (Planned)
 
