@@ -26,7 +26,6 @@
 | [public.employee_mcp_configs](public.employee_mcp_configs.md) | 11 |  | BASE TABLE |
 | [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
 | [public.approvals](public.approvals.md) | 7 |  | BASE TABLE |
-| [public.activity_logs](public.activity_logs.md) | 7 |  | BASE TABLE |
 | [public.usage_records](public.usage_records.md) | 12 |  | BASE TABLE |
 | [public.v_employee_agents](public.v_employee_agents.md) | 12 | Complete view of employee agent configurations with catalog details | VIEW |
 | [public.v_employee_mcps](public.v_employee_mcps.md) | 11 | Complete view of employee MCP configurations with catalog details | VIEW |
@@ -120,8 +119,6 @@ erDiagram
 "public.agent_requests" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.approvals" }o--|| "public.agent_requests" : "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
-"public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
-"public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
@@ -345,15 +342,6 @@ erDiagram
   text comment
   timestamp_without_time_zone created_at
   timestamp_without_time_zone resolved_at
-}
-"public.activity_logs" {
-  uuid id
-  uuid org_id FK
-  uuid employee_id FK
-  varchar_100_ event_type
-  varchar_50_ event_category
-  jsonb payload
-  timestamp_without_time_zone created_at
 }
 "public.usage_records" {
   uuid id

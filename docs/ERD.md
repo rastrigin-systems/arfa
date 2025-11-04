@@ -39,8 +39,6 @@ erDiagram
     employees ||--o{ agent_requests : "has"
     employees ||--o{ approvals : "has"
     agent_requests ||--o{ approvals : "has"
-    organizations ||--o{ activity_logs : "has"
-    employees ||--o{ activity_logs : "has"
     organizations ||--o{ usage_records : "has"
     employees ||--o{ usage_records : "has"
     employee_agent_configs ||--o{ usage_records : "has"
@@ -234,16 +232,6 @@ erDiagram
         timestamp resolved_at
     }
     
-    activity_logs {
-        uuid id PK
-        uuid org_id FK
-        uuid employee_id FK
-        varchar100 event_type
-        varchar50 event_category
-        jsonb payload
-        timestamp created_at
-    }
-    
     usage_records {
         uuid id PK
         uuid org_id FK
@@ -349,12 +337,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 26
+- **Total Tables**: 25
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~210
-- **Foreign Keys**: 34+
-- **Indexes**: 86+
+- **Total Columns**: ~203
+- **Foreign Keys**: 32+
+- **Indexes**: 81+
 
 ## Legend
 
@@ -366,6 +354,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-11-02 19:37:33
+**Generated**: 2025-11-04 13:47:39
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+
