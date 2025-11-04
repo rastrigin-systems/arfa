@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health Check
+         * @description Returns API health status for monitoring
+         */
+        get: operations["healthCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -503,6 +523,260 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mcp-servers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available MCP servers
+         * @description Get catalog of approved MCP servers (Filesystem, GitHub, Playwright, etc.)
+         */
+        get: operations["listMCPServers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/skills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all available skills
+         * @description Get list of all skills in the catalog
+         */
+        get: operations["listSkills"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mcp-servers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MCP Server UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get MCP server details
+         * @description Get details for a specific MCP server from the catalog
+         */
+        get: operations["getMCPServer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/skills/{skill_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Skill UUID */
+                skill_id: components["parameters"]["SkillId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get skill details
+         * @description Get details of a specific skill from the catalog
+         */
+        get: operations["getSkill"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/employees/me/mcp-servers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List employee's MCP servers
+         * @description Get all MCP server configurations for the authenticated employee
+         */
+        get: operations["listEmployeeMCPServers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/employees/me/skills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List employee's installed skills
+         * @description Get list of skills installed for the authenticated employee
+         */
+        get: operations["listEmployeeSkills"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/employees/me/skills/{skill_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Skill UUID */
+                skill_id: components["parameters"]["SkillId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get employee's specific skill
+         * @description Get details of a specific skill installed for the authenticated employee
+         */
+        get: operations["getEmployeeSkill"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List logs
+         * @description List activity logs with pagination and filters.
+         *
+         *     Supports filtering by:
+         *     - session_id: Get all logs for a specific CLI session
+         *     - employee_id: Get logs for a specific employee
+         *     - agent_id: Get logs for a specific agent
+         *     - event_type: Filter by event type (input, output, error, etc.)
+         *     - event_category: Filter by category (io, agent, mcp, auth, admin)
+         *     - start_date: Logs created on or after this date
+         *     - end_date: Logs created on or before this date
+         */
+        get: operations["listLogs"];
+        put?: never;
+        /**
+         * Create log entry
+         * @description Create a new activity log entry. Called by CLI to track I/O and events.
+         *
+         *     Rate limited to 100 logs/second per employee to prevent spam.
+         */
+        post: operations["createLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/logs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export logs
+         * @description Export activity logs as JSON or CSV.
+         *
+         *     Supports same filters as /logs endpoint.
+         *     Response is streamed for large exports.
+         */
+        get: operations["exportLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/logs/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List sessions
+         * @description List CLI sessions with metadata (start time, duration, event count, etc.).
+         *
+         *     Returns both active and completed sessions.
+         */
+        get: operations["listSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/claude-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get complete Claude Code configuration
+         * @description Returns complete configuration bundle for Claude Code sync:
+         *     - All agent configurations
+         *     - All assigned skills (with files)
+         *     - All MCP server configurations
+         *
+         *     This is the primary endpoint used by the CLI to synchronize configurations.
+         */
+        get: operations["getClaudeCodeSync"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -515,6 +789,15 @@ export interface components {
             details?: {
                 [key: string]: unknown;
             };
+        };
+        HealthResponse: {
+            /** @example healthy */
+            status: string;
+            /**
+             * Format: date-time
+             * @example 2025-11-01T20:15:30Z
+             */
+            timestamp: string;
         };
         LoginRequest: {
             /**
@@ -972,6 +1255,91 @@ export interface components {
             configs: components["schemas"]["EmployeeAgentConfig"][];
             total: number;
         };
+        Skill: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @example github-task-manager */
+            name: string;
+            /** @example Manages GitHub issues and project tasks */
+            description: string;
+            /** @example workflow */
+            category: string;
+            /** @example 1.0.0 */
+            version: string;
+            files: {
+                /** @example SKILL.md */
+                path?: string;
+                /** @example # GitHub Task Manager\n\nManages GitHub issues... */
+                content?: string;
+            }[];
+            dependencies?: {
+                /**
+                 * @example [
+                 *       "github"
+                 *     ]
+                 */
+                mcp_servers?: string[];
+                /** @example [] */
+                skills?: string[];
+            } | null;
+            /** @default true */
+            is_active: boolean;
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
+        EmployeeSkill: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @example github-task-manager */
+            name: string;
+            /** @example Manages GitHub issues and project tasks */
+            description: string;
+            /** @example workflow */
+            category: string;
+            /** @example 1.0.0 */
+            version: string;
+            files: {
+                /** @example SKILL.md */
+                path?: string;
+                /** @example # GitHub Task Manager\n\nManages GitHub issues... */
+                content?: string;
+            }[];
+            dependencies?: {
+                /**
+                 * @example [
+                 *       "github"
+                 *     ]
+                 */
+                mcp_servers?: string[];
+                /** @example [] */
+                skills?: string[];
+            } | null;
+            /** @description Whether skill is active in catalog */
+            is_active: boolean;
+            /** @description Whether skill is enabled for this employee */
+            is_enabled: boolean;
+            /** @description Employee-specific skill configuration */
+            config?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Format: date-time
+             * @description When skill was assigned to employee
+             */
+            readonly installed_at: string;
+        };
+        ListSkillsResponse: {
+            skills: components["schemas"]["Skill"][];
+            /** @example 10 */
+            total: number;
+        };
+        ListEmployeeSkillsResponse: {
+            skills: components["schemas"]["EmployeeSkill"][];
+            /** @example 3 */
+            total: number;
+        };
         PaginationMeta: {
             /** @example 100 */
             total: number;
@@ -986,6 +1354,359 @@ export interface components {
             data: components["schemas"]["Employee"][];
             meta: components["schemas"]["PaginationMeta"];
         };
+        MCPServer: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @example GitHub */
+            name: string;
+            /** @example Anthropic */
+            provider: string;
+            /** @example 1.0.0 */
+            version: string;
+            /** @example GitHub integration MCP server */
+            description: string;
+            /**
+             * @example {
+             *       "token": "string"
+             *     }
+             */
+            connection_schema?: {
+                [key: string]: unknown;
+            };
+            /**
+             * @example [
+             *       "repository_access",
+             *       "issue_management"
+             *     ]
+             */
+            capabilities?: string[];
+            /** @default false */
+            requires_credentials: boolean;
+            /** @default false */
+            is_approved: boolean;
+            /** Format: uuid */
+            category_id?: string | null;
+            /** @example modelcontextprotocol/server-github:latest */
+            docker_image?: string | null;
+            /**
+             * @example {
+             *       "token": "${GITHUB_TOKEN}"
+             *     }
+             */
+            config_template?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * @example [
+             *       "GITHUB_TOKEN"
+             *     ]
+             */
+            required_env_vars?: string[] | null;
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
+        ListMCPServersResponse: {
+            servers: components["schemas"]["MCPServer"][];
+            /** @example 12 */
+            total: number;
+        };
+        EmployeeMCPServer: {
+            /**
+             * Format: uuid
+             * @description MCP server catalog ID
+             */
+            id: string;
+            /** @example GitHub */
+            name: string;
+            /** @example Anthropic */
+            provider: string;
+            /** @example 1.0.0 */
+            version: string;
+            /** @example GitHub integration MCP server */
+            description: string;
+            /** @example modelcontextprotocol/server-github:latest */
+            docker_image?: string | null;
+            /**
+             * @example {
+             *       "token": "${GITHUB_TOKEN}"
+             *     }
+             */
+            config_template?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * @example [
+             *       "GITHUB_TOKEN"
+             *     ]
+             */
+            required_env_vars?: string[] | null;
+            /**
+             * @description Employee's actual configuration (may contain credentials)
+             * @example {
+             *       "token": "ghp_xxxxxxxxxxxx"
+             *     }
+             */
+            connection_config?: {
+                [key: string]: unknown;
+            };
+            /** @default true */
+            is_enabled: boolean;
+            /** Format: date-time */
+            configured_at: string;
+        };
+        ListEmployeeMCPServersResponse: {
+            servers: components["schemas"]["EmployeeMCPServer"][];
+            /** @example 5 */
+            total: number;
+        };
+        ClaudeCodeSyncResponse: {
+            /** @description All agent configurations for this employee */
+            agents: components["schemas"]["SyncAgentConfig"][];
+            /** @description All assigned skills with files */
+            skills: components["schemas"]["SyncSkillConfig"][];
+            /** @description All MCP server configurations */
+            mcp_servers: components["schemas"]["SyncMCPServerConfig"][];
+            /**
+             * @description API version
+             * @example 1.0.0
+             */
+            version: string;
+            /**
+             * Format: date-time
+             * @description Timestamp of this sync
+             * @example 2025-11-02T18:00:00Z
+             */
+            synced_at: string;
+        };
+        SyncAgentConfig: {
+            /**
+             * Format: uuid
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /** @example go-backend-developer */
+            name: string;
+            /** @example claude-code */
+            type: string;
+            /** @example go-backend-developer.md */
+            filename: string;
+            /** @description Agent configuration file content (optional) */
+            content?: string;
+            /**
+             * @description Merged agent configuration (org + team + employee)
+             * @example {
+             *       "model": "claude-3-5-sonnet-20241022",
+             *       "temperature": 0.7
+             *     }
+             */
+            config: {
+                [key: string]: unknown;
+            };
+            /** @example anthropic */
+            provider: string;
+            /** @example true */
+            is_enabled: boolean;
+            /** @example 1.0.0 */
+            version: string;
+        };
+        SyncSkillConfig: {
+            /** Format: uuid */
+            id: string;
+            /** @example release-manager */
+            name: string;
+            /** @example Release management skill */
+            description?: string;
+            /** @example project-management */
+            category?: string;
+            /** @example 1.0.0 */
+            version: string;
+            files?: {
+                /** @example SKILL.md */
+                path?: string;
+                /**
+                 * @example # Release Manager
+                 *     ...
+                 */
+                content?: string;
+            }[];
+            /**
+             * @example {
+             *       "mcp_servers": [
+             *         "github-mcp-server"
+             *       ]
+             *     }
+             */
+            dependencies?: {
+                [key: string]: unknown;
+            };
+            /** @example true */
+            is_enabled: boolean;
+        };
+        SyncMCPServerConfig: {
+            /** Format: uuid */
+            id: string;
+            /** @example github-mcp-server */
+            name: string;
+            /** @example github */
+            provider: string;
+            /** @example 1.0.0 */
+            version: string;
+            /** @example GitHub MCP server */
+            description?: string;
+            /** @example ghcr.io/github/github-mcp-server */
+            docker_image: string;
+            /**
+             * @example {
+             *       "env": {
+             *         "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxx"
+             *       }
+             *     }
+             */
+            config: {
+                [key: string]: unknown;
+            };
+            /**
+             * @example [
+             *       "GITHUB_PERSONAL_ACCESS_TOKEN"
+             *     ]
+             */
+            required_env_vars?: string[];
+            /** @example true */
+            is_enabled: boolean;
+        };
+        CreateLogRequest: {
+            /**
+             * Format: uuid
+             * @description CLI session ID (optional, generated if not provided)
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            session_id?: string;
+            /**
+             * Format: uuid
+             * @description Agent that generated this log entry
+             * @example 660e8400-e29b-41d4-a716-446655440000
+             */
+            agent_id?: string;
+            /**
+             * @description Type of event
+             * @example input
+             * @enum {string}
+             */
+            event_type: "input" | "output" | "error" | "session_start" | "session_end" | "agent.installed" | "mcp.configured" | "config.synced";
+            /**
+             * @description Category of event
+             * @example io
+             * @enum {string}
+             */
+            event_category: "io" | "agent" | "mcp" | "auth" | "admin";
+            /**
+             * @description Actual I/O text for input/output/error events
+             * @example User typed: write a test
+             */
+            content?: string;
+            /**
+             * @description Additional metadata (command, tool, duration, etc.)
+             * @example {
+             *       "command": "test",
+             *       "tool": "bash",
+             *       "duration_ms": 150
+             *     }
+             */
+            payload?: {
+                [key: string]: unknown;
+            };
+        };
+        ActivityLog: {
+            /**
+             * Format: uuid
+             * @example 770e8400-e29b-41d4-a716-446655440000
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @example 880e8400-e29b-41d4-a716-446655440000
+             */
+            org_id: string;
+            /**
+             * Format: uuid
+             * @example 990e8400-e29b-41d4-a716-446655440000
+             */
+            employee_id?: string | null;
+            /**
+             * Format: uuid
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            session_id?: string | null;
+            /**
+             * Format: uuid
+             * @example 660e8400-e29b-41d4-a716-446655440000
+             */
+            agent_id?: string | null;
+            /** @example input */
+            event_type: string;
+            /** @example io */
+            event_category: string;
+            /** @example User typed: write a test */
+            content?: string | null;
+            /**
+             * @example {
+             *       "command": "test",
+             *       "tool": "bash"
+             *     }
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Format: date-time
+             * @example 2025-11-04T10:30:00Z
+             */
+            created_at: string;
+        };
+        ListLogsResponse: {
+            logs: components["schemas"]["ActivityLog"][];
+            pagination: components["schemas"]["PaginationMeta"];
+        };
+        SessionInfo: {
+            /**
+             * Format: uuid
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            session_id: string;
+            /**
+             * Format: uuid
+             * @example 660e8400-e29b-41d4-a716-446655440000
+             */
+            agent_id?: string | null;
+            /**
+             * Format: date-time
+             * @example 2025-11-04T10:00:00Z
+             */
+            start_time: string;
+            /**
+             * Format: date-time
+             * @example 2025-11-04T10:30:00Z
+             */
+            end_time?: string | null;
+            /**
+             * @description Session duration in seconds (null if still active)
+             * @example 1800
+             */
+            duration_seconds?: number | null;
+            /**
+             * @description Total number of events in this session
+             * @example 42
+             */
+            event_count: number;
+            /** @example output */
+            last_event_type?: string | null;
+        };
+        ListSessionsResponse: {
+            sessions: components["schemas"]["SessionInfo"][];
+            pagination: components["schemas"]["PaginationMeta"];
+        };
     };
     responses: never;
     parameters: {
@@ -995,6 +1716,8 @@ export interface components {
         TeamId: string;
         /** @description Agent configuration UUID */
         ConfigId: string;
+        /** @description Skill UUID */
+        SkillId: string;
         /** @description Page number */
         Page: number;
         /** @description Items per page */
@@ -1008,6 +1731,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    healthCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API is healthy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -2663,6 +3406,478 @@ export interface operations {
             };
             /** @description Employee not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listMCPServers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description MCP server catalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListMCPServersResponse"];
+                };
+            };
+        };
+    };
+    listSkills: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of available skills */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListSkillsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMCPServer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MCP Server UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description MCP server details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MCPServer"];
+                };
+            };
+        };
+    };
+    getSkill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Skill UUID */
+                skill_id: components["parameters"]["SkillId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Skill details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Skill"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description MCP server not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listEmployeeMCPServers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Employee MCP server configurations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListEmployeeMCPServersResponse"];
+                };
+            };
+        };
+    };
+    listEmployeeSkills: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of employee's skills */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListEmployeeSkillsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getEmployeeSkill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Skill UUID */
+                skill_id: components["parameters"]["SkillId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Employee skill details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeSkill"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Skill not found or not installed for employee */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listLogs: {
+        parameters: {
+            query?: {
+                /** @description Filter by CLI session ID */
+                session_id?: string;
+                /** @description Filter by employee ID */
+                employee_id?: string;
+                /** @description Filter by agent ID */
+                agent_id?: string;
+                /** @description Filter by event type */
+                event_type?: "input" | "output" | "error" | "session_start" | "session_end" | "agent.installed" | "mcp.configured" | "config.synced";
+                /** @description Filter by event category */
+                event_category?: "io" | "agent" | "mcp" | "auth" | "admin";
+                /** @description Filter logs on or after this date */
+                start_date?: string;
+                /** @description Filter logs on or before this date */
+                end_date?: string;
+                /** @description Page number */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page */
+                per_page?: components["parameters"]["PerPage"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of logs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListLogsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLogRequest"];
+            };
+        };
+        responses: {
+            /** @description Log entry created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityLog"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    exportLogs: {
+        parameters: {
+            query: {
+                /** @description Export format */
+                format: "json" | "csv";
+                /** @description Filter by CLI session ID */
+                session_id?: string;
+                /** @description Filter by employee ID */
+                employee_id?: string;
+                /** @description Filter by agent ID */
+                agent_id?: string;
+                /** @description Filter by event type */
+                event_type?: "input" | "output" | "error" | "session_start" | "session_end" | "agent.installed" | "mcp.configured" | "config.synced";
+                /** @description Filter by event category */
+                event_category?: "io" | "agent" | "mcp" | "auth" | "admin";
+                /** @description Filter logs on or after this date */
+                start_date?: string;
+                /** @description Filter logs on or before this date */
+                end_date?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exported logs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "text/csv": string;
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listSessions: {
+        parameters: {
+            query?: {
+                /** @description Filter by employee ID */
+                employee_id?: string;
+                /** @description Filter by agent ID */
+                agent_id?: string;
+                /** @description Show only active sessions (no end_time) */
+                active_only?: boolean;
+                /** @description Page number */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page */
+                per_page?: components["parameters"]["PerPage"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of sessions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListSessionsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getClaudeCodeSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Complete Claude Code configuration bundle */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaudeCodeSyncResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
