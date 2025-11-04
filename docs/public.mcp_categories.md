@@ -51,9 +51,6 @@ erDiagram
   uuid category_id FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  varchar_255_ docker_image
-  jsonb config_template
-  jsonb required_env_vars
 }
 ```
 

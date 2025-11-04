@@ -50,7 +50,7 @@ CREATE VIEW v_employee_agents AS (
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [public.employee_agent_configs](public.employee_agent_configs.md) | 10 |  | BASE TABLE |
+| [public.employee_agent_configs](public.employee_agent_configs.md) | 9 |  | BASE TABLE |
 | [public.employees](public.employees.md) | 14 |  | BASE TABLE |
 | [public.agents](public.agents.md) | 12 |  | BASE TABLE |
 

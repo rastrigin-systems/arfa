@@ -39,11 +39,12 @@ erDiagram
     employees ||--o{ agent_requests : "has"
     employees ||--o{ approvals : "has"
     agent_requests ||--o{ approvals : "has"
+    organizations ||--o{ activity_logs : "has"
+    employees ||--o{ activity_logs : "has"
+    agents ||--o{ activity_logs : "has"
     organizations ||--o{ usage_records : "has"
     employees ||--o{ usage_records : "has"
     employee_agent_configs ||--o{ usage_records : "has"
-    employees ||--o{ employee_skills : "has"
-    skill_catalog ||--o{ employee_skills : "has"
 
     %% Table Definitions
     organizations {
@@ -169,7 +170,6 @@ erDiagram
         timestamp last_synced_at
         timestamp created_at
         timestamp updated_at
-        text content
     }
     
     mcp_categories {
@@ -192,9 +192,6 @@ erDiagram
         uuid category_id FK
         timestamp created_at
         timestamp updated_at
-        varchar255 docker_image
-        jsonb config_template
-        jsonb required_env_vars
     }
     
     employee_mcp_configs {
@@ -208,7 +205,6 @@ erDiagram
         timestamp last_sync_at
         timestamp created_at
         timestamp updated_at
-        boolean is_enabled
     }
     
     agent_requests {
@@ -230,6 +226,19 @@ erDiagram
         text comment
         timestamp created_at
         timestamp resolved_at
+    }
+    
+    activity_logs {
+        uuid id PK
+        uuid org_id FK
+        uuid employee_id FK
+        uuid session_id
+        uuid agent_id FK
+        varchar100 event_type
+        varchar50 event_category
+        text content
+        jsonb payload
+        timestamp created_at
     }
     
     usage_records {
@@ -337,12 +346,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 25
+- **Total Tables**: 24
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~203
-- **Foreign Keys**: 32+
-- **Indexes**: 81+
+- **Total Columns**: ~191
+- **Foreign Keys**: 33+
+- **Indexes**: 78+
 
 ## Legend
 
@@ -354,6 +363,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-11-04 13:47:39
+**Generated**: 2025-11-04 16:23:35
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

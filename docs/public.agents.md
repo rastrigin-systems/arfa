@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.agent_tools](public.agent_tools.md) [public.agent_policies](public.agent_policies.md) [public.org_agent_configs](public.org_agent_configs.md) [public.team_agent_configs](public.team_agent_configs.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.system_prompts](public.system_prompts.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.agent_tools](public.agent_tools.md) [public.agent_policies](public.agent_policies.md) [public.org_agent_configs](public.org_agent_configs.md) [public.team_agent_configs](public.team_agent_configs.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.system_prompts](public.system_prompts.md) [public.activity_logs](public.activity_logs.md) |  |  |
 | name | varchar(255) |  | false |  |  |  |
 | type | varchar(100) |  | false |  |  |  |
 | description | text |  | false |  |  |  |
@@ -50,6 +50,7 @@ erDiagram
 "public.team_agent_configs" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
 "public.employee_agent_configs" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT"
 "public.system_prompts" }o--o| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
+"public.activity_logs" }o--o| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL"
 
 "public.agents" {
   uuid id
@@ -104,7 +105,6 @@ erDiagram
   timestamp_without_time_zone last_synced_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  text content
 }
 "public.system_prompts" {
   uuid id
@@ -115,6 +115,18 @@ erDiagram
   integer priority
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+}
+"public.activity_logs" {
+  uuid id
+  uuid org_id FK
+  uuid employee_id FK
+  uuid session_id
+  uuid agent_id FK
+  varchar_100_ event_type
+  varchar_50_ event_category
+  text content
+  jsonb payload
+  timestamp_without_time_zone created_at
 }
 ```
 

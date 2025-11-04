@@ -421,6 +421,65 @@ func (pc *PlatformClient) GetEmployeeSkill(skillID string) (*EmployeeSkill, erro
 	return &skill, nil
 }
 
+// LogEntry represents a log entry to send to the API
+type LogEntry struct {
+	SessionID     string                 `json:"session_id,omitempty"`
+	AgentID       string                 `json:"agent_id,omitempty"`
+	EventType     string                 `json:"event_type"`
+	EventCategory string                 `json:"event_category"`
+	Content       string                 `json:"content,omitempty"`
+	Payload       map[string]interface{} `json:"payload,omitempty"`
+}
+
+// CreateLogRequest represents a single log creation request
+type CreateLogRequest struct {
+	SessionID     *string                `json:"session_id,omitempty"`
+	AgentID       *string                `json:"agent_id,omitempty"`
+	EventType     string                 `json:"event_type"`
+	EventCategory string                 `json:"event_category"`
+	Content       *string                `json:"content,omitempty"`
+	Payload       *map[string]interface{} `json:"payload,omitempty"`
+}
+
+// CreateLog sends a single log entry to the platform API
+func (pc *PlatformClient) CreateLog(entry LogEntry) error {
+	req := CreateLogRequest{
+		EventType:     entry.EventType,
+		EventCategory: entry.EventCategory,
+	}
+
+	if entry.SessionID != "" {
+		req.SessionID = &entry.SessionID
+	}
+	if entry.AgentID != "" {
+		req.AgentID = &entry.AgentID
+	}
+	if entry.Content != "" {
+		req.Content = &entry.Content
+	}
+	if entry.Payload != nil {
+		req.Payload = &entry.Payload
+	}
+
+	if err := pc.doRequest("POST", "/logs", req, nil); err != nil {
+		return fmt.Errorf("failed to create log: %w", err)
+	}
+
+	return nil
+}
+
+// CreateLogBatch sends multiple log entries in a single request
+func (pc *PlatformClient) CreateLogBatch(entries []LogEntry) error {
+	// For now, send logs individually
+	// TODO: Update API to support batch endpoint
+	for _, entry := range entries {
+		if err := pc.CreateLog(entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // doRequest is a helper method to perform HTTP requests
 func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
 	// Add /api/v1 prefix to all API calls
