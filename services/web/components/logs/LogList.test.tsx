@@ -12,12 +12,11 @@ const mockLogs: ActivityLog[] = [
     org_id: 'org-1',
     session_id: 'session-1',
     employee_id: 'emp-1',
-    employee_name: 'John Doe',
     agent_id: 'agent-1',
-    agent_name: 'claude-code',
     event_type: 'session_start',
     event_category: 'io',
     content: 'Session started',
+    payload: {},
     created_at: '2024-01-01T10:00:00Z',
   },
   {
@@ -25,12 +24,11 @@ const mockLogs: ActivityLog[] = [
     org_id: 'org-1',
     session_id: 'session-1',
     employee_id: 'emp-1',
-    employee_name: 'John Doe',
     agent_id: 'agent-1',
-    agent_name: 'claude-code',
     event_type: 'input',
     event_category: 'io',
     content: 'Implement JWT authentication',
+    payload: {},
     created_at: '2024-01-01T10:00:10Z',
   },
   {
@@ -38,12 +36,11 @@ const mockLogs: ActivityLog[] = [
     org_id: 'org-1',
     session_id: 'session-1',
     employee_id: 'emp-1',
-    employee_name: 'John Doe',
     agent_id: 'agent-1',
-    agent_name: 'claude-code',
     event_type: 'output',
     event_category: 'io',
     content: 'I will help you implement JWT authentication...',
+    payload: {},
     created_at: '2024-01-01T10:00:15Z',
   },
   {
@@ -51,12 +48,11 @@ const mockLogs: ActivityLog[] = [
     org_id: 'org-1',
     session_id: 'session-1',
     employee_id: 'emp-1',
-    employee_name: 'John Doe',
     agent_id: 'agent-1',
-    agent_name: 'claude-code',
     event_type: 'session_end',
     event_category: 'io',
     content: 'Session ended',
+    payload: {},
     created_at: '2024-01-01T10:05:30Z',
   },
 ];
@@ -76,16 +72,11 @@ describe('LogList', () => {
     expect(screen.getByText(/Session:/)).toBeInTheDocument();
     // Check for event count badge
     expect(screen.getByText('4 events')).toBeInTheDocument();
-    // Verify session details are rendered
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('claude-code')).toBeInTheDocument();
   });
 
   it('should display session metadata', () => {
     render(<LogList logs={mockLogs} />);
 
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('claude-code')).toBeInTheDocument();
     expect(screen.getByText('5m 30s')).toBeInTheDocument(); // Duration
   });
 
@@ -152,23 +143,23 @@ describe('LogList', () => {
     expect(screen.getByText('Show less')).toBeInTheDocument();
   });
 
-  it('should display metadata in details', async () => {
+  it('should display payload in details', async () => {
     const user = userEvent.setup();
-    const logsWithMetadata: ActivityLog[] = [
+    const logsWithPayload: ActivityLog[] = [
       {
         ...mockLogs[0],
-        metadata: { workspace: '/path/to/workspace', command: 'ubik' },
+        payload: { workspace: '/path/to/workspace', command: 'ubik' },
       },
     ];
 
-    render(<LogList logs={logsWithMetadata} />);
+    render(<LogList logs={logsWithPayload} />);
 
     const sessionCard = screen.getByText(/Session:/i).closest('[class*="cursor-pointer"]');
     await user.click(sessionCard!);
 
     await waitFor(() => {
-      const metadataToggle = screen.getByText('Metadata');
-      expect(metadataToggle).toBeInTheDocument();
+      const payloadToggle = screen.getByText('Payload');
+      expect(payloadToggle).toBeInTheDocument();
     });
   });
 });

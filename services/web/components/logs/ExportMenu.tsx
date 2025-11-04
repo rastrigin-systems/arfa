@@ -13,7 +13,16 @@ import { Download, Loader2 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 
 interface ExportMenuProps {
-  filters: Record<string, string | undefined>;
+  filters: {
+    session_id?: string;
+    employee_id?: string;
+    agent_id?: string;
+    event_type?: string;
+    event_category?: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+  };
 }
 
 export function ExportMenu({ filters }: ExportMenuProps) {
@@ -24,11 +33,20 @@ export function ExportMenu({ filters }: ExportMenuProps) {
     setIsExporting(true);
 
     try {
+      type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced';
+      type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin';
+
       const { data, error } = await apiClient.GET('/logs/export', {
         params: {
           query: {
             format,
-            ...filters,
+            session_id: filters.session_id,
+            employee_id: filters.employee_id,
+            agent_id: filters.agent_id,
+            event_type: filters.event_type as EventType,
+            event_category: filters.event_category as EventCategory,
+            start_date: filters.start_date,
+            end_date: filters.end_date,
           },
         },
       });

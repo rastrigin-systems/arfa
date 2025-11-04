@@ -33,14 +33,17 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
     setError(null);
 
     try {
+      type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced';
+      type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin';
+
       const { data, error: apiError } = await apiClient.GET('/logs', {
         params: {
           query: {
             session_id: filters.session_id,
             employee_id: filters.employee_id,
             agent_id: filters.agent_id,
-            event_type: filters.event_type,
-            event_category: filters.event_category,
+            event_type: filters.event_type as EventType,
+            event_category: filters.event_category as EventCategory,
             start_date: filters.start_date,
             end_date: filters.end_date,
             limit: filters.limit || 100,

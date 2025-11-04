@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Clock, User, Bot } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock } from 'lucide-react';
 import type { components } from '@/lib/api/schema';
 
 type ActivityLog = components['schemas']['ActivityLog'];
@@ -19,8 +19,6 @@ interface SessionGroup {
   start_time: string;
   end_time?: string;
   duration?: number;
-  employee_name?: string;
-  agent_name?: string;
 }
 
 export function LogList({ logs }: LogListProps) {
@@ -38,8 +36,6 @@ export function LogList({ logs }: LogListProps) {
           session_id: log.session_id,
           logs: [],
           start_time: log.created_at,
-          employee_name: log.employee_name,
-          agent_name: log.agent_name,
         });
       }
 
@@ -135,18 +131,6 @@ function SessionCard({ session, expanded, onToggle }: SessionCardProps) {
             </div>
 
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              {session.employee_name && (
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {session.employee_name}
-                </span>
-              )}
-              {session.agent_name && (
-                <span className="flex items-center gap-1">
-                  <Bot className="h-3 w-3" />
-                  {session.agent_name}
-                </span>
-              )}
               <span>{new Date(session.start_time).toLocaleString()}</span>
             </div>
           </div>
@@ -225,13 +209,13 @@ function LogEntry({ log }: LogEntryProps) {
             </>
           )}
 
-          {log.metadata && (
+          {log.payload && Object.keys(log.payload).length > 0 && (
             <details className="mt-2">
               <summary className="text-xs text-muted-foreground cursor-pointer">
-                Metadata
+                Payload
               </summary>
               <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
-                {JSON.stringify(log.metadata, null, 2)}
+                {JSON.stringify(log.payload, null, 2)}
               </pre>
             </details>
           )}
