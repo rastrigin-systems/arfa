@@ -15,7 +15,6 @@
 | last_synced_at | timestamp without time zone |  | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
-| content | text |  | true |  |  | Full .md file content for agent configuration |
 
 ## Constraints
 
@@ -65,7 +64,6 @@ erDiagram
   timestamp_without_time_zone last_synced_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  text content
 }
 "public.usage_records" {
   uuid id
