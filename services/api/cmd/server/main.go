@@ -18,6 +18,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
 	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
 )
 
 func main() {
@@ -44,6 +45,10 @@ func main() {
 	// Create database queries instance
 	queries := db.New(dbPool)
 
+	// Create WebSocket hub for real-time log streaming
+	wsHub := websocket.NewHub()
+	go wsHub.Run()
+
 	// Create handlers
 	healthHandler := handlers.NewHealthHandler()
 	authHandler := handlers.NewAuthHandler(queries)
@@ -56,8 +61,9 @@ func main() {
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
 	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
-	logsHandler := handlers.NewLogsHandler(queries)
+	logsHandler := handlers.NewLogsHandler(queries, wsHub)
 	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
+	wsHandler := websocket.NewHandler(wsHub)
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
@@ -236,6 +242,11 @@ func main() {
 					params := extractListSessionsParams(r)
 					logsHandler.ListSessions(w, r, params)
 				})
+
+				// WebSocket endpoint for real-time log streaming
+				// Format: WS /api/v1/logs/stream?session_id=xxx&employee_id=xxx&agent_id=xxx
+				// Auth: JWT token required in Authorization header
+				r.Get("/stream", wsHandler.ServeHTTP)
 			})
 
 			// Subscription routes

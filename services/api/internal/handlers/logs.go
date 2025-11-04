@@ -13,19 +13,22 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
 )
 
 // LogsHandler handles logging API requests
 type LogsHandler struct {
 	db             db.Querier
 	loggingService *service.LoggingService
+	wsHub          *websocket.Hub
 }
 
 // NewLogsHandler creates a new logs handler
-func NewLogsHandler(database db.Querier) *LogsHandler {
+func NewLogsHandler(database db.Querier, wsHub *websocket.Hub) *LogsHandler {
 	return &LogsHandler{
 		db:             database,
 		loggingService: service.NewLoggingService(database),
+		wsHub:          wsHub,
 	}
 }
 
@@ -93,6 +96,33 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	// For now, we'll construct a response from the input
 	// In a real implementation, the service would return the created log
 	newID := uuid.New()
+
+	// Broadcast log to WebSocket clients (if hub is configured)
+	if h.wsHub != nil {
+		wsMsg := websocket.LogMessage{
+			ID:            newID,
+			OrgID:         orgID,
+			EmployeeID:    employeeID,
+			EventType:     string(req.EventType),
+			EventCategory: string(req.EventCategory),
+			Timestamp:     time.Now(),
+		}
+
+		if req.SessionId != nil {
+			wsMsg.SessionID = *req.SessionId
+		}
+		if req.AgentId != nil {
+			wsMsg.AgentID = *req.AgentId
+		}
+		if req.Content != nil {
+			wsMsg.Content = *req.Content
+		}
+		if req.Payload != nil {
+			wsMsg.Payload = *req.Payload
+		}
+
+		h.wsHub.Broadcast(wsMsg)
+	}
 	response := api.ActivityLog{
 		Id:            openapi_types.UUID(newID),
 		OrgId:         openapi_types.UUID(orgID),
