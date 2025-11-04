@@ -72,7 +72,7 @@ func TestCreateLog_Success(t *testing.T) {
 			}, nil
 		})
 
-	handler := handlers.NewLogsHandler(mockDB)
+	handler := handlers.NewLogsHandler(mockDB, nil)
 
 	// Create request
 	bodyBytes, _ := json.Marshal(requestBody)
@@ -113,7 +113,7 @@ func TestCreateLog_MissingRequiredFields(t *testing.T) {
 		EventCategory: "io",
 	}
 
-	handler := handlers.NewLogsHandler(mockDB)
+	handler := handlers.NewLogsHandler(mockDB, nil)
 
 	// Create request
 	bodyBytes, _ := json.Marshal(requestBody)
@@ -184,7 +184,7 @@ func TestListLogs_Success(t *testing.T) {
 		CountActivityLogs(gomock.Any(), orgID).
 		Return(int64(2), nil)
 
-	handler := handlers.NewLogsHandler(mockDB)
+	handler := handlers.NewLogsHandler(mockDB, nil)
 
 	// Create request
 	req := httptest.NewRequest(http.MethodGet, "/logs?page=1&per_page=20", nil)
@@ -220,7 +220,7 @@ func TestListLogs_WithSessionFilter(t *testing.T) {
 		GetLogsBySession(gomock.Any(), pgtype.UUID{Bytes: sessionID, Valid: true}).
 		Return([]db.ActivityLog{}, nil)
 
-	handler := handlers.NewLogsHandler(mockDB)
+	handler := handlers.NewLogsHandler(mockDB, nil)
 
 	// Create request with session_id filter
 	req := httptest.NewRequest(http.MethodGet, "/logs?session_id="+sessionID.String(), nil)
