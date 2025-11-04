@@ -38,6 +38,8 @@ tags:
     description: Skills catalog and management
   - name: approvals
     description: Approval workflows
+  - name: logs
+    description: Activity logging and I/O capture
   - name: sync
     description: Configuration synchronization for CLI
 
@@ -1424,6 +1426,180 @@ components:
         is_enabled:
           type: boolean
           example: true
+
+    # ============================================================================
+    # Logging Schemas
+    # ============================================================================
+    CreateLogRequest:
+      type: object
+      required:
+        - event_type
+        - event_category
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: CLI session ID (optional, generated if not provided)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        agent_id:
+          type: string
+          format: uuid
+          description: Agent that generated this log entry
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        event_type:
+          type: string
+          description: Type of event
+          example: "input"
+          enum:
+            - input
+            - output
+            - error
+            - session_start
+            - session_end
+            - agent.installed
+            - mcp.configured
+            - config.synced
+        event_category:
+          type: string
+          description: Category of event
+          example: "io"
+          enum:
+            - io
+            - agent
+            - mcp
+            - auth
+            - admin
+        content:
+          type: string
+          description: Actual I/O text for input/output/error events
+          example: "User typed: write a test"
+        payload:
+          type: object
+          additionalProperties: true
+          description: Additional metadata (command, tool, duration, etc.)
+          example:
+            command: "test"
+            tool: "bash"
+            duration_ms: 150
+
+    ActivityLog:
+      type: object
+      required:
+        - id
+        - org_id
+        - event_type
+        - event_category
+        - payload
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440000"
+        org_id:
+          type: string
+          format: uuid
+          example: "880e8400-e29b-41d4-a716-446655440000"
+        employee_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "990e8400-e29b-41d4-a716-446655440000"
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        agent_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        event_type:
+          type: string
+          example: "input"
+        event_category:
+          type: string
+          example: "io"
+        content:
+          type: string
+          nullable: true
+          example: "User typed: write a test"
+        payload:
+          type: object
+          additionalProperties: true
+          example:
+            command: "test"
+            tool: "bash"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-04T10:30:00Z"
+
+    ListLogsResponse:
+      type: object
+      required:
+        - logs
+        - pagination
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityLog'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    SessionInfo:
+      type: object
+      required:
+        - session_id
+        - start_time
+        - event_count
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        agent_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        start_time:
+          type: string
+          format: date-time
+          example: "2025-11-04T10:00:00Z"
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-11-04T10:30:00Z"
+        duration_seconds:
+          type: integer
+          nullable: true
+          example: 1800
+          description: Session duration in seconds (null if still active)
+        event_count:
+          type: integer
+          example: 42
+          description: Total number of events in this session
+        last_event_type:
+          type: string
+          nullable: true
+          example: "output"
+
+    ListSessionsResponse:
+      type: object
+      required:
+        - sessions
+        - pagination
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionInfo'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
 
   parameters:
     EmployeeId:
@@ -2901,6 +3077,284 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Skill not found or not installed for employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Logging Endpoints
+  # ============================================================================
+  /logs:
+    post:
+      tags:
+        - logs
+      summary: Create log entry
+      description: |
+        Create a new activity log entry. Called by CLI to track I/O and events.
+
+        Rate limited to 100 logs/second per employee to prevent spam.
+      operationId: createLog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLogRequest'
+      responses:
+        '201':
+          description: Log entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLog'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - logs
+      summary: List logs
+      description: |
+        List activity logs with pagination and filters.
+
+        Supports filtering by:
+        - session_id: Get all logs for a specific CLI session
+        - employee_id: Get logs for a specific employee
+        - agent_id: Get logs for a specific agent
+        - event_type: Filter by event type (input, output, error, etc.)
+        - event_category: Filter by category (io, agent, mcp, auth, admin)
+        - start_date: Logs created on or after this date
+        - end_date: Logs created on or before this date
+      operationId: listLogs
+      parameters:
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by CLI session ID
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by employee ID
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by agent ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [input, output, error, session_start, session_end, agent.installed, mcp.configured, config.synced]
+          description: Filter by event type
+        - name: event_category
+          in: query
+          schema:
+            type: string
+            enum: [io, agent, mcp, auth, admin]
+          description: Filter by event category
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs on or after this date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs on or before this date
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: List of logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLogsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logs/export:
+    get:
+      tags:
+        - logs
+      summary: Export logs
+      description: |
+        Export activity logs as JSON or CSV.
+
+        Supports same filters as /logs endpoint.
+        Response is streamed for large exports.
+      operationId: exportLogs
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+          description: Export format
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by CLI session ID
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by employee ID
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by agent ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [input, output, error, session_start, session_end, agent.installed, mcp.configured, config.synced]
+          description: Filter by event type
+        - name: event_category
+          in: query
+          schema:
+            type: string
+            enum: [io, agent, mcp, auth, admin]
+          description: Filter by event category
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs on or after this date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs on or before this date
+      responses:
+        '200':
+          description: Exported logs
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+                description: Newline-delimited JSON (one log entry per line)
+            text/csv:
+              schema:
+                type: string
+                format: binary
+                description: CSV file with log entries
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logs/sessions:
+    get:
+      tags:
+        - logs
+      summary: List sessions
+      description: |
+        List CLI sessions with metadata (start time, duration, event count, etc.).
+
+        Returns both active and completed sessions.
+      operationId: listSessions
+      parameters:
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by employee ID
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by agent ID
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Show only active sessions (no end_time)
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSessionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:

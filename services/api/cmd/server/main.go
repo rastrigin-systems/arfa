@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
 	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
@@ -55,6 +56,7 @@ func main() {
 	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
 	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
+	logsHandler := handlers.NewLogsHandler(queries)
 	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
@@ -211,9 +213,29 @@ func main() {
 				r.Get("/claude-code", syncHandler.GetClaudeCodeSync)
 			})
 
-			// Activity logs routes
+			// Activity logs routes (for web UI dashboard)
 			r.Route("/activity-logs", func(r chi.Router) {
 				r.Get("/", activityLogsHandler.ListActivityLogs)
+			})
+
+			// Logging API routes (for CLI and programmatic access)
+			r.Route("/logs", func(r chi.Router) {
+				r.Post("/", logsHandler.CreateLog)
+				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					// Extract query parameters
+					params := extractListLogsParams(r)
+					logsHandler.ListLogs(w, r, params)
+				})
+				r.Get("/export", func(w http.ResponseWriter, r *http.Request) {
+					// Extract query parameters
+					params := extractExportLogsParams(r)
+					logsHandler.ExportLogs(w, r, params)
+				})
+				r.Get("/sessions", func(w http.ResponseWriter, r *http.Request) {
+					// Extract query parameters
+					params := extractListSessionsParams(r)
+					logsHandler.ListSessions(w, r, params)
+				})
 			})
 
 			// Subscription routes
@@ -296,4 +318,28 @@ func maskPassword(dbURL string) string {
 		return dbURL[:20] + "***" + dbURL[len(dbURL)-10:]
 	}
 	return "***"
+}
+
+// extractListLogsParams extracts query parameters for ListLogs
+func extractListLogsParams(r *http.Request) api.ListLogsParams {
+	params := api.ListLogsParams{}
+	// TODO: Parse query parameters from r.URL.Query()
+	// For now, return empty params - will be implemented in follow-up
+	return params
+}
+
+// extractExportLogsParams extracts query parameters for ExportLogs
+func extractExportLogsParams(r *http.Request) api.ExportLogsParams {
+	params := api.ExportLogsParams{}
+	// TODO: Parse query parameters from r.URL.Query()
+	// For now, return empty params - will be implemented in follow-up
+	return params
+}
+
+// extractListSessionsParams extracts query parameters for ListSessions
+func extractListSessionsParams(r *http.Request) api.ListSessionsParams {
+	params := api.ListSessionsParams{}
+	// TODO: Parse query parameters from r.URL.Query()
+	// For now, return empty params - will be implemented in follow-up
+	return params
 }
