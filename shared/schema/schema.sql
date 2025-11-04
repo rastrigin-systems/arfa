@@ -324,9 +324,12 @@ CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
-    event_type VARCHAR(100) NOT NULL, -- agent.installed, mcp.configured, config.synced
-    event_category VARCHAR(50) NOT NULL, -- agent, mcp, auth, admin
-    payload JSONB NOT NULL DEFAULT '{}',
+    session_id UUID, -- CLI session tracking
+    agent_id UUID REFERENCES agents(id) ON DELETE SET NULL, -- Which agent: claude-code, etc.
+    event_type VARCHAR(100) NOT NULL, -- input, output, error, session_start, session_end, agent.installed, mcp.configured, config.synced
+    event_category VARCHAR(50) NOT NULL, -- agent, mcp, auth, admin, io
+    content TEXT, -- Actual I/O text for input/output/error events
+    payload JSONB NOT NULL DEFAULT '{}', -- Metadata: command, tool, duration, etc.
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -379,8 +382,11 @@ CREATE INDEX idx_employee_mcp_configs_sync_token ON employee_mcp_configs(sync_to
 -- Activity Logs
 CREATE INDEX idx_activity_logs_org_id ON activity_logs(org_id);
 CREATE INDEX idx_activity_logs_employee_id ON activity_logs(employee_id);
+CREATE INDEX idx_activity_logs_session_id ON activity_logs(session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX idx_activity_logs_agent_id ON activity_logs(agent_id) WHERE agent_id IS NOT NULL;
 CREATE INDEX idx_activity_logs_event_type ON activity_logs(event_type);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at DESC);
+CREATE INDEX idx_activity_logs_session_created ON activity_logs(session_id, created_at) WHERE session_id IS NOT NULL;
 
 -- Usage Records
 CREATE INDEX idx_usage_records_org_id ON usage_records(org_id);
