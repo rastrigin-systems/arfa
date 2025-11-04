@@ -21,9 +21,9 @@ describe.skip('ExportMenu', () => {
     // Mock link click
     const mockLink = document.createElement('a');
     mockLink.click = vi.fn();
-    vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as any);
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as any);
+    vi.spyOn(document, 'createElement').mockReturnValue(mockLink as unknown as HTMLElement);
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as Node);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as Node);
   });
 
   it('should render format selector and export button', () => {
@@ -53,7 +53,7 @@ describe.skip('ExportMenu', () => {
     vi.mocked(apiClient.GET).mockResolvedValue({
       data: mockData,
       error: undefined,
-      response: {} as any,
+      response: {} as Response,
     });
 
     render(<ExportMenu filters={{ employee_id: 'emp-1' }} />);
@@ -79,7 +79,7 @@ describe.skip('ExportMenu', () => {
     vi.mocked(apiClient.GET).mockImplementation(
       () =>
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: '[]', error: undefined, response: {} as any }), 100)
+          setTimeout(() => resolve({ data: '[]', error: undefined, response: {} as Response }), 100)
         )
     );
 
@@ -103,10 +103,14 @@ describe.skip('ExportMenu', () => {
     const user = userEvent.setup();
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
+    interface ErrorType {
+      message: string;
+    }
+
     vi.mocked(apiClient.GET).mockResolvedValue({
       data: undefined,
-      error: { message: 'Export failed' } as any,
-      response: {} as any,
+      error: { message: 'Export failed' } as ErrorType,
+      response: {} as Response,
     });
 
     render(<ExportMenu filters={{}} />);

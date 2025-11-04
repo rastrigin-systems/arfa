@@ -29,7 +29,7 @@ export function ExportMenu({ filters }: ExportMenuProps) {
           query: {
             format,
             ...filters,
-          } as any,
+          },
         },
       });
 
@@ -38,7 +38,7 @@ export function ExportMenu({ filters }: ExportMenuProps) {
       }
 
       // Create a blob and download
-      const blob = new Blob([data as any], {
+      const blob = new Blob([data as BlobPart], {
         type: format === 'json' ? 'application/json' : 'text/csv',
       });
 
