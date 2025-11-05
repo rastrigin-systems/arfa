@@ -2,8 +2,6 @@
 
 ## Description
 
-Skills assigned to each employee
-
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
@@ -11,10 +9,10 @@ Skills assigned to each employee
 | id | uuid | uuid_generate_v4() | false |  |  |  |
 | employee_id | uuid |  | false |  | [public.employees](public.employees.md) |  |
 | skill_id | uuid |  | false |  | [public.skill_catalog](public.skill_catalog.md) |  |
-| is_enabled | boolean | true | true |  |  |  |
-| config | jsonb |  | true |  |  | Employee-specific configuration overrides |
+| is_enabled | boolean | true | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
+| config | jsonb | '{}'::jsonb | false |  |  |  |
 
 ## Constraints
 
@@ -23,23 +21,14 @@ Skills assigned to each employee
 | employee_skills_employee_id_fkey | FOREIGN KEY | FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE |
 | employee_skills_skill_id_fkey | FOREIGN KEY | FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE |
 | employee_skills_pkey | PRIMARY KEY | PRIMARY KEY (id) |
-| unique_employee_skill | UNIQUE | UNIQUE (employee_id, skill_id) |
+| employee_skills_employee_id_skill_id_key | UNIQUE | UNIQUE (employee_id, skill_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | employee_skills_pkey | CREATE UNIQUE INDEX employee_skills_pkey ON public.employee_skills USING btree (id) |
-| unique_employee_skill | CREATE UNIQUE INDEX unique_employee_skill ON public.employee_skills USING btree (employee_id, skill_id) |
-| idx_employee_skills_employee_id | CREATE INDEX idx_employee_skills_employee_id ON public.employee_skills USING btree (employee_id) |
-| idx_employee_skills_skill_id | CREATE INDEX idx_employee_skills_skill_id ON public.employee_skills USING btree (skill_id) |
-| idx_employee_skills_is_enabled | CREATE INDEX idx_employee_skills_is_enabled ON public.employee_skills USING btree (is_enabled) |
-
-## Triggers
-
-| Name | Definition |
-| ---- | ---------- |
-| update_employee_skills_updated_at | CREATE TRIGGER update_employee_skills_updated_at BEFORE UPDATE ON public.employee_skills FOR EACH ROW EXECUTE FUNCTION update_updated_at_column() |
+| employee_skills_employee_id_skill_id_key | CREATE UNIQUE INDEX employee_skills_employee_id_skill_id_key ON public.employee_skills USING btree (employee_id, skill_id) |
 
 ## Relations
 
@@ -54,9 +43,9 @@ erDiagram
   uuid employee_id FK
   uuid skill_id FK
   boolean is_enabled
-  jsonb config
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  jsonb config
 }
 "public.employees" {
   uuid id
@@ -76,10 +65,10 @@ erDiagram
 }
 "public.skill_catalog" {
   uuid id
-  varchar_100_ name
+  varchar_255_ name
   text description
-  varchar_50_ category
-  varchar_20_ version
+  varchar_100_ category
+  varchar_50_ version
   jsonb files
   jsonb dependencies
   boolean is_active

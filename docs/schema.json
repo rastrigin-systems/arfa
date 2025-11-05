@@ -2082,6 +2082,23 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "docker_image",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "config_template",
+          "type": "jsonb",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "required_env_vars",
+          "type": "jsonb",
+          "nullable": true,
+          "default": "'[]'::jsonb"
         }
       ],
       "indexes": [
@@ -2202,6 +2219,12 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
         }
       ],
       "indexes": [
@@ -3103,6 +3126,222 @@
         "public.organizations",
         "public.teams"
       ]
+    },
+    {
+      "name": "public.skill_catalog",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "varchar(100)",
+          "nullable": true
+        },
+        {
+          "name": "version",
+          "type": "varchar(50)",
+          "nullable": false
+        },
+        {
+          "name": "files",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb"
+        },
+        {
+          "name": "dependencies",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "skill_catalog_pkey",
+          "def": "CREATE UNIQUE INDEX skill_catalog_pkey ON public.skill_catalog USING btree (id)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "skill_catalog_name_key",
+          "def": "CREATE UNIQUE INDEX skill_catalog_name_key ON public.skill_catalog USING btree (name)",
+          "table": "public.skill_catalog",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "skill_catalog_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.skill_catalog",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "skill_catalog_name_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE (name)",
+          "table": "public.skill_catalog",
+          "referenced_table": "",
+          "columns": [
+            "name"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.employee_skills",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "employee_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "skill_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "config",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "employee_skills_pkey",
+          "def": "CREATE UNIQUE INDEX employee_skills_pkey ON public.employee_skills USING btree (id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_employee_id_skill_id_key",
+          "def": "CREATE UNIQUE INDEX employee_skills_employee_id_skill_id_key ON public.employee_skills USING btree (employee_id, skill_id)",
+          "table": "public.employee_skills",
+          "columns": [
+            "employee_id",
+            "skill_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "employee_skills_employee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
+          "table": "public.employee_skills",
+          "referenced_table": "employees",
+          "columns": [
+            "employee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_skill_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE",
+          "table": "public.employee_skills",
+          "referenced_table": "skill_catalog",
+          "columns": [
+            "skill_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.employee_skills",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "employee_skills_employee_id_skill_id_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE (employee_id, skill_id)",
+          "table": "public.employee_skills",
+          "referenced_table": "",
+          "columns": [
+            "employee_id",
+            "skill_id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -3534,6 +3773,32 @@
       ],
       "parent_cardinality": "zero_or_one",
       "def": "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.employee_skills",
+      "columns": [
+        "employee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.employee_skills",
+      "columns": [
+        "skill_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.skill_catalog",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
