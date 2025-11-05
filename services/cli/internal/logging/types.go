@@ -70,6 +70,9 @@ type Logger interface {
 	// EndSession marks the end of the current session
 	EndSession()
 
+	// SetAgentID sets the agent ID for all subsequent log entries
+	SetAgentID(agentID string)
+
 	// InterceptStdout wraps stdout to capture output
 	InterceptStdout(original io.Writer) io.Writer
 

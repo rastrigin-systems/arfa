@@ -18,6 +18,7 @@ type loggerImpl struct {
 	config      *Config
 	api         APIClient
 	sessionID   uuid.UUID
+	agentID     string
 	startTime   time.Time
 	buffer      []LogEntry
 	bufferMu    sync.Mutex
@@ -100,6 +101,11 @@ func (l *loggerImpl) StartSession() uuid.UUID {
 	return l.sessionID
 }
 
+// SetAgentID sets the agent ID for all subsequent log entries
+func (l *loggerImpl) SetAgentID(agentID string) {
+	l.agentID = agentID
+}
+
 // EndSession marks the end of the current session
 func (l *loggerImpl) EndSession() {
 	duration := time.Since(l.startTime)
@@ -155,6 +161,7 @@ func (l *loggerImpl) LogError(content string, metadata map[string]interface{}) {
 func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[string]interface{}) {
 	entry := LogEntry{
 		SessionID:     l.sessionID.String(),
+		AgentID:       l.agentID,
 		EventType:     eventType,
 		EventCategory: category,
 		Content:       content,

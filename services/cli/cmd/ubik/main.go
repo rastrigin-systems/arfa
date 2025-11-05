@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"text/tabwriter"
+	"time"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -787,6 +789,26 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		return err
 	}
 
+	// Initialize logger (silently fails if disabled or opt-out)
+	loggerConfig := &logging.Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		MaxRetries:    5,
+		RetryBackoff:  1 * time.Second,
+	}
+	apiClient := logging.NewPlatformAPIClient(platformClient)
+	logger, err := logging.NewLogger(loggerConfig, apiClient)
+	if err != nil {
+		// Log error but continue - logging is optional
+		fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
+	}
+
+	// Ensure logger is closed on exit
+	if logger != nil {
+		defer logger.Close()
+	}
+
 	// Get local agent configs
 	agentConfigs, err := syncService.GetLocalAgentConfigs()
 	if err != nil {
@@ -821,6 +843,13 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 	fmt.Printf("✓ Agent: %s (%s)\n", selectedAgent.AgentName, selectedAgent.AgentType)
 	if len(selectedAgent.MCPServers) > 0 {
 		fmt.Printf("✓ MCP Servers: %d\n", len(selectedAgent.MCPServers))
+	}
+
+	// Start logging session
+	if logger != nil {
+		logger.SetAgentID(selectedAgent.AgentID)
+		sessionID := logger.StartSession()
+		fmt.Printf("✓ Session ID: %s\n", sessionID.String())
 	}
 
 	// Workspace selection
@@ -937,6 +966,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		ContainerID: agentContainerID,
 		AgentName:   selectedAgent.AgentName,
 		WorkingDir:  workspace,
+		Logger:      logger,
 	}
 
 	// Start interactive session
@@ -948,6 +978,12 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 	// Attach to container and proxy I/O
 	ctx := context.Background()
 	session, err := proxyService.ExecuteInteractive(ctx, proxyOptions)
+
+	// End logging session
+	if logger != nil {
+		logger.EndSession()
+		logger.Flush()
+	}
 
 	// Display session summary
 	if session != nil {

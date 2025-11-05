@@ -18,6 +18,13 @@ type ProxyService struct {
 	dockerClient *DockerClient
 }
 
+// Logger interface for I/O logging (minimal interface to avoid circular dependency)
+type Logger interface {
+	InterceptStdout(original io.Writer) io.Writer
+	InterceptStderr(original io.Writer) io.Writer
+	InterceptStdin(original io.Reader) io.Reader
+}
+
 // SessionInfo tracks information about an interactive session
 type SessionInfo struct {
 	ContainerID string
@@ -35,6 +42,7 @@ type ProxyOptions struct {
 	Stdin       io.Reader
 	Stdout      io.Writer
 	Stderr      io.Writer
+	Logger      Logger // Optional logger for I/O capture
 }
 
 // NewProxyService creates a new proxy service
@@ -118,6 +126,16 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 		options.Stderr = os.Stderr
 	}
 
+	// Wrap streams with logger if provided
+	stdin := options.Stdin
+	stdout := options.Stdout
+	stderr := options.Stderr
+	if options.Logger != nil {
+		stdin = options.Logger.InterceptStdin(stdin)
+		stdout = options.Logger.InterceptStdout(stdout)
+		stderr = options.Logger.InterceptStderr(stderr)
+	}
+
 	// Check if stdin is a terminal
 	stdinFd := int(os.Stdin.Fd())
 	isTerminal := term.IsTerminal(stdinFd)
@@ -161,7 +179,7 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 
 	// Start goroutine to copy stdin to container
 	go func() {
-		_, err := io.Copy(resp.Conn, options.Stdin)
+		_, err := io.Copy(resp.Conn, stdin)
 		if err != nil && err != io.EOF {
 			errChan <- fmt.Errorf("stdin copy error: %w", err)
 		} else {
@@ -172,7 +190,7 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 	// Start goroutine to copy container output to stdout
 	go func() {
 		// For TTY containers, output is not multiplexed - just copy directly
-		_, err := io.Copy(options.Stdout, resp.Reader)
+		_, err := io.Copy(stdout, resp.Reader)
 		if err != nil && err != io.EOF {
 			errChan <- fmt.Errorf("output copy error: %w", err)
 		} else {
