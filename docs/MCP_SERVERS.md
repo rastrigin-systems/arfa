@@ -15,7 +15,6 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
   - [Playwright MCP](#playwright-mcp)
   - [Qdrant MCP](#qdrant-mcp)
   - [PostgreSQL MCP](#postgresql-mcp)
-  - [Railway MCP](#railway-mcp)
 - [Management Commands](#management-commands)
 - [Troubleshooting](#troubleshooting)
 
@@ -40,7 +39,6 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
 | **playwright** | Browser automation and web interaction | ✅ Active | Official Playwright MCP |
 | **qdrant** | Vector search and knowledge management | ⚠️ Manual | `qdrant/qdrant:latest` |
 | **postgres** | Database operations and queries | ⚠️ Manual | `mcp/postgres` |
-| **railway** | Cloud deployment management | ⚠️ Manual | `@railway/mcp-server` |
 
 **Legend:**
 - ✅ Active = Auto-configured with Claude Code
@@ -290,70 +288,6 @@ make db-up
 
 ---
 
-### Railway MCP
-
-**Purpose:** Cloud deployment management for Railway platform.
-
-**⚠️ MANDATORY: Use Railway MCP for all deployment operations**
-
-**When to Use Railway MCP:**
-- ✅ Creating and configuring services
-- ✅ Managing environment variables
-- ✅ Deploying from GitHub
-- ✅ Monitoring build and deployment status
-- ✅ Managing databases (PostgreSQL, Redis, etc.)
-- ✅ Configuring networking and domains
-
-**When NOT to Use:**
-- ❌ Local development (use docker-compose)
-- ❌ Running tests (use make test)
-- ❌ Code generation (use make generate)
-
-**Why Railway MCP?**
-- Create and manage services programmatically
-- Deploy from GitHub with automatic builds
-- Manage environment variables across services
-- Monitor deployments and logs
-- Configure databases and networking
-- Zero-configuration monorepo support
-
-**Setup:**
-
-```bash
-# Add Railway MCP server to Claude Code config
-# Requires Railway API token from https://railway.app/account/tokens
-claude mcp add railway -- npx -y @railway/mcp-server
-```
-
-**Configuration in ~/.claude.json:**
-
-```json
-{
-  "mcpServers": {
-    "railway-mcp-server": {
-      "command": "npx",
-      "args": ["-y", "@railway/mcp-server"]
-    }
-  }
-}
-```
-
-**Common Operations:**
-
-```bash
-# Verify Railway MCP is connected
-claude mcp list | grep railway
-
-# If not running, add it (requires Railway API token)
-claude mcp add railway -- npx -y @railway/mcp-server
-```
-
-**Note:** Railway MCP requires a Railway API token. Create one at https://railway.app/account/tokens and set it as an environment variable or provide it when prompted.
-
-**See Also:** [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete deployment guide.
-
----
-
 ## Management Commands
 
 ### List Configured Servers
@@ -448,7 +382,7 @@ docker pull ghcr.io/github/github-mcp-server
 
 #### Token Expired
 
-**Problem:** Authentication token expired (GitHub, Railway)
+**Problem:** Authentication token expired (GitHub)
 
 **Solution:**
 ```bash

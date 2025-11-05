@@ -430,19 +430,6 @@ make db-up  # If not running
 
 ---
 
-### Railway MCP
-
-```bash
-# Add Railway MCP (requires API token)
-claude mcp add railway -- npx -y @railway/mcp-server
-
-# Verify connection
-claude mcp list | grep railway
-
-# Get Railway API token
-open https://railway.app/account/tokens
-```
-
 **See:** [MCP_SERVERS.md](./MCP_SERVERS.md) for complete MCP server guide.
 
 ---

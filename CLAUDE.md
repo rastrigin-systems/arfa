@@ -288,7 +288,6 @@ make clean              # Clean generated files
 - ✅ **playwright** - Browser automation and web interaction
 - ⚠️ **qdrant** - Vector search and knowledge management (manual setup)
 - ⚠️ **postgres** - Database operations (manual setup)
-- ⚠️ **railway** - Cloud deployment (manual setup)
 
 **See [docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md) for complete setup and usage guide.**
 
