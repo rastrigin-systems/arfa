@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { apiClient } from '@/lib/api/client';
 import type { components } from '@/lib/api/schema';
 
 type ActivityLog = components['schemas']['ActivityLog'];
@@ -33,29 +32,27 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
     setError(null);
 
     try {
-      type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced';
-      type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin';
+      // Build query parameters
+      const params = new URLSearchParams();
 
-      const { data, error: apiError } = await apiClient.GET('/logs', {
-        params: {
-          query: {
-            session_id: filters.session_id,
-            employee_id: filters.employee_id,
-            agent_id: filters.agent_id,
-            event_type: filters.event_type as EventType,
-            event_category: filters.event_category as EventCategory,
-            start_date: filters.start_date,
-            end_date: filters.end_date,
-            limit: filters.limit || 100,
-            offset: filters.offset || 0,
-          },
-        },
-      });
+      if (filters.session_id) params.append('session_id', filters.session_id);
+      if (filters.employee_id) params.append('employee_id', filters.employee_id);
+      if (filters.agent_id) params.append('agent_id', filters.agent_id);
+      if (filters.event_type) params.append('event_type', filters.event_type);
+      if (filters.event_category) params.append('event_category', filters.event_category);
+      if (filters.start_date) params.append('start_date', filters.start_date);
+      if (filters.end_date) params.append('end_date', filters.end_date);
+      params.append('limit', String(filters.limit || 100));
+      params.append('offset', String(filters.offset || 0));
 
-      if (apiError) {
-        throw new Error(apiError.message || 'Failed to fetch logs');
+      // Call Next.js API route instead of backend directly
+      const response = await fetch(`/api/logs?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logs: ${response.statusText}`);
       }
 
+      const data = await response.json();
       setLogs(data?.logs || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));

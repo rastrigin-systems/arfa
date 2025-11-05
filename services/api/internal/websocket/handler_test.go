@@ -262,3 +262,58 @@ func TestHandler_RateLimit(t *testing.T) {
 	assert.NotNil(t, handler)
 	assert.NotNil(t, handler.hub)
 }
+
+// ============================================================================
+// Query Parameter Authentication Tests
+// ============================================================================
+
+func TestExtractToken_FromHeader(t *testing.T) {
+	// Test standard Authorization header extraction (existing behavior)
+	req := httptest.NewRequest("GET", "/ws", nil)
+	req.Header.Set("Authorization", "Bearer test-token-123")
+
+	token := extractToken(req)
+	assert.Equal(t, "test-token-123", token)
+}
+
+func TestExtractToken_FromQueryParam(t *testing.T) {
+	// Test query parameter extraction (new behavior for browser WebSockets)
+	req := httptest.NewRequest("GET", "/ws?token=test-token-456", nil)
+
+	token := extractToken(req)
+	assert.Equal(t, "test-token-456", token)
+}
+
+func TestExtractToken_HeaderTakesPrecedence(t *testing.T) {
+	// When both header and query param present, header should take precedence
+	req := httptest.NewRequest("GET", "/ws?token=query-token", nil)
+	req.Header.Set("Authorization", "Bearer header-token")
+
+	token := extractToken(req)
+	assert.Equal(t, "header-token", token, "Header token should take precedence over query param")
+}
+
+func TestExtractToken_NoToken(t *testing.T) {
+	// No token in either header or query param
+	req := httptest.NewRequest("GET", "/ws", nil)
+
+	token := extractToken(req)
+	assert.Empty(t, token)
+}
+
+func TestExtractToken_EmptyQueryParam(t *testing.T) {
+	// Empty token query parameter should be treated as no token
+	req := httptest.NewRequest("GET", "/ws?token=", nil)
+
+	token := extractToken(req)
+	assert.Empty(t, token)
+}
+
+func TestExtractToken_MalformedHeader(t *testing.T) {
+	// Malformed Authorization header without "Bearer " prefix
+	req := httptest.NewRequest("GET", "/ws", nil)
+	req.Header.Set("Authorization", "invalid-format")
+
+	token := extractToken(req)
+	assert.Empty(t, token)
+}

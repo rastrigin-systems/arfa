@@ -22,14 +22,23 @@ export function useLogWebSocket(): UseLogWebSocketReturn {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     try {
       // Close existing connection if any
       if (wsRef.current) {
         wsRef.current.close();
       }
 
-      const ws = new WebSocket(`${WS_URL}/api/v1/logs/stream`);
+      // Fetch token from Next.js API route
+      const tokenResponse = await fetch('/api/logs/ws-token');
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get WebSocket token');
+      }
+
+      const { token } = await tokenResponse.json();
+
+      // Connect to WebSocket with token as query param
+      const ws = new WebSocket(`${WS_URL}/api/v1/logs/stream?token=${token}`);
 
       ws.onopen = () => {
         console.log('[WebSocket] Connected to log stream');

@@ -1120,3 +1120,82 @@ vim docs/DEVELOPMENT.md
 ```bash
 docker run -d --name claude-qdrant -p 6333:6333 qdrant/qdrant:latest
 ```
+
+### ✅ PostgreSQL MCP for Database Operations
+
+**MANDATORY: Use PostgreSQL MCP for all database operations**
+
+- **Before database tasks**: Ensure PostgreSQL MCP is running
+- **During work**: Use MCP tools for queries, schema inspection, migrations
+- **Database access**: Direct SQL execution through MCP interface
+
+**Why PostgreSQL MCP?**
+- Direct SQL query execution without psql CLI
+- Schema introspection and analysis
+- Table and column browsing
+- Query result formatting
+- Transaction support
+- Multi-database connection support
+
+**Setup & Configuration:**
+```bash
+# Add PostgreSQL MCP server to Claude Code config
+claude mcp add postgres \
+  -- docker run -i --rm mcp/postgres \
+  postgresql://host.docker.internal:5432/ubik
+
+# For our development database
+claude mcp add postgres \
+  -- docker run -i --rm mcp/postgres \
+  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
+```
+
+**MCP Server Configuration (in ~/.claude.json):**
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/postgres",
+        "postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik"
+      ]
+    }
+  }
+}
+```
+
+**Common Operations:**
+```bash
+# Verify PostgreSQL MCP is connected
+claude mcp list | grep postgres
+
+# If not running, add it (container auto-starts when needed)
+claude mcp add postgres -- docker run -i --rm mcp/postgres \
+  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
+
+# Check database is accessible
+docker ps | grep ubik-postgres
+
+# If database not running, start it
+make db-up
+```
+
+**When to Use PostgreSQL MCP:**
+- ✅ Schema inspection and exploration
+- ✅ Ad-hoc query execution
+- ✅ Data validation and verification
+- ✅ Migration testing
+- ✅ Performance analysis
+- ✅ Troubleshooting database issues
+
+**When NOT to Use:**
+- ❌ Production database access (security risk)
+- ❌ Schema migrations (use sqlc/migrations instead)
+- ❌ Automated tests (use testcontainers)
+- ❌ Application queries (use generated sqlc code)
+
+**Note:** PostgreSQL MCP is for development/debugging only. Always use type-safe sqlc queries in application code.

@@ -40,3 +40,6 @@ temp/
 
 # GitHub token (never commit!)
 .env.github
+
+# Playwright temporary files
+.playwright-mcp/

@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,10 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
+	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
 	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
@@ -44,6 +45,15 @@ func TestWebSocketIntegration(t *testing.T) {
 	token, err := auth.GenerateJWT(employee.ID, org.ID, 24*time.Hour)
 	require.NoError(t, err)
 
+	// Create session in database for JWT middleware
+	tokenHash := auth.HashToken(token)
+	_, err = queries.CreateSession(ctx, db.CreateSessionParams{
+		EmployeeID: employee.ID,
+		TokenHash:  tokenHash,
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	require.NoError(t, err)
+
 	// Create WebSocket hub
 	hub := ws.NewHub()
 	go hub.Run()
@@ -55,8 +65,15 @@ func TestWebSocketIntegration(t *testing.T) {
 
 	// Setup router
 	router := chi.NewRouter()
-	router.Use(authmiddleware.JWTAuth(queries))
-	router.Post("/api/v1/logs", logsHandler.CreateLog)
+
+	// Apply JWT middleware only to REST endpoints (not WebSocket)
+	// WebSocket handler has its own authentication logic
+	router.Group(func(r chi.Router) {
+		r.Use(authmiddleware.JWTAuth(queries))
+		r.Post("/api/v1/logs", logsHandler.CreateLog)
+	})
+
+	// WebSocket endpoint without middleware (handles auth internally)
 	router.Get("/api/v1/logs/stream", wsHandler.ServeHTTP)
 
 	// Start test server
@@ -66,8 +83,8 @@ func TestWebSocketIntegration(t *testing.T) {
 	// Convert http:// to ws://
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/api/v1/logs/stream"
 
-	t.Run("WebSocket connection with valid JWT", func(t *testing.T) {
-		// Connect to WebSocket with JWT token
+	t.Run("WebSocket connection with valid JWT header", func(t *testing.T) {
+		// Connect to WebSocket with JWT token in header (standard method)
 		headers := http.Header{}
 		headers.Set("Authorization", "Bearer "+token)
 
@@ -78,6 +95,44 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		// Connection successful
 		assert.NotNil(t, conn)
+	})
+
+	t.Run("WebSocket connection with valid JWT query param", func(t *testing.T) {
+		// Connect to WebSocket with JWT token in query parameter
+		// This simulates browser WebSocket which can't set custom headers
+		wsURLWithToken := wsURL + "?token=" + token
+
+		conn, resp, err := websocket.DefaultDialer.Dial(wsURLWithToken, nil)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+		defer conn.Close()
+
+		// Connection successful
+		assert.NotNil(t, conn)
+	})
+
+	t.Run("WebSocket header takes precedence over query param", func(t *testing.T) {
+		// When both header and query param present, header should be used
+		headers := http.Header{}
+		headers.Set("Authorization", "Bearer "+token)
+		wsURLWithToken := wsURL + "?token=invalid-token"
+
+		// Should succeed because valid token in header
+		conn, resp, err := websocket.DefaultDialer.Dial(wsURLWithToken, headers)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+		defer conn.Close()
+
+		assert.NotNil(t, conn)
+	})
+
+	t.Run("WebSocket connection with invalid query param token fails", func(t *testing.T) {
+		// Invalid token in query parameter should fail
+		wsURLWithToken := wsURL + "?token=invalid-token"
+
+		_, resp, err := websocket.DefaultDialer.Dial(wsURLWithToken, nil)
+		assert.Error(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
 	t.Run("WebSocket connection without JWT fails", func(t *testing.T) {
@@ -122,14 +177,6 @@ func TestWebSocketIntegration(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/logs", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
-
-		// Inject JWT context manually for test
-		claims := &auth.Claims{
-			EmployeeID: employee.ID.String(),
-			OrgID:      org.ID.String(),
-		}
-		ctx := context.WithValue(req.Context(), "claims", claims)
-		req = req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -182,12 +229,6 @@ func TestWebSocketIntegration(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		claims := &auth.Claims{
-			EmployeeID: employee.ID.String(),
-			OrgID:      org.ID.String(),
-		}
-		ctx := context.WithValue(req.Context(), "claims", claims)
-		req = req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -248,12 +289,6 @@ func TestWebSocketIntegration(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		claims := &auth.Claims{
-			EmployeeID: employee.ID.String(),
-			OrgID:      org.ID.String(),
-		}
-		ctx := context.WithValue(req.Context(), "claims", claims)
-		req = req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)

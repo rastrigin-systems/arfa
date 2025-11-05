@@ -111,20 +111,25 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go client.readPump(h.hub)
 }
 
-// extractToken extracts JWT token from Authorization header
+// extractToken extracts JWT token from Authorization header or query parameter
+// Priority: Authorization header > query parameter (for backward compatibility)
 func extractToken(r *http.Request) string {
+	// Try Authorization header first (standard method)
 	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
+	if authHeader != "" {
+		// Expected format: "Bearer <token>"
+		const bearerPrefix = "Bearer "
+		if len(authHeader) >= len(bearerPrefix) && authHeader[:len(bearerPrefix)] == bearerPrefix {
+			return authHeader[len(bearerPrefix):]
+		}
+		// Malformed header - return empty string
 		return ""
 	}
 
-	// Expected format: "Bearer <token>"
-	const bearerPrefix = "Bearer "
-	if len(authHeader) < len(bearerPrefix) {
-		return ""
-	}
-
-	return authHeader[len(bearerPrefix):]
+	// Fallback to query parameter for WebSocket connections from browser
+	// (Browser WebSocket API cannot set custom headers in initial handshake)
+	token := r.URL.Query().Get("token")
+	return token
 }
 
 // parseSubscriptionFilters parses subscription filters from query parameters
