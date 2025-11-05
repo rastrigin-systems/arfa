@@ -18,6 +18,9 @@
 | category_id | uuid |  | true |  | [public.mcp_categories](public.mcp_categories.md) |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
+| docker_image | varchar(255) |  | true |  |  |  |
+| config_template | jsonb | '{}'::jsonb | true |  |  |  |
+| required_env_vars | jsonb | '[]'::jsonb | true |  |  |  |
 
 ## Constraints
 
@@ -61,6 +64,9 @@ erDiagram
   uuid category_id FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  varchar_255_ docker_image
+  jsonb config_template
+  jsonb required_env_vars
 }
 "public.employee_mcp_configs" {
   uuid id
@@ -73,6 +79,7 @@ erDiagram
   timestamp_without_time_zone last_sync_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  boolean is_enabled
 }
 "public.mcp_categories" {
   uuid id

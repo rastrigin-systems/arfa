@@ -2,20 +2,18 @@
 
 ## Description
 
-Available skills for Claude Code agents
-
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | uuid | uuid_generate_v4() | false | [public.employee_skills](public.employee_skills.md) |  |  |
-| name | varchar(100) |  | false |  |  |  |
+| name | varchar(255) |  | false |  |  |  |
 | description | text |  | true |  |  |  |
-| category | varchar(50) |  | true |  |  |  |
-| version | varchar(20) |  | false |  |  |  |
-| files | jsonb |  | false |  |  | Array of file objects with path and content |
-| dependencies | jsonb |  | true |  |  | Required MCP servers and other skills |
-| is_active | boolean | true | true |  |  |  |
+| category | varchar(100) |  | true |  |  |  |
+| version | varchar(50) |  | false |  |  |  |
+| files | jsonb | '[]'::jsonb | false |  |  |  |
+| dependencies | jsonb | '{}'::jsonb | false |  |  |  |
+| is_active | boolean | true | false |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
 
@@ -32,15 +30,6 @@ Available skills for Claude Code agents
 | ---- | ---------- |
 | skill_catalog_pkey | CREATE UNIQUE INDEX skill_catalog_pkey ON public.skill_catalog USING btree (id) |
 | skill_catalog_name_key | CREATE UNIQUE INDEX skill_catalog_name_key ON public.skill_catalog USING btree (name) |
-| idx_skill_catalog_name | CREATE INDEX idx_skill_catalog_name ON public.skill_catalog USING btree (name) |
-| idx_skill_catalog_category | CREATE INDEX idx_skill_catalog_category ON public.skill_catalog USING btree (category) |
-| idx_skill_catalog_is_active | CREATE INDEX idx_skill_catalog_is_active ON public.skill_catalog USING btree (is_active) |
-
-## Triggers
-
-| Name | Definition |
-| ---- | ---------- |
-| update_skill_catalog_updated_at | CREATE TRIGGER update_skill_catalog_updated_at BEFORE UPDATE ON public.skill_catalog FOR EACH ROW EXECUTE FUNCTION update_updated_at_column() |
 
 ## Relations
 
@@ -51,10 +40,10 @@ erDiagram
 
 "public.skill_catalog" {
   uuid id
-  varchar_100_ name
+  varchar_255_ name
   text description
-  varchar_50_ category
-  varchar_20_ version
+  varchar_100_ category
+  varchar_50_ version
   jsonb files
   jsonb dependencies
   boolean is_active
@@ -66,9 +55,9 @@ erDiagram
   uuid employee_id FK
   uuid skill_id FK
   boolean is_enabled
-  jsonb config
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
+  jsonb config
 }
 ```
 

@@ -30,14 +30,14 @@
 <text text-anchor="start" x="403.77" y="-740" font-family="Arial" font-size="14.00">is_enabled </text>
 <text text-anchor="start" x="475.39" y="-740" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
 <polygon fill="none" stroke="black" points="396.77,-697 396.77,-727.8 701.74,-727.8 701.74,-697 396.77,-697"/>
-<text text-anchor="start" x="403.77" y="-709.2" font-family="Arial" font-size="14.00">config </text>
-<text text-anchor="start" x="445.02" y="-709.2" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
+<text text-anchor="start" x="403.77" y="-709.2" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="473.82" y="-709.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="396.77,-666.2 396.77,-697 701.74,-697 701.74,-666.2 396.77,-666.2"/>
-<text text-anchor="start" x="403.77" y="-678.4" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="473.82" y="-678.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="403.77" y="-678.4" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="477.73" y="-678.4" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 <polygon fill="none" stroke="black" points="396.77,-635.4 396.77,-666.2 701.74,-666.2 701.74,-635.4 396.77,-635.4"/>
-<text text-anchor="start" x="403.77" y="-647.6" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="477.73" y="-647.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<text text-anchor="start" x="403.77" y="-647.6" font-family="Arial" font-size="14.00">config </text>
+<text text-anchor="start" x="445.02" y="-647.6" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
 <polygon fill="none" stroke="black" stroke-width="3" points="395.27,-633.9 395.27,-888.1 703.24,-888.1 703.24,-633.9 395.27,-633.9"/>
 </g>
 <!-- public.employees -->
@@ -111,16 +111,16 @@
 <text text-anchor="start" x="624.06" y="-394.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
 <polygon fill="none" stroke="black" points="602.27,-351.2 602.27,-382 882.23,-382 882.23,-351.2 602.27,-351.2"/>
 <text text-anchor="start" x="609.27" y="-363.4" font-family="Arial" font-size="14.00">name </text>
-<text text-anchor="start" x="648.19" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<text text-anchor="start" x="648.19" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
 <polygon fill="none" stroke="black" points="602.27,-320.4 602.27,-351.2 882.23,-351.2 882.23,-320.4 602.27,-320.4"/>
 <text text-anchor="start" x="609.27" y="-332.6" font-family="Arial" font-size="14.00">description </text>
 <text text-anchor="start" x="680.87" y="-332.6" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="black" points="602.27,-289.6 602.27,-320.4 882.23,-320.4 882.23,-289.6 602.27,-289.6"/>
 <text text-anchor="start" x="609.27" y="-301.8" font-family="Arial" font-size="14.00">category </text>
-<text text-anchor="start" x="666.86" y="-301.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
+<text text-anchor="start" x="666.86" y="-301.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
 <polygon fill="none" stroke="black" points="602.27,-258.8 602.27,-289.6 882.23,-289.6 882.23,-258.8 602.27,-258.8"/>
 <text text-anchor="start" x="609.27" y="-271" font-family="Arial" font-size="14.00">version </text>
-<text text-anchor="start" x="658.3" y="-271" font-family="Arial" font-size="14.00" fill="#666666">[varchar(20)]</text>
+<text text-anchor="start" x="658.3" y="-271" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
 <polygon fill="none" stroke="black" points="602.27,-228 602.27,-258.8 882.23,-258.8 882.23,-228 602.27,-228"/>
 <text text-anchor="start" x="609.27" y="-240.2" font-family="Arial" font-size="14.00">files </text>
 <text text-anchor="start" x="638.06" y="-240.2" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
