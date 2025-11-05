@@ -40,6 +40,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="you@example.com"
+                defaultValue="sarah.cto@acme.com"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.email}
@@ -60,6 +61,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 placeholder="••••••••"
+                defaultValue="password123"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.password}

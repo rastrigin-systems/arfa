@@ -24,12 +24,17 @@ interface SessionGroup {
 export function LogList({ logs }: LogListProps) {
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
 
-  // Group logs by session
-  const sessionGroups = useMemo(() => {
+  // Group logs by session and collect standalone logs
+  const { sessionGroups, standaloneLogs } = useMemo(() => {
     const groups = new Map<string, SessionGroup>();
+    const standalone: ActivityLog[] = [];
 
     logs.forEach((log) => {
-      if (!log.session_id) return;
+      // Handle standalone logs (no session)
+      if (!log.session_id) {
+        standalone.push(log);
+        return;
+      }
 
       if (!groups.has(log.session_id)) {
         groups.set(log.session_id, {
@@ -52,9 +57,19 @@ export function LogList({ logs }: LogListProps) {
     });
 
     // Sort by most recent first
-    return Array.from(groups.values()).sort(
+    const sortedGroups = Array.from(groups.values()).sort(
       (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
     );
+
+    // Sort standalone logs by most recent first
+    const sortedStandalone = standalone.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    return {
+      sessionGroups: sortedGroups,
+      standaloneLogs: sortedStandalone,
+    };
   }, [logs]);
 
   const toggleSession = (sessionId: string) => {
@@ -82,6 +97,7 @@ export function LogList({ logs }: LogListProps) {
 
   return (
     <div className="space-y-4">
+      {/* Render session groups */}
       {sessionGroups.map((session) => (
         <SessionCard
           key={session.session_id}
@@ -89,6 +105,13 @@ export function LogList({ logs }: LogListProps) {
           expanded={expandedSessions.has(session.session_id)}
           onToggle={() => toggleSession(session.session_id)}
         />
+      ))}
+
+      {/* Render standalone logs */}
+      {standaloneLogs.map((log) => (
+        <Card key={log.id} className="p-4">
+          <LogEntry log={log} />
+        </Card>
       ))}
     </div>
   );
