@@ -286,9 +286,9 @@ make clean              # Clean generated files
 **Currently Configured:**
 - ✅ **github** - GitHub operations (issues, PRs, repos, code search)
 - ✅ **playwright** - Browser automation and web interaction
-- ⚠️ **qdrant** - Vector search and knowledge management (manual setup)
+- ✅ **qdrant** - Vector search and knowledge management (ACTIVE - use for all knowledge operations!)
+- ✅ **railway** - Cloud deployment and infrastructure management
 - ⚠️ **postgres** - Database operations (manual setup)
-- ⚠️ **railway** - Cloud deployment (manual setup)
 
 **See [docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md) for complete setup and usage guide.**
 

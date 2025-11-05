@@ -43,3 +43,6 @@ temp/
 
 # Playwright temporary files
 .playwright-mcp/
+
+# Qdrant vector database storage
+.qdrant/
