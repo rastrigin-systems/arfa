@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["go_1_24", "postgresql"]
+
+[phases.build]
+cmds = [
+  "go mod download",
+  "go build -o ./bin/ubik-server ./cmd/server"
+]
+
+[start]
+cmd = "./bin/ubik-server"
+
+[variables]
+GO111MODULE = "on"
+CGO_ENABLED = "0"

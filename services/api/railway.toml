@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+nixpacksConfigPath = "services/api/nixpacks.toml"
+
+[build.buildCommand]
+# Generate code before building
+cmd = "make install-tools && make generate && cd services/api && go build -o ../../bin/ubik-server ./cmd/server"
+
+[deploy]
+startCommand = "./bin/ubik-server"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
