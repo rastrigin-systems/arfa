@@ -28,57 +28,19 @@ on:
       - 'cloudbuild-api.yaml'
 
 jobs:
-  build:
-    name: Build
+  # Combined build-and-test job for efficiency
+  # Eliminates duplicate setup/generation steps
+  # Expected runtime: ~5-6 minutes (down from 10-12 minutes)
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # Use golang container for faster setup (Go pre-installed)
+    container:
+      image: golang:1.24
+      options: --user root
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/*/go.sum
-
-      - name: Setup Go code generation tools (with cache)
-        uses: ./.github/actions/setup-go-tools
-
-      - name: Generate code
-        run: |
-          make generate-api
-          make generate-db
-          make generate-mocks
-
-      - name: Sync workspace
-        run: go work sync
-
-      - name: Build API server binary
-        run: |
-          mkdir -p bin
-          cd services/api && go build -v -o ../../bin/ubik-server cmd/server/main.go
-
-      - name: Verify binary
-        run: |
-          ./bin/ubik-server --version || echo "Server binary built successfully"
-          ls -lh bin/ubik-server
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ubik-server
-          path: bin/ubik-server
-          retention-days: 7
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: build
-
+    # PostgreSQL service for integration tests
     services:
       postgres:
         image: postgres:15-alpine
@@ -91,57 +53,97 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/*/go.sum
-
+      # Install PostgreSQL client for schema setup
       - name: Install PostgreSQL client
         run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          apt-get update && apt-get install -y postgresql-client
 
+      # Cache Go modules (very fast with container)
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: /go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      # Cache Go build cache
+      - name: Cache Go build
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
+
+      # Cache code generation tools
+      - name: Cache Go tools
+        uses: actions/cache@v4
+        id: go-tools-cache
+        with:
+          path: /go/bin
+          key: ${{ runner.os }}-go-tools-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-tools-
+
+      # Install code generation tools (only if not cached)
+      - name: Install code generation tools
+        if: steps.go-tools-cache.outputs.cache-hit != 'true'
+        run: |
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install go.uber.org/mock/mockgen@latest
+
+      # Apply database schema
       - name: Apply database schema
         env:
           PGPASSWORD: ubik_dev_password
         run: |
-          psql -h localhost -U ubik -d ubik -f shared/schema/schema.sql
+          psql -h postgres -U ubik -d ubik -f shared/schema/schema.sql
 
-      - name: Setup Go code generation tools (with cache)
-        uses: ./.github/actions/setup-go-tools
-
+      # Generate code (once!)
       - name: Generate code
         run: |
           make generate-api
           make generate-db
           make generate-mocks
 
+      # Sync workspace
       - name: Sync workspace
         run: go work sync
 
+      # Build binary
+      - name: Build API server binary
+        run: |
+          mkdir -p bin
+          cd services/api && go build -v -o ../../bin/ubik-server cmd/server/main.go
+
+      # Verify binary
+      - name: Verify binary
+        run: |
+          ./bin/ubik-server --version || echo "Server binary built successfully"
+          ls -lh bin/ubik-server
+
+      # Run unit tests
       - name: Run unit tests
         env:
-          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
+          DATABASE_URL: postgres://ubik:ubik_dev_password@postgres:5432/ubik?sslmode=disable
         run: |
           cd services/api && go test -v -race -coverprofile=../../coverage-unit.out -covermode=atomic ./internal/...
 
+      # Run integration tests
       - name: Run integration tests
         env:
-          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
+          DATABASE_URL: postgres://ubik:ubik_dev_password@postgres:5432/ubik?sslmode=disable
         run: |
           cd services/api && go test -v -race -coverprofile=../../coverage-integration.out -covermode=atomic ./tests/integration/...
 
+      # Generate coverage report
       - name: Generate coverage report
         run: |
           echo "=== Unit Test Coverage ==="
@@ -150,6 +152,15 @@ jobs:
           echo "=== Integration Test Coverage ==="
           go tool cover -func=coverage-integration.out
 
+      # Upload binary artifact for deploy job
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubik-server
+          path: bin/ubik-server
+          retention-days: 7
+
+      # Upload coverage to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -159,10 +170,11 @@ jobs:
           name: api-server-coverage
         continue-on-error: true
 
+  # Deploy job (unchanged, depends on build-and-test)
   deploy:
     name: Deploy to GCP Cloud Run
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: build-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
