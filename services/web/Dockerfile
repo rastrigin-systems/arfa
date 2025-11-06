@@ -1,64 +1,60 @@
-# Development stage with hot reload
-FROM node:20-alpine AS development
-
+# Multi-stage build for Next.js Web UI (GCP Cloud Run)
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
+# Copy package files from web directory
+COPY services/web/package*.json ./
 RUN npm ci
 
-# Copy source code
-COPY . .
-
-# Expose port
-EXPOSE 3000
-
-# Start dev server with hot reload
-CMD ["npm", "run", "dev"]
-
-# Build stage
+# Builder stage
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY services/web/ .
 
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Copy OpenAPI spec for type generation
-COPY ../../shared/openapi/spec.yaml /app/openapi-spec.yaml
+# Copy OpenAPI spec for type generation (match the path expected by generate:api script)
+RUN mkdir -p ../../shared/openapi
+COPY shared/openapi/spec.yaml ../../shared/openapi/spec.yaml
 
 # Generate API types
 RUN npm run generate:api
 
 # Build Next.js app
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage
 FROM node:20-alpine AS production
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install production dependencies only
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy package files and install production dependencies only
+COPY services/web/package*.json ./
 RUN npm ci --omit=dev
 
 # Copy built app from builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.js ./next.config.js
 
-# Expose port
+# Set ownership
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
 EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 # Start production server
 CMD ["npm", "start"]

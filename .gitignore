@@ -46,3 +46,4 @@ temp/
 
 # Qdrant vector database storage
 .qdrant/
+github-actions-key.json

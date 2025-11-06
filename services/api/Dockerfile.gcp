@@ -1,0 +1,32 @@
+# Multi-stage build for Go API
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /workspace
+
+# Copy workspace files
+COPY go.work go.work.sum ./
+COPY services/api/go.mod services/api/go.sum ./services/api/
+COPY services/cli/go.mod services/cli/go.sum ./services/cli/
+COPY pkg/types/go.mod ./pkg/types/
+COPY generated/go.mod generated/go.sum ./generated/
+
+# Download dependencies
+RUN go work sync
+RUN cd services/api && go mod download
+
+# Copy source code
+COPY services/api/ ./services/api/
+COPY pkg/ ./pkg/
+COPY generated/ ./generated/
+
+# Build binary
+WORKDIR /workspace/services/api
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/server
+
+# Runtime stage
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/server .
+EXPOSE 8080
+CMD ["./server"]

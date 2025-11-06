@@ -14,6 +14,9 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
   - [GitHub MCP](#github-mcp)
   - [Playwright MCP](#playwright-mcp)
   - [Qdrant MCP](#qdrant-mcp)
+  - [Railway MCP](#railway-mcp)
+  - [Google Cloud Platform MCP](#google-cloud-platform-mcp)
+  - [Google Cloud Observability MCP](#google-cloud-observability-mcp)
   - [PostgreSQL MCP](#postgresql-mcp)
 - [Management Commands](#management-commands)
 - [Troubleshooting](#troubleshooting)
@@ -39,6 +42,8 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
 | **playwright** | Browser automation and web interaction | ✅ Active | Official Playwright MCP |
 | **qdrant** | Vector search and knowledge management | ✅ Active | `better-qdrant-mcp-server` (npm) |
 | **railway** | Cloud deployment and infrastructure | ✅ Active | `@railway/mcp-server` (npm) |
+| **gcloud** | Google Cloud Platform operations | ✅ Active | `@google-cloud/gcloud-mcp` (npm) |
+| **observability** | Google Cloud monitoring and logging | ✅ Active | `@google-cloud/observability-mcp` (npm) |
 | **postgres** | Database operations and queries | ⚠️ Manual | `mcp/postgres` |
 
 **Legend:**
@@ -207,6 +212,200 @@ claude mcp list | grep qdrant
 - ✅ MCP server connected and active
 - ✅ Ready for knowledge storage and retrieval
 - 📁 Persistent storage at `.qdrant/` directory
+
+---
+
+### Railway MCP
+
+**Purpose:** Cloud deployment and infrastructure management for Railway platform.
+
+**Capabilities:**
+- Deploy applications to Railway
+- Manage services and environments
+- View logs and metrics
+- Configure environment variables
+- Monitor deployments
+
+**Setup:**
+
+```bash
+# Railway MCP is installed via npm and auto-runs when needed
+# No manual installation required - it's configured in Claude Code
+```
+
+**Configuration in claude_desktop_config.json:**
+
+```json
+{
+  "mcpServers": {
+    "railway": {
+      "command": "npx",
+      "args": ["-y", "@railway/mcp-server"]
+    }
+  }
+}
+```
+
+**Authentication:**
+- Railway MCP uses Railway CLI authentication
+- Run `railway login` to authenticate
+- Tokens are stored in Railway CLI config
+
+**Verification:**
+
+```bash
+# Check Railway authentication
+railway whoami
+
+# If not logged in
+railway login
+```
+
+---
+
+### Google Cloud Platform MCP
+
+**Purpose:** Google Cloud Platform operations including projects, compute, storage, and services.
+
+**Capabilities:**
+- Manage GCP projects and resources
+- Deploy to Cloud Run, App Engine, Compute Engine
+- Configure Cloud Storage buckets
+- Set up networking and load balancing
+- Manage IAM and service accounts
+- Work with Cloud SQL databases
+- Configure Cloud Build CI/CD
+
+**Setup:**
+
+```bash
+# GCP MCP is installed via npm and auto-runs when needed
+# No manual installation required - it's configured in Claude Code
+```
+
+**Configuration in claude_desktop_config.json:**
+
+```json
+{
+  "mcpServers": {
+    "gcloud": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"]
+    }
+  }
+}
+```
+
+**Prerequisites:**
+
+```bash
+# Install Google Cloud SDK if not already installed
+brew install google-cloud-sdk
+
+# Authenticate with Google Cloud
+gcloud auth login
+
+# Set default project (optional)
+gcloud config set project your-project-id
+```
+
+**Verification:**
+
+```bash
+# Check gcloud authentication
+gcloud auth list
+
+# Check current project
+gcloud config get-value project
+
+# Test access
+gcloud projects list
+```
+
+**Common Operations:**
+- Create and manage GCP projects
+- Deploy applications to Cloud Run
+- Configure Cloud Storage
+- Set up Cloud SQL databases
+- Manage IAM permissions
+- View billing information
+
+---
+
+### Google Cloud Observability MCP
+
+**Purpose:** Google Cloud monitoring, logging, and observability for production systems.
+
+**Capabilities:**
+- View Cloud Logging logs
+- Monitor Cloud Monitoring metrics
+- Set up alerts and notifications
+- Trace distributed requests
+- Profile application performance
+- Debug production issues
+- Analyze error reports
+
+**Setup:**
+
+```bash
+# Observability MCP is installed via npm and auto-runs when needed
+# No manual installation required - it's configured in Claude Code
+```
+
+**Configuration in claude_desktop_config.json:**
+
+```json
+{
+  "mcpServers": {
+    "observability": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/observability-mcp"]
+    }
+  }
+}
+```
+
+**Prerequisites:**
+
+```bash
+# Same as GCP MCP - requires Google Cloud SDK
+# Ensure you're authenticated
+gcloud auth login
+
+# Grant necessary observability permissions
+# Your account needs roles:
+# - Logging Viewer (roles/logging.viewer)
+# - Monitoring Viewer (roles/monitoring.viewer)
+# - Error Reporting Viewer (roles/errorreporting.viewer)
+```
+
+**Verification:**
+
+```bash
+# Check authentication
+gcloud auth list
+
+# Test log access
+gcloud logging read --limit 5
+
+# Test metrics access
+gcloud monitoring dashboards list
+```
+
+**Common Operations:**
+- Query Cloud Logging logs
+- View application metrics
+- Monitor service health
+- Debug production errors
+- Analyze request traces
+- Set up alerting policies
+
+**Use Cases:**
+- Production debugging
+- Performance analysis
+- Cost monitoring
+- Security auditing
+- SLA monitoring
 
 ---
 

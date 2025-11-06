@@ -288,6 +288,8 @@ make clean              # Clean generated files
 - ✅ **playwright** - Browser automation and web interaction
 - ✅ **qdrant** - Vector search and knowledge management (ACTIVE - use for all knowledge operations!)
 - ✅ **railway** - Cloud deployment and infrastructure management
+- ✅ **gcloud** - Google Cloud Platform operations (projects, services, compute, storage)
+- ✅ **observability** - Google Cloud monitoring and logging
 - ⚠️ **postgres** - Database operations (manual setup)
 
 **See [docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md) for complete setup and usage guide.**

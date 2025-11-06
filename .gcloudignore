@@ -1,0 +1,15 @@
+.gcloudignore
+.git
+.gitignore
+node_modules
+.env
+.env.*
+!.env.railway.example
+*.log
+.DS_Store
+bin/
+docs/
+tests/
+.github/
+.claude/
+scripts/
