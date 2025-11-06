@@ -240,7 +240,7 @@ jobs:
             --platform=managed \
             --region=us-central1 \
             --allow-unauthenticated \
-            --set-env-vars="NEXT_PUBLIC_API_URL=https://ubik-api-754414213269.us-central1.run.app,NODE_ENV=production,PORT=8080" \
+            --set-env-vars="NEXT_PUBLIC_API_URL=https://ubik-api-754414213269.us-central1.run.app,NODE_ENV=production" \
             --memory=512Mi \
             --cpu=1 \
             --min-instances=0 \
