@@ -7,11 +7,15 @@ on:
       - develop
     paths:
       - 'services/web/**'
+      - 'shared/openapi/**'
       - '.github/workflows/web-server.yml'
+      - 'cloudbuild-web.yaml'
   pull_request:
     paths:
       - 'services/web/**'
+      - 'shared/openapi/**'
       - '.github/workflows/web-server.yml'
+      - 'cloudbuild-web.yaml'
 
 jobs:
   build:
