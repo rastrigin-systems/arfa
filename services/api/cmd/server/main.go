@@ -91,6 +91,10 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// API Documentation (public, no auth required)
+	router.Get("/api/docs/spec.yaml", handlers.SpecHandler())
+	router.Mount("/api/docs", handlers.SwaggerHandler())
+
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {
 		// Public routes (no auth required)
@@ -285,6 +289,7 @@ func main() {
 	go func() {
 		log.Printf("🚀 API Server starting on http://localhost:%s", port)
 		log.Printf("📝 Health Check: http://localhost:%s/api/v1/health", port)
+		log.Printf("📚 API Documentation: http://localhost:%s/api/docs", port)
 		log.Printf("🔐 Auth endpoints:")
 		log.Printf("   POST http://localhost:%s/api/v1/auth/login", port)
 		log.Printf("   POST http://localhost:%s/api/v1/auth/logout", port)
