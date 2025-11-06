@@ -14,7 +14,6 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
   - [GitHub MCP](#github-mcp)
   - [Playwright MCP](#playwright-mcp)
   - [Qdrant MCP](#qdrant-mcp)
-  - [Railway MCP](#railway-mcp)
   - [Google Cloud Platform MCP](#google-cloud-platform-mcp)
   - [Google Cloud Observability MCP](#google-cloud-observability-mcp)
   - [PostgreSQL MCP](#postgresql-mcp)
@@ -41,7 +40,6 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
 | **github** | GitHub operations (issues, PRs, code search) | ✅ Active | `ghcr.io/github/github-mcp-server` |
 | **playwright** | Browser automation and web interaction | ✅ Active | Official Playwright MCP |
 | **qdrant** | Vector search and knowledge management | ✅ Active | `better-qdrant-mcp-server` (npm) |
-| **railway** | Cloud deployment and infrastructure | ✅ Active | `@railway/mcp-server` (npm) |
 | **gcloud** | Google Cloud Platform operations | ✅ Active | `@google-cloud/gcloud-mcp` (npm) |
 | **observability** | Google Cloud monitoring and logging | ✅ Active | `@google-cloud/observability-mcp` (npm) |
 | **postgres** | Database operations and queries | ⚠️ Manual | `mcp/postgres` |
@@ -215,53 +213,6 @@ claude mcp list | grep qdrant
 
 ---
 
-### Railway MCP
-
-**Purpose:** Cloud deployment and infrastructure management for Railway platform.
-
-**Capabilities:**
-- Deploy applications to Railway
-- Manage services and environments
-- View logs and metrics
-- Configure environment variables
-- Monitor deployments
-
-**Setup:**
-
-```bash
-# Railway MCP is installed via npm and auto-runs when needed
-# No manual installation required - it's configured in Claude Code
-```
-
-**Configuration in claude_desktop_config.json:**
-
-```json
-{
-  "mcpServers": {
-    "railway": {
-      "command": "npx",
-      "args": ["-y", "@railway/mcp-server"]
-    }
-  }
-}
-```
-
-**Authentication:**
-- Railway MCP uses Railway CLI authentication
-- Run `railway login` to authenticate
-- Tokens are stored in Railway CLI config
-
-**Verification:**
-
-```bash
-# Check Railway authentication
-railway whoami
-
-# If not logged in
-railway login
-```
-
----
 
 ### Google Cloud Platform MCP
 
@@ -585,7 +536,7 @@ docker pull ghcr.io/github/github-mcp-server
 
 #### Token Expired
 
-**Problem:** Authentication token expired (GitHub, Railway)
+**Problem:** Authentication token expired (GitHub)
 
 **Solution:**
 ```bash

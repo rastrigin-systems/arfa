@@ -36,7 +36,7 @@ Successfully restructured CLAUDE.md and created comprehensive documentation know
 ### 1. MCP_SERVERS.md
 **Size:** ~3K tokens
 **Content:**
-- Overview of all MCP servers (GitHub, Playwright, Qdrant, PostgreSQL, Railway)
+- Overview of all MCP servers (GitHub, Playwright, Qdrant, PostgreSQL)
 - Detailed setup instructions for each server
 - Configuration examples
 - Management commands
@@ -223,7 +223,6 @@ All sections in CLAUDE.md now include clear references to detailed documentation
 
 - **MCP_SERVERS.md** - MCP server setup and management
 - **WORKFLOWS.md** - Milestone planning and releases
-- **RAILWAY_DEPLOYMENT.md** - Cloud deployment
 
 ### CLI Documentation
 
