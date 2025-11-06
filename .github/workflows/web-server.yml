@@ -200,10 +200,37 @@ jobs:
       - name: Build and push Docker image
         if: steps.check_web.outputs.exists == 'true'
         run: |
-          gcloud builds submit \
+          BUILD_ID=$(gcloud builds submit \
             --config=cloudbuild-web.yaml \
             --project=ubik-enterprise-prod \
-            .
+            --async \
+            --format='value(id)' \
+            .)
+          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          echo "🔨 Cloud Build started: $BUILD_ID"
+
+      - name: Wait for build to complete
+        if: steps.check_web.outputs.exists == 'true'
+        run: |
+          echo "⏳ Waiting for Cloud Build $BUILD_ID to complete..."
+          for i in {1..90}; do
+            STATUS=$(gcloud builds describe $BUILD_ID --project=ubik-enterprise-prod --format='value(status)')
+            echo "Build status: $STATUS"
+
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "✅ Build completed successfully!"
+              exit 0
+            elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "TIMEOUT" ] || [ "$STATUS" = "CANCELLED" ]; then
+              echo "❌ Build failed with status: $STATUS"
+              echo "View logs: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=ubik-enterprise-prod"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "⏰ Timeout waiting for build to complete"
+          exit 1
 
       - name: Deploy to Cloud Run
         if: steps.check_web.outputs.exists == 'true'
