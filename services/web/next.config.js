@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Enable standalone output for optimal Docker images
+  output: 'standalone',
   // Enable instrumentation for MSW during E2E tests
   experimental: {
     instrumentationHook: true,
