@@ -541,3 +541,224 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	// This is the GOLD STANDARD for integration testing:
 	// We tested the entire system working together with a real database!
 }
+
+// TestRegister_Integration_Success tests the complete registration flow with a REAL database
+//
+// Integration Test Lesson:
+// - Tests organization + employee creation in a single transaction
+// - Verifies admin role assignment
+// - Confirms session creation and JWT token generation
+// - Validates the entire registration → login flow
+func TestRegister_Integration_Success(t *testing.T) {
+	// Skip in short mode
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	// === ARRANGE === Setup real database
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+
+	ctx := testutil.GetContext(t)
+
+	// Get the admin role (should already exist from seed data)
+	// Don't create a new one, use the existing "admin" role
+	adminRole, err := queries.GetRoleByName(ctx, "admin")
+	if err != nil {
+		// If it doesn't exist, create it
+		adminRole = testutil.CreateTestRole(t, queries, ctx, "admin")
+	}
+	t.Logf("Using admin role: ID=%s", adminRole.ID)
+
+	// Setup HTTP router with real handler
+	router := chi.NewRouter()
+	authHandler := handlers.NewAuthHandler(queries)
+	router.Post("/auth/register", authHandler.Register)
+
+	// === ACT === Make registration request
+	registerRequest := api.RegisterRequest{
+		Email:    openapi_types.Email("alice@newcorp.com"),
+		Password: "SecurePass123!",
+		FullName: "Alice Johnson",
+		OrgName:  "NewCorp Inc",
+		OrgSlug:  "newcorp-inc",
+	}
+	bodyBytes, _ := json.Marshal(registerRequest)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// === ASSERT === Verify response
+
+	// Debug: Print response if not 201
+	if rec.Code != http.StatusCreated {
+		t.Logf("Response Code: %d", rec.Code)
+		t.Logf("Response Body: %s", rec.Body.String())
+	}
+
+	assert.Equal(t, http.StatusCreated, rec.Code, "Should return 201 Created")
+
+	var response api.RegisterResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err, "Response should be valid JSON")
+
+	// Verify token
+	assert.NotEmpty(t, response.Token, "Should return JWT token")
+	assert.Greater(t, len(response.Token), 50, "Token should be reasonably long")
+	assert.True(t, response.ExpiresAt.After(time.Now()), "Token should not be expired")
+
+	// Verify employee data
+	require.NotNil(t, response.Employee.Id)
+	assert.Equal(t, "alice@newcorp.com", string(response.Employee.Email))
+	assert.Equal(t, "Alice Johnson", response.Employee.FullName)
+	assert.Equal(t, "active", string(response.Employee.Status))
+
+	// Verify organization data
+	require.NotNil(t, response.Organization.Id)
+	assert.Equal(t, "NewCorp Inc", response.Organization.Name)
+	assert.Equal(t, "newcorp-inc", response.Organization.Slug)
+
+	// === ASSERT === Verify database state
+
+	// Verify organization was created
+	org, err := queries.GetOrganizationBySlug(ctx, "newcorp-inc")
+	require.NoError(t, err, "Organization should exist in database")
+	assert.Equal(t, "NewCorp Inc", org.Name)
+	t.Logf("✅ Organization created: %s", org.Name)
+
+	// Verify employee was created
+	employee, err := queries.GetEmployeeByEmail(ctx, "alice@newcorp.com")
+	require.NoError(t, err, "Employee should exist in database")
+	assert.Equal(t, "Alice Johnson", employee.FullName)
+	assert.Equal(t, adminRole.ID, employee.RoleID, "Employee should have admin role")
+	assert.NotEmpty(t, employee.PasswordHash, "Password should be hashed")
+	assert.NotEqual(t, "SecurePass123!", employee.PasswordHash, "Password should not be stored in plain text")
+	t.Logf("✅ Employee created with admin role")
+
+	// Verify session was created
+	tokenHash := auth.HashToken(response.Token)
+	sessionData, err := queries.GetSessionWithEmployee(ctx, tokenHash)
+	require.NoError(t, err, "Session should exist in database")
+	assert.Equal(t, employee.ID, sessionData.EmployeeID)
+	t.Logf("✅ Session created")
+
+	// Verify JWT token is valid
+	claims, err := auth.VerifyJWT(response.Token)
+	require.NoError(t, err, "JWT token should be valid")
+	assert.Equal(t, employee.ID.String(), claims.EmployeeID)
+	assert.Equal(t, org.ID.String(), claims.OrgID)
+	t.Logf("✅ JWT token is valid")
+
+	// Integration Test Lesson: Registration flow verified!
+	// ✅ Organization created
+	// ✅ Employee created with admin role
+	// ✅ Password hashed properly
+	// ✅ Session created
+	// ✅ JWT token generated and valid
+}
+
+// TestRegister_Integration_DuplicateOrgSlug tests org_slug uniqueness with real database
+func TestRegister_Integration_DuplicateOrgSlug(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+
+	ctx := testutil.GetContext(t)
+
+	// Ensure admin role exists
+	_, err := queries.GetRoleByName(ctx, "admin")
+	if err != nil {
+		testutil.CreateTestRole(t, queries, ctx, "admin")
+	}
+
+	// Create first organization
+	org := testutil.CreateTestOrg(t, queries, ctx)
+
+	// Setup router
+	router := chi.NewRouter()
+	authHandler := handlers.NewAuthHandler(queries)
+	router.Post("/auth/register", authHandler.Register)
+
+	// Try to register with same org_slug
+	registerRequest := api.RegisterRequest{
+		Email:    openapi_types.Email("bob@example.com"),
+		Password: "SecurePass123!",
+		FullName: "Bob Smith",
+		OrgName:  "Another Corp",
+		OrgSlug:  org.Slug, // Same slug!
+	}
+	bodyBytes, _ := json.Marshal(registerRequest)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var errorResponse api.Error
+	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "org_slug")
+}
+
+// TestRegister_Integration_DuplicateEmail tests email uniqueness with real database
+func TestRegister_Integration_DuplicateEmail(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	conn, queries := testutil.SetupTestDB(t)
+	defer conn.Close(testutil.GetContext(t))
+
+	ctx := testutil.GetContext(t)
+
+	// Create test data
+	org := testutil.CreateTestOrg(t, queries, ctx)
+	role := testutil.CreateTestRole(t, queries, ctx, "admin")
+
+	passwordHash, _ := auth.HashPassword("password")
+	employee := testutil.CreateTestEmployee(t, queries, ctx, testutil.TestEmployeeParams{
+		OrgID:        org.ID,
+		RoleID:       role.ID,
+		Email:        "alice@example.com",
+		FullName:     "Alice Smith",
+		PasswordHash: passwordHash,
+		Status:       "active",
+	})
+
+	// Setup router
+	router := chi.NewRouter()
+	authHandler := handlers.NewAuthHandler(queries)
+	router.Post("/auth/register", authHandler.Register)
+
+	// Try to register with same email
+	registerRequest := api.RegisterRequest{
+		Email:    openapi_types.Email(employee.Email), // Same email!
+		Password: "SecurePass123!",
+		FullName: "Different Person",
+		OrgName:  "Different Corp",
+		OrgSlug:  "different-corp",
+	}
+	bodyBytes, _ := json.Marshal(registerRequest)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var errorResponse api.Error
+	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "email")
+}

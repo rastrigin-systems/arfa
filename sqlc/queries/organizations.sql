@@ -68,6 +68,10 @@ ORDER BY name;
 SELECT * FROM roles
 WHERE id = $1;
 
+-- name: GetRoleByName :one
+SELECT * FROM roles
+WHERE name = $1;
+
 -- name: CreateRole :one
 INSERT INTO roles (
     name,

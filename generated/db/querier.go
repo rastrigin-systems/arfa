@@ -120,6 +120,7 @@ type Querier interface {
 	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
 	GetOrganizationClaudeToken(ctx context.Context, id uuid.UUID) (GetOrganizationClaudeTokenRow, error)
 	GetRole(ctx context.Context, id uuid.UUID) (Role, error)
+	GetRoleByName(ctx context.Context, name string) (Role, error)
 	GetSession(ctx context.Context, tokenHash string) (Session, error)
 	GetSessionWithEmployee(ctx context.Context, tokenHash string) (GetSessionWithEmployeeRow, error)
 	GetSkill(ctx context.Context, id uuid.UUID) (SkillCatalog, error)

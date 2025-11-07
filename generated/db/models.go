@@ -139,6 +139,22 @@ type EmployeeSkill struct {
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
+type Invitation struct {
+	ID         uuid.UUID        `json:"id"`
+	OrgID      uuid.UUID        `json:"org_id"`
+	InviterID  uuid.UUID        `json:"inviter_id"`
+	Email      string           `json:"email"`
+	RoleID     uuid.UUID        `json:"role_id"`
+	TeamID     pgtype.UUID      `json:"team_id"`
+	Token      string           `json:"token"`
+	Status     string           `json:"status"`
+	ExpiresAt  pgtype.Timestamp `json:"expires_at"`
+	AcceptedBy pgtype.UUID      `json:"accepted_by"`
+	AcceptedAt pgtype.Timestamp `json:"accepted_at"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+}
+
 type McpCatalog struct {
 	ID                  uuid.UUID        `json:"id"`
 	Name                string           `json:"name"`

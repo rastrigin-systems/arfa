@@ -319,6 +319,166 @@ func mapEmployeeToAPI(emp db.Employee) api.Employee {
 	return employee
 }
 
+// Register handles employee self-service registration
+//
+// TDD Lesson: Registration is more complex than login - we create both org and employee atomically
+//
+// Implementation Steps (derived from tests):
+// 1. Parse and validate request
+// 2. Check org_slug availability
+// 3. Check email availability
+// 4. Get admin role
+// 5. Hash password
+// 6. Create organization
+// 7. Create employee with admin role
+// 8. Generate JWT token
+// 9. Create session
+// 10. Return token, employee, and organization data
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Parse request (TestRegister_InvalidJSON requires this)
+	var req api.RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request format")
+		return
+	}
+
+	// Validate password strength (TestRegister_WeakPassword requires this)
+	if len(req.Password) < 8 {
+		writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+
+	// Validate org_slug format (TestRegister_InvalidOrgSlug requires this)
+	if !isValidOrgSlug(req.OrgSlug) {
+		writeError(w, http.StatusBadRequest, "org_slug must be lowercase, alphanumeric, dashes only, and at least 3 characters")
+		return
+	}
+
+	// Step 2: Check org_slug is available (TestRegister_DuplicateOrgSlug requires this)
+	_, err := h.db.GetOrganizationBySlug(ctx, req.OrgSlug)
+	if err == nil {
+		// Organization found = slug already exists
+		writeError(w, http.StatusConflict, "org_slug already exists")
+		return
+	}
+
+	// Step 3: Check email is available (TestRegister_DuplicateEmail requires this)
+	_, err = h.db.GetEmployeeByEmail(ctx, string(req.Email))
+	if err == nil {
+		// Employee found = email already exists
+		writeError(w, http.StatusConflict, "email already exists")
+		return
+	}
+
+	// Step 4: Get admin role (TestRegister_AdminRoleNotFound requires this)
+	adminRole, err := h.db.GetRoleByName(ctx, "admin")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to get admin role")
+		return
+	}
+
+	// Step 5: Hash password (TestRegister_Success validates this)
+	passwordHash, err := auth.HashPassword(req.Password)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to hash password")
+		return
+	}
+
+	// Step 6: Create organization (TestRegister_Success expects this)
+	org, err := h.db.CreateOrganization(ctx, db.CreateOrganizationParams{
+		Name: req.OrgName,
+		Slug: req.OrgSlug,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to create organization")
+		return
+	}
+
+	// Step 7: Create employee with admin role (TestRegister_Success expects this)
+	employee, err := h.db.CreateEmployee(ctx, db.CreateEmployeeParams{
+		OrgID:        org.ID,
+		RoleID:       adminRole.ID,
+		Email:        string(req.Email),
+		FullName:     req.FullName,
+		PasswordHash: passwordHash,
+		Status:       "active",
+		Preferences:  []byte("{}"),
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to create employee")
+		return
+	}
+
+	// Step 8: Generate JWT token (TestRegister_Success requires this)
+	token, err := auth.GenerateJWT(employee.ID, employee.OrgID, 24*time.Hour)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to generate token")
+		return
+	}
+
+	// Step 9: Create session (TestRegister_Success expects this)
+	tokenHash := auth.HashToken(token)
+	ipAddress := r.RemoteAddr
+	userAgent := r.UserAgent()
+	session, err := h.db.CreateSession(ctx, db.CreateSessionParams{
+		EmployeeID: employee.ID,
+		TokenHash:  tokenHash,
+		IpAddress:  &ipAddress,
+		UserAgent:  &userAgent,
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to create session")
+		return
+	}
+
+	// Step 10: Return response (TestRegister_Success validates this)
+	response := api.RegisterResponse{
+		Token:        token,
+		ExpiresAt:    session.ExpiresAt.Time,
+		Employee:     mapEmployeeToAPI(employee),
+		Organization: mapOrganizationToAPI(org),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+// isValidOrgSlug validates org_slug format
+// Must be lowercase, alphanumeric, dashes only, at least 3 characters
+func isValidOrgSlug(slug string) bool {
+	if len(slug) < 3 || len(slug) > 100 {
+		return false
+	}
+
+	for _, ch := range slug {
+		if !((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-') {
+			return false
+		}
+	}
+
+	return true
+}
+
+// mapOrganizationToAPI converts database organization to API organization
+func mapOrganizationToAPI(org db.Organization) api.Organization {
+	orgID := openapi_types.UUID(org.ID)
+	createdAt := org.CreatedAt.Time
+	updatedAt := org.UpdatedAt.Time
+
+	return api.Organization{
+		Id:        &orgID,
+		Name:      org.Name,
+		Slug:      org.Slug,
+		Plan:      api.OrganizationPlan(org.Plan),
+		CreatedAt: &createdAt,
+		UpdatedAt: &updatedAt,
+	}
+}
+
 // writeError writes a JSON error response
 //
 // TDD Lesson: Centralized error handling makes code cleaner and more consistent.

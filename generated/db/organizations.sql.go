@@ -192,6 +192,25 @@ func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (Role, error) {
 	return i, err
 }
 
+const GetRoleByName = `-- name: GetRoleByName :one
+SELECT id, name, description, permissions, created_at, updated_at FROM roles
+WHERE name = $1
+`
+
+func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) {
+	row := q.db.QueryRow(ctx, GetRoleByName, name)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Permissions,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const GetTeam = `-- name: GetTeam :one
 SELECT id, org_id, name, description, created_at, updated_at FROM teams
 WHERE id = $1 AND org_id = $2
