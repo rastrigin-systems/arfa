@@ -10,7 +10,7 @@ import type {
   InvitationsResponse,
   CreateInvitationParams,
   CreateInvitationResponse,
-} from '../api/types';
+} from '../api/invitations';
 
 /**
  * Hook to fetch invitations list with filters and pagination
