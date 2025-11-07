@@ -33,6 +33,8 @@ COPY --from=builder /workspace/shared/openapi ./shared/openapi
 
 # Set project root for Swagger handler to find spec.yaml
 ENV PROJECT_ROOT=/app
+# Set port for Cloud Run
+ENV PORT=8080
 
 EXPOSE 8080
 CMD ["./server"]
