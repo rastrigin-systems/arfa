@@ -430,10 +430,6 @@ make db-up  # If not running
 
 ---
 
-**See:** [MCP_SERVERS.md](./MCP_SERVERS.md) for complete MCP server guide.
-
----
-
 ## Common Tasks
 
 ### Update Dependencies

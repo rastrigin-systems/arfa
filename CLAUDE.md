@@ -203,7 +203,6 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 **Operations:**
 - **[docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md)** - MCP server setup and configuration
 - **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning, releases, task management
-- **[docs/RAILWAY_DEPLOYMENT.md](./docs/RAILWAY_DEPLOYMENT.md)** - Cloud deployment guide
 
 **CLI:**
 - **[docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md)** - CLI architecture and design
@@ -286,7 +285,9 @@ make clean              # Clean generated files
 **Currently Configured:**
 - ✅ **github** - GitHub operations (issues, PRs, repos, code search)
 - ✅ **playwright** - Browser automation and web interaction
-- ⚠️ **qdrant** - Vector search and knowledge management (manual setup)
+- ✅ **qdrant** - Vector search and knowledge management (ACTIVE - use for all knowledge operations!)
+- ✅ **gcloud** - Google Cloud Platform operations (projects, services, compute, storage)
+- ✅ **observability** - Google Cloud monitoring and logging
 - ⚠️ **postgres** - Database operations (manual setup)
 
 **See [docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md) for complete setup and usage guide.**

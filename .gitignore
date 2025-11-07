@@ -43,3 +43,7 @@ temp/
 
 # Playwright temporary files
 .playwright-mcp/
+
+# Qdrant vector database storage
+.qdrant/
+github-actions-key.json

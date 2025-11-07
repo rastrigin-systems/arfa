@@ -1,0 +1,33 @@
+steps:
+  # Build API image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:latest'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:$BUILD_ID'
+      - '-f'
+      - 'services/api/Dockerfile.gcp'
+      - '.'
+    timeout: 600s
+
+  # Push API image (latest tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:latest'
+    timeout: 600s
+
+  # Push API image (build ID tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:$BUILD_ID'
+    timeout: 600s
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:$BUILD_ID'
+
+timeout: 1200s

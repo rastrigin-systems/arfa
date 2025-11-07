@@ -50,7 +50,6 @@
 | **Critical Usage Notes** | ~180 | ~2,000 | **Redundant** | **Move entirely** |
 | Qdrant MCP | 35 | 400 | Move | → MCP_SERVERS.md |
 | PostgreSQL MCP | 80 | 900 | Move | → MCP_SERVERS.md |
-| Railway MCP | 65 | 700 | Move | → MCP_SERVERS.md |
 
 ---
 
@@ -62,7 +61,6 @@
 **Content to move:**
 - ✅ Qdrant MCP setup and usage
 - ✅ PostgreSQL MCP setup and usage
-- ✅ Railway MCP setup and usage
 - ✅ GitHub MCP server details (from Quick Reference)
 - ✅ Playwright MCP details
 

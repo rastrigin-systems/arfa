@@ -14,6 +14,8 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
   - [GitHub MCP](#github-mcp)
   - [Playwright MCP](#playwright-mcp)
   - [Qdrant MCP](#qdrant-mcp)
+  - [Google Cloud Platform MCP](#google-cloud-platform-mcp)
+  - [Google Cloud Observability MCP](#google-cloud-observability-mcp)
   - [PostgreSQL MCP](#postgresql-mcp)
 - [Management Commands](#management-commands)
 - [Troubleshooting](#troubleshooting)
@@ -37,7 +39,9 @@ This guide covers all Model Context Protocol (MCP) servers used in the Ubik Ente
 |--------|---------|--------|-----------|
 | **github** | GitHub operations (issues, PRs, code search) | ✅ Active | `ghcr.io/github/github-mcp-server` |
 | **playwright** | Browser automation and web interaction | ✅ Active | Official Playwright MCP |
-| **qdrant** | Vector search and knowledge management | ⚠️ Manual | `qdrant/qdrant:latest` |
+| **qdrant** | Vector search and knowledge management | ✅ Active | `better-qdrant-mcp-server` (npm) |
+| **gcloud** | Google Cloud Platform operations | ✅ Active | `@google-cloud/gcloud-mcp` (npm) |
+| **observability** | Google Cloud monitoring and logging | ✅ Active | `@google-cloud/observability-mcp` (npm) |
 | **postgres** | Database operations and queries | ⚠️ Manual | `mcp/postgres` |
 
 **Legend:**
@@ -171,38 +175,188 @@ claude mcp add playwright -- <command>
 2. Use Qdrant for search/discovery → then read full .md file
 3. Update stored knowledge after task completion
 
-**Setup:**
+**Setup (Completed):**
 
 ```bash
-# Start Qdrant container
-docker run -d --name claude-qdrant -p 6333:6333 qdrant/qdrant:latest
+# 1. Start Qdrant container (already running)
+docker run -d --name claude-qdrant -p 6333:6333 -v $(pwd)/.qdrant:/qdrant/storage qdrant/qdrant:latest
+
+# 2. Install better-qdrant-mcp-server (already installed)
+npm install -g better-qdrant-mcp-server
+
+# 3. Add to Claude Code (already configured)
+claude mcp add qdrant -- npx better-qdrant-mcp-server
 
 # Verify running
 docker ps | grep claude-qdrant
-
-# Add to Claude Code (if needed)
-claude mcp add qdrant -- <command>
+claude mcp list | grep qdrant
 ```
 
-**Configuration:**
+**Configuration in ~/.claude.json:**
 
 ```json
 {
   "mcpServers": {
     "qdrant": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-p",
-        "6333:6333",
-        "qdrant/qdrant:latest"
-      ]
+      "command": "npx",
+      "args": ["better-qdrant-mcp-server"]
     }
   }
 }
 ```
+
+**Current Status:**
+- ✅ Container running on localhost:6333
+- ✅ MCP server connected and active
+- ✅ Ready for knowledge storage and retrieval
+- 📁 Persistent storage at `.qdrant/` directory
+
+---
+
+
+### Google Cloud Platform MCP
+
+**Purpose:** Google Cloud Platform operations including projects, compute, storage, and services.
+
+**Capabilities:**
+- Manage GCP projects and resources
+- Deploy to Cloud Run, App Engine, Compute Engine
+- Configure Cloud Storage buckets
+- Set up networking and load balancing
+- Manage IAM and service accounts
+- Work with Cloud SQL databases
+- Configure Cloud Build CI/CD
+
+**Setup:**
+
+```bash
+# GCP MCP is installed via npm and auto-runs when needed
+# No manual installation required - it's configured in Claude Code
+```
+
+**Configuration in claude_desktop_config.json:**
+
+```json
+{
+  "mcpServers": {
+    "gcloud": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"]
+    }
+  }
+}
+```
+
+**Prerequisites:**
+
+```bash
+# Install Google Cloud SDK if not already installed
+brew install google-cloud-sdk
+
+# Authenticate with Google Cloud
+gcloud auth login
+
+# Set default project (optional)
+gcloud config set project your-project-id
+```
+
+**Verification:**
+
+```bash
+# Check gcloud authentication
+gcloud auth list
+
+# Check current project
+gcloud config get-value project
+
+# Test access
+gcloud projects list
+```
+
+**Common Operations:**
+- Create and manage GCP projects
+- Deploy applications to Cloud Run
+- Configure Cloud Storage
+- Set up Cloud SQL databases
+- Manage IAM permissions
+- View billing information
+
+---
+
+### Google Cloud Observability MCP
+
+**Purpose:** Google Cloud monitoring, logging, and observability for production systems.
+
+**Capabilities:**
+- View Cloud Logging logs
+- Monitor Cloud Monitoring metrics
+- Set up alerts and notifications
+- Trace distributed requests
+- Profile application performance
+- Debug production issues
+- Analyze error reports
+
+**Setup:**
+
+```bash
+# Observability MCP is installed via npm and auto-runs when needed
+# No manual installation required - it's configured in Claude Code
+```
+
+**Configuration in claude_desktop_config.json:**
+
+```json
+{
+  "mcpServers": {
+    "observability": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/observability-mcp"]
+    }
+  }
+}
+```
+
+**Prerequisites:**
+
+```bash
+# Same as GCP MCP - requires Google Cloud SDK
+# Ensure you're authenticated
+gcloud auth login
+
+# Grant necessary observability permissions
+# Your account needs roles:
+# - Logging Viewer (roles/logging.viewer)
+# - Monitoring Viewer (roles/monitoring.viewer)
+# - Error Reporting Viewer (roles/errorreporting.viewer)
+```
+
+**Verification:**
+
+```bash
+# Check authentication
+gcloud auth list
+
+# Test log access
+gcloud logging read --limit 5
+
+# Test metrics access
+gcloud monitoring dashboards list
+```
+
+**Common Operations:**
+- Query Cloud Logging logs
+- View application metrics
+- Monitor service health
+- Debug production errors
+- Analyze request traces
+- Set up alerting policies
+
+**Use Cases:**
+- Production debugging
+- Performance analysis
+- Cost monitoring
+- Security auditing
+- SLA monitoring
 
 ---
 
@@ -419,5 +573,4 @@ claude mcp add github \
 
 - [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Command reference
 - [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
-- [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) - Railway deployment guide
 - [DATABASE.md](./DATABASE.md) - Database operations

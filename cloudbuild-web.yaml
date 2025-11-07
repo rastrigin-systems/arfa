@@ -1,0 +1,35 @@
+steps:
+  # Build Web image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:$BUILD_ID'
+      - '--target'
+      - 'production'
+      - '-f'
+      - 'services/web/Dockerfile'
+      - '.'
+    timeout: 900s
+
+  # Push Web image (latest tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest'
+    timeout: 600s
+
+  # Push Web image (build ID tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:$BUILD_ID'
+    timeout: 600s
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:$BUILD_ID'
+
+timeout: 2000s
