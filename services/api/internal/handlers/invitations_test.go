@@ -314,7 +314,10 @@ func TestGetInvitationByToken_Expired(t *testing.T) {
 		}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/invitations/"+token, nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	w := httptest.NewRecorder()
 
 	// Execute
