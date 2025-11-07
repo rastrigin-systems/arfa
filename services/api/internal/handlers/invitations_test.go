@@ -18,6 +18,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
+	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 )
 
@@ -104,8 +105,7 @@ func TestCreateInvitation_Success(t *testing.T) {
 
 	// HTTP request
 	req := httptest.NewRequest(http.MethodPost, "/invitations", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "employee_id", inviterID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), inviterID, orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -149,8 +149,7 @@ func TestCreateInvitation_RateLimitExceeded(t *testing.T) {
 	bodyBytes, _ := json.Marshal(reqBody)
 
 	req := httptest.NewRequest(http.MethodPost, "/invitations", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "employee_id", inviterID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), inviterID, orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -218,7 +217,7 @@ func TestListInvitations_Success(t *testing.T) {
 
 	// HTTP request with query params
 	req := httptest.NewRequest(http.MethodGet, "/invitations?limit=10&offset=0", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -467,7 +466,7 @@ func TestCancelInvitation_Success(t *testing.T) {
 		})
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
 	w := httptest.NewRecorder()
 
@@ -504,7 +503,7 @@ func TestCancelInvitation_AlreadyAccepted(t *testing.T) {
 		})
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
 	w := httptest.NewRecorder()
 
