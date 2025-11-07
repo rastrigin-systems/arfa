@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -272,9 +273,10 @@ func TestGetInvitationByToken_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/invitations/"+token, nil)
 	w := httptest.NewRecorder()
 
-	// We need to set path param - in real Chi router this is done automatically
-	// For testing, we'll pass token via context
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	// Execute
 	handler.GetInvitationByToken(w, req)
@@ -410,7 +412,10 @@ func TestAcceptInvitation_Success(t *testing.T) {
 	bodyBytes, _ := json.Marshal(reqBody)
 
 	req := httptest.NewRequest(http.MethodPost, "/invitations/"+token+"/accept", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	w := httptest.NewRecorder()
 
 	// Execute
