@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) [public.invitations](public.invitations.md) |  |  |
 | name | varchar(100) |  | false |  |  |  |
 | description | text |  | true |  |  |  |
 | permissions | jsonb | '[]'::jsonb | false |  |  |  |
@@ -39,6 +39,7 @@
 erDiagram
 
 "public.employees" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
+"public.invitations" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
 
 "public.roles" {
   uuid id
@@ -63,6 +64,21 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
+}
+"public.invitations" {
+  uuid id
+  uuid org_id FK
+  uuid inviter_id FK
+  varchar_255_ email
+  uuid role_id FK
+  uuid team_id FK
+  varchar_64_ token
+  varchar_50_ status
+  timestamp_without_time_zone expires_at
+  uuid accepted_by FK
+  timestamp_without_time_zone accepted_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 ```
 

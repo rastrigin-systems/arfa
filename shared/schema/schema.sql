@@ -317,6 +317,27 @@ CREATE TABLE approvals (
 );
 
 -- ============================================================================
+-- INVITATIONS & ONBOARDING
+-- ============================================================================
+
+CREATE TABLE invitations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    inviter_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    role_id UUID NOT NULL REFERENCES roles(id),
+    team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, accepted, expired, cancelled
+    expires_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+    accepted_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+    accepted_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_pending_invitation UNIQUE (org_id, email, status)
+);
+
+-- ============================================================================
 -- AUDIT & ANALYTICS
 -- ============================================================================
 
@@ -403,6 +424,14 @@ CREATE INDEX idx_agent_requests_created_at ON agent_requests(created_at DESC);
 CREATE INDEX idx_approvals_request_id ON approvals(request_id);
 CREATE INDEX idx_approvals_approver_id ON approvals(approver_id);
 
+-- Invitations
+CREATE INDEX idx_invitations_org_id ON invitations(org_id);
+CREATE INDEX idx_invitations_email ON invitations(email);
+CREATE INDEX idx_invitations_token ON invitations(token);
+CREATE INDEX idx_invitations_status ON invitations(status);
+CREATE INDEX idx_invitations_expires_at ON invitations(expires_at);
+CREATE INDEX idx_invitations_inviter_id ON invitations(inviter_id);
+
 -- ============================================================================
 -- ROW-LEVEL SECURITY
 -- ============================================================================
@@ -413,6 +442,7 @@ ALTER TABLE employee_agent_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employee_mcp_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
 
 -- Example RLS policy (requires app to set current_setting('app.current_org_id'))
 -- CREATE POLICY org_isolation ON employees
@@ -464,6 +494,9 @@ CREATE TRIGGER update_mcp_catalog_updated_at BEFORE UPDATE ON mcp_catalog
 CREATE TRIGGER update_employee_mcp_configs_updated_at BEFORE UPDATE ON employee_mcp_configs
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_invitations_updated_at BEFORE UPDATE ON invitations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Generate sync tokens automatically
 CREATE OR REPLACE FUNCTION generate_sync_token()
 RETURNS TRIGGER AS $$
@@ -480,6 +513,34 @@ CREATE TRIGGER generate_agent_config_sync_token BEFORE INSERT ON employee_agent_
 
 CREATE TRIGGER generate_mcp_config_sync_token BEFORE INSERT ON employee_mcp_configs
     FOR EACH ROW EXECUTE FUNCTION generate_sync_token();
+
+-- Generate invitation tokens automatically
+CREATE OR REPLACE FUNCTION generate_invitation_token()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.token IS NULL OR NEW.token = '' THEN
+        NEW.token := encode(gen_random_bytes(32), 'hex');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER generate_invitation_token_trigger BEFORE INSERT ON invitations
+    FOR EACH ROW EXECUTE FUNCTION generate_invitation_token();
+
+-- Expire old invitations automatically
+CREATE OR REPLACE FUNCTION expire_old_invitations()
+RETURNS void AS $$
+BEGIN
+    UPDATE invitations
+    SET status = 'expired'
+    WHERE status = 'pending'
+    AND expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION expire_old_invitations() IS
+'Marks all pending invitations that have passed their expiration date as expired. Should be called periodically (e.g., via cron job)';
 
 -- ============================================================================
 -- SEED DATA

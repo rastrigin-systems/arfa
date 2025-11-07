@@ -2082,23 +2082,6 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
-        },
-        {
-          "name": "docker_image",
-          "type": "varchar(255)",
-          "nullable": true
-        },
-        {
-          "name": "config_template",
-          "type": "jsonb",
-          "nullable": true,
-          "default": "'{}'::jsonb"
-        },
-        {
-          "name": "required_env_vars",
-          "type": "jsonb",
-          "nullable": true,
-          "default": "'[]'::jsonb"
         }
       ],
       "indexes": [
@@ -2219,12 +2202,6 @@
           "type": "timestamp without time zone",
           "nullable": false,
           "default": "now()"
-        },
-        {
-          "name": "is_enabled",
-          "type": "boolean",
-          "nullable": false,
-          "default": "true"
         }
       ],
       "indexes": [
@@ -2568,6 +2545,267 @@
           "columns": [
             "id"
           ]
+        }
+      ]
+    },
+    {
+      "name": "public.invitations",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "org_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "inviter_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "role_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "team_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "token",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(50)",
+          "nullable": false,
+          "default": "'pending'::character varying"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "(now() + '7 days'::interval)"
+        },
+        {
+          "name": "accepted_by",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "accepted_at",
+          "type": "timestamp without time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "invitations_pkey",
+          "def": "CREATE UNIQUE INDEX invitations_pkey ON public.invitations USING btree (id)",
+          "table": "public.invitations",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_token_key",
+          "def": "CREATE UNIQUE INDEX invitations_token_key ON public.invitations USING btree (token)",
+          "table": "public.invitations",
+          "columns": [
+            "token"
+          ]
+        },
+        {
+          "name": "unique_pending_invitation",
+          "def": "CREATE UNIQUE INDEX unique_pending_invitation ON public.invitations USING btree (org_id, email, status)",
+          "table": "public.invitations",
+          "columns": [
+            "org_id",
+            "email",
+            "status"
+          ]
+        },
+        {
+          "name": "idx_invitations_org_id",
+          "def": "CREATE INDEX idx_invitations_org_id ON public.invitations USING btree (org_id)",
+          "table": "public.invitations",
+          "columns": [
+            "org_id"
+          ]
+        },
+        {
+          "name": "idx_invitations_email",
+          "def": "CREATE INDEX idx_invitations_email ON public.invitations USING btree (email)",
+          "table": "public.invitations",
+          "columns": [
+            "email"
+          ]
+        },
+        {
+          "name": "idx_invitations_token",
+          "def": "CREATE INDEX idx_invitations_token ON public.invitations USING btree (token)",
+          "table": "public.invitations",
+          "columns": [
+            "token"
+          ]
+        },
+        {
+          "name": "idx_invitations_status",
+          "def": "CREATE INDEX idx_invitations_status ON public.invitations USING btree (status)",
+          "table": "public.invitations",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_invitations_expires_at",
+          "def": "CREATE INDEX idx_invitations_expires_at ON public.invitations USING btree (expires_at)",
+          "table": "public.invitations",
+          "columns": [
+            "expires_at"
+          ]
+        },
+        {
+          "name": "idx_invitations_inviter_id",
+          "def": "CREATE INDEX idx_invitations_inviter_id ON public.invitations USING btree (inviter_id)",
+          "table": "public.invitations",
+          "columns": [
+            "inviter_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "invitations_org_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE",
+          "table": "public.invitations",
+          "referenced_table": "organizations",
+          "columns": [
+            "org_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_team_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL",
+          "table": "public.invitations",
+          "referenced_table": "teams",
+          "columns": [
+            "team_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_role_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (role_id) REFERENCES roles(id)",
+          "table": "public.invitations",
+          "referenced_table": "roles",
+          "columns": [
+            "role_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_accepted_by_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (accepted_by) REFERENCES employees(id) ON DELETE SET NULL",
+          "table": "public.invitations",
+          "referenced_table": "employees",
+          "columns": [
+            "accepted_by"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_inviter_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE",
+          "table": "public.invitations",
+          "referenced_table": "employees",
+          "columns": [
+            "inviter_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.invitations",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "invitations_token_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE (token)",
+          "table": "public.invitations",
+          "referenced_table": "",
+          "columns": [
+            "token"
+          ]
+        },
+        {
+          "name": "unique_pending_invitation",
+          "type": "UNIQUE",
+          "def": "UNIQUE (org_id, email, status)",
+          "table": "public.invitations",
+          "referenced_table": "",
+          "columns": [
+            "org_id",
+            "email",
+            "status"
+          ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "update_invitations_updated_at",
+          "def": "CREATE TRIGGER update_invitations_updated_at BEFORE UPDATE ON public.invitations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
+        },
+        {
+          "name": "generate_invitation_token_trigger",
+          "def": "CREATE TRIGGER generate_invitation_token_trigger BEFORE INSERT ON public.invitations FOR EACH ROW EXECUTE FUNCTION generate_invitation_token()"
         }
       ]
     },
@@ -3126,222 +3364,6 @@
         "public.organizations",
         "public.teams"
       ]
-    },
-    {
-      "name": "public.skill_catalog",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "name",
-          "type": "varchar(255)",
-          "nullable": false
-        },
-        {
-          "name": "description",
-          "type": "text",
-          "nullable": true
-        },
-        {
-          "name": "category",
-          "type": "varchar(100)",
-          "nullable": true
-        },
-        {
-          "name": "version",
-          "type": "varchar(50)",
-          "nullable": false
-        },
-        {
-          "name": "files",
-          "type": "jsonb",
-          "nullable": false,
-          "default": "'[]'::jsonb"
-        },
-        {
-          "name": "dependencies",
-          "type": "jsonb",
-          "nullable": false,
-          "default": "'{}'::jsonb"
-        },
-        {
-          "name": "is_active",
-          "type": "boolean",
-          "nullable": false,
-          "default": "true"
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "updated_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        }
-      ],
-      "indexes": [
-        {
-          "name": "skill_catalog_pkey",
-          "def": "CREATE UNIQUE INDEX skill_catalog_pkey ON public.skill_catalog USING btree (id)",
-          "table": "public.skill_catalog",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "skill_catalog_name_key",
-          "def": "CREATE UNIQUE INDEX skill_catalog_name_key ON public.skill_catalog USING btree (name)",
-          "table": "public.skill_catalog",
-          "columns": [
-            "name"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "skill_catalog_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.skill_catalog",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "skill_catalog_name_key",
-          "type": "UNIQUE",
-          "def": "UNIQUE (name)",
-          "table": "public.skill_catalog",
-          "referenced_table": "",
-          "columns": [
-            "name"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "public.employee_skills",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "employee_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "skill_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "is_enabled",
-          "type": "boolean",
-          "nullable": false,
-          "default": "true"
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "updated_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "config",
-          "type": "jsonb",
-          "nullable": false,
-          "default": "'{}'::jsonb"
-        }
-      ],
-      "indexes": [
-        {
-          "name": "employee_skills_pkey",
-          "def": "CREATE UNIQUE INDEX employee_skills_pkey ON public.employee_skills USING btree (id)",
-          "table": "public.employee_skills",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "employee_skills_employee_id_skill_id_key",
-          "def": "CREATE UNIQUE INDEX employee_skills_employee_id_skill_id_key ON public.employee_skills USING btree (employee_id, skill_id)",
-          "table": "public.employee_skills",
-          "columns": [
-            "employee_id",
-            "skill_id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "employee_skills_employee_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
-          "table": "public.employee_skills",
-          "referenced_table": "employees",
-          "columns": [
-            "employee_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "employee_skills_skill_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE",
-          "table": "public.employee_skills",
-          "referenced_table": "skill_catalog",
-          "columns": [
-            "skill_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "employee_skills_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.employee_skills",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "employee_skills_employee_id_skill_id_key",
-          "type": "UNIQUE",
-          "def": "UNIQUE (employee_id, skill_id)",
-          "table": "public.employee_skills",
-          "referenced_table": "",
-          "columns": [
-            "employee_id",
-            "skill_id"
-          ]
-        }
-      ]
     }
   ],
   "relations": [
@@ -3697,6 +3719,71 @@
       "def": "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
     },
     {
+      "table": "public.invitations",
+      "columns": [
+        "org_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.organizations",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.invitations",
+      "columns": [
+        "team_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.teams",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.invitations",
+      "columns": [
+        "role_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.roles",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (role_id) REFERENCES roles(id)"
+    },
+    {
+      "table": "public.invitations",
+      "columns": [
+        "accepted_by"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "zero_or_one",
+      "def": "FOREIGN KEY (accepted_by) REFERENCES employees(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "public.invitations",
+      "columns": [
+        "inviter_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE"
+    },
+    {
       "table": "public.activity_logs",
       "columns": [
         "org_id"
@@ -3773,32 +3860,6 @@
       ],
       "parent_cardinality": "zero_or_one",
       "def": "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
-    },
-    {
-      "table": "public.employee_skills",
-      "columns": [
-        "employee_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.employees",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.employee_skills",
-      "columns": [
-        "skill_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.skill_catalog",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE"
     }
   ],
   "functions": [
@@ -4087,6 +4148,18 @@
     {
       "name": "public.generate_sync_token",
       "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.generate_invitation_token",
+      "return_type": "trigger",
+      "arguments": "",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.expire_old_invitations",
+      "return_type": "void",
       "arguments": "",
       "type": "FUNCTION"
     },

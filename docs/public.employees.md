@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) [public.employee_skills](public.employee_skills.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | team_id | uuid |  | true |  | [public.teams](public.teams.md) |  |
 | role_id | uuid |  | false |  | [public.roles](public.roles.md) |  |
@@ -60,9 +60,10 @@ erDiagram
 "public.employee_mcp_configs" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.agent_requests" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.invitations" }o--o| "public.employees" : "FOREIGN KEY (accepted_by) REFERENCES employees(id) ON DELETE SET NULL"
+"public.invitations" }o--|| "public.employees" : "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-"public.employee_skills" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
 "public.employees" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
@@ -121,7 +122,6 @@ erDiagram
   timestamp_without_time_zone last_sync_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  boolean is_enabled
 }
 "public.agent_requests" {
   uuid id
@@ -141,6 +141,21 @@ erDiagram
   text comment
   timestamp_without_time_zone created_at
   timestamp_without_time_zone resolved_at
+}
+"public.invitations" {
+  uuid id
+  uuid org_id FK
+  uuid inviter_id FK
+  varchar_255_ email
+  uuid role_id FK
+  uuid team_id FK
+  varchar_64_ token
+  varchar_50_ status
+  timestamp_without_time_zone expires_at
+  uuid accepted_by FK
+  timestamp_without_time_zone accepted_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 "public.activity_logs" {
   uuid id
@@ -167,15 +182,6 @@ erDiagram
   jsonb metadata
   varchar_20_ token_source
   timestamp_without_time_zone created_at
-}
-"public.employee_skills" {
-  uuid id
-  uuid employee_id FK
-  uuid skill_id FK
-  boolean is_enabled
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
-  jsonb config
 }
 "public.organizations" {
   uuid id

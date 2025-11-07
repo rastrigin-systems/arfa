@@ -48,9 +48,9 @@ CREATE VIEW v_employee_mcps AS (
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [public.employee_mcp_configs](public.employee_mcp_configs.md) | 11 |  | BASE TABLE |
+| [public.employee_mcp_configs](public.employee_mcp_configs.md) | 10 |  | BASE TABLE |
 | [public.employees](public.employees.md) | 14 |  | BASE TABLE |
-| [public.mcp_catalog](public.mcp_catalog.md) | 15 |  | BASE TABLE |
+| [public.mcp_catalog](public.mcp_catalog.md) | 12 |  | BASE TABLE |
 
 ## Relations
 

@@ -22,17 +22,16 @@
 | [public.system_prompts](public.system_prompts.md) | 8 |  | BASE TABLE |
 | [public.employee_policies](public.employee_policies.md) | 5 |  | BASE TABLE |
 | [public.mcp_categories](public.mcp_categories.md) | 4 |  | BASE TABLE |
-| [public.mcp_catalog](public.mcp_catalog.md) | 15 |  | BASE TABLE |
-| [public.employee_mcp_configs](public.employee_mcp_configs.md) | 11 |  | BASE TABLE |
+| [public.mcp_catalog](public.mcp_catalog.md) | 12 |  | BASE TABLE |
+| [public.employee_mcp_configs](public.employee_mcp_configs.md) | 10 |  | BASE TABLE |
 | [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
 | [public.approvals](public.approvals.md) | 7 |  | BASE TABLE |
+| [public.invitations](public.invitations.md) | 13 |  | BASE TABLE |
 | [public.activity_logs](public.activity_logs.md) | 10 |  | BASE TABLE |
 | [public.usage_records](public.usage_records.md) | 12 |  | BASE TABLE |
 | [public.v_employee_agents](public.v_employee_agents.md) | 12 | Complete view of employee agent configurations with catalog details | VIEW |
 | [public.v_employee_mcps](public.v_employee_mcps.md) | 11 | Complete view of employee MCP configurations with catalog details | VIEW |
 | [public.v_pending_approvals](public.v_pending_approvals.md) | 10 | Pending approval requests with full requester context | VIEW |
-| [public.skill_catalog](public.skill_catalog.md) | 10 |  | BASE TABLE |
-| [public.employee_skills](public.employee_skills.md) | 7 |  | BASE TABLE |
 
 ## Stored procedures and functions
 
@@ -86,6 +85,8 @@
 | public.pgp_armor_headers | record | text, OUT key text, OUT value text | FUNCTION |
 | public.update_updated_at_column | trigger |  | FUNCTION |
 | public.generate_sync_token | trigger |  | FUNCTION |
+| public.generate_invitation_token | trigger |  | FUNCTION |
+| public.expire_old_invitations | void |  | FUNCTION |
 | public.get_effective_claude_token | record | emp_id uuid | FUNCTION |
 
 ## Relations
@@ -120,14 +121,17 @@ erDiagram
 "public.agent_requests" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.approvals" }o--|| "public.agent_requests" : "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
+"public.invitations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.invitations" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
+"public.invitations" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
+"public.invitations" }o--o| "public.employees" : "FOREIGN KEY (accepted_by) REFERENCES employees(id) ON DELETE SET NULL"
+"public.invitations" }o--|| "public.employees" : "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.activity_logs" }o--o| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL"
 "public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
-"public.employee_skills" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
-"public.employee_skills" }o--|| "public.skill_catalog" : "FOREIGN KEY (skill_id) REFERENCES skill_catalog(id) ON DELETE CASCADE"
 
 "public.organizations" {
   uuid id
@@ -310,9 +314,6 @@ erDiagram
   uuid category_id FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  varchar_255_ docker_image
-  jsonb config_template
-  jsonb required_env_vars
 }
 "public.employee_mcp_configs" {
   uuid id
@@ -325,7 +326,6 @@ erDiagram
   timestamp_without_time_zone last_sync_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-  boolean is_enabled
 }
 "public.agent_requests" {
   uuid id
@@ -345,6 +345,21 @@ erDiagram
   text comment
   timestamp_without_time_zone created_at
   timestamp_without_time_zone resolved_at
+}
+"public.invitations" {
+  uuid id
+  uuid org_id FK
+  uuid inviter_id FK
+  varchar_255_ email
+  uuid role_id FK
+  uuid team_id FK
+  varchar_64_ token
+  varchar_50_ status
+  timestamp_without_time_zone expires_at
+  uuid accepted_by FK
+  timestamp_without_time_zone accepted_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 "public.activity_logs" {
   uuid id
@@ -410,27 +425,6 @@ erDiagram
   varchar_255_ requester_email
   varchar_255_ team_name
   varchar_255_ org_name
-}
-"public.skill_catalog" {
-  uuid id
-  varchar_255_ name
-  text description
-  varchar_100_ category
-  varchar_50_ version
-  jsonb files
-  jsonb dependencies
-  boolean is_active
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
-}
-"public.employee_skills" {
-  uuid id
-  uuid employee_id FK
-  uuid skill_id FK
-  boolean is_enabled
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
-  jsonb config
 }
 ```
 

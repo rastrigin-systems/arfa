@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.subscriptions](public.subscriptions.md) [public.teams](public.teams.md) [public.employees](public.employees.md) [public.org_agent_configs](public.org_agent_configs.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.subscriptions](public.subscriptions.md) [public.teams](public.teams.md) [public.employees](public.employees.md) [public.org_agent_configs](public.org_agent_configs.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
 | name | varchar(255) |  | false |  |  |  |
 | slug | varchar(100) |  | false |  |  |  |
 | plan | varchar(50) | 'starter'::character varying | false |  |  |  |
@@ -47,6 +47,7 @@ erDiagram
 "public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.org_agent_configs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.invitations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 
@@ -104,6 +105,21 @@ erDiagram
   uuid agent_id FK
   jsonb config
   boolean is_enabled
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.invitations" {
+  uuid id
+  uuid org_id FK
+  uuid inviter_id FK
+  varchar_255_ email
+  uuid role_id FK
+  uuid team_id FK
+  varchar_64_ token
+  varchar_50_ status
+  timestamp_without_time_zone expires_at
+  uuid accepted_by FK
+  timestamp_without_time_zone accepted_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }
