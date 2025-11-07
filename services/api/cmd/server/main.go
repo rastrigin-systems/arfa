@@ -92,8 +92,8 @@ func main() {
 	}))
 
 	// API Documentation (public, no auth required)
+	router.Handle("/api/docs/*", handlers.SwaggerHandler())
 	router.Get("/api/docs/spec.yaml", handlers.SpecHandler())
-	router.Mount("/api/docs", handlers.SwaggerHandler())
 
 	// API routes
 	router.Route("/api/v1", func(r chi.Router) {

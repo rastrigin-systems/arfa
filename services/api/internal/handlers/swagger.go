@@ -8,16 +8,20 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-// SwaggerHandler returns a handler that serves Swagger UI and OpenAPI spec
-func SwaggerHandler() http.Handler {
-	// Create a handler that serves the OpenAPI spec at /api/docs/spec.yaml
-	// and the Swagger UI at /api/docs/
-	return httpSwagger.Handler(
+// SwaggerHandler returns a handler function that serves Swagger UI
+func SwaggerHandler() http.HandlerFunc {
+	// Get the Swagger UI handler
+	swaggerHandler := httpSwagger.Handler(
 		httpSwagger.URL("/api/docs/spec.yaml"),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("list"),
 		httpSwagger.DomID("swagger-ui"),
 	)
+
+	// Wrap http.Handler as http.HandlerFunc
+	return func(w http.ResponseWriter, r *http.Request) {
+		swaggerHandler.ServeHTTP(w, r)
+	}
 }
 
 // SpecHandler serves the OpenAPI spec file
