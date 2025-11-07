@@ -467,6 +467,47 @@ When integration tests or CLI operations fail unexpectedly:
 
 ---
 
+### 7. Docker Testing
+
+**⚠️ CRITICAL: ALWAYS Test Docker Builds Locally Before Deploying**
+
+**Mandatory Docker Testing Workflow:**
+
+```bash
+# 1. Build Docker image locally
+docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
+
+# 2. Verify files are in the image
+docker run --rm ubik-api-test ls -la /app/
+docker run --rm ubik-api-test ls -la /app/shared/openapi/
+
+# 3. Test container locally
+docker run --rm -p 8080:8080 \
+  -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
+  ubik-api-test
+
+# 4. Verify endpoints work
+curl http://localhost:8080/api/v1/health
+curl http://localhost:8080/api/docs/
+```
+
+**Why This Matters:**
+- ❌ Local build ≠ Docker build
+- ❌ Files in local filesystem may not be in Docker image
+- ❌ Routes may behave differently in containers
+- ✅ Testing Docker locally catches environment-specific bugs
+
+**When Docker Testing is Required:**
+- ✅ ANY change to Dockerfile
+- ✅ ANY change to cloudbuild.yaml
+- ✅ New API endpoints added
+- ✅ New file resources needed (configs, specs, images)
+- ✅ Environment variable changes
+
+**See [docs/DOCKER_TESTING_CHECKLIST.md](./docs/DOCKER_TESTING_CHECKLIST.md) for complete Docker testing guide.**
+
+---
+
 # STATUS & ROADMAP
 
 *Current progress and next steps*
