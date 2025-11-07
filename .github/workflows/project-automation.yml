@@ -1,0 +1,110 @@
+name: Project Automation
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  update-project-status:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review'
+    steps:
+      - name: Extract issue number from PR
+        id: extract_issue
+        run: |
+          # Extract issue number from PR title or branch name
+          # Format: "feat: Add feature (#123)" or "feature/123-description"
+          ISSUE_NUM=""
+
+          # Try to extract from PR title (e.g., "feat: description (#123)")
+          if [[ "${{ github.event.pull_request.title }}" =~ \(#([0-9]+)\) ]]; then
+            ISSUE_NUM="${BASH_REMATCH[1]}"
+          # Try to extract from branch name (e.g., "feature/123-description")
+          elif [[ "${{ github.event.pull_request.head.ref }}" =~ ^[^/]+/([0-9]+) ]]; then
+            ISSUE_NUM="${BASH_REMATCH[1]}"
+          fi
+
+          echo "issue_number=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          echo "Extracted issue number: $ISSUE_NUM"
+
+      - name: Move to In Review (PR opened)
+        if: |
+          (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
+          && steps.extract_issue.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = ${{ steps.extract_issue.outputs.issue_number }};
+
+            // Add "in-review" label
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['status/in-review']
+              });
+              console.log(`Added 'status/in-review' label to issue #${issueNumber}`);
+            } catch (error) {
+              console.log(`Note: Could not add label (may not exist yet): ${error.message}`);
+            }
+
+            // Add comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `🔍 **PR opened for review**: #${{ github.event.pull_request.number }}\n\nStatus: In Review`
+            });
+
+      - name: Move to Done (PR merged)
+        if: |
+          github.event.pull_request.merged == true
+          && steps.extract_issue.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = ${{ steps.extract_issue.outputs.issue_number }};
+
+            // Remove "in-review" label and add "status/done"
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'status/in-review'
+              });
+            } catch (error) {
+              console.log(`Note: Could not remove label: ${error.message}`);
+            }
+
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['status/done']
+              });
+            } catch (error) {
+              console.log(`Note: Could not add label: ${error.message}`);
+            }
+
+            // Close the issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              state: 'closed'
+            });
+
+            // Add comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ **PR merged**: #${{ github.event.pull_request.number }}\n\nStatus: Done\nClosed automatically.`
+            });
