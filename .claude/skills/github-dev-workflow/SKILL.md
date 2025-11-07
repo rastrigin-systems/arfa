@@ -43,10 +43,10 @@ gh issue edit $ISSUE_NUM --add-assignee "@me"
 
 ### 3. Create Git Worktree with Standard Branch Name
 ```bash
-# Branch naming convention: issue-{num}-{short-description}
-# Example: issue-47-dev-workflow-skill
+# Branch naming convention: feature/{num}-{short-description}
+# Example: feature/47-dev-workflow-skill
 
-BRANCH_NAME="issue-${ISSUE_NUM}-short-description"
+BRANCH_NAME="feature/${ISSUE_NUM}-short-description"
 
 # Create worktree in parallel directory
 git worktree add ../$(basename $(pwd))-issue-${ISSUE_NUM} -b $BRANCH_NAME
@@ -65,11 +65,11 @@ cd ../$(basename $(pwd))-issue-${ISSUE_NUM}
 ```bash
 # Confirm you're on the right branch
 git branch --show-current
-# Output: issue-47-short-description
+# Output: feature/47-short-description
 
 # Confirm clean working directory
 git status
-# Output: On branch issue-47-short-description, nothing to commit
+# Output: On branch feature/47-short-description, nothing to commit
 
 echo "✅ Ready to start work on issue #${ISSUE_NUM}"
 ```
@@ -99,7 +99,7 @@ ISSUE_NUM=47
 git add .
 
 # Commit with proper format
-git commit -m "feat: Implement feature description (#${ISSUE_NUM})
+git commit -m "feat: Implement feature description
 
 Detailed description of what was implemented.
 
@@ -115,7 +115,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 **Commit Message Format:**
-- `type: Description (#issue)` - Title line
+- `type: Description` - Title line (no issue number in commit)
 - Blank line
 - Detailed explanation
 - Blank line
@@ -133,14 +133,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### 2. Push to Remote
 ```bash
 # Push and set upstream
-git push -u origin issue-${ISSUE_NUM}-short-description
+git push -u origin feature/${ISSUE_NUM}-short-description
 ```
 
-### 3. Create Pull Request
+### 3. Create Pull Request (with Issue Number in Title - REQUIRED!)
 ```bash
 ISSUE_TITLE=$(gh issue view $ISSUE_NUM --json title -q .title)
 ISSUE_LABELS=$(gh issue view $ISSUE_NUM --json labels -q '.labels[].name' | grep -E '^area/' | head -1)
 
+# CRITICAL: Include (#ISSUE_NUM) in title for automatic status updates
 gh pr create \
   --title "feat: ${ISSUE_TITLE} (#${ISSUE_NUM})" \
   --label "$ISSUE_LABELS" \
@@ -183,40 +184,39 @@ gh pr checks $PR_NUM --watch --interval 10
 
 **This step is MANDATORY. Never skip it!**
 
-### 5. Check CI Results and Update Status
+### 5. Check CI Results (Automation Handles Status Updates)
 ```bash
 CI_FAILED=$(gh pr checks $PR_NUM --json state -q 'map(select(.state == "FAILURE" or .state == "CANCELLED")) | length')
 
 if [ "$CI_FAILED" -eq 0 ]; then
   echo "✅ All CI checks passed!"
-
-  # Update issue status to "In Review"
-  ./scripts/update-project-status.sh --issue $ISSUE_NUM --status "In Review"
-
-  # Add success comment
-  gh issue comment $ISSUE_NUM --body "✅ PR #${PR_NUM} created and all CI checks passing. Ready for review."
-
+  echo ""
+  echo "📋 GitHub Actions will automatically:"
+  echo "  - Update issue #${ISSUE_NUM} status to 'In Review'"
+  echo "  - Add comment linking PR #${PR_NUM} to issue"
+  echo "  - Close issue when PR is merged"
+  echo "  - Delete branch after merge"
+  echo ""
   echo "✅ Task ready for review. PR: #${PR_NUM}"
 else
   echo "❌ Some CI checks failed. Please investigate:"
   gh pr checks $PR_NUM
 
-  # Add failure comment but DON'T update status
-  gh issue comment $ISSUE_NUM --body "⚠️ PR #${PR_NUM} created but CI checks failed. Investigating..."
-
-  echo "❌ Fix CI failures before moving to review"
+  echo "❌ Fix CI failures and push again"
   exit 1
 fi
 ```
 
-**Quality Gate: NEVER update status to "In Review" until CI passes!**
+**Quality Gate: CI must pass before PR can be merged!**
+**Automation: GitHub Actions handles all status updates based on PR title (#ISSUE_NUM)**
 
 ### 6. Return to Main Workspace (Optional)
 ```bash
 # Navigate back to main workspace
 cd ../$(basename $(pwd) | sed 's/-issue-[0-9]*//')
 
-# Worktree remains for potential fixes
+# Worktree remains for potential fixes or future work
+# No manual status updates needed - automation handles it!
 ```
 
 ---
@@ -302,6 +302,10 @@ fi
 gh pr merge $PR_NUM --squash --delete-branch
 
 echo "✅ PR #${PR_NUM} merged!"
+echo "📋 GitHub Actions will automatically:"
+echo "  - Close issue #${ISSUE_NUM}"
+echo "  - Update status to 'Done'"
+echo "  - Delete feature branch"
 ```
 
 **Merge Strategies:**
@@ -309,16 +313,16 @@ echo "✅ PR #${PR_NUM} merged!"
 - **`--merge`**: Creates merge commit, preserves all commits
 - **`--rebase`**: Rewrites history, linear timeline
 
-### 4. Verify Issue Closed
+### 4. Verify Issue Closed (Automatic)
 ```bash
-# Issue should auto-close due to "Closes #123" in PR
+# Issue auto-closes due to "Closes #123" in PR + GitHub Actions
 ISSUE_STATE=$(gh issue view $ISSUE_NUM --json state -q .state)
 
 if [ "$ISSUE_STATE" = "CLOSED" ]; then
-  echo "✅ Issue #${ISSUE_NUM} automatically closed"
+  echo "✅ Issue #${ISSUE_NUM} automatically closed by GitHub Actions"
 else
-  echo "⚠️ Issue not auto-closed. Closing manually..."
-  gh issue close $ISSUE_NUM
+  echo "⚠️ Issue not yet closed. GitHub Actions may be processing..."
+  echo "   Check workflow status: gh run list --limit 5"
 fi
 ```
 
@@ -337,15 +341,14 @@ git worktree list
 echo "✅ Worktree cleaned up"
 ```
 
-### 6. Confirm Status is "Done"
+### 6. Confirm Status is "Done" (Automatic)
 ```bash
-# Check status in GitHub Projects
-gh project item-list 3 --owner sergei-rastrigin --format json | \
-  jq ".items[] | select(.content.number == $ISSUE_NUM) | .fieldValues[] | select(.field.name == \"Status\") | .name"
-
-# Should output: "Done"
-
+# GitHub Actions automatically updates status to "Done"
 echo "✅ Task complete! Issue #${ISSUE_NUM} closed and merged."
+echo "📋 GitHub Actions handled:"
+echo "  - Issue closure"
+echo "  - Status update to 'Done'"
+echo "  - Branch deletion"
 ```
 
 ---
@@ -367,11 +370,11 @@ ISSUE_NUM=47
 gh issue edit $ISSUE_NUM --add-assignee "@me"
 
 # 3. Create worktree
-git worktree add ../ubik-issue-47 -b issue-47-dev-workflow-skill
+git worktree add ../ubik-issue-47 -b feature/47-dev-workflow-skill
 cd ../ubik-issue-47
 
 # 4. Verify setup
-git branch --show-current  # issue-47-dev-workflow-skill
+git branch --show-current  # feature/47-dev-workflow-skill
 pwd  # /Users/you/Projects/ubik-issue-47
 
 # 5. Implement feature (TDD)
@@ -384,7 +387,7 @@ make test
 
 # 1. Commit
 git add .
-git commit -m "feat: Create development workflow skill (#47)
+git commit -m "feat: Create development workflow skill
 
 Implements comprehensive workflow for all development tasks.
 
@@ -399,7 +402,7 @@ Closes #47
 Co-Authored-By: Claude <noreply@anthropic.com>"
 
 # 2. Push
-git push -u origin issue-47-dev-workflow-skill
+git push -u origin feature/47-dev-workflow-skill
 
 # 3. Create PR
 ISSUE_TITLE=$(gh issue view 47 --json title -q .title)
@@ -413,12 +416,14 @@ PR_NUM=$(gh pr view --json number -q .number)
 # 4. Wait for CI (MANDATORY!)
 gh pr checks $PR_NUM --watch --interval 10
 
-# 5. Check CI and update status
+# 5. Check CI (automation handles status updates)
 CI_FAILED=$(gh pr checks $PR_NUM --json state -q 'map(select(.state == "FAILURE")) | length')
 if [ "$CI_FAILED" -eq 0 ]; then
-  ./scripts/update-project-status.sh --issue 47 --status "In Review"
-  gh issue comment 47 --body "✅ PR #${PR_NUM} ready for review"
-  echo "✅ PR ready for review"
+  echo "✅ All CI checks passed!"
+  echo "📋 GitHub Actions will automatically:"
+  echo "  - Update issue status to 'In Review'"
+  echo "  - Close issue when PR is merged"
+  echo "  - Delete branch after merge"
 else
   echo "❌ Fix CI failures first"
   exit 1
@@ -442,42 +447,46 @@ fi
 # 2. Merge PR
 gh pr merge $PR_NUM --squash --delete-branch
 
-# 3. Verify issue closed
+# 3. Verify issue closed (automatic via GitHub Actions)
 gh issue view 47 --json state -q .state  # CLOSED
 
 # 4. Clean up worktree
 cd ../ubik-enterprise
 git worktree remove ../ubik-issue-47
 
-# 5. Verify status
-# Should be "Done" in GitHub Projects
-
+# 5. Status automatically updated to "Done" by GitHub Actions
 echo "✅ Task complete! Issue #47 closed and merged."
+echo "📋 GitHub Actions handled:"
+echo "  - Issue closure"
+echo "  - Status update to 'Done'"
+echo "  - Branch deletion"
 ```
 
 ---
 
 ## Quality Gates (MANDATORY)
 
-### Gate 1: Status Updates
-- ✅ **MUST** update to "In Progress" when starting work
-- ✅ **MUST** wait for CI before "In Review"
-- ✅ Status **MUST** be "Done" after merge
+### Gate 1: Status Updates (Automated)
+- ✅ **MUST** manually update to "In Progress" when starting work
+- ✅ **AUTOMATIC** update to "In Review" when CI passes (via GitHub Actions)
+- ✅ **AUTOMATIC** update to "Done" after merge (via GitHub Actions)
 
-### Gate 2: CI Checks
+### Gate 2: CI Checks (Critical!)
 - ✅ **MUST** wait for ALL CI checks to complete
-- ✅ **MUST NOT** update to "In Review" if CI fails
+- ✅ **MUST NOT** proceed if CI fails (automation won't update status)
 - ✅ **MUST** re-run CI after fixing failures
 - ✅ **MUST** wait for CI again after resolving conflicts
 
 ### Gate 3: Git Workflow
 - ✅ **MUST** use git worktrees for parallel work
-- ✅ **MUST** follow branch naming: `issue-{num}-{description}`
+- ✅ **MUST** follow branch naming: `feature/{num}-{description}`
+- ✅ **MUST** include `(#ISSUE_NUM)` in PR title for automation
 - ✅ **MUST** include `Closes #issue` in PR description
 - ✅ **MUST** clean up worktree after merge
 
 ### Gate 4: PR Quality
 - ✅ **MUST** use proper commit message format
+- ✅ **MUST** include issue number in PR title: `type: Title (#123)`
 - ✅ **MUST** fill out PR template completely
 - ✅ **MUST** inherit area labels from issue
 - ✅ **MUST** include Claude Code attribution
@@ -486,15 +495,15 @@ echo "✅ Task complete! Issue #47 closed and merged."
 
 ## Branch Naming Convention
 
-**Format:** `issue-{number}-{short-description}`
+**Format:** `feature/{number}-{short-description}`
 
 **Examples:**
-- `issue-47-dev-workflow-skill`
-- `issue-89-list-agents-endpoint`
-- `issue-123-fix-auth-bug`
+- `feature/47-dev-workflow-skill`
+- `feature/89-list-agents-endpoint`
+- `feature/123-fix-auth-bug`
 
 **Rules:**
-- Always start with `issue-{num}`
+- Always start with `feature/{num}`
 - Use lowercase with dashes
 - Keep description short (3-5 words max)
 - Be descriptive but concise
@@ -624,12 +633,37 @@ github-task-manager → github-dev-workflow → github-pr-workflow → merge
 ## Success Metrics
 
 - ✅ 100% of tasks follow standardized workflow
-- ✅ Zero status updates forgotten
+- ✅ Zero manual status updates (except "In Progress")
 - ✅ Zero "In Review" with failing CI
 - ✅ All PRs use worktrees
+- ✅ All PRs have issue number in title for automation
 - ✅ Clean git history (no leftover branches)
 - ✅ Complete audit trail
 
 ---
 
-**This skill ensures every agent follows the exact same development workflow from start to finish, with mandatory quality gates at every step.**
+## What Changed with Automation
+
+**Before (Manual):**
+- Manual status update scripts
+- Manual issue comments
+- Manual branch deletion
+- Manual status label management
+
+**After (Automated via GitHub Actions):**
+- ✅ PR created with `(#123)` in title → Auto-updates status to "In Review"
+- ✅ PR merged → Auto-closes issue and updates status to "Done"
+- ✅ Branch auto-deleted after merge
+- ✅ Automatic comment on issue with PR link
+
+**Agent Responsibilities Now:**
+- ✅ Create PR with issue number in title: `feat: Title (#123)`
+- ✅ Wait for CI checks (still critical!)
+- ✅ Merge when approved
+- ❌ No manual status updates after PR creation
+- ❌ No manual issue closure
+- ❌ No manual branch deletion
+
+---
+
+**This skill ensures every agent follows the exact same development workflow from start to finish, with mandatory quality gates and automated status management.**

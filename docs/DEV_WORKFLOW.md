@@ -1,7 +1,14 @@
 # Development Workflow - PR & Git Best Practices
 
-**Last Updated:** 2025-11-01
+**Last Updated:** 2025-11-07
 **Applies to:** All developers (human and AI agents)
+
+**🎉 NEW: Automated PR Workflow!**
+- ✅ Branch protection enforces PR-based workflow (no direct commits to `main`)
+- ✅ Issue status auto-updates when PR created (`status/in-review`)
+- ✅ Issues auto-close when PR merges (`status/done`)
+- ✅ Branches auto-delete after merge
+- ✅ **PR title MUST include issue number:** `feat: Description (#123)`
 
 ---
 
@@ -293,8 +300,8 @@ git push origin --delete feature/your-feature-name
 gh issue list --label="backend,status/ready"
 
 # 2. Create branch + workspace
-git checkout -b issue-123-feature
-git worktree add ../ubik-issue-123 issue-123-feature
+git checkout -b feature/123-feature-description
+git worktree add ../ubik-issue-123 feature/123-feature-description
 cd ../ubik-issue-123
 
 # 3. Implement feature (TDD)
@@ -302,8 +309,8 @@ cd ../ubik-issue-123
 # - Implement code
 # - All tests pass locally
 
-# 4. Create PR
-gh pr create --title "..." --body "..." --label "backend"
+# 4. Create PR with issue number in title (REQUIRED for automation!)
+gh pr create --title "feat: Feature description (#123)" --body "..." --label "backend"
 PR_NUM=$(gh pr view --json number -q .number)
 
 # 5. Wait for CI checks (CRITICAL!)
@@ -314,14 +321,18 @@ CI_STATUS=$(gh pr checks $PR_NUM --json state -q 'map(select(.state == "FAILURE"
 
 if [ "$CI_STATUS" -eq 0 ]; then
   # All checks passed!
-  ./scripts/update-project-status.sh --issue 123 --status "In Review"
-  gh issue edit 123 --add-label "status/waiting-for-review"
-  gh issue comment 123 --body "✅ All CI checks passed. PR #${PR_NUM} ready for review."
+  # ✅ GitHub Actions automatically:
+  #    - Updates issue status to "In Review"
+  #    - Adds status/in-review label
+  #    - Posts comment linking PR to issue
+
+  echo "✅ PR #${PR_NUM} created and all CI checks passing."
+  echo "✅ GitHub automation updated issue #123 status to 'In Review'."
 else
   # Checks failed - investigate and fix
   gh pr checks $PR_NUM
-  gh issue comment 123 --body "❌ CI checks failed for PR #${PR_NUM}. Investigating..."
-  # Fix failures and push again
+  echo "❌ CI checks failed for PR #${PR_NUM}. Fix failures and push again."
+  # Fix failures and push again - CI will re-run automatically
 fi
 ```
 
@@ -333,16 +344,34 @@ fi
 - ✅ **Fast Feedback**: Failures caught immediately, not during code review
 - ✅ **Clean Pipeline**: No broken PRs waiting for review
 
-### Helper Script
+### Status Updates (Now Automated!)
+
+**✨ NEW:** Status updates are now automated! Just include issue number in PR title:
 
 ```bash
-# Update GitHub Project status for an issue
-./scripts/update-project-status.sh --issue 123 --status "In Review"
-./scripts/update-project-status.sh --issue 123 --status "Done"
-./scripts/update-project-status.sh --issue 123 --status "In Progress"
+# PR title format (automation triggers on this!)
+gh pr create --title "feat: Your feature (#123)" ...
 
-# For marketing board
-./scripts/update-project-status.sh --issue 124 --status "Launched" --project marketing
+# When PR is created with passing CI:
+#   → Issue status automatically updates to "In Review"
+#   → status/in-review label added
+#   → Comment posted linking PR to issue
+
+# When PR is merged:
+#   → Issue automatically closes
+#   → status/done label added
+#   → Branch automatically deleted
+```
+
+**Manual status updates only needed for:**
+- Moving issues to "In Progress" when starting work
+- Marking issues as "Blocked"
+- Non-PR status changes (e.g., research tasks)
+
+```bash
+# Manual status update (rarely needed now)
+./scripts/update-project-status.sh --issue 123 --status "In Progress"
+./scripts/update-project-status.sh --issue 123 --status "Blocked"
 ```
 
 **See agent configurations:**

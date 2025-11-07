@@ -467,7 +467,60 @@ When integration tests or CLI operations fail unexpectedly:
 
 ---
 
-### 7. Docker Testing
+### 7. PR-Based Development Workflow
+
+**⚠️ CRITICAL: ALL code changes MUST go through Pull Requests**
+
+**Branch Protection Enforcement:**
+- ✅ Direct commits to `main` are **BLOCKED** by branch protection
+- ✅ All changes require Pull Request approval
+- ✅ Branches auto-delete after PR merge
+
+**Mandatory PR Workflow:**
+
+1. **Create Feature Branch:**
+   ```bash
+   # Format: feature/{issue-number}-{description}
+   git checkout -b feature/138-update-prompts
+   ```
+
+2. **PR Title Format (REQUIRED):**
+   ```
+   feat: Description (#138)
+   fix: Bug description (#139)
+   chore: Maintenance task (#140)
+   ```
+   **The issue number in title is critical for automatic linking!**
+
+3. **Automatic Status Transitions (GitHub Actions):**
+   - ✅ PR opened → Issue gets `status/in-review` label + comment
+   - ✅ PR merged → Issue gets `status/done` label, closes automatically
+   - ✅ Branch deleted automatically after merge
+
+4. **CI Checks (MANDATORY):**
+   - ✅ All tests must pass
+   - ✅ Lint checks must pass
+   - ✅ Build must succeed
+   - ❌ **NEVER merge with failing CI**
+
+**What's Automated:**
+- Issue status updates (`status/in-review`, `status/done`)
+- Issue closure (via `Closes #123` or PR title)
+- Branch deletion after merge
+- Status comments on issues
+
+**What You Still Do:**
+- Create feature branch
+- Write code following TDD
+- Create PR with proper title format
+- Wait for CI checks to pass
+- Merge PR when approved
+
+**See [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) for complete workflow guide.**
+
+---
+
+### 8. Docker Testing
 
 **⚠️ CRITICAL: ALWAYS Test Docker Builds Locally Before Deploying**
 
