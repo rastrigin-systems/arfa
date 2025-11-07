@@ -176,6 +176,184 @@ components:
         organization:
           $ref: '#/components/schemas/Organization'
 
+    # Invitation schemas
+    CreateInvitationRequest:
+      type: object
+      required:
+        - email
+        - role_id
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address of the person being invited
+        role_id:
+          type: string
+          format: uuid
+          description: Role to assign to the new employee
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional team to assign the employee to
+
+    Invitation:
+      type: object
+      required:
+        - id
+        - org_id
+        - inviter_id
+        - email
+        - role_id
+        - token
+        - status
+        - expires_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        org_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+          description: Employee who created the invitation
+        email:
+          type: string
+          format: email
+        role_id:
+          type: string
+          format: uuid
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+        token:
+          type: string
+          minLength: 64
+          maxLength: 64
+          description: Secure invitation token (64 character hex string)
+        status:
+          type: string
+          enum: [pending, accepted, expired, cancelled]
+          description: Current invitation status
+        expires_at:
+          type: string
+          format: date-time
+          description: When the invitation expires (7 days from creation)
+        accepted_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Employee ID who accepted the invitation
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the invitation was accepted
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    InvitationListResponse:
+      type: object
+      required:
+        - invitations
+        - total
+        - limit
+        - offset
+      properties:
+        invitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'
+        total:
+          type: integer
+          description: Total number of invitations
+        limit:
+          type: integer
+          description: Number of results per page
+        offset:
+          type: integer
+          description: Offset for pagination
+
+    InvitationDetails:
+      type: object
+      required:
+        - id
+        - org_name
+        - email
+        - role_name
+        - status
+        - expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_name:
+          type: string
+          description: Name of the organization
+        email:
+          type: string
+          format: email
+        role_name:
+          type: string
+          description: Name of the role being assigned
+        team_name:
+          type: string
+          nullable: true
+          description: Name of the team (if assigned)
+        status:
+          type: string
+          enum: [pending, accepted, expired, cancelled]
+        expires_at:
+          type: string
+          format: date-time
+          description: When the invitation expires
+
+    AcceptInvitationRequest:
+      type: object
+      required:
+        - full_name
+        - password
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Full name of the employee
+        password:
+          type: string
+          minLength: 8
+          format: password
+          description: Password (must be at least 8 characters)
+
+    AcceptInvitationResponse:
+      type: object
+      required:
+        - token
+        - expires_at
+        - employee
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+        expires_at:
+          type: string
+          format: date-time
+          description: Token expiration timestamp
+        employee:
+          $ref: '#/components/schemas/Employee'
+
     # Core domain schemas
     Employee:
       type: object
@@ -1714,6 +1892,25 @@ components:
         default: 20
       description: Items per page
 
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      description: Number of items to return
+
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of items to skip
+
     Status:
       name: status
       in: query
@@ -1858,6 +2055,217 @@ paths:
                 $ref: '#/components/schemas/Employee'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Invitations
+  # ============================================================================
+  /invitations:
+    post:
+      tags:
+        - invitations
+      summary: Create invitation
+      description: Create an invitation for a new employee (admin only, rate limited to 20/day)
+      operationId: createInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+      responses:
+        '201':
+          description: Invitation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - requires admin role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded (20 invitations/day)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - invitations
+      summary: List invitations
+      description: Get paginated list of invitations for current organization (admin only)
+      operationId: listInvitations
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - requires admin role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invitations/{token}:
+    get:
+      tags:
+        - invitations
+      summary: Get invitation by token
+      description: Validate invitation token and get details (public endpoint)
+      operationId: getInvitationByToken
+      security: []  # No auth required - public endpoint
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 64
+          description: Invitation token (64 character hex string)
+      responses:
+        '200':
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationDetails'
+        '404':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Invitation expired or cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invitations/{token}/accept:
+    post:
+      tags:
+        - invitations
+      summary: Accept invitation
+      description: Accept invitation and create employee account (public endpoint)
+      operationId: acceptInvitation
+      security: []  # No auth required - public endpoint
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 64
+          description: Invitation token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptInvitationRequest'
+      responses:
+        '200':
+          description: Invitation accepted, employee created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptInvitationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already exists or invitation already accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Invitation expired or cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invitations/{id}:
+    delete:
+      tags:
+        - invitations
+      summary: Cancel invitation
+      description: Cancel a pending invitation (admin only)
+      operationId: cancelInvitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Invitation ID
+      responses:
+        '204':
+          description: Invitation cancelled successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - requires admin role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invitation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Cannot cancel accepted invitation
           content:
             application/json:
               schema:

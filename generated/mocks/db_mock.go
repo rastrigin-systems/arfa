@@ -43,6 +43,21 @@ func (m *MockQuerier) EXPECT() *MockQuerierMockRecorder {
 	return m.recorder
 }
 
+// AcceptInvitation mocks base method.
+func (m *MockQuerier) AcceptInvitation(ctx context.Context, arg db.AcceptInvitationParams) (db.Invitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AcceptInvitation", ctx, arg)
+	ret0, _ := ret[0].(db.Invitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AcceptInvitation indicates an expected call of AcceptInvitation.
+func (mr *MockQuerierMockRecorder) AcceptInvitation(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AcceptInvitation", reflect.TypeOf((*MockQuerier)(nil).AcceptInvitation), ctx, arg)
+}
+
 // ApproveMCPServer mocks base method.
 func (m *MockQuerier) ApproveMCPServer(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -70,6 +85,20 @@ func (m *MockQuerier) AssignSkillToEmployee(ctx context.Context, arg db.AssignSk
 func (mr *MockQuerierMockRecorder) AssignSkillToEmployee(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignSkillToEmployee", reflect.TypeOf((*MockQuerier)(nil).AssignSkillToEmployee), ctx, arg)
+}
+
+// CancelInvitation mocks base method.
+func (m *MockQuerier) CancelInvitation(ctx context.Context, arg db.CancelInvitationParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelInvitation", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelInvitation indicates an expected call of CancelInvitation.
+func (mr *MockQuerierMockRecorder) CancelInvitation(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelInvitation", reflect.TypeOf((*MockQuerier)(nil).CancelInvitation), ctx, arg)
 }
 
 // CheckEmployeeAgentExists mocks base method.
@@ -252,6 +281,36 @@ func (mr *MockQuerierMockRecorder) CountEmployeesWithPersonalTokens(ctx, orgID a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmployeesWithPersonalTokens", reflect.TypeOf((*MockQuerier)(nil).CountEmployeesWithPersonalTokens), ctx, orgID)
 }
 
+// CountInvitations mocks base method.
+func (m *MockQuerier) CountInvitations(ctx context.Context, orgID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountInvitations", ctx, orgID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountInvitations indicates an expected call of CountInvitations.
+func (mr *MockQuerierMockRecorder) CountInvitations(ctx, orgID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountInvitations", reflect.TypeOf((*MockQuerier)(nil).CountInvitations), ctx, orgID)
+}
+
+// CountInvitationsByOrgToday mocks base method.
+func (m *MockQuerier) CountInvitationsByOrgToday(ctx context.Context, orgID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountInvitationsByOrgToday", ctx, orgID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountInvitationsByOrgToday indicates an expected call of CountInvitationsByOrgToday.
+func (mr *MockQuerierMockRecorder) CountInvitationsByOrgToday(ctx, orgID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountInvitationsByOrgToday", reflect.TypeOf((*MockQuerier)(nil).CountInvitationsByOrgToday), ctx, orgID)
+}
+
 // CountPendingRequestsByOrg mocks base method.
 func (m *MockQuerier) CountPendingRequestsByOrg(ctx context.Context, orgID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
@@ -370,6 +429,21 @@ func (m *MockQuerier) CreateEmployeeMCPConfig(ctx context.Context, arg db.Create
 func (mr *MockQuerierMockRecorder) CreateEmployeeMCPConfig(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEmployeeMCPConfig", reflect.TypeOf((*MockQuerier)(nil).CreateEmployeeMCPConfig), ctx, arg)
+}
+
+// CreateInvitation mocks base method.
+func (m *MockQuerier) CreateInvitation(ctx context.Context, arg db.CreateInvitationParams) (db.Invitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInvitation", ctx, arg)
+	ret0, _ := ret[0].(db.Invitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateInvitation indicates an expected call of CreateInvitation.
+func (mr *MockQuerierMockRecorder) CreateInvitation(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvitation", reflect.TypeOf((*MockQuerier)(nil).CreateInvitation), ctx, arg)
 }
 
 // CreateMCPServer mocks base method.
@@ -760,6 +834,20 @@ func (mr *MockQuerierMockRecorder) DisapproveMCPServer(ctx, id any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisapproveMCPServer", reflect.TypeOf((*MockQuerier)(nil).DisapproveMCPServer), ctx, id)
 }
 
+// ExpireOldInvitations mocks base method.
+func (m *MockQuerier) ExpireOldInvitations(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExpireOldInvitations", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExpireOldInvitations indicates an expected call of ExpireOldInvitations.
+func (mr *MockQuerierMockRecorder) ExpireOldInvitations(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpireOldInvitations", reflect.TypeOf((*MockQuerier)(nil).ExpireOldInvitations), ctx)
+}
+
 // GetAgentByID mocks base method.
 func (m *MockQuerier) GetAgentByID(ctx context.Context, id uuid.UUID) (db.Agent, error) {
 	m.ctrl.T.Helper()
@@ -983,6 +1071,51 @@ func (m *MockQuerier) GetEmployeesByTeam(ctx context.Context, teamID pgtype.UUID
 func (mr *MockQuerierMockRecorder) GetEmployeesByTeam(ctx, teamID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesByTeam", reflect.TypeOf((*MockQuerier)(nil).GetEmployeesByTeam), ctx, teamID)
+}
+
+// GetInvitationByID mocks base method.
+func (m *MockQuerier) GetInvitationByID(ctx context.Context, arg db.GetInvitationByIDParams) (db.Invitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationByID", ctx, arg)
+	ret0, _ := ret[0].(db.Invitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationByID indicates an expected call of GetInvitationByID.
+func (mr *MockQuerierMockRecorder) GetInvitationByID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByID", reflect.TypeOf((*MockQuerier)(nil).GetInvitationByID), ctx, arg)
+}
+
+// GetInvitationByToken mocks base method.
+func (m *MockQuerier) GetInvitationByToken(ctx context.Context, token string) (db.GetInvitationByTokenRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationByToken", ctx, token)
+	ret0, _ := ret[0].(db.GetInvitationByTokenRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationByToken indicates an expected call of GetInvitationByToken.
+func (mr *MockQuerierMockRecorder) GetInvitationByToken(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByToken", reflect.TypeOf((*MockQuerier)(nil).GetInvitationByToken), ctx, token)
+}
+
+// GetInvitationEmailInfo mocks base method.
+func (m *MockQuerier) GetInvitationEmailInfo(ctx context.Context, id uuid.UUID) (db.GetInvitationEmailInfoRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationEmailInfo", ctx, id)
+	ret0, _ := ret[0].(db.GetInvitationEmailInfoRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationEmailInfo indicates an expected call of GetInvitationEmailInfo.
+func (mr *MockQuerierMockRecorder) GetInvitationEmailInfo(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationEmailInfo", reflect.TypeOf((*MockQuerier)(nil).GetInvitationEmailInfo), ctx, id)
 }
 
 // GetLogsByEmployee mocks base method.
@@ -1508,6 +1641,21 @@ func (m *MockQuerier) ListEmployees(ctx context.Context, arg db.ListEmployeesPar
 func (mr *MockQuerierMockRecorder) ListEmployees(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmployees", reflect.TypeOf((*MockQuerier)(nil).ListEmployees), ctx, arg)
+}
+
+// ListInvitations mocks base method.
+func (m *MockQuerier) ListInvitations(ctx context.Context, arg db.ListInvitationsParams) ([]db.Invitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListInvitations", ctx, arg)
+	ret0, _ := ret[0].([]db.Invitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListInvitations indicates an expected call of ListInvitations.
+func (mr *MockQuerierMockRecorder) ListInvitations(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvitations", reflect.TypeOf((*MockQuerier)(nil).ListInvitations), ctx, arg)
 }
 
 // ListMCPServers mocks base method.

@@ -59,6 +59,22 @@ const (
 	EmployeeStatusSuspended EmployeeStatus = "suspended"
 )
 
+// Defines values for InvitationStatus.
+const (
+	InvitationStatusAccepted  InvitationStatus = "accepted"
+	InvitationStatusCancelled InvitationStatus = "cancelled"
+	InvitationStatusExpired   InvitationStatus = "expired"
+	InvitationStatusPending   InvitationStatus = "pending"
+)
+
+// Defines values for InvitationDetailsStatus.
+const (
+	InvitationDetailsStatusAccepted  InvitationDetailsStatus = "accepted"
+	InvitationDetailsStatusCancelled InvitationDetailsStatus = "cancelled"
+	InvitationDetailsStatusExpired   InvitationDetailsStatus = "expired"
+	InvitationDetailsStatusPending   InvitationDetailsStatus = "pending"
+)
+
 // Defines values for OrganizationPlan.
 const (
 	Enterprise   OrganizationPlan = "enterprise"
@@ -134,6 +150,26 @@ const (
 	ExportLogsParamsEventCategoryIo    ExportLogsParamsEventCategory = "io"
 	ExportLogsParamsEventCategoryMcp   ExportLogsParamsEventCategory = "mcp"
 )
+
+// AcceptInvitationRequest defines model for AcceptInvitationRequest.
+type AcceptInvitationRequest struct {
+	// FullName Full name of the employee
+	FullName string `json:"full_name"`
+
+	// Password Password (must be at least 8 characters)
+	Password string `json:"password"`
+}
+
+// AcceptInvitationResponse defines model for AcceptInvitationResponse.
+type AcceptInvitationResponse struct {
+	Employee Employee `json:"employee"`
+
+	// ExpiresAt Token expiration timestamp
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// Token JWT authentication token
+	Token string `json:"token"`
+}
 
 // ActivityLog defines model for ActivityLog.
 type ActivityLog struct {
@@ -229,6 +265,18 @@ type CreateEmployeeResponse struct {
 
 	// TemporaryPassword Temporary password for the new employee (only returned on creation)
 	TemporaryPassword string `json:"temporary_password"`
+}
+
+// CreateInvitationRequest defines model for CreateInvitationRequest.
+type CreateInvitationRequest struct {
+	// Email Email address of the person being invited
+	Email openapi_types.Email `json:"email"`
+
+	// RoleId Role to assign to the new employee
+	RoleId openapi_types.UUID `json:"role_id"`
+
+	// TeamId Optional team to assign the employee to
+	TeamId *openapi_types.UUID `json:"team_id"`
 }
 
 // CreateLogRequest defines model for CreateLogRequest.
@@ -408,6 +456,73 @@ type Error struct {
 type HealthResponse struct {
 	Status    string    `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+// Invitation defines model for Invitation.
+type Invitation struct {
+	// AcceptedAt When the invitation was accepted
+	AcceptedAt *time.Time `json:"accepted_at"`
+
+	// AcceptedBy Employee ID who accepted the invitation
+	AcceptedBy *openapi_types.UUID `json:"accepted_by"`
+	CreatedAt  *time.Time          `json:"created_at,omitempty"`
+	Email      openapi_types.Email `json:"email"`
+
+	// ExpiresAt When the invitation expires (7 days from creation)
+	ExpiresAt time.Time           `json:"expires_at"`
+	Id        *openapi_types.UUID `json:"id,omitempty"`
+
+	// InviterId Employee who created the invitation
+	InviterId openapi_types.UUID `json:"inviter_id"`
+	OrgId     openapi_types.UUID `json:"org_id"`
+	RoleId    openapi_types.UUID `json:"role_id"`
+
+	// Status Current invitation status
+	Status InvitationStatus    `json:"status"`
+	TeamId *openapi_types.UUID `json:"team_id"`
+
+	// Token Secure invitation token (64 character hex string)
+	Token     string     `json:"token"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
+// InvitationStatus Current invitation status
+type InvitationStatus string
+
+// InvitationDetails defines model for InvitationDetails.
+type InvitationDetails struct {
+	Email openapi_types.Email `json:"email"`
+
+	// ExpiresAt When the invitation expires
+	ExpiresAt time.Time          `json:"expires_at"`
+	Id        openapi_types.UUID `json:"id"`
+
+	// OrgName Name of the organization
+	OrgName string `json:"org_name"`
+
+	// RoleName Name of the role being assigned
+	RoleName string                  `json:"role_name"`
+	Status   InvitationDetailsStatus `json:"status"`
+
+	// TeamName Name of the team (if assigned)
+	TeamName *string `json:"team_name"`
+}
+
+// InvitationDetailsStatus defines model for InvitationDetails.Status.
+type InvitationDetailsStatus string
+
+// InvitationListResponse defines model for InvitationListResponse.
+type InvitationListResponse struct {
+	Invitations []Invitation `json:"invitations"`
+
+	// Limit Number of results per page
+	Limit int `json:"limit"`
+
+	// Offset Offset for pagination
+	Offset int `json:"offset"`
+
+	// Total Total number of invitations
+	Total int `json:"total"`
 }
 
 // ListAgentsResponse defines model for ListAgentsResponse.
@@ -796,6 +911,12 @@ type ConfigId = openapi_types.UUID
 // EmployeeId defines model for EmployeeId.
 type EmployeeId = openapi_types.UUID
 
+// Limit defines model for Limit.
+type Limit = int
+
+// Offset defines model for Offset.
+type Offset = int
+
 // Page defines model for Page.
 type Page = int
 
@@ -825,6 +946,15 @@ type ListEmployeesParams struct {
 
 // ListEmployeesParamsStatus defines parameters for ListEmployees.
 type ListEmployeesParamsStatus string
+
+// ListInvitationsParams defines parameters for ListInvitations.
+type ListInvitationsParams struct {
+	// Limit Number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of items to skip
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
 // ListLogsParams defines parameters for ListLogs.
 type ListLogsParams struct {
@@ -937,6 +1067,12 @@ type CreateEmployeeAgentConfigJSONRequestBody = CreateEmployeeAgentConfigRequest
 // UpdateEmployeeAgentConfigJSONRequestBody defines body for UpdateEmployeeAgentConfig for application/json ContentType.
 type UpdateEmployeeAgentConfigJSONRequestBody = UpdateEmployeeAgentConfigRequest
 
+// CreateInvitationJSONRequestBody defines body for CreateInvitation for application/json ContentType.
+type CreateInvitationJSONRequestBody = CreateInvitationRequest
+
+// AcceptInvitationJSONRequestBody defines body for AcceptInvitation for application/json ContentType.
+type AcceptInvitationJSONRequestBody = AcceptInvitationRequest
+
 // CreateLogJSONRequestBody defines body for CreateLog for application/json ContentType.
 type CreateLogJSONRequestBody = CreateLogRequest
 
@@ -1035,6 +1171,21 @@ type ServerInterface interface {
 	// Health Check
 	// (GET /health)
 	HealthCheck(w http.ResponseWriter, r *http.Request)
+	// List invitations
+	// (GET /invitations)
+	ListInvitations(w http.ResponseWriter, r *http.Request, params ListInvitationsParams)
+	// Create invitation
+	// (POST /invitations)
+	CreateInvitation(w http.ResponseWriter, r *http.Request)
+	// Cancel invitation
+	// (DELETE /invitations/{id})
+	CancelInvitation(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Get invitation by token
+	// (GET /invitations/{token})
+	GetInvitationByToken(w http.ResponseWriter, r *http.Request, token string)
+	// Accept invitation
+	// (POST /invitations/{token}/accept)
+	AcceptInvitation(w http.ResponseWriter, r *http.Request, token string)
 	// List logs
 	// (GET /logs)
 	ListLogs(w http.ResponseWriter, r *http.Request, params ListLogsParams)
@@ -1266,6 +1417,36 @@ func (_ Unimplemented) UpdateEmployeeAgentConfig(w http.ResponseWriter, r *http.
 // Health Check
 // (GET /health)
 func (_ Unimplemented) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List invitations
+// (GET /invitations)
+func (_ Unimplemented) ListInvitations(w http.ResponseWriter, r *http.Request, params ListInvitationsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create invitation
+// (POST /invitations)
+func (_ Unimplemented) CreateInvitation(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Cancel invitation
+// (DELETE /invitations/{id})
+func (_ Unimplemented) CancelInvitation(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get invitation by token
+// (GET /invitations/{token})
+func (_ Unimplemented) GetInvitationByToken(w http.ResponseWriter, r *http.Request, token string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Accept invitation
+// (POST /invitations/{token}/accept)
+func (_ Unimplemented) AcceptInvitation(w http.ResponseWriter, r *http.Request, token string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2065,6 +2246,148 @@ func (siw *ServerInterfaceWrapper) HealthCheck(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.HealthCheck(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListInvitations operation middleware
+func (siw *ServerInterfaceWrapper) ListInvitations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListInvitationsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListInvitations(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateInvitation operation middleware
+func (siw *ServerInterfaceWrapper) CreateInvitation(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateInvitation(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelInvitation operation middleware
+func (siw *ServerInterfaceWrapper) CancelInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelInvitation(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInvitationByToken operation middleware
+func (siw *ServerInterfaceWrapper) GetInvitationByToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", chi.URLParam(r, "token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInvitationByToken(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptInvitation operation middleware
+func (siw *ServerInterfaceWrapper) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", chi.URLParam(r, "token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptInvitation(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3186,6 +3509,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/health", wrapper.HealthCheck)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/invitations", wrapper.ListInvitations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/invitations", wrapper.CreateInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/invitations/{id}", wrapper.CancelInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/invitations/{token}", wrapper.GetInvitationByToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/invitations/{token}/accept", wrapper.AcceptInvitation)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/logs", wrapper.ListLogs)
