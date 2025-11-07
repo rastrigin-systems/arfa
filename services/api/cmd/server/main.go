@@ -18,6 +18,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
 	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
 )
 
@@ -71,6 +72,10 @@ func main() {
 	syncHandler := handlers.NewSyncHandler(queries)
 	skillsHandler := handlers.NewSkillsHandler(queries)
 
+	// Email service (MockEmailService for development)
+	emailService := service.NewMockEmailService()
+	invitationsHandler := handlers.NewInvitationHandler(queries, emailService)
+
 	// Setup router
 	router := chi.NewRouter()
 
@@ -113,6 +118,11 @@ func main() {
 				r.Get("/me", authHandler.GetMe)
 			})
 		})
+
+		// Public invitation token routes (no auth required)
+		// These use token-based validation, not JWT
+		r.Get("/invitations/{token}", invitationsHandler.GetInvitationByToken)
+		r.Post("/invitations/{token}/accept", invitationsHandler.AcceptInvitation)
 
 		// Protected routes (require authentication)
 		r.Group(func(r chi.Router) {
@@ -158,6 +168,16 @@ func main() {
 					r.Patch("/{config_id}", teamAgentConfigsHandler.UpdateTeamAgentConfig)
 					r.Delete("/{config_id}", teamAgentConfigsHandler.DeleteTeamAgentConfig)
 				})
+			})
+
+			// Protected invitation routes (require authentication)
+			r.Route("/invitations", func(r chi.Router) {
+				// List all invitations for organization (admin)
+				r.Get("/", invitationsHandler.ListInvitations)
+				// Create new invitation (admin)
+				r.Post("/", invitationsHandler.CreateInvitation)
+				// Cancel invitation (admin)
+				r.Delete("/{id}", invitationsHandler.CancelInvitation)
 			})
 
 			// Organizations routes

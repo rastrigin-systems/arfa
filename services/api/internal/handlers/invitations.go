@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -17,6 +18,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
+	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 )
 
@@ -51,14 +53,14 @@ func (h *InvitationHandler) CreateInvitation(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 
 	// Step 1: Extract org_id and inviter_id from context (set by auth middleware)
-	orgID, ok := ctx.Value("org_id").(uuid.UUID)
-	if !ok {
+	orgID, err := authmiddleware.GetOrgID(ctx)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "Missing organization context")
 		return
 	}
 
-	inviterID, ok := ctx.Value("employee_id").(uuid.UUID)
-	if !ok {
+	inviterID, err := authmiddleware.GetEmployeeID(ctx)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "Missing employee context")
 		return
 	}
@@ -151,8 +153,8 @@ func (h *InvitationHandler) ListInvitations(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 
 	// Step 1: Extract org_id (TestListInvitations_Success requires this)
-	orgID, ok := ctx.Value("org_id").(uuid.UUID)
-	if !ok {
+	orgID, err := authmiddleware.GetOrgID(ctx)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "Missing organization context")
 		return
 	}
@@ -220,9 +222,9 @@ func (h *InvitationHandler) ListInvitations(w http.ResponseWriter, r *http.Reque
 func (h *InvitationHandler) GetInvitationByToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Step 1: Extract token from context (TestGetInvitationByToken_Success requires this)
-	token, ok := ctx.Value("token").(string)
-	if !ok {
+	// Step 1: Extract token from URL parameter (TestGetInvitationByToken_Success requires this)
+	token := chi.URLParam(r, "token")
+	if token == "" {
 		writeError(w, http.StatusBadRequest, "Missing token")
 		return
 	}
@@ -284,9 +286,9 @@ func (h *InvitationHandler) GetInvitationByToken(w http.ResponseWriter, r *http.
 func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Step 1: Extract token (TestAcceptInvitation_Success requires this)
-	token, ok := ctx.Value("token").(string)
-	if !ok {
+	// Step 1: Extract token from URL parameter (TestAcceptInvitation_Success requires this)
+	token := chi.URLParam(r, "token")
+	if token == "" {
 		writeError(w, http.StatusBadRequest, "Missing token")
 		return
 	}
@@ -408,8 +410,8 @@ func (h *InvitationHandler) CancelInvitation(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 
 	// Step 1: Extract org_id and invitation_id (TestCancelInvitation_Success requires this)
-	orgID, ok := ctx.Value("org_id").(uuid.UUID)
-	if !ok {
+	orgID, err := authmiddleware.GetOrgID(ctx)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "Missing organization context")
 		return
 	}
