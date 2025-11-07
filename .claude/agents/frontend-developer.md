@@ -258,12 +258,12 @@ The github-project-manager uses these labels:
 4. **Create Feature Branch & Workspace:**
    ```bash
    # Create and checkout new branch named after the issue
-   # Format: issue-<number>-<short-description>
-   git checkout -b issue-234-team-management-ui
+   # Format: feature/<number>-<short-description>
+   git checkout -b feature/234-team-management-ui
 
    # Create a new Git workspace for this branch
    # This allows multiple agents to work in parallel in separate directories
-   git worktree add ../ubik-issue-234 issue-234-team-management-ui
+   git worktree add ../ubik-issue-234 feature/234-team-management-ui
 
    # Move to the new workspace
    cd ../ubik-issue-234
@@ -294,7 +294,7 @@ The github-project-manager uses these labels:
 
 **Workspace Naming Convention:**
 - Workspace directory: `../ubik-issue-<number>` (e.g., `../ubik-issue-234`)
-- Branch name: `issue-<number>-<short-description>` (e.g., `issue-234-team-management-ui`)
+- Branch name: `feature/<number>-<short-description>` (e.g., `feature/234-team-management-ui`)
 - This makes it easy to track which workspace corresponds to which issue
 
 **Implementation Steps:**
@@ -400,11 +400,11 @@ The github-project-manager uses these labels:
    Closes #234"
 
    # Push branch to remote
-   git push -u origin issue-234-team-management-ui
+   git push -u origin feature/234-team-management-ui
 
-   # Create PR and link to issue
+   # Create PR with issue number in title (REQUIRED for automation)
    gh pr create \
-     --title "feat: Implement team management interface" \
+     --title "feat: Implement team management interface (#234)" \
      --body "## Summary
    Implements complete team management interface with CRUD operations.
 
@@ -444,25 +444,16 @@ The github-project-manager uses these labels:
 
    if [ "$CI_STATUS" -eq 0 ]; then
      echo "✅ All CI checks passed!"
-
-     # Update GitHub Project status to "In Review"
-     ./scripts/update-project-status.sh --issue 234 --status "In Review"
-
-     # Update issue with success
-     gh issue comment 234 --body "✅ Implementation complete. All CI checks passed. PR #${PR_NUM} ready for review."
-
-     # Move issue to "Waiting for Review"
-     gh issue edit 234 \
-       --remove-label "status/in-progress" \
-       --add-label "status/waiting-for-review"
+     echo "📋 GitHub Actions will automatically:"
+     echo "  - Update issue status to 'In Review'"
+     echo "  - Add comment linking PR to issue"
+     echo "  - Close issue when PR is merged"
+     echo "  - Delete branch after merge"
    else
      echo "❌ CI checks failed!"
 
      # Show failed check details
      gh pr checks $PR_NUM
-
-     # Notify about failure
-     gh issue comment 234 --body "❌ CI checks failed for PR #${PR_NUM}. Investigating..."
 
      # Fix failures and push again (repeat from step 7)
      exit 1
@@ -479,9 +470,14 @@ The github-project-manager uses these labels:
 - Prevents merging broken code
 - Maintains high code quality
 - Verifies E2E tests in CI environment
-- No manual intervention needed
+- Triggers automatic status updates
 
 **CI Timeout:** If CI doesn't complete in 10 minutes, investigate infrastructure issues.
+
+**Automatic Workflow:**
+- ✅ PR created with issue number → GitHub Actions updates issue status to "In Review"
+- ✅ PR merged → GitHub Actions closes issue and sets status to "Done"
+- ✅ Branch automatically deleted after merge
 
 10. **Clean Up Workspace (After PR Merged):**
    ```bash
@@ -491,12 +487,12 @@ The github-project-manager uses these labels:
    # Remove worktree
    git worktree remove ../ubik-issue-234
 
-   # Delete local branch (after PR is merged)
-   git branch -D issue-234-team-management-ui
-
    # Update main branch
    git checkout main
    git pull origin main
+
+   # Note: Remote branch is auto-deleted by GitHub after merge
+   # Local branch reference is removed with worktree
    ```
 
 ## 5. PARALLEL DEVELOPMENT WORKFLOW SUMMARY
@@ -523,10 +519,10 @@ gh issue edit $ISSUE_NUM \
 # 4. Create feature branch
 git checkout main
 git pull origin main
-git checkout -b issue-${ISSUE_NUM}-short-description
+git checkout -b feature/${ISSUE_NUM}-short-description
 
 # 5. Create Git worktree for parallel development
-git worktree add ../ubik-issue-${ISSUE_NUM} issue-${ISSUE_NUM}-short-description
+git worktree add ../ubik-issue-${ISSUE_NUM} feature/${ISSUE_NUM}-short-description
 
 # 6. Move to new workspace
 cd ../ubik-issue-${ISSUE_NUM}
@@ -595,15 +591,15 @@ git commit -m "feat: Implement feature X
 Closes #${ISSUE_NUM}"
 
 # 15. Push to remote
-git push -u origin issue-${ISSUE_NUM}-short-description
+git push -u origin feature/${ISSUE_NUM}-short-description
 
 # ═══════════════════════════════════════════════════════
 # PHASE 4: CREATE PR & UPDATE ISSUE
 # ═══════════════════════════════════════════════════════
 
-# 16. Create pull request
+# 16. Create pull request with issue number in title (REQUIRED)
 gh pr create \
-  --title "feat: Implement feature X" \
+  --title "feat: Implement feature X (#${ISSUE_NUM})" \
   --body "## Summary
 [Description of changes]
 
@@ -685,28 +681,18 @@ CI_STATUS=$(gh pr checks $PR_NUM --json state -q 'map(select(.state == "FAILURE"
 
 if [ "$CI_STATUS" -eq 0 ]; then
   echo "✅ All CI checks passed!"
-
-  # 19. Update GitHub Project status to "In Review"
-  ./scripts/update-project-status.sh --issue $ISSUE_NUM --status "In Review"
-
-  # 20. Update issue with success message
-  gh issue comment $ISSUE_NUM --body "✅ Implementation complete. All CI checks passed. PR #${PR_NUM} ready for review."
-
-  # 21. Move issue to "Waiting for Review"
-  gh issue edit $ISSUE_NUM \
-    --remove-label "status/in-progress" \
-    --add-label "status/waiting-for-review"
+  echo "📋 GitHub Actions will automatically:"
+  echo "  - Update issue #${ISSUE_NUM} status to 'In Review'"
+  echo "  - Add comment linking PR #${PR_NUM} to issue"
+  echo "  - Close issue when PR is merged"
+  echo "  - Delete branch after merge"
 else
   echo "❌ CI checks failed. Please review the logs and fix."
 
   # Get failed check details
   gh pr checks $PR_NUM
 
-  # Update issue with failure notification
-  gh issue comment $ISSUE_NUM --body "❌ CI checks failed for PR #${PR_NUM}. Investigating failures..."
-
-  # Keep issue in "in-progress" status
-  # Agent should investigate failures and push fixes
+  # Fix failures and push again
   exit 1
 fi
 
@@ -714,21 +700,20 @@ fi
 # PHASE 5: CLEANUP (After PR Merged)
 # ═══════════════════════════════════════════════════════
 
-# 22. Return to main repo
+# 19. Return to main repo
 cd /Users/sergeirastrigin/Projects/ubik-enterprise
 
-# 23. Remove worktree
+# 20. Remove worktree
 git worktree remove ../ubik-issue-${ISSUE_NUM}
 
-# 24. Delete local branch
-git branch -D issue-${ISSUE_NUM}-short-description
-
-# 25. Update main branch
+# 21. Update main branch
 git checkout main
 git pull origin main
 
-# 26. Close issue (if not auto-closed by PR merge)
-gh issue close $ISSUE_NUM --comment "Completed and merged in PR #${PR_NUM}"
+# Note: GitHub Actions automatically handles:
+# - Issue closure (via "Closes #X" in PR)
+# - Branch deletion (after merge)
+# - Status update to "Done"
 ```
 
 **Key Benefits of This Workflow:**
@@ -765,12 +750,12 @@ gh issue close $ISSUE_NUM --comment "Completed and merged in PR #${PR_NUM}"
 ```
 Agent 1 (in ../ubik-issue-234):
 ├── Working on: "Team management interface"
-├── Branch: issue-234-team-management-ui
+├── Branch: feature/234-team-management-ui
 └── Status: Writing component tests
 
 Agent 2 (in ../ubik-issue-235):
 ├── Working on: "Cost dashboard UI"
-├── Branch: issue-235-cost-dashboard
+├── Branch: feature/235-cost-dashboard
 └── Status: Integrating with API
 
 Agent 3 (in /Users/sergeirastrigin/Projects/ubik-enterprise):
@@ -1108,8 +1093,8 @@ gh issue edit <NUM> --add-label "status/in-progress"
 
 # ✅ 3. Create branch + workspace
 git checkout main && git pull
-git checkout -b issue-<NUM>-description
-git worktree add ../ubik-issue-<NUM> issue-<NUM>-description
+git checkout -b feature/<NUM>-description
+git worktree add ../ubik-issue-<NUM> feature/<NUM>-description
 cd ../ubik-issue-<NUM>
 
 # ✅ 4. Set up environment
@@ -1129,10 +1114,10 @@ pnpm test:watch
 pnpm test && pnpm type-check && pnpm lint && pnpm build
 
 # ✅ 9. Commit & push
-git add . && git commit -m "feat: ..." && git push -u origin issue-<NUM>-description
+git add . && git commit -m "feat: ..." && git push -u origin feature/<NUM>-description
 
-# ✅ 10. Create PR & get PR number
-gh pr create --title "..." --body "..." --label "frontend" --assignee "@me"
+# ✅ 10. Create PR with issue number in title (REQUIRED)
+gh pr create --title "feat: Description (#<NUM>)" --body "..." --label "frontend" --assignee "@me"
 PR_NUM=$(gh pr view --json number -q .number)
 
 # ✅ 11. Take screenshots (MANDATORY for UI features!)
@@ -1146,20 +1131,21 @@ gh pr comment $PR_NUM --body "## 📸 Screenshots [desktop/tablet/mobile]..."
 # ✅ 12. Wait for CI checks (CRITICAL!)
 gh pr checks $PR_NUM --watch --interval 10
 
-# ✅ 13. Verify CI passed & update status
+# ✅ 13. Verify CI passed (automation handles the rest)
 if [ all checks passed ]; then
-  ./scripts/update-project-status.sh --issue <NUM> --status "In Review"
-  gh issue edit <NUM> --add-label "status/waiting-for-review"
-  gh issue comment <NUM> --body "✅ All CI passed. PR #${PR_NUM} ready for review"
+  echo "✅ All CI passed!"
+  echo "📋 GitHub Actions will automatically:"
+  echo "  - Update issue status to 'In Review'"
+  echo "  - Close issue when PR is merged"
+  echo "  - Delete branch after merge"
 else
-  gh issue comment <NUM> --body "❌ CI failed for PR #${PR_NUM}. Fixing..."
+  echo "❌ CI failed. Fixing..."
   # Fix and push again
 fi
 
-# ✅ 14. After merge: Clean up
+# ✅ 14. After merge: Clean up workspace
 cd ../ubik-enterprise
 git worktree remove ../ubik-issue-<NUM>
-git branch -D issue-<NUM>-description
 git checkout main && git pull
 ```
 
