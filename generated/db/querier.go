@@ -12,8 +12,15 @@ import (
 )
 
 type Querier interface {
+	// Accept an invitation (updates status and records acceptance)
+	// Used by POST /invitations/{token}/accept
+	// Note: Must be called within a transaction that also creates the employee
+	AcceptInvitation(ctx context.Context, arg AcceptInvitationParams) (Invitation, error)
 	ApproveMCPServer(ctx context.Context, id uuid.UUID) error
 	AssignSkillToEmployee(ctx context.Context, arg AssignSkillToEmployeeParams) (EmployeeSkill, error)
+	// Cancel a pending invitation
+	// Used by DELETE /invitations/{id} (admin only)
+	CancelInvitation(ctx context.Context, arg CancelInvitationParams) error
 	// Check if employee already has this agent assigned
 	CheckEmployeeAgentExists(ctx context.Context, arg CheckEmployeeAgentExistsParams) (bool, error)
 	// Check if org already has this agent configured
@@ -34,6 +41,12 @@ type Querier interface {
 	// TOKEN STATISTICS
 	// ============================================================================
 	CountEmployeesWithPersonalTokens(ctx context.Context, orgID uuid.UUID) (int64, error)
+	// Count total invitations for an organization (for pagination)
+	// Used by GET /invitations (admin only)
+	CountInvitations(ctx context.Context, orgID uuid.UUID) (int64, error)
+	// Count invitations created today for rate limiting (20/day)
+	// Used by POST /invitations for rate limiting validation
+	CountInvitationsByOrgToday(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountPendingRequestsByOrg(ctx context.Context, orgID uuid.UUID) (int64, error)
 	// Count agent configurations for a specific team
 	CountTeamAgentConfigs(ctx context.Context, teamID uuid.UUID) (int64, error)
@@ -46,6 +59,9 @@ type Querier interface {
 	// Create a new agent configuration for an employee
 	CreateEmployeeAgentConfig(ctx context.Context, arg CreateEmployeeAgentConfigParams) (CreateEmployeeAgentConfigRow, error)
 	CreateEmployeeMCPConfig(ctx context.Context, arg CreateEmployeeMCPConfigParams) (EmployeeMcpConfig, error)
+	// Create a new invitation with a secure token
+	// Used by POST /invitations (admin only)
+	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (Invitation, error)
 	CreateMCPServer(ctx context.Context, arg CreateMCPServerParams) (McpCatalog, error)
 	// Create org-level agent config
 	CreateOrgAgentConfig(ctx context.Context, arg CreateOrgAgentConfigParams) (OrgAgentConfig, error)
@@ -80,6 +96,9 @@ type Querier interface {
 	// Delete a team agent configuration (hard delete)
 	DeleteTeamAgentConfig(ctx context.Context, id uuid.UUID) error
 	DisapproveMCPServer(ctx context.Context, id uuid.UUID) error
+	// Mark expired invitations (background job)
+	// Used by scheduled cleanup task
+	ExpireOldInvitations(ctx context.Context) error
 	// Get a specific agent by ID
 	GetAgentByID(ctx context.Context, id uuid.UUID) (Agent, error)
 	// Get a specific agent by name
@@ -103,6 +122,12 @@ type Querier interface {
 	GetEmployeeUsageStats(ctx context.Context, arg GetEmployeeUsageStatsParams) (GetEmployeeUsageStatsRow, error)
 	GetEmployeeWithRole(ctx context.Context, id uuid.UUID) (GetEmployeeWithRoleRow, error)
 	GetEmployeesByTeam(ctx context.Context, teamID pgtype.UUID) ([]Employee, error)
+	// Get invitation by ID (for cancellation)
+	// Used by DELETE /invitations/{id} (admin only)
+	GetInvitationByID(ctx context.Context, arg GetInvitationByIDParams) (Invitation, error)
+	// Get invitation details by token (for validation)
+	// Used by GET /invitations/{token} (public)
+	GetInvitationByToken(ctx context.Context, token string) (GetInvitationByTokenRow, error)
 	// Get logs for a specific employee with filters
 	GetLogsByEmployee(ctx context.Context, arg GetLogsByEmployeeParams) ([]ActivityLog, error)
 	// Get all logs for a specific CLI session
@@ -161,6 +186,9 @@ type Querier interface {
 	// ============================================================================
 	ListEmployeeSkills(ctx context.Context, employeeID uuid.UUID) ([]ListEmployeeSkillsRow, error)
 	ListEmployees(ctx context.Context, arg ListEmployeesParams) ([]ListEmployeesRow, error)
+	// List all invitations for an organization with pagination
+	// Used by GET /invitations (admin only)
+	ListInvitations(ctx context.Context, arg ListInvitationsParams) ([]Invitation, error)
 	// ============================================================================
 	// MCP Catalog Queries
 	// ============================================================================
