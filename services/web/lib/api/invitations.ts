@@ -32,6 +32,7 @@ export interface Invitation {
   id: string;
   email: string;
   status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  created_at: string;
   expires_at: string;
   organization: InvitationOrganization;
   inviter: InvitationInviter;
