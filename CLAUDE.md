@@ -221,6 +221,7 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 
 - **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend API development
 - **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend/Next.js development
+- **[.claude/agents/product-designer.md](./.claude/agents/product-designer.md)** - Wireframes, UI/UX design & accessibility
 - **[.claude/agents/coordinator.md](./.claude/agents/coordinator.md)** - Autonomous team orchestration
 - **[.claude/agents/tech-lead.md](./.claude/agents/tech-lead.md)** - Architecture & technical leadership
 - **[.claude/agents/product-strategist.md](./.claude/agents/product-strategist.md)** - Feature prioritization
@@ -416,14 +417,19 @@ Use Row-Level Security (RLS) policies as safety net.
 **⚠️ CRITICAL: Wireframes Required for All UI Changes**
 
 **Mandatory UI Workflow:**
-- ✅ Create wireframe FIRST (for new pages)
-- ✅ Update wireframes (for page changes)
-- ✅ Implement UI matching wireframe
-- ❌ NEVER implement new pages without wireframes
+- ✅ Request wireframes from **product-designer agent** FIRST (for new pages)
+- ✅ Request updated wireframes from **product-designer agent** (for page changes)
+- ✅ Wait for wireframes before starting implementation
+- ✅ Implement UI matching wireframes exactly
+- ❌ NEVER implement new UI without wireframes from product-designer
 
 **Wireframe Location:** `docs/wireframes/` directory
 
-**See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#ui-development) for complete UI workflow.**
+**Product Designer Agent:** Senior UX/UI expert responsible for all wireframes, user flows, and accessibility compliance.
+
+**See:**
+- [.claude/agents/product-designer.md](./.claude/agents/product-designer.md) - Product designer agent configuration
+- [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#ui-development) - Complete UI workflow
 
 ---
 
