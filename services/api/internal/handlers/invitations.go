@@ -17,19 +17,22 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 )
 
 // InvitationHandler handles invitation-related requests
 type InvitationHandler struct {
-	db db.Querier
+	db           db.Querier
+	emailService service.EmailService
 }
 
 // NewInvitationHandler creates a new invitation handler
 //
 // TDD Lesson: Constructor pattern for dependency injection
-func NewInvitationHandler(database db.Querier) *InvitationHandler {
+func NewInvitationHandler(database db.Querier, emailService service.EmailService) *InvitationHandler {
 	return &InvitationHandler{
-		db: database,
+		db:           database,
+		emailService: emailService,
 	}
 }
 
@@ -103,6 +106,27 @@ func (h *InvitationHandler) CreateInvitation(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to create invitation")
 		return
+	}
+
+	// Step 5.5: Get email info and send invitation email
+	emailInfo, err := h.db.GetInvitationEmailInfo(ctx, invitation.ID)
+	if err != nil {
+		// Log error but don't fail the request - invitation was created successfully
+		// In production, you might want to retry sending the email or queue it
+		fmt.Printf("Warning: Failed to get email info for invitation %s: %v\n", invitation.ID, err)
+	} else {
+		// Send invitation email (non-blocking - log error but continue)
+		emailErr := h.emailService.SendInvitation(service.InvitationEmail{
+			Recipient:   invitation.Email,
+			InviterName: emailInfo.InviterName,
+			OrgName:     emailInfo.OrgName,
+			Token:       invitation.Token,
+			ExpiresAt:   invitation.ExpiresAt.Time,
+		})
+		if emailErr != nil {
+			// Log error but don't fail the request - invitation was created successfully
+			fmt.Printf("Warning: Failed to send invitation email to %s: %v\n", invitation.Email, emailErr)
+		}
 	}
 
 	// Step 6: Return response (TestCreateInvitation_Success validates this)
