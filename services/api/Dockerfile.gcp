@@ -18,6 +18,7 @@ RUN cd services/api && go mod download
 COPY services/api/ ./services/api/
 COPY pkg/ ./pkg/
 COPY generated/ ./generated/
+COPY shared/openapi/ ./shared/openapi/
 
 # Build binary
 WORKDIR /workspace/services/api
@@ -26,7 +27,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/server
 # Runtime stage
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+WORKDIR /app
 COPY --from=builder /app/server .
+COPY --from=builder /workspace/shared/openapi ./shared/openapi
+
+# Set project root for Swagger handler to find spec.yaml
+ENV PROJECT_ROOT=/app
+
 EXPOSE 8080
 CMD ["./server"]
