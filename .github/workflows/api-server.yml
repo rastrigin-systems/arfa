@@ -27,6 +27,12 @@ on:
       - '.github/workflows/api-server.yml'
       - 'cloudbuild-api.yaml'
 
+# Ensure only one deployment runs at a time for API service
+# Deployments queue and run in merge order to prevent race conditions
+concurrency:
+  group: deploy-api-production
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build
