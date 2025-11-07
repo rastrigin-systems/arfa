@@ -508,6 +508,91 @@ curl http://localhost:8080/api/docs/
 
 ---
 
+### 8. Context Efficiency & Tool Selection
+
+**⚠️ CRITICAL: Choose the Right Tool for the Task**
+
+**Context Usage Awareness:**
+
+Different tools have vastly different context costs:
+
+```
+Playwright browser snapshot:  ~12,000 tokens (Swagger UI page)
+Screenshot:                   ~1,000 tokens
+Curl API test:               ~100 tokens
+```
+
+**Golden Rule: Use the simplest tool that accomplishes the task**
+
+**For API Testing:**
+```bash
+# ✅ GOOD - Direct and efficient
+curl http://localhost:8080/api/v1/health
+
+# ❌ BAD - Wastes ~50k tokens for same result
+# playwright navigate → click endpoint → try it out → execute
+```
+
+**For UI Verification:**
+```bash
+# ✅ GOOD - Visual confirmation
+browser_navigate + browser_take_screenshot  # ~1k tokens
+
+# ❌ BAD - Full accessibility tree
+browser_navigate + analyze full snapshot    # ~12k tokens
+```
+
+**When to Use Each Tool:**
+
+**Playwright (browser automation):**
+- ✅ Testing UI interactions (forms, buttons, navigation)
+- ✅ Visual regression testing (screenshots)
+- ✅ E2E workflows requiring browser state
+- ❌ API endpoint testing (use curl)
+- ❌ Browsing complex pages (use screenshots)
+
+**Curl (HTTP requests):**
+- ✅ API endpoint testing
+- ✅ Health checks
+- ✅ Quick response verification
+- ✅ Testing authentication flows
+
+**Read/Grep (file operations):**
+- ✅ Searching code
+- ✅ Verifying file contents
+- ✅ Configuration inspection
+
+**Best Practices:**
+1. **Test APIs with curl, not Playwright**
+2. **Use screenshots for visual verification**
+3. **Minimize page snapshots** - only when you need to interact with specific elements
+4. **Chain operations efficiently** - navigate → act → verify, don't browse
+5. **Monitor token usage** - if a single operation uses >5k tokens, consider alternatives
+
+**Example - Testing Swagger UI:**
+
+```bash
+# ❌ BAD - Uses ~48k tokens
+playwright navigate to /api/docs
+playwright click health endpoint      # 12k tokens
+playwright click "Try it out"         # 12k tokens
+playwright click "Execute"            # 12k tokens
+verify response                       # 12k tokens
+
+# ✅ GOOD - Uses ~2k tokens
+playwright navigate to /api/docs      # 12k tokens (verify UI loads)
+playwright take_screenshot            # 1k tokens
+curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
+```
+
+**Token Budget Awareness:**
+- 200k token context limit
+- Large Playwright snapshots can consume 5-10% per interaction
+- 4-5 page loads = 50k tokens = 25% of context
+- Be mindful and efficient
+
+---
+
 # STATUS & ROADMAP
 
 *Current progress and next steps*
