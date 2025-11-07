@@ -17,6 +17,12 @@ on:
       - 'go.work'
       - '.github/workflows/cli-client.yml'
 
+# Ensure only one deployment runs at a time for CLI service
+# Deployments queue and run in merge order to prevent race conditions
+concurrency:
+  group: deploy-cli-production
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build

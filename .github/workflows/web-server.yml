@@ -17,6 +17,12 @@ on:
       - '.github/workflows/web-server.yml'
       - 'cloudbuild-web.yaml'
 
+# Ensure only one deployment runs at a time for Web service
+# Deployments queue and run in merge order to prevent race conditions
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build
