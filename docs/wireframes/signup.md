@@ -1,346 +1,524 @@
 # Signup Page Wireframe
 
-## Page: /signup
+**Route:** `/signup`
+**Access:** Public (unauthenticated)
+**Components:** Form, Input, Button, Alert, Card
+**Layout:** Centered card on full-page background
 
-### Layout
+---
+
+## Page Purpose
+
+Combined registration and organization creation form. New users create their account and organization in a single step. This is the entry point for all new customers to the platform.
+
+---
+
+## Visual Layout
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                                                               │
-│                     Centered Card (max-w-lg)                 │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │          Ubik Enterprise                        │  │  │
-│  │  │     Create Your Organization Account           │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Full Name                                       │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [John Doe                                  ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Email                                           │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [you@example.com                           ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  │ [!] Invalid email format                        │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Organization Name                               │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [Acme Corporation                          ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Organization Slug                               │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [acme                                      ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  │ ✓ acme.ubik.com is available                    │  │  │
-│  │  │ [!] This slug is already taken                  │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Password                                        │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [••••••••                                  ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  │                                                 │  │  │
-│  │  │ Password Strength: Weak/Medium/Strong          │  │  │
-│  │  │ ▓▓▓▓░░░░ (visual indicator bar)                │  │  │
-│  │  │                                                 │  │  │
-│  │  │ Requirements:                                   │  │  │
-│  │  │ ✓ At least 8 characters                        │  │  │
-│  │  │ ✗ One uppercase letter                         │  │  │
-│  │  │ ✓ One number                                   │  │  │
-│  │  │ ✗ One special character                        │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Confirm Password                                │  │  │
-│  │  │ ┌─────────────────────────────────────────────┐ │  │  │
-│  │  │ │ [••••••••                                  ] │ │  │  │
-│  │  │ └─────────────────────────────────────────────┘ │  │  │
-│  │  │ [!] Passwords do not match                      │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │        [Create Account]                         │  │  │
-│  │  │     (full width button, disabled when invalid)  │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                         │  │
-│  │  Already have an account? [Sign in]                   │  │
-│  │                                                         │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         UBIK ENTERPRISE                          │
+│                     AI Agent Management Platform                 │
+│                                                                   │
+│   ┌────────────────────────────────────────────────────────┐   │
+│   │                                                          │   │
+│   │                    Create Your Account                   │   │
+│   │                                                          │   │
+│   │   ┌──────────────────────────────────────────────────┐ │   │
+│   │   │ Account Information                               │ │   │
+│   │   ├──────────────────────────────────────────────────┤ │   │
+│   │   │                                                    │ │   │
+│   │   │  Email Address *                                   │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ you@company.com                              │ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   │                                                    │ │   │
+│   │   │  Full Name *                                       │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ John Smith                                   │ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   │                                                    │ │   │
+│   │   │  Password *                                        │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ ●●●●●●●●                           [👁]       │ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   │  [Strength: ▓▓▓▓░░░░ Medium]                      │ │   │
+│   │   │  ℹ️ Must be at least 8 characters with mix of     │ │   │
+│   │   │     letters, numbers, and symbols                 │ │   │
+│   │   │                                                    │ │   │
+│   │   │  Confirm Password *                                │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ ●●●●●●●●                           [👁]       │ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   └──────────────────────────────────────────────────┘ │   │
+│   │                                                          │   │
+│   │   ┌──────────────────────────────────────────────────┐ │   │
+│   │   │ Organization Details                              │ │   │
+│   │   ├──────────────────────────────────────────────────┤ │   │
+│   │   │                                                    │ │   │
+│   │   │  Organization Name *                               │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ Acme Corporation                             │ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   │                                                    │ │   │
+│   │   │  Organization Slug *                               │ │   │
+│   │   │  ┌──────────────────────────────────────────────┐ │ │   │
+│   │   │  │ acme-corp                          [✓ Available]│ │ │   │
+│   │   │  └──────────────────────────────────────────────┘ │ │   │
+│   │   │  🔗 Your workspace URL:                           │ │   │
+│   │   │     https://acme-corp.ubik.io                     │ │   │
+│   │   └──────────────────────────────────────────────────┘ │   │
+│   │                                                          │   │
+│   │   ┌──────────────────────────────────────────────────┐ │   │
+│   │   │ ☐ I agree to the Terms of Service and            │ │   │
+│   │   │   Privacy Policy                                  │ │   │
+│   │   └──────────────────────────────────────────────────┘ │   │
+│   │                                                          │   │
+│   │   ┌──────────────────────────────────────────────────┐ │   │
+│   │   │          Create Account & Organization           │ │   │
+│   │   └──────────────────────────────────────────────────┘ │   │
+│   │                                                          │   │
+│   │             Already have an account? Log in              │   │
+│   │                                                          │   │
+│   └────────────────────────────────────────────────────────┘   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Form Fields
+---
 
-### 1. Full Name
-- **Type**: Text input
-- **Required**: Yes
-- **Validation**:
-  - Not empty
-  - Min 2 characters
-  - Max 100 characters
-- **Error Messages**:
-  - "Full name is required"
-  - "Full name must be at least 2 characters"
+## Component Breakdown
 
-### 2. Email
-- **Type**: Email input
-- **Required**: Yes
-- **Validation**:
-  - Valid email format
-  - Unique in database (server-side)
-- **Error Messages**:
-  - "Invalid email address"
-  - "This email is already registered"
+### Layout Container
+- **Component:** Full-page centered layout with branded background
+- **Styling:** Gradient or subtle pattern background, card centered vertically and horizontally
+- **Responsive:** Card full-width on mobile (with padding), max-width 500px on desktop
 
-### 3. Organization Name
-- **Type**: Text input
-- **Required**: Yes
-- **Validation**:
-  - Not empty
-  - Min 2 characters
-  - Max 100 characters
-- **Error Messages**:
-  - "Organization name is required"
-  - "Organization name must be at least 2 characters"
+### Header Section
+- **Logo:** Ubik Enterprise logo with tagline
+- **Title:** "Create Your Account" (h1)
+- **Styling:** Centered, clear typography hierarchy
 
-### 4. Organization Slug
-- **Type**: Text input
-- **Required**: Yes
-- **Validation**:
-  - Lowercase letters, numbers, hyphens only
-  - Must start with letter
-  - Min 3 characters
-  - Max 50 characters
-  - Unique in database (real-time check)
-- **Real-time Feedback**:
-  - "✓ {slug}.ubik.com is available" (green)
-  - "✗ This slug is already taken" (red)
-  - "⏳ Checking availability..." (loading)
-- **Debounce**: 500ms
-- **Error Messages**:
-  - "Organization slug is required"
-  - "Slug must be 3-50 characters"
-  - "Slug can only contain lowercase letters, numbers, and hyphens"
-  - "Slug must start with a letter"
-  - "This slug is already taken"
+### Form Sections
 
-### 5. Password
-- **Type**: Password input
-- **Required**: Yes
-- **Validation**:
-  - Min 8 characters
-  - At least 1 uppercase letter
-  - At least 1 lowercase letter
-  - At least 1 number
-  - At least 1 special character (@$!%*?&)
-- **Visual Feedback**:
-  - Strength indicator bar (Weak/Medium/Strong)
-  - Color-coded: Red/Yellow/Green
-  - Checklist of requirements (✓/✗)
-- **Error Messages**:
-  - "Password is required"
-  - "Password must be at least 8 characters"
-  - "Password must contain at least one uppercase letter"
-  - "Password must contain at least one number"
-  - "Password must contain at least one special character"
+#### Account Information Section
+- **Container:** Card with border and subtle shadow
+- **Fields:**
+  1. **Email Address**
+     - Type: email input
+     - Validation: Valid email format, unique in system
+     - Error messages: "Invalid email format", "This email is already registered"
+     - Auto-focus on page load
 
-### 6. Confirm Password
-- **Type**: Password input
-- **Required**: Yes
-- **Validation**:
-  - Must match password field
-- **Error Messages**:
-  - "Please confirm your password"
-  - "Passwords do not match"
+  2. **Full Name**
+     - Type: text input
+     - Validation: 2-100 characters, letters/spaces/hyphens only
+     - Error messages: "Name must be between 2 and 100 characters"
 
-## Form Behavior
+  3. **Password**
+     - Type: password input with toggle visibility button
+     - Validation:
+       - Minimum 8 characters
+       - Must contain: uppercase, lowercase, number, special character
+     - Real-time strength indicator:
+       - Weak (red): < 8 chars or missing requirements
+       - Medium (yellow): 8+ chars, 2-3 requirements met
+       - Strong (green): 8+ chars, all requirements met
+       - Very Strong (dark green): 12+ chars, all requirements met
+     - Helper text below input with requirements
 
-### Submit Button
-- **Label**: "Create Account" (default)
-- **Label (loading)**: "Creating Account..." (with spinner)
-- **Disabled when**:
-  - Form is invalid
-  - Submission in progress
-  - Org slug is being checked
-  - Org slug is not available
+  4. **Confirm Password**
+     - Type: password input with toggle visibility button
+     - Validation: Must match password field
+     - Real-time validation: Shows checkmark when matches
+     - Error message: "Passwords do not match"
 
-### Form Submission
-1. Validate all fields client-side
-2. Show loading state on button
-3. Call POST /auth/register API endpoint
-4. Handle responses:
-   - **Success (201)**: Store session token → Redirect to /onboarding/welcome
-   - **400 (Validation error)**: Show field errors
-   - **409 (Duplicate email)**: Show "This email is already registered"
-   - **409 (Duplicate slug)**: Show "This slug is already taken"
-   - **500**: Show generic error message
+#### Organization Details Section
+- **Container:** Separate card section with visual separation
+- **Fields:**
+  1. **Organization Name**
+     - Type: text input
+     - Validation: 3-100 characters, required
+     - Error messages: "Organization name must be between 3 and 100 characters"
+     - Auto-generates slug on blur (if slug empty)
 
-### API Endpoint: POST /auth/register
+  2. **Organization Slug**
+     - Type: text input with real-time validation
+     - Validation:
+       - 3-50 characters
+       - Lowercase letters, numbers, hyphens only
+       - Must start with letter
+       - Cannot end with hyphen
+       - Unique in system (real-time check via debounced API call)
+     - Visual indicators:
+       - ⏳ Checking... (while API call in progress)
+       - ✓ Available (green, slug is unique)
+       - ✗ Already taken (red, slug exists)
+     - Preview text: "Your workspace URL: https://{slug}.ubik.io"
+     - Error messages:
+       - "Slug must be 3-50 characters"
+       - "Slug can only contain lowercase letters, numbers, and hyphens"
+       - "Slug must start with a letter"
+       - "This slug is already taken"
+
+#### Terms of Service
+- **Component:** Checkbox with linked text
+- **Validation:** Must be checked to submit
+- **Links:**
+  - Terms of Service (opens in new tab)
+  - Privacy Policy (opens in new tab)
+- **Error message:** "You must agree to the Terms of Service and Privacy Policy"
+
+### Action Buttons
+
+#### Create Account Button
+- **Type:** Primary button (full-width on mobile, auto-width on desktop)
+- **Label:** "Create Account & Organization"
+- **States:**
+  - Default: Blue/primary color, enabled
+  - Hover: Darker shade
+  - Disabled: Gray, cursor not-allowed (when form invalid or submitting)
+  - Loading: Show spinner + "Creating account..." text
+- **Behavior:** Submits form, shows loading state, handles errors
+
+#### Login Link
+- **Type:** Text link
+- **Label:** "Already have an account? Log in"
+- **Behavior:** Navigates to `/login` page
+
+---
+
+## Field Validation Rules
+
+### Client-Side Validation (Real-time)
+
+| Field | Validation Rules | Error Timing |
+|-------|------------------|--------------|
+| Email | Valid email format | On blur |
+| Full Name | 2-100 chars, letters/spaces/hyphens | On blur |
+| Password | 8+ chars, complexity requirements | On change (for strength), on blur (for errors) |
+| Confirm Password | Matches password | On change |
+| Org Name | 3-100 chars | On blur |
+| Org Slug | 3-50 chars, format, uniqueness | On change (debounced 500ms for uniqueness) |
+| Terms Checkbox | Must be checked | On submit |
+
+### Server-Side Validation (On Submit)
+
+- Email uniqueness (double-check)
+- Org slug uniqueness (double-check)
+- Password complexity
+- All required fields present
+- Rate limiting (5 registrations/hour per IP)
+
+---
+
+## API Integration
+
+### Endpoint: `POST /auth/register`
 
 **Request Body:**
 ```json
 {
-  "full_name": "John Doe",
-  "email": "john@example.com",
+  "email": "john@acme.com",
+  "password": "SecurePass123!",
+  "full_name": "John Smith",
   "org_name": "Acme Corporation",
-  "org_slug": "acme",
-  "password": "SecurePass123!"
+  "org_slug": "acme-corp"
 }
 ```
 
-**Success Response (201):**
+**Success Response (201 Created):**
 ```json
 {
-  "token": "jwt-token-here",
   "employee": {
     "id": "uuid",
-    "email": "john@example.com",
-    "full_name": "John Doe"
+    "email": "john@acme.com",
+    "full_name": "John Smith",
+    "role": {
+      "id": "uuid",
+      "name": "admin"
+    }
   },
   "organization": {
     "id": "uuid",
     "name": "Acme Corporation",
-    "slug": "acme"
-  }
+    "slug": "acme-corp"
+  },
+  "token": "jwt-session-token"
 }
 ```
 
-**Error Response (400):**
-```json
-{
-  "message": "Validation failed",
-  "errors": {
-    "email": ["Invalid email format"],
-    "password": ["Password too weak"]
+**Error Responses:**
+- `400 Bad Request` - Validation errors
+  ```json
+  {
+    "error": "Validation failed",
+    "details": [
+      {"field": "email", "message": "Invalid email format"},
+      {"field": "org_slug", "message": "Slug is already taken"}
+    ]
   }
-}
-```
+  ```
+- `409 Conflict` - Email already registered
+- `429 Too Many Requests` - Rate limit exceeded
+- `500 Internal Server Error` - Server error
 
-### Org Slug Availability Check
+### Slug Availability Check: `GET /auth/check-slug?slug={slug}`
 
-**API Endpoint**: GET /auth/check-slug?slug={slug}
-
-**Request**: `GET /auth/check-slug?slug=acme`
-
-**Success Response (200):**
+**Success Response (200 OK):**
 ```json
 {
   "available": true
 }
 ```
 
-**Response (200) - Not Available:**
+**Conflict Response (409 Conflict):**
 ```json
 {
   "available": false
 }
 ```
 
-## Responsive Design
+---
 
-### Mobile (<768px)
-- Single column layout
-- Full-width card with padding
-- Stacked form fields
-- Touch-friendly input sizes (min 44px height)
-- Password requirements list below password field
+## User Interactions & Flows
 
-### Tablet (768px-1024px)
-- Centered card with max-width
-- All fields visible without scrolling
+### Happy Path
+1. User lands on `/signup`
+2. User enters email, full name, password
+3. Password strength indicator updates in real-time
+4. User confirms password (checkmark appears when match)
+5. User enters organization name
+6. Organization slug is auto-generated from org name
+7. User modifies slug (optional)
+8. Slug availability is checked in real-time (✓ Available shown)
+9. User checks Terms of Service checkbox
+10. User clicks "Create Account & Organization"
+11. Button shows loading state
+12. On success:
+    - Session token is stored
+    - User is redirected to `/onboarding` wizard
 
-### Desktop (>1024px)
-- Centered card with max-width: 512px
-- Comfortable spacing
-- Focus states clearly visible
+### Error Scenarios
 
-## Accessibility
+#### Email Already Registered
+1. User enters email that's already in system
+2. On blur, inline error appears: "This email is already registered"
+3. Alternative: Server returns 409 on submit
+4. Error alert shown: "An account with this email already exists. Please log in or use a different email."
+5. Provide "Go to Login" link in error
+
+#### Slug Already Taken
+1. User enters slug
+2. After 500ms debounce, API check is made
+3. ✗ Icon shown with "Already taken" message
+4. User must choose different slug before submitting
+
+#### Password Mismatch
+1. User enters password
+2. User enters different confirm password
+3. Real-time error shown: "Passwords do not match"
+4. Confirm password field has red border
+5. Submit button remains disabled
+
+#### Terms Not Accepted
+1. User fills form but doesn't check terms
+2. User clicks submit
+3. Checkbox field is highlighted with error
+4. Focus moves to checkbox
+5. Error message shown: "You must agree to the Terms of Service"
+
+#### Network Error
+1. User submits form
+2. API request fails (timeout, network error)
+3. Loading state stops
+4. Error alert shown: "Unable to create account. Please check your connection and try again."
+5. Form fields remain filled
+6. User can retry submission
+
+#### Rate Limit Exceeded
+1. User submits form multiple times
+2. Server returns 429
+3. Error alert shown: "Too many registration attempts. Please try again in 1 hour."
+4. Form is disabled for cooldown period
+
+---
+
+## Accessibility (WCAG AA)
 
 ### Keyboard Navigation
-- Tab order: Name → Email → Org Name → Org Slug → Password → Confirm Password → Submit
-- Enter key submits form
-- Escape key clears focus (browser default)
+- Tab order: Email → Full Name → Password → Show Password → Confirm Password → Show Password → Org Name → Org Slug → Terms Checkbox → Submit Button → Login Link
+- Enter key submits form when valid
+- Escape key clears form (with confirmation)
 
 ### Screen Reader Support
-- All form labels properly associated with inputs
-- ARIA attributes:
-  - `aria-required="true"` on all required fields
-  - `aria-invalid="true"` when field has error
-  - `aria-describedby` linking to error messages
-  - `role="alert"` on error messages
-- Password strength indicator announced to screen readers
-- Org slug availability announced with live region
+- Form labeled as "Registration Form"
+- Each input has associated label
+- Required fields announced as "required"
+- Error messages associated with inputs via `aria-describedby`
+- Password strength announced via live region
+- Slug availability announced via live region
+- Loading state announced: "Creating your account, please wait"
 
-### WCAG AA Compliance
-- Color contrast ratio ≥ 4.5:1 for all text
-- Focus indicators visible and clear
-- Error messages descriptive and specific
-- Form labels always visible (no placeholder-only labels)
+### Visual Design
+- Clear focus indicators on all interactive elements
+- High contrast text (4.5:1 minimum)
+- Error messages in red with icon (not color alone)
+- Success indicators with checkmark icon (not color alone)
+- Large touch targets (44px minimum on mobile)
 
-## User Flow
+### Form Labels
+- All inputs have visible labels (not just placeholders)
+- Labels remain visible when input is focused/filled
+- Helper text provides guidance
+- Error messages are specific and actionable
 
-1. User lands on /signup
-2. User fills in full name
-3. User enters email
-4. User enters organization name
-5. User enters organization slug → Real-time availability check starts
-6. User sees availability feedback (available/taken/checking)
-7. User enters password → Strength indicator updates in real-time
-8. User sees password requirements checklist
-9. User enters confirm password → Match validation happens
-10. All validations pass → Submit button becomes enabled
-11. User clicks "Create Account"
-12. Loading state shown
-13. Success: Redirect to /onboarding/welcome
-14. Error: Show error messages, keep form data
+---
 
-## Error Handling
+## Responsive Design
 
-### Client-side Validation
-- Show errors on blur (after user leaves field)
-- Show errors on submit attempt
-- Clear errors when user starts typing again
+### Mobile (< 640px)
+- Card takes full width with 16px padding
+- Single column layout
+- Full-width inputs
+- Full-width button
+- Stack password strength indicator below input
+- Reduce logo size
+- Simplify header
 
-### Server-side Errors
-- Duplicate email: "This email is already registered. [Sign in]"
-- Duplicate slug: "This organization slug is already taken. Please choose another."
-- Network error: "Unable to create account. Please check your connection and try again."
-- Unknown error: "An unexpected error occurred. Please try again later."
+### Tablet (640px - 1024px)
+- Card width: 90% max 500px
+- Maintain single column
+- Larger touch targets
+- More spacing between sections
 
-## Link to Login
-- Text: "Already have an account? Sign in"
-- Link: /login
-- Positioned below submit button
+### Desktop (> 1024px)
+- Card width: 500px fixed
+- Centered on page
+- Larger typography
+- More generous spacing
+- Show org slug preview more prominently
 
-## Design Tokens
+---
 
-### Colors
-- Primary: Blue (#3B82F6)
-- Success: Green (#10B981)
-- Error: Red (#EF4444)
-- Warning: Yellow (#F59E0B)
+## Implementation Notes
 
-### Typography
-- Title: 3xl font size, font-bold
-- Description: sm font size, text-muted-foreground
-- Labels: sm font size, font-medium
-- Error messages: sm font size, text-destructive
+### Technologies
+- **Framework:** Next.js 14 (App Router)
+- **Form Handling:** React Hook Form
+- **Validation:** Zod schema
+- **Components:** shadcn/ui (Form, Input, Button, Card, Alert, Checkbox)
+- **Styling:** Tailwind CSS
+- **State Management:** React Hook Form state + React Query for API calls
 
-### Spacing
-- Card padding: p-6
-- Form fields gap: space-y-4
-- Input height: 40px
-- Button height: 40px
+### Form Schema (Zod)
+```typescript
+const signupSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  full_name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters')
+    .regex(/^[a-zA-Z\s-]+$/, 'Name can only contain letters, spaces, and hyphens'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain uppercase letter')
+    .regex(/[a-z]/, 'Password must contain lowercase letter')
+    .regex(/[0-9]/, 'Password must contain number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain special character'),
+  confirm_password: z.string(),
+  org_name: z.string()
+    .min(3, 'Organization name must be at least 3 characters')
+    .max(100, 'Organization name must be less than 100 characters'),
+  org_slug: z.string()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(50, 'Slug must be less than 50 characters')
+    .regex(/^[a-z][a-z0-9-]*[a-z0-9]$/, 'Slug must start with letter, contain only lowercase letters, numbers, hyphens'),
+  terms_accepted: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the Terms of Service'
+  })
+}).refine(data => data.password === data.confirm_password, {
+  message: 'Passwords do not match',
+  path: ['confirm_password']
+});
+```
+
+### Debounced Slug Check
+- Use `useDebounce` hook or `lodash.debounce`
+- Debounce delay: 500ms
+- Cancel pending requests on unmount
+- Show loading spinner during check
+
+### Auto-Generate Slug
+- Triggered on org_name blur (if org_slug is empty)
+- Transform: lowercase, replace spaces with hyphens, remove special chars
+- Example: "Acme Corporation!" → "acme-corporation"
+
+### Password Strength Calculation
+```typescript
+function calculatePasswordStrength(password: string): PasswordStrength {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score < 3) return 'weak';
+  if (score < 5) return 'medium';
+  if (score < 6) return 'strong';
+  return 'very-strong';
+}
+```
+
+---
+
+## Testing Checklist
+
+### Unit Tests
+- [ ] Form validation rules (all fields)
+- [ ] Password strength calculation
+- [ ] Slug auto-generation
+- [ ] Error message display
+- [ ] Accessibility attributes
+
+### Integration Tests
+- [ ] Successful registration flow
+- [ ] Email already registered error
+- [ ] Slug already taken error
+- [ ] Password mismatch error
+- [ ] Terms not accepted error
+- [ ] Network error handling
+- [ ] Rate limit handling
+
+### E2E Tests (Playwright)
+- [ ] Complete registration journey
+- [ ] Form field interactions
+- [ ] Real-time validation
+- [ ] Slug availability check
+- [ ] Error recovery flows
+- [ ] Redirect to onboarding after success
+
+### Accessibility Tests
+- [ ] Keyboard navigation
+- [ ] Screen reader announcements
+- [ ] Focus management
+- [ ] Color contrast
+- [ ] Touch target sizes
+
+---
+
+## Related Pages
+- **Previous:** None (entry point)
+- **Next:** `/onboarding` (Onboarding Wizard)
+- **Alternative:** `/login` (Login Page)
+
+---
+
+## Design System References
+- **shadcn/ui Form:** https://ui.shadcn.com/docs/components/form
+- **shadcn/ui Input:** https://ui.shadcn.com/docs/components/input
+- **shadcn/ui Button:** https://ui.shadcn.com/docs/components/button
+- **shadcn/ui Card:** https://ui.shadcn.com/docs/components/card
+- **shadcn/ui Alert:** https://ui.shadcn.com/docs/components/alert
+- **shadcn/ui Checkbox:** https://ui.shadcn.com/docs/components/checkbox
