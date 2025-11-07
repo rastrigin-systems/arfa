@@ -1103,6 +1103,21 @@ func (mr *MockQuerierMockRecorder) GetInvitationByToken(ctx, token any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByToken", reflect.TypeOf((*MockQuerier)(nil).GetInvitationByToken), ctx, token)
 }
 
+// GetInvitationEmailInfo mocks base method.
+func (m *MockQuerier) GetInvitationEmailInfo(ctx context.Context, id uuid.UUID) (db.GetInvitationEmailInfoRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationEmailInfo", ctx, id)
+	ret0, _ := ret[0].(db.GetInvitationEmailInfoRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationEmailInfo indicates an expected call of GetInvitationEmailInfo.
+func (mr *MockQuerierMockRecorder) GetInvitationEmailInfo(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationEmailInfo", reflect.TypeOf((*MockQuerier)(nil).GetInvitationEmailInfo), ctx, id)
+}
+
 // GetLogsByEmployee mocks base method.
 func (m *MockQuerier) GetLogsByEmployee(ctx context.Context, arg db.GetLogsByEmployeeParams) ([]db.ActivityLog, error) {
 	m.ctrl.T.Helper()

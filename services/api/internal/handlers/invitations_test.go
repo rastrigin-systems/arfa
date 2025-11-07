@@ -18,7 +18,19 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 )
+
+// ============================================================================
+// Test Helpers
+// ============================================================================
+
+// newTestInvitationHandler creates a handler with mock dependencies for testing
+func newTestInvitationHandler(mockDB db.Querier) *InvitationHandler {
+	// Use mock email service for all tests
+	emailService := service.NewMockEmailService()
+	return NewInvitationHandler(mockDB, emailService)
+}
 
 // ============================================================================
 // POST /invitations - Create Invitation Tests
@@ -30,7 +42,7 @@ func TestCreateInvitation_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	// Test data
 	orgID := uuid.New()
@@ -45,6 +57,7 @@ func TestCreateInvitation_Success(t *testing.T) {
 		Return(int64(10), nil)
 
 	// Mock: Create invitation
+	createdInvitationID := uuid.New()
 	mockDB.EXPECT().
 		CreateInvitation(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, params db.CreateInvitationParams) (db.Invitation, error) {
@@ -59,7 +72,7 @@ func TestCreateInvitation_Success(t *testing.T) {
 			assert.Len(t, params.Token, 64)  // 256 bits = 64 hex chars
 
 			return db.Invitation{
-				ID:         uuid.New(),
+				ID:         createdInvitationID,
 				OrgID:      params.OrgID,
 				InviterID:  params.InviterID,
 				Email:      params.Email,
@@ -72,6 +85,14 @@ func TestCreateInvitation_Success(t *testing.T) {
 				UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
 			}, nil
 		})
+
+	// Mock: Get email info for sending invitation email
+	mockDB.EXPECT().
+		GetInvitationEmailInfo(gomock.Any(), createdInvitationID).
+		Return(db.GetInvitationEmailInfoRow{
+			InviterName: "John Doe",
+			OrgName:     "Acme Corp",
+		}, nil)
 
 	// Request body
 	reqBody := api.CreateInvitationRequest{
@@ -110,7 +131,7 @@ func TestCreateInvitation_RateLimitExceeded(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	orgID := uuid.New()
 	inviterID := uuid.New()
@@ -154,7 +175,7 @@ func TestListInvitations_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	orgID := uuid.New()
 
@@ -226,7 +247,7 @@ func TestGetInvitationByToken_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	token := "valid-token-123"
 	orgID := uuid.New()
@@ -278,7 +299,7 @@ func TestGetInvitationByToken_Expired(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	token := "expired-token"
 
@@ -312,7 +333,7 @@ func TestAcceptInvitation_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	token := "valid-token"
 	orgID := uuid.New()
@@ -417,7 +438,7 @@ func TestCancelInvitation_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	invitationID := uuid.New()
 	orgID := uuid.New()
@@ -463,7 +484,7 @@ func TestCancelInvitation_AlreadyAccepted(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockQuerier(ctrl)
-	handler := NewInvitationHandler(mockDB)
+	handler := newTestInvitationHandler(mockDB)
 
 	invitationID := uuid.New()
 	orgID := uuid.New()

@@ -128,6 +128,9 @@ type Querier interface {
 	// Get invitation details by token (for validation)
 	// Used by GET /invitations/{token} (public)
 	GetInvitationByToken(ctx context.Context, token string) (GetInvitationByTokenRow, error)
+	// Get information needed to send invitation email
+	// Used by POST /invitations after creating invitation
+	GetInvitationEmailInfo(ctx context.Context, id uuid.UUID) (GetInvitationEmailInfoRow, error)
 	// Get logs for a specific employee with filters
 	GetLogsByEmployee(ctx context.Context, arg GetLogsByEmployeeParams) ([]ActivityLog, error)
 	// Get all logs for a specific CLI session

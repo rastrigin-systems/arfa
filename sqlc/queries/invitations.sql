@@ -84,3 +84,14 @@ WHERE org_id = $1
 UPDATE invitations
 SET status = 'expired', updated_at = NOW()
 WHERE status = 'pending' AND expires_at <= NOW();
+
+-- name: GetInvitationEmailInfo :one
+-- Get information needed to send invitation email
+-- Used by POST /invitations after creating invitation
+SELECT
+    e.full_name as inviter_name,
+    o.name as org_name
+FROM invitations i
+JOIN employees e ON i.inviter_id = e.id
+JOIN organizations o ON i.org_id = o.id
+WHERE i.id = $1;
