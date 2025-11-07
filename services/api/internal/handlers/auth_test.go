@@ -481,3 +481,375 @@ func TestGetMe_SessionNotFound(t *testing.T) {
 	// Should return 401 Unauthorized
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
+
+// ============================================================================
+// Register Tests
+// ============================================================================
+
+// TestRegister_Success is the first TDD test for registration
+//
+// TDD Lesson: Define EXPECTED behavior before implementation
+func TestRegister_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	// Test data
+	email := "alice@acme.com"
+	password := "SecurePass123!"
+	fullName := "Alice Smith"
+	orgName := "ACME Corporation"
+	orgSlug := "acme-corp"
+
+	orgID := uuid.New()
+	employeeID := uuid.New()
+	roleID := uuid.New()
+	passwordHash, _ := auth.HashPassword(password)
+
+	// 1. Check org_slug is available (no existing org)
+	mockDB.EXPECT().
+		GetOrganizationBySlug(gomock.Any(), orgSlug).
+		Return(db.Organization{}, assert.AnError) // Not found = available
+
+	// 2. Check email is available (no existing employee)
+	mockDB.EXPECT().
+		GetEmployeeByEmail(gomock.Any(), email).
+		Return(db.Employee{}, assert.AnError) // Not found = available
+
+	// 3. Get admin role
+	mockDB.EXPECT().
+		GetRoleByName(gomock.Any(), "admin").
+		Return(db.Role{
+			ID:          roleID,
+			Name:        "admin",
+			Permissions: []byte(`["*"]`),
+		}, nil)
+
+	// 4. Create organization
+	mockDB.EXPECT().
+		CreateOrganization(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateOrganizationParams) (db.Organization, error) {
+			return db.Organization{
+				ID:   orgID,
+				Name: params.Name,
+				Slug: params.Slug,
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+			}, nil
+		})
+
+	// 5. Create employee
+	mockDB.EXPECT().
+		CreateEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateEmployeeParams) (db.Employee, error) {
+			assert.Equal(t, orgID, params.OrgID)
+			assert.Equal(t, roleID, params.RoleID)
+			assert.Equal(t, email, params.Email)
+			assert.Equal(t, fullName, params.FullName)
+			// Verify password is hashed (not plain text)
+			assert.NotEqual(t, password, params.PasswordHash)
+			assert.True(t, len(params.PasswordHash) > 30) // bcrypt hash is long
+
+			return db.Employee{
+				ID:           employeeID,
+				OrgID:        orgID,
+				RoleID:       roleID,
+				Email:        email,
+				FullName:     fullName,
+				PasswordHash: passwordHash,
+				Status:       "active",
+				CreatedAt:    pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Time: time.Now(), Valid: true},
+			}, nil
+		})
+
+	// 6. Create session
+	mockDB.EXPECT().
+		CreateSession(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateSessionParams) (db.Session, error) {
+			return db.Session{
+				ID:         uuid.New(),
+				EmployeeID: params.EmployeeID,
+				TokenHash:  params.TokenHash,
+				ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+				CreatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
+			}, nil
+		})
+
+	// Create handler and request
+	handler := handlers.NewAuthHandler(mockDB)
+
+	requestBody := api.RegisterRequest{
+		Email:    openapi_types.Email(email),
+		Password: password,
+		FullName: fullName,
+		OrgName:  orgName,
+		OrgSlug:  orgSlug,
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Assert response
+	assert.Equal(t, http.StatusCreated, rec.Code, "Should return 201 Created")
+
+	var response api.RegisterResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err, "Response should be valid JSON")
+
+	// Verify token
+	assert.NotEmpty(t, response.Token, "Should return JWT token")
+	assert.Greater(t, len(response.Token), 50, "Token should be reasonably long")
+	assert.True(t, response.ExpiresAt.After(time.Now()), "Token should not be expired")
+
+	// Verify employee data
+	require.NotNil(t, response.Employee.Id)
+	assert.Equal(t, employeeID.String(), response.Employee.Id.String())
+	assert.Equal(t, email, string(response.Employee.Email))
+	assert.Equal(t, fullName, response.Employee.FullName)
+
+	// Verify organization data
+	require.NotNil(t, response.Organization.Id)
+	assert.Equal(t, orgID.String(), response.Organization.Id.String())
+	assert.Equal(t, orgName, response.Organization.Name)
+	assert.Equal(t, orgSlug, response.Organization.Slug)
+}
+
+// TestRegister_DuplicateOrgSlug tests org_slug uniqueness constraint
+func TestRegister_DuplicateOrgSlug(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgSlug := "acme-corp"
+
+	// Org slug already exists
+	mockDB.EXPECT().
+		GetOrganizationBySlug(gomock.Any(), orgSlug).
+		Return(db.Organization{
+			ID:   uuid.New(),
+			Slug: orgSlug,
+		}, nil) // Found = conflict
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	requestBody := api.RegisterRequest{
+		Email:    openapi_types.Email("alice@acme.com"),
+		Password: "SecurePass123!",
+		FullName: "Alice Smith",
+		OrgName:  "ACME Corporation",
+		OrgSlug:  orgSlug,
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var errorResponse api.Error
+	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "org_slug")
+	assert.Contains(t, errorResponse.Error, "already exists")
+}
+
+// TestRegister_DuplicateEmail tests email uniqueness constraint
+func TestRegister_DuplicateEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	email := "alice@acme.com"
+	orgSlug := "acme-corp"
+
+	// Org slug is available
+	mockDB.EXPECT().
+		GetOrganizationBySlug(gomock.Any(), orgSlug).
+		Return(db.Organization{}, assert.AnError) // Not found = available
+
+	// Email already exists
+	mockDB.EXPECT().
+		GetEmployeeByEmail(gomock.Any(), email).
+		Return(db.Employee{
+			ID:    uuid.New(),
+			Email: email,
+		}, nil) // Found = conflict
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	requestBody := api.RegisterRequest{
+		Email:    openapi_types.Email(email),
+		Password: "SecurePass123!",
+		FullName: "Alice Smith",
+		OrgName:  "ACME Corporation",
+		OrgSlug:  orgSlug,
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Should return 409 Conflict
+	assert.Equal(t, http.StatusConflict, rec.Code)
+
+	var errorResponse api.Error
+	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "email")
+	assert.Contains(t, errorResponse.Error, "already exists")
+}
+
+// TestRegister_InvalidJSON tests malformed request
+func TestRegister_InvalidJSON(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	// Send invalid JSON
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader([]byte("invalid json")))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Should return 400 Bad Request
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+// TestRegister_WeakPassword tests password strength validation
+func TestRegister_WeakPassword(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	requestBody := api.RegisterRequest{
+		Email:    openapi_types.Email("alice@acme.com"),
+		Password: "weak", // Too short
+		FullName: "Alice Smith",
+		OrgName:  "ACME Corporation",
+		OrgSlug:  "acme-corp",
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Should return 400 Bad Request
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+	var errorResponse api.Error
+	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	assert.Contains(t, errorResponse.Error, "password")
+}
+
+// TestRegister_InvalidOrgSlug tests org_slug format validation
+func TestRegister_InvalidOrgSlug(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewAuthHandler(mockDB)
+
+	testCases := []struct {
+		name    string
+		orgSlug string
+	}{
+		{"uppercase", "ACME-Corp"},
+		{"spaces", "acme corp"},
+		{"underscores", "acme_corp"},
+		{"too short", "ab"},
+		{"special chars", "acme@corp"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody := api.RegisterRequest{
+				Email:    openapi_types.Email("alice@acme.com"),
+				Password: "SecurePass123!",
+				FullName: "Alice Smith",
+				OrgName:  "ACME Corporation",
+				OrgSlug:  tc.orgSlug,
+			}
+			bodyBytes, _ := json.Marshal(requestBody)
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			handler.Register(rec, req)
+
+			// Should return 400 Bad Request
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+			var errorResponse api.Error
+			json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+			assert.Contains(t, errorResponse.Error, "org_slug")
+		})
+	}
+}
+
+// TestRegister_AdminRoleNotFound tests missing admin role
+func TestRegister_AdminRoleNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgSlug := "acme-corp"
+	email := "alice@acme.com"
+
+	// Org slug is available
+	mockDB.EXPECT().
+		GetOrganizationBySlug(gomock.Any(), orgSlug).
+		Return(db.Organization{}, assert.AnError)
+
+	// Email is available
+	mockDB.EXPECT().
+		GetEmployeeByEmail(gomock.Any(), email).
+		Return(db.Employee{}, assert.AnError)
+
+	// Admin role not found
+	mockDB.EXPECT().
+		GetRoleByName(gomock.Any(), "admin").
+		Return(db.Role{}, assert.AnError)
+
+	handler := handlers.NewAuthHandler(mockDB)
+
+	requestBody := api.RegisterRequest{
+		Email:    openapi_types.Email(email),
+		Password: "SecurePass123!",
+		FullName: "Alice Smith",
+		OrgName:  "ACME Corporation",
+		OrgSlug:  orgSlug,
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	// Should return 500 Internal Server Error
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}

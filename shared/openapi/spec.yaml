@@ -117,6 +117,65 @@ components:
         employee:
           $ref: '#/components/schemas/Employee'
 
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - full_name
+        - org_name
+        - org_slug
+      properties:
+        email:
+          type: string
+          format: email
+          example: "alice@acme.com"
+          description: "Employee email address (must be unique)"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "SecurePass123!"
+          description: "Password (minimum 8 characters)"
+        full_name:
+          type: string
+          minLength: 1
+          example: "Alice Smith"
+          description: "Employee full name"
+        org_name:
+          type: string
+          minLength: 1
+          example: "ACME Corporation"
+          description: "Organization name"
+        org_slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 3
+          maxLength: 100
+          example: "acme-corp"
+          description: "Organization slug (lowercase, alphanumeric, dashes only, must be unique)"
+
+    RegisterResponse:
+      type: object
+      required:
+        - token
+        - expires_at
+        - employee
+        - organization
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          description: "JWT authentication token"
+        expires_at:
+          type: string
+          format: date-time
+          description: "Token expiration timestamp"
+        employee:
+          $ref: '#/components/schemas/Employee'
+        organization:
+          $ref: '#/components/schemas/Organization'
+
     # Core domain schemas
     Employee:
       type: object
@@ -1715,6 +1774,52 @@ paths:
                 $ref: '#/components/schemas/Error'
         '422':
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register new organization
+      description: Self-service registration - creates organization and first employee with admin role
+      operationId: register
+      security: []  # No auth required for registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email or org_slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
           content:
             application/json:
               schema:

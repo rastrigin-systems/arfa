@@ -571,6 +571,36 @@ type PaginationMeta struct {
 	TotalPages int `json:"total_pages"`
 }
 
+// RegisterRequest defines model for RegisterRequest.
+type RegisterRequest struct {
+	// Email Employee email address (must be unique)
+	Email openapi_types.Email `json:"email"`
+
+	// FullName Employee full name
+	FullName string `json:"full_name"`
+
+	// OrgName Organization name
+	OrgName string `json:"org_name"`
+
+	// OrgSlug Organization slug (lowercase, alphanumeric, dashes only, must be unique)
+	OrgSlug string `json:"org_slug"`
+
+	// Password Password (minimum 8 characters)
+	Password string `json:"password"`
+}
+
+// RegisterResponse defines model for RegisterResponse.
+type RegisterResponse struct {
+	Employee Employee `json:"employee"`
+
+	// ExpiresAt Token expiration timestamp
+	ExpiresAt    time.Time    `json:"expires_at"`
+	Organization Organization `json:"organization"`
+
+	// Token JWT authentication token
+	Token string `json:"token"`
+}
+
 // ResolvedAgentConfig defines model for ResolvedAgentConfig.
 type ResolvedAgentConfig struct {
 	AgentId   openapi_types.UUID `json:"agent_id"`
@@ -889,6 +919,9 @@ type ListSessionsParams struct {
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// RegisterJSONRequestBody defines body for Register for application/json ContentType.
+type RegisterJSONRequestBody = RegisterRequest
+
 // CreateEmployeeJSONRequestBody defines body for CreateEmployee for application/json ContentType.
 type CreateEmployeeJSONRequestBody = CreateEmployeeRequest
 
@@ -942,6 +975,9 @@ type ServerInterface interface {
 	// Get current employee
 	// (GET /auth/me)
 	GetCurrentEmployee(w http.ResponseWriter, r *http.Request)
+	// Register new organization
+	// (POST /auth/register)
+	Register(w http.ResponseWriter, r *http.Request)
 	// List employees
 	// (GET /employees)
 	ListEmployees(w http.ResponseWriter, r *http.Request, params ListEmployeesParams)
@@ -1110,6 +1146,12 @@ func (_ Unimplemented) Logout(w http.ResponseWriter, r *http.Request) {
 // Get current employee
 // (GET /auth/me)
 func (_ Unimplemented) GetCurrentEmployee(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Register new organization
+// (POST /auth/register)
+func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1469,6 +1511,20 @@ func (siw *ServerInterfaceWrapper) GetCurrentEmployee(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCurrentEmployee(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Register operation middleware
+func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Register(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3070,6 +3126,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/auth/me", wrapper.GetCurrentEmployee)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/register", wrapper.Register)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/employees", wrapper.ListEmployees)

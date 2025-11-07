@@ -101,9 +101,10 @@ func main() {
 		// Health check
 		r.Get("/health", healthHandler.HealthCheck)
 
-		// Auth routes (login is public, others need auth)
+		// Auth routes (login and register are public, others need auth)
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/login", authHandler.Login)
+			r.Post("/register", authHandler.Register)
 
 			// Protected auth routes
 			r.Group(func(r chi.Router) {

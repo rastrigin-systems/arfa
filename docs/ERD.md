@@ -368,6 +368,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-11-07 13:06:24
+**Generated**: 2025-11-07 15:08:16
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

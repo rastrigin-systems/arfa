@@ -1150,6 +1150,21 @@ func (mr *MockQuerierMockRecorder) GetRole(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRole", reflect.TypeOf((*MockQuerier)(nil).GetRole), ctx, id)
 }
 
+// GetRoleByName mocks base method.
+func (m *MockQuerier) GetRoleByName(ctx context.Context, name string) (db.Role, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRoleByName", ctx, name)
+	ret0, _ := ret[0].(db.Role)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRoleByName indicates an expected call of GetRoleByName.
+func (mr *MockQuerierMockRecorder) GetRoleByName(ctx, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleByName", reflect.TypeOf((*MockQuerier)(nil).GetRoleByName), ctx, name)
+}
+
 // GetSession mocks base method.
 func (m *MockQuerier) GetSession(ctx context.Context, tokenHash string) (db.Session, error) {
 	m.ctrl.T.Helper()
