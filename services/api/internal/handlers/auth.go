@@ -447,6 +447,45 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// CheckSlugAvailability checks if an organization slug is available
+//
+// TDD Lesson: Simple validation endpoint - checks database and returns boolean
+//
+// Implementation Steps:
+// 1. Extract slug from query parameter
+// 2. Validate slug format
+// 3. Check if organization with slug exists in database
+// 4. Return availability status
+func (h *AuthHandler) CheckSlugAvailability(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Get slug from query parameter
+	slug := r.URL.Query().Get("slug")
+	if slug == "" {
+		writeError(w, http.StatusBadRequest, "slug parameter is required")
+		return
+	}
+
+	// Step 2: Validate slug format
+	if !isValidOrgSlug(slug) {
+		writeError(w, http.StatusBadRequest, "Invalid slug format")
+		return
+	}
+
+	// Step 3: Check if slug exists in database
+	_, err := h.db.GetOrganizationBySlug(ctx, slug)
+	available := err != nil // If error (org not found), slug is available
+
+	// Step 4: Return availability status
+	response := map[string]bool{
+		"available": available,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 // isValidOrgSlug validates org_slug format
 // Must be lowercase, alphanumeric, dashes only, at least 3 characters
 func isValidOrgSlug(slug string) bool {

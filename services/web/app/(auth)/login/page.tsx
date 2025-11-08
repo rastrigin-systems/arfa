@@ -40,7 +40,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="you@example.com"
-                defaultValue="sarah.cto@acme.com"
+                defaultValue="alice@acme.com"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.email}
@@ -61,7 +61,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 placeholder="••••••••"
-                defaultValue="password123"
+                defaultValue="SecurePass123!"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.password}
@@ -83,6 +83,14 @@ export default function LoginPage() {
 
             {/* Submit button */}
             <SubmitButton />
+
+            {/* Sign up link */}
+            <div className="text-center text-sm">
+              Don&apos;t have an account?{' '}
+              <a href="/signup" className="text-primary hover:underline">
+                Sign up
+              </a>
+            </div>
           </form>
         </CardContent>
       </Card>

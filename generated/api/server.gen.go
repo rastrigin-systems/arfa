@@ -932,6 +932,12 @@ type Status string
 // TeamId defines model for TeamId.
 type TeamId = openapi_types.UUID
 
+// CheckSlugAvailabilityParams defines parameters for CheckSlugAvailability.
+type CheckSlugAvailabilityParams struct {
+	// Slug Organization slug to check
+	Slug string `form:"slug" json:"slug"`
+}
+
 // ListEmployeesParams defines parameters for ListEmployees.
 type ListEmployeesParams struct {
 	// Page Page number
@@ -1102,6 +1108,9 @@ type ServerInterface interface {
 	// List available agents
 	// (GET /agents)
 	ListAgents(w http.ResponseWriter, r *http.Request)
+	// Check organization slug availability
+	// (GET /auth/check-slug)
+	CheckSlugAvailability(w http.ResponseWriter, r *http.Request, params CheckSlugAvailabilityParams)
 	// Login
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -1279,6 +1288,12 @@ type Unimplemented struct{}
 // List available agents
 // (GET /agents)
 func (_ Unimplemented) ListAgents(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Check organization slug availability
+// (GET /auth/check-slug)
+func (_ Unimplemented) CheckSlugAvailability(w http.ResponseWriter, r *http.Request, params CheckSlugAvailabilityParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1638,6 +1653,40 @@ func (siw *ServerInterfaceWrapper) ListAgents(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListAgents(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CheckSlugAvailability operation middleware
+func (siw *ServerInterfaceWrapper) CheckSlugAvailability(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CheckSlugAvailabilityParams
+
+	// ------------- Required query parameter "slug" -------------
+
+	if paramValue := r.URL.Query().Get("slug"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "slug"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "slug", r.URL.Query(), &params.Slug)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CheckSlugAvailability(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3440,6 +3489,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/agents", wrapper.ListAgents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/auth/check-slug", wrapper.CheckSlugAvailability)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)
