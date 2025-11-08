@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
+	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
 )
 
@@ -104,8 +106,7 @@ func TestCreateInvitation_Success(t *testing.T) {
 
 	// HTTP request
 	req := httptest.NewRequest(http.MethodPost, "/invitations", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "employee_id", inviterID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), inviterID, orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -149,8 +150,7 @@ func TestCreateInvitation_RateLimitExceeded(t *testing.T) {
 	bodyBytes, _ := json.Marshal(reqBody)
 
 	req := httptest.NewRequest(http.MethodPost, "/invitations", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "employee_id", inviterID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), inviterID, orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -218,7 +218,7 @@ func TestListInvitations_Success(t *testing.T) {
 
 	// HTTP request with query params
 	req := httptest.NewRequest(http.MethodGet, "/invitations?limit=10&offset=0", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -273,9 +273,10 @@ func TestGetInvitationByToken_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/invitations/"+token, nil)
 	w := httptest.NewRecorder()
 
-	// We need to set path param - in real Chi router this is done automatically
-	// For testing, we'll pass token via context
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	// Execute
 	handler.GetInvitationByToken(w, req)
@@ -313,7 +314,10 @@ func TestGetInvitationByToken_Expired(t *testing.T) {
 		}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/invitations/"+token, nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -411,7 +415,10 @@ func TestAcceptInvitation_Success(t *testing.T) {
 	bodyBytes, _ := json.Marshal(reqBody)
 
 	req := httptest.NewRequest(http.MethodPost, "/invitations/"+token+"/accept", bytes.NewReader(bodyBytes))
-	req = req.WithContext(context.WithValue(req.Context(), "token", token))
+	// Set Chi route context with URL param
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("token", token)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -467,7 +474,7 @@ func TestCancelInvitation_Success(t *testing.T) {
 		})
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
 	w := httptest.NewRecorder()
 
@@ -504,7 +511,7 @@ func TestCancelInvitation_AlreadyAccepted(t *testing.T) {
 		})
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
-	req = req.WithContext(context.WithValue(req.Context(), "org_id", orgID))
+	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
 	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
 	w := httptest.NewRecorder()
 
