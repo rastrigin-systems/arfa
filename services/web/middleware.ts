@@ -4,7 +4,13 @@ import type { NextRequest } from 'next/server';
 const TOKEN_COOKIE_NAME = 'ubik_token';
 
 // Public routes that don't require authentication
-const publicRoutes = ['/login'];
+// These routes will handle their own auth logic (e.g., redirect after login)
+const publicRoutes = [
+  '/',             // Root page - redirects based on auth status
+  '/login',        // Login page
+  '/signup',       // Signup page
+  '/accept-invite' // Accept invitation page
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,11 +28,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is authenticated and trying to access login page
-  if (token && pathname === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
+  // Let pages handle their own post-auth redirects
+  // This prevents redirect loops when tokens are invalid
   return NextResponse.next();
 }
 

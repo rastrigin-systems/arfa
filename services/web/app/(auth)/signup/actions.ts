@@ -88,9 +88,11 @@ export async function signupAction(
     });
 
     if (error || !response.ok) {
+      // Extract error message from API response
+      const errorMessage = error?.error || error?.message || 'Registration failed. Please try again.';
       return {
         errors: {
-          _form: [error?.message || 'Registration failed. Please try again.'],
+          _form: [errorMessage],
         },
       };
     }
@@ -116,7 +118,7 @@ export async function signupAction(
   }
 
   // Redirect outside try/catch so Next.js redirect error propagates correctly
-  redirect('/onboarding/welcome');
+  redirect('/dashboard');
 }
 
 export async function checkSlugAvailability(slug: string): Promise<{ available: boolean }> {

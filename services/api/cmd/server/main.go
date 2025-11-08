@@ -110,6 +110,7 @@ func main() {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/login", authHandler.Login)
 			r.Post("/register", authHandler.Register)
+			r.Get("/check-slug", authHandler.CheckSlugAvailability)
 
 			// Protected auth routes
 			r.Group(func(r chi.Router) {

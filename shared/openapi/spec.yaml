@@ -2022,6 +2022,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /auth/check-slug:
+    get:
+      tags:
+        - auth
+      summary: Check organization slug availability
+      description: Check if an organization slug is available for registration
+      operationId: checkSlugAvailability
+      security: []  # No auth required
+      parameters:
+        - name: slug
+          in: query
+          required: true
+          description: Organization slug to check
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+            pattern: '^[a-z][a-z0-9-]*$'
+            example: 'acme-corp'
+      responses:
+        '200':
+          description: Slug availability status
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - available
+                properties:
+                  available:
+                    type: boolean
+                    description: Whether the slug is available
+                    example: true
+        '400':
+          description: Invalid slug format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /auth/logout:
     post:
       tags:
