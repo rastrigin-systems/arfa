@@ -204,6 +204,107 @@ And a new session is created for the new user
 
 ---
 
-**Next story to add:** Story 1.4 - Dashboard Overview
+### Story 1.4: Password Reset (Forgot Password)
 
-Is Story 1.3 approved?
+**As a** user who forgot my password
+**I want to** request a password reset link via email
+**So that** I can regain access to my account without contacting support
+
+**Priority:** P2 (Medium)
+**Status:** 📋 Planned (Issue #155)
+**Endpoints:** `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password`, `GET /api/v1/auth/verify-reset-token`
+**UI:** `/forgot-password`, `/reset-password/[token]`
+
+**Acceptance Criteria:**
+
+```gherkin
+Given I am on the login page
+When I click "Forgot password?"
+Then I am redirected to /forgot-password
+And I see a form asking for my email address
+
+Given I am on the forgot password page
+When I enter my registered email address
+And I click "Send reset link"
+Then I see a success message "Password reset link sent to your email"
+And I receive an email with a password reset link
+And the link is valid for 1 hour
+
+Given I am on the forgot password page
+When I enter an email that doesn't exist in the system
+And I click "Send reset link"
+Then I see the same success message (for security)
+And no email is sent
+And no error reveals that the email doesn't exist
+
+Given I receive a password reset email
+When I click the reset link
+Then I am redirected to /reset-password/[token]
+And I see a form to enter a new password
+And the form requires password confirmation
+
+Given I am on the reset password page with a valid token
+When I enter a new password and confirmation that match
+And the password meets requirements (8+ chars, uppercase, number, special)
+And I click "Reset password"
+Then my password is updated
+And I see a success message "Password reset successful"
+And I am redirected to /login
+And I can log in with my new password
+
+Given I am on the reset password page with an expired token
+When I try to submit the form
+Then I see an error "This reset link has expired"
+And I see a link to request a new reset link
+
+Given I am on the reset password page with an already-used token
+When I try to submit the form
+Then I see an error "This reset link has already been used"
+And I see a link to request a new reset link
+
+Given I am on the reset password page
+When I enter passwords that don't match
+And I click "Reset password"
+Then I see an error "Passwords do not match"
+And the form does not submit
+
+Given I try to reuse a password reset link
+When the link has already been used once
+Then the link is invalid
+And I cannot reset my password again with the same link
+```
+
+**Implementation Notes:**
+- **Database:** Requires `password_reset_tokens` table with columns:
+  - `id` (UUID, PK)
+  - `employee_id` (UUID, FK to employees)
+  - `token` (VARCHAR, unique, cryptographically random)
+  - `expires_at` (TIMESTAMP, 1 hour from creation)
+  - `used_at` (TIMESTAMP, nullable, marks token as used)
+  - `created_at` (TIMESTAMP)
+- **Security:**
+  - Tokens must be cryptographically random (256-bit minimum)
+  - Tokens are single-use (marked as used after password reset)
+  - Tokens expire after 1 hour
+  - Rate limiting: Max 3 reset requests per email per hour
+  - Generic success message for non-existent emails (prevents email enumeration)
+- **Email:**
+  - Requires email service integration (e.g., SendGrid, AWS SES)
+  - Email should include reset link: `https://app.ubik.com/reset-password/[TOKEN]`
+  - Email should clearly state the 1-hour expiration
+- **Password validation:**
+  - Same requirements as registration: 8+ chars, uppercase, number, special character
+  - Password confirmation must match
+- **User experience:**
+  - Clear error messages for expired/used tokens
+  - Link back to forgot-password page if token is invalid
+  - Auto-redirect to login after successful reset
+
+**Related Issues:**
+- Issue #155 - Full implementation spec
+
+---
+
+**Next story to add:** Story 1.5 - Dashboard Overview
+
+Is Story 1.4 approved?
