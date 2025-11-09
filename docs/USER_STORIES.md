@@ -305,6 +305,133 @@ And I cannot reset my password again with the same link
 
 ---
 
-**Next story to add:** Story 1.5 - Dashboard Overview
+## Epic 2: Dashboard & Navigation
 
-Is Story 1.4 approved?
+### Story 2.1: Admin Dashboard (Overview & Activity)
+
+**As an** admin or manager
+**I want to** see an overview of pending approvals and recent organization activity
+**So that** I can quickly identify what needs my attention and stay informed
+
+**Priority:** P1 (High)
+**Status:** 🚧 In Progress (Basic shell exists, needs implementation)
+**Endpoints:** `GET /api/v1/approvals/pending`, `GET /api/v1/activity-logs`
+**UI:** `/dashboard`
+
+**Acceptance Criteria:**
+
+```gherkin
+Given I am an admin and I log in successfully
+When I am redirected to /dashboard
+Then I see a welcome message with my name "Welcome back, [Name]!"
+And I see the page title "Dashboard"
+
+Given I am viewing the dashboard
+When the page loads
+Then I see four main sections in this order:
+  1. Pending Approvals (top priority)
+  2. Activity Timeline (recent org events)
+  3. Quick Stats (org metrics)
+  4. Quick Actions (navigation links)
+
+# Pending Approvals Section
+Given there are 3 pending approval requests
+When I view the Pending Approvals section
+Then I see "Pending Approvals (3)" as the section title
+And I see a list of up to 5 most recent pending requests
+And each request shows:
+  - Employee name who made the request
+  - Request type (e.g., "Agent Request" or "MCP Server Request")
+  - Requested item name (e.g., "Claude Code")
+  - Time since request (e.g., "2 days ago")
+And I see a "View All Requests" button at the bottom
+And clicking it takes me to /approvals
+
+Given there are no pending approvals
+When I view the Pending Approvals section
+Then I see "Pending Approvals (0)" as the section title
+And I see "No pending approvals" message
+And I see "All caught up!" encouraging text
+And I do NOT see "View All Requests" button
+
+# Activity Timeline Section
+Given there are recent activities in my organization
+When I view the Activity Timeline section
+Then I see "Activity Timeline" as the section title
+And I see a list of up to 10 most recent activity log entries
+And each entry shows:
+  - Activity icon (🟢 create, 🔵 update, 🟡 approve, 🔴 delete)
+  - Activity description (e.g., "Sarah approved agent for Bob")
+  - Timestamp (e.g., "5 minutes ago", "2 hours ago", "Yesterday")
+And I see a "View All Activity" button at the bottom
+And clicking it takes me to /activity
+
+Given there is no recent activity
+When I view the Activity Timeline section
+Then I see "Activity Timeline" as the section title
+And I see "No recent activity" message
+And I see "Activity will appear here as your team uses Ubik"
+
+# Quick Stats Section
+Given I am viewing the dashboard
+When I look at the Quick Stats section
+Then I see four stat cards displayed horizontally:
+  1. "Active Employees" with count (e.g., "12")
+  2. "Agents in Use" with count (e.g., "8")
+  3. "Pending Requests" with count (e.g., "3")
+  4. "This Month Usage" with cost (e.g., "$324")
+And each stat card shows the metric name and value clearly
+And the values are fetched from the API in real-time
+
+# Quick Actions Section
+Given I am viewing the dashboard
+When I look at the Quick Actions section
+Then I see "Quick Actions" as the section title
+And I see four action buttons:
+  - "Manage Employees" (links to /employees)
+  - "View Teams" (links to /teams)
+  - "Agent Catalog" (links to /agents)
+  - "Usage Reports" (links to /usage)
+And each button is clearly labeled and clickable
+
+# Loading States
+Given I just landed on the dashboard
+When the data is still loading from the API
+Then I see skeleton loaders for each section
+And I see a loading spinner in the Pending Approvals section
+And I see a loading spinner in the Activity Timeline section
+And I see "Loading..." placeholders for Quick Stats
+
+# Error States
+Given the API fails to load pending approvals
+When I view the dashboard
+Then I see an error message "Unable to load pending approvals"
+And I see a "Retry" button
+And other sections still load successfully (fail gracefully)
+```
+
+**Implementation Notes:**
+- **Current State:** Basic shell exists (welcome message + placeholder cards)
+- **Needs Rework:** Replace placeholder cards with functional sections
+- **API Endpoints:**
+  - `GET /api/v1/approvals/pending?limit=5` - Get pending approval requests
+  - `GET /api/v1/activity-logs?limit=10` - Get recent activity log entries
+  - `GET /api/v1/organizations/current/stats` - Get org-level stats
+- **Data Refresh:** Auto-refresh every 60 seconds (optional polling)
+- **Responsive Design:** Stack sections vertically on mobile, side-by-side on desktop
+- **Icons:** Use appropriate icons for activities (see acceptance criteria)
+- **Time Formatting:** Use relative time (e.g., "2 hours ago", "Yesterday", "Last week")
+- **Access Control:** This page is for admins/managers only (employees should see different content or be redirected)
+- **Empty States:** Show encouraging messages when there's no data
+- **Error Handling:** Fail gracefully - if one section errors, others still work
+
+**Related Endpoints:**
+- `GET /api/v1/employees` (for employee count)
+- `GET /api/v1/agents` (for agents in use count)
+- `GET /api/v1/usage-records` (for monthly usage cost)
+
+---
+
+**Next story to add:** Story 2.2 - Navigation & Layout (Sidebar/Header)
+
+Is Story 2.1 approved?
