@@ -206,6 +206,15 @@ type Organization struct {
 	UpdatedAt            pgtype.Timestamp `json:"updated_at"`
 }
 
+type PasswordResetToken struct {
+	ID         uuid.UUID        `json:"id"`
+	EmployeeID uuid.UUID        `json:"employee_id"`
+	Token      string           `json:"token"`
+	ExpiresAt  pgtype.Timestamp `json:"expires_at"`
+	UsedAt     pgtype.Timestamp `json:"used_at"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+}
+
 type Policy struct {
 	ID        uuid.UUID        `json:"id"`
 	Name      string           `json:"name"`

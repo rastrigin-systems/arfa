@@ -112,6 +112,11 @@ func main() {
 			r.Post("/register", authHandler.Register)
 			r.Get("/check-slug", authHandler.CheckSlugAvailability)
 
+			// Password reset routes (public)
+			r.Post("/forgot-password", authHandler.ForgotPassword)
+			r.Get("/verify-reset-token", authHandler.VerifyResetToken)
+			r.Post("/reset-password", authHandler.ResetPassword)
+
 			// Protected auth routes
 			r.Group(func(r chi.Router) {
 				r.Use(authmiddleware.JWTAuth(queries))

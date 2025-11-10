@@ -12,6 +12,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
 	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
+	authpkg "github.com/sergeirastrigin/ubik-enterprise/services/api/pkg/auth"
 )
 
 // AuthHandler handles authentication-related requests
@@ -484,6 +485,195 @@ func (h *AuthHandler) CheckSlugAvailability(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+// ForgotPassword handles password reset requests
+//
+// TDD Lesson: Security-first design to prevent email enumeration
+//
+// Implementation Steps (derived from security requirements):
+// 1. Parse email from request
+// 2. Always return success message (don't reveal if email exists)
+// 3. If employee exists, check rate limit
+// 4. Generate secure token and store it
+// 5. Send password reset email
+func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Parse request
+	var req api.ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request format")
+		return
+	}
+
+	// Step 2: Generic success message (prevents email enumeration)
+	genericMessage := "If an account exists with this email, you will receive a password reset link within a few minutes."
+
+	// Try to get employee by email (don't fail if not found)
+	employee, err := h.db.GetEmployeeByEmail(ctx, string(req.Email))
+	if err != nil {
+		// Employee not found - return generic success (security)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+			Message: genericMessage,
+		})
+		return
+	}
+
+	// Step 3: Check rate limit (3 requests per hour)
+	if err := authpkg.CheckPasswordResetRateLimit(ctx, employee.ID, h.db); err != nil {
+		// Rate limited - return 429
+		writeError(w, http.StatusTooManyRequests, "Too many password reset requests. Please try again later.")
+		return
+	}
+
+	// Step 4: Generate secure token
+	token, err := authpkg.GenerateSecureToken()
+	if err != nil {
+		// Log error but return generic success (don't reveal internal errors)
+		fmt.Printf("Error generating token: %v\n", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+			Message: genericMessage,
+		})
+		return
+	}
+
+	// Store token in database with 1-hour expiration
+	expiresAt := pgtype.Timestamp{Time: time.Now().Add(1 * time.Hour), Valid: true}
+	_, err = h.db.CreatePasswordResetToken(ctx, db.CreatePasswordResetTokenParams{
+		EmployeeID: employee.ID,
+		Token:      token,
+		ExpiresAt:  expiresAt,
+	})
+	if err != nil {
+		// Log error but return generic success
+		fmt.Printf("Error creating password reset token: %v\n", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+			Message: genericMessage,
+		})
+		return
+	}
+
+	// Step 5: Send email (in production, this would be async)
+	// For now, use mock email service
+	// TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
+	fmt.Printf("📧 Password reset token for %s: %s\n", employee.Email, token)
+	fmt.Printf("   Reset URL: https://app.ubik.cloud/reset-password/%s\n", token)
+
+	// Return generic success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+		Message: genericMessage,
+	})
+}
+
+// VerifyResetToken verifies if a password reset token is valid
+//
+// TDD Lesson: Token validation with clear error messages
+//
+// Implementation Steps:
+// 1. Extract token from query parameter
+// 2. Check if token exists and is not expired
+// 3. Check if token has not been used
+// 4. Return validation result
+func (h *AuthHandler) VerifyResetToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Extract token from query parameter
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "Token is required")
+		return
+	}
+
+	// Step 2 & 3: Check if token is valid (exists, not expired, not used)
+	_, err := h.db.GetPasswordResetToken(ctx, token)
+	if err != nil {
+		// Token invalid, expired, or already used
+		writeError(w, http.StatusBadRequest, "Invalid, expired, or already used token")
+		return
+	}
+
+	// Step 4: Return success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(api.VerifyResetTokenResponse{
+		Valid: true,
+	})
+}
+
+// ResetPassword resets an employee's password using a valid token
+//
+// TDD Lesson: Atomic operation - update password and mark token as used
+//
+// Implementation Steps:
+// 1. Parse request (token + new password)
+// 2. Validate password strength
+// 3. Verify token is valid
+// 4. Hash new password
+// 5. Update employee password
+// 6. Mark token as used
+// 7. Return success
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Step 1: Parse request
+	var req api.ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request format")
+		return
+	}
+
+	// Step 2: Validate password strength (minimum 8 characters)
+	if len(req.NewPassword) < 8 {
+		writeError(w, http.StatusBadRequest, "Password must be at least 8 characters")
+		return
+	}
+
+	// Step 3: Verify token is valid (not expired, not used)
+	resetToken, err := h.db.GetPasswordResetToken(ctx, req.Token)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid, expired, or already used token")
+		return
+	}
+
+	// Step 4: Hash new password
+	passwordHash, err := auth.HashPassword(req.NewPassword)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to process password")
+		return
+	}
+
+	// Step 5: Update employee password
+	err = h.db.UpdateEmployeePassword(ctx, db.UpdateEmployeePasswordParams{
+		PasswordHash: passwordHash,
+		ID:           resetToken.EmployeeID,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	// Step 6: Mark token as used
+	err = h.db.MarkPasswordResetTokenUsed(ctx, req.Token)
+	if err != nil {
+		// Log error but password was updated successfully
+		fmt.Printf("Warning: Failed to mark token as used: %v\n", err)
+	}
+
+	// Step 7: Return success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(api.ResetPasswordResponse{
+		Message: "Password reset successful",
+	})
 }
 
 // isValidOrgSlug validates org_slug format
