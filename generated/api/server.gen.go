@@ -452,6 +452,18 @@ type Error struct {
 	Message string                  `json:"message"`
 }
 
+// ForgotPasswordRequest defines model for ForgotPasswordRequest.
+type ForgotPasswordRequest struct {
+	// Email Email address to send password reset link to
+	Email openapi_types.Email `json:"email"`
+}
+
+// ForgotPasswordResponse defines model for ForgotPasswordResponse.
+type ForgotPasswordResponse struct {
+	// Message Generic success message (prevents email enumeration)
+	Message string `json:"message"`
+}
+
 // HealthResponse defines model for HealthResponse.
 type HealthResponse struct {
 	Status    string    `json:"status"`
@@ -716,6 +728,21 @@ type RegisterResponse struct {
 	Token string `json:"token"`
 }
 
+// ResetPasswordRequest defines model for ResetPasswordRequest.
+type ResetPasswordRequest struct {
+	// NewPassword New password (minimum 8 characters, must include uppercase, number, special character)
+	NewPassword string `json:"new_password"`
+
+	// Token Password reset token from email
+	Token string `json:"token"`
+}
+
+// ResetPasswordResponse defines model for ResetPasswordResponse.
+type ResetPasswordResponse struct {
+	// Message Success message
+	Message string `json:"message"`
+}
+
 // ResolvedAgentConfig defines model for ResolvedAgentConfig.
 type ResolvedAgentConfig struct {
 	AgentId   openapi_types.UUID `json:"agent_id"`
@@ -905,6 +932,12 @@ type UpdateTeamRequest struct {
 	Name        *string `json:"name,omitempty"`
 }
 
+// VerifyResetTokenResponse defines model for VerifyResetTokenResponse.
+type VerifyResetTokenResponse struct {
+	// Valid Whether the token is valid (not expired, not used)
+	Valid bool `json:"valid"`
+}
+
 // ConfigId defines model for ConfigId.
 type ConfigId = openapi_types.UUID
 
@@ -936,6 +969,12 @@ type TeamId = openapi_types.UUID
 type CheckSlugAvailabilityParams struct {
 	// Slug Organization slug to check
 	Slug string `form:"slug" json:"slug"`
+}
+
+// VerifyResetTokenParams defines parameters for VerifyResetToken.
+type VerifyResetTokenParams struct {
+	// Token The password reset token to verify
+	Token string `form:"token" json:"token"`
 }
 
 // ListEmployeesParams defines parameters for ListEmployees.
@@ -1052,11 +1091,17 @@ type ListSessionsParams struct {
 	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
+// ForgotPasswordJSONRequestBody defines body for ForgotPassword for application/json ContentType.
+type ForgotPasswordJSONRequestBody = ForgotPasswordRequest
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterRequest
+
+// ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
+type ResetPasswordJSONRequestBody = ResetPasswordRequest
 
 // CreateEmployeeJSONRequestBody defines body for CreateEmployee for application/json ContentType.
 type CreateEmployeeJSONRequestBody = CreateEmployeeRequest
@@ -1111,6 +1156,9 @@ type ServerInterface interface {
 	// Check organization slug availability
 	// (GET /auth/check-slug)
 	CheckSlugAvailability(w http.ResponseWriter, r *http.Request, params CheckSlugAvailabilityParams)
+	// Request password reset link
+	// (POST /auth/forgot-password)
+	ForgotPassword(w http.ResponseWriter, r *http.Request)
 	// Login
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -1123,6 +1171,12 @@ type ServerInterface interface {
 	// Register new organization
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// Reset password using token
+	// (POST /auth/reset-password)
+	ResetPassword(w http.ResponseWriter, r *http.Request)
+	// Verify password reset token
+	// (GET /auth/verify-reset-token)
+	VerifyResetToken(w http.ResponseWriter, r *http.Request, params VerifyResetTokenParams)
 	// List employees
 	// (GET /employees)
 	ListEmployees(w http.ResponseWriter, r *http.Request, params ListEmployeesParams)
@@ -1297,6 +1351,12 @@ func (_ Unimplemented) CheckSlugAvailability(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Request password reset link
+// (POST /auth/forgot-password)
+func (_ Unimplemented) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Login
 // (POST /auth/login)
 func (_ Unimplemented) Login(w http.ResponseWriter, r *http.Request) {
@@ -1318,6 +1378,18 @@ func (_ Unimplemented) GetCurrentEmployee(w http.ResponseWriter, r *http.Request
 // Register new organization
 // (POST /auth/register)
 func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Reset password using token
+// (POST /auth/reset-password)
+func (_ Unimplemented) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Verify password reset token
+// (GET /auth/verify-reset-token)
+func (_ Unimplemented) VerifyResetToken(w http.ResponseWriter, r *http.Request, params VerifyResetTokenParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1696,6 +1768,20 @@ func (siw *ServerInterfaceWrapper) CheckSlugAvailability(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ForgotPassword operation middleware
+func (siw *ServerInterfaceWrapper) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ForgotPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
 
@@ -1755,6 +1841,54 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetPassword operation middleware
+func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyResetToken operation middleware
+func (siw *ServerInterfaceWrapper) VerifyResetToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params VerifyResetTokenParams
+
+	// ------------- Required query parameter "token" -------------
+
+	if paramValue := r.URL.Query().Get("token"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "token"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "token", r.URL.Query(), &params.Token)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyResetToken(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3494,6 +3628,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/auth/check-slug", wrapper.CheckSlugAvailability)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/forgot-password", wrapper.ForgotPassword)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)
 	})
 	r.Group(func(r chi.Router) {
@@ -3504,6 +3641,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/register", wrapper.Register)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/reset-password", wrapper.ResetPassword)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/auth/verify-reset-token", wrapper.VerifyResetToken)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/employees", wrapper.ListEmployees)

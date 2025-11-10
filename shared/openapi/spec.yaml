@@ -176,6 +176,65 @@ components:
         organization:
           $ref: '#/components/schemas/Organization'
 
+    # Password reset schemas
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "alice@acme.com"
+          description: "Email address to send password reset link to"
+
+    ForgotPasswordResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "If an account exists with this email, you will receive a password reset link within a few minutes."
+          description: "Generic success message (prevents email enumeration)"
+
+    VerifyResetTokenResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          example: true
+          description: "Whether the token is valid (not expired, not used)"
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - new_password
+      properties:
+        token:
+          type: string
+          example: "abc123xyz456..."
+          description: "Password reset token from email"
+        new_password:
+          type: string
+          format: password
+          minLength: 8
+          example: "NewSecurePass123!"
+          description: "New password (minimum 8 characters, must include uppercase, number, special character)"
+
+    ResetPasswordResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Password reset successful"
+          description: "Success message"
+
     # Invitation schemas
     CreateInvitationRequest:
       type: object
@@ -2095,6 +2154,97 @@ paths:
                 $ref: '#/components/schemas/Employee'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - auth
+      summary: Request password reset link
+      description: Sends a password reset email to the provided address (if it exists). Always returns success to prevent email enumeration.
+      operationId: forgotPassword
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Success (generic message for security)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgotPasswordResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests (rate limited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-reset-token:
+    get:
+      tags:
+        - auth
+      summary: Verify password reset token
+      description: Checks if a password reset token is valid (not expired, not used)
+      operationId: verifyResetToken
+      security: []  # Public endpoint
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The password reset token to verify
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResetTokenResponse'
+        '400':
+          description: Token invalid, expired, or already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/reset-password:
+    post:
+      tags:
+        - auth
+      summary: Reset password using token
+      description: Updates the employee's password using a valid reset token. Marks token as used.
+      operationId: resetPassword
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordResponse'
+        '400':
+          description: Invalid token or validation error
           content:
             application/json:
               schema:

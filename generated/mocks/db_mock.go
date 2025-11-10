@@ -326,6 +326,21 @@ func (mr *MockQuerierMockRecorder) CountPendingRequestsByOrg(ctx, orgID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountPendingRequestsByOrg", reflect.TypeOf((*MockQuerier)(nil).CountPendingRequestsByOrg), ctx, orgID)
 }
 
+// CountRecentPasswordResetRequests mocks base method.
+func (m *MockQuerier) CountRecentPasswordResetRequests(ctx context.Context, employeeID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRecentPasswordResetRequests", ctx, employeeID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRecentPasswordResetRequests indicates an expected call of CountRecentPasswordResetRequests.
+func (mr *MockQuerierMockRecorder) CountRecentPasswordResetRequests(ctx, employeeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRecentPasswordResetRequests", reflect.TypeOf((*MockQuerier)(nil).CountRecentPasswordResetRequests), ctx, employeeID)
+}
+
 // CountTeamAgentConfigs mocks base method.
 func (m *MockQuerier) CountTeamAgentConfigs(ctx context.Context, teamID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
@@ -489,6 +504,21 @@ func (m *MockQuerier) CreateOrganization(ctx context.Context, arg db.CreateOrgan
 func (mr *MockQuerierMockRecorder) CreateOrganization(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockQuerier)(nil).CreateOrganization), ctx, arg)
+}
+
+// CreatePasswordResetToken mocks base method.
+func (m *MockQuerier) CreatePasswordResetToken(ctx context.Context, arg db.CreatePasswordResetTokenParams) (db.PasswordResetToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePasswordResetToken", ctx, arg)
+	ret0, _ := ret[0].(db.PasswordResetToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePasswordResetToken indicates an expected call of CreatePasswordResetToken.
+func (mr *MockQuerierMockRecorder) CreatePasswordResetToken(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePasswordResetToken", reflect.TypeOf((*MockQuerier)(nil).CreatePasswordResetToken), ctx, arg)
 }
 
 // CreateRole mocks base method.
@@ -1268,6 +1298,21 @@ func (mr *MockQuerierMockRecorder) GetOrganizationClaudeToken(ctx, id any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationClaudeToken", reflect.TypeOf((*MockQuerier)(nil).GetOrganizationClaudeToken), ctx, id)
 }
 
+// GetPasswordResetToken mocks base method.
+func (m *MockQuerier) GetPasswordResetToken(ctx context.Context, token string) (db.PasswordResetToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPasswordResetToken", ctx, token)
+	ret0, _ := ret[0].(db.PasswordResetToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPasswordResetToken indicates an expected call of GetPasswordResetToken.
+func (mr *MockQuerierMockRecorder) GetPasswordResetToken(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPasswordResetToken", reflect.TypeOf((*MockQuerier)(nil).GetPasswordResetToken), ctx, token)
+}
+
 // GetRole mocks base method.
 func (m *MockQuerier) GetRole(ctx context.Context, id uuid.UUID) (db.Role, error) {
 	m.ctrl.T.Helper()
@@ -1748,6 +1793,20 @@ func (mr *MockQuerierMockRecorder) ListTeams(ctx, orgID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTeams", reflect.TypeOf((*MockQuerier)(nil).ListTeams), ctx, orgID)
 }
 
+// MarkPasswordResetTokenUsed mocks base method.
+func (m *MockQuerier) MarkPasswordResetTokenUsed(ctx context.Context, token string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkPasswordResetTokenUsed", ctx, token)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkPasswordResetTokenUsed indicates an expected call of MarkPasswordResetTokenUsed.
+func (mr *MockQuerierMockRecorder) MarkPasswordResetTokenUsed(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPasswordResetTokenUsed", reflect.TypeOf((*MockQuerier)(nil).MarkPasswordResetTokenUsed), ctx, token)
+}
+
 // RemoveSkillFromEmployee mocks base method.
 func (m *MockQuerier) RemoveSkillFromEmployee(ctx context.Context, arg db.RemoveSkillFromEmployeeParams) error {
 	m.ctrl.T.Helper()
@@ -1862,6 +1921,20 @@ func (m *MockQuerier) UpdateEmployeeMCPConfig(ctx context.Context, arg db.Update
 func (mr *MockQuerierMockRecorder) UpdateEmployeeMCPConfig(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmployeeMCPConfig", reflect.TypeOf((*MockQuerier)(nil).UpdateEmployeeMCPConfig), ctx, arg)
+}
+
+// UpdateEmployeePassword mocks base method.
+func (m *MockQuerier) UpdateEmployeePassword(ctx context.Context, arg db.UpdateEmployeePasswordParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEmployeePassword", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEmployeePassword indicates an expected call of UpdateEmployeePassword.
+func (mr *MockQuerierMockRecorder) UpdateEmployeePassword(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmployeePassword", reflect.TypeOf((*MockQuerier)(nil).UpdateEmployeePassword), ctx, arg)
 }
 
 // UpdateEmployeeSkill mocks base method.

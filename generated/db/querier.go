@@ -48,6 +48,7 @@ type Querier interface {
 	// Used by POST /invitations for rate limiting validation
 	CountInvitationsByOrgToday(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountPendingRequestsByOrg(ctx context.Context, orgID uuid.UUID) (int64, error)
+	CountRecentPasswordResetRequests(ctx context.Context, employeeID uuid.UUID) (int64, error)
 	// Count agent configurations for a specific team
 	CountTeamAgentConfigs(ctx context.Context, teamID uuid.UUID) (int64, error)
 	// Create a new activity log entry
@@ -66,6 +67,7 @@ type Querier interface {
 	// Create org-level agent config
 	CreateOrgAgentConfig(ctx context.Context, arg CreateOrgAgentConfigParams) (OrgAgentConfig, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
+	CreatePasswordResetToken(ctx context.Context, arg CreatePasswordResetTokenParams) (PasswordResetToken, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	// Authentication and session queries
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
@@ -147,6 +149,7 @@ type Querier interface {
 	GetOrganization(ctx context.Context, id uuid.UUID) (Organization, error)
 	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
 	GetOrganizationClaudeToken(ctx context.Context, id uuid.UUID) (GetOrganizationClaudeTokenRow, error)
+	GetPasswordResetToken(ctx context.Context, token string) (PasswordResetToken, error)
 	GetRole(ctx context.Context, id uuid.UUID) (Role, error)
 	GetRoleByName(ctx context.Context, name string) (Role, error)
 	GetSession(ctx context.Context, tokenHash string) (Session, error)
@@ -207,6 +210,7 @@ type Querier interface {
 	// List all agent configurations for a specific team
 	ListTeamAgentConfigs(ctx context.Context, teamID uuid.UUID) ([]ListTeamAgentConfigsRow, error)
 	ListTeams(ctx context.Context, orgID uuid.UUID) ([]Team, error)
+	MarkPasswordResetTokenUsed(ctx context.Context, token string) error
 	RemoveSkillFromEmployee(ctx context.Context, arg RemoveSkillFromEmployeeParams) error
 	// ============================================================================
 	// EMPLOYEE TOKEN MANAGEMENT
@@ -224,6 +228,7 @@ type Querier interface {
 	UpdateEmployeeAgentConfig(ctx context.Context, arg UpdateEmployeeAgentConfigParams) (UpdateEmployeeAgentConfigRow, error)
 	UpdateEmployeeLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateEmployeeMCPConfig(ctx context.Context, arg UpdateEmployeeMCPConfigParams) (EmployeeMcpConfig, error)
+	UpdateEmployeePassword(ctx context.Context, arg UpdateEmployeePasswordParams) error
 	UpdateEmployeeSkill(ctx context.Context, arg UpdateEmployeeSkillParams) (EmployeeSkill, error)
 	UpdateMCPServer(ctx context.Context, arg UpdateMCPServerParams) (McpCatalog, error)
 	// Update org-level agent config
