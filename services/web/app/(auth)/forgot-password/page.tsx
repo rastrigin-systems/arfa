@@ -1,37 +1,61 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { loginAction, type LoginFormState } from './actions';
+import { forgotPasswordAction, type ForgotPasswordFormState } from './actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Logging in...' : 'Login'}
+      {pending ? 'Sending...' : 'Send reset link'}
     </Button>
   );
 }
 
-export default function LoginPage() {
-  const initialState: LoginFormState = {};
-  const [state, formAction] = useFormState(loginAction, initialState);
+export default function ForgotPasswordPage() {
+  const initialState: ForgotPasswordFormState = {};
+  const [state, formAction] = useFormState(forgotPasswordAction, initialState);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center text-3xl">Ubik Enterprise</CardTitle>
+          <CardTitle className="text-center text-2xl font-semibold">Forgot Password</CardTitle>
           <CardDescription className="text-center">
-            Sign in to manage your AI agent configurations
+            Enter your email address and we&apos;ll send you a link to reset your password.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-4">
+            {/* Success message */}
+            {state.success && state.message && (
+              <div
+                role="alert"
+                aria-live="polite"
+                aria-describedby="reset-success"
+                className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">✅</span>
+                  <div id="reset-success" className="space-y-2">
+                    <p className="font-semibold">Password reset link sent to your email</p>
+                    <p className="text-sm">
+                      If an account exists with this email, you will receive a password reset link
+                      within a few minutes.
+                    </p>
+                    <p className="text-sm">Please check your spam folder if you don&apos;t see it.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Email field */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -40,41 +64,16 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="you@example.com"
-                defaultValue="alice@acme.com"
                 required
+                disabled={state.success}
                 aria-required="true"
+                aria-label="Email address"
                 aria-invalid={!!state.errors?.email}
                 aria-describedby={state.errors?.email ? 'email-error' : undefined}
               />
               {state.errors?.email && (
                 <p id="email-error" role="alert" className="text-sm text-destructive">
                   {state.errors.email.join(', ')}
-                </p>
-              )}
-            </div>
-
-            {/* Password field */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <a href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </a>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                defaultValue="SecurePass123!"
-                required
-                aria-required="true"
-                aria-invalid={!!state.errors?.password}
-                aria-describedby={state.errors?.password ? 'password-error' : undefined}
-              />
-              {state.errors?.password && (
-                <p id="password-error" role="alert" className="text-sm text-destructive">
-                  {state.errors.password.join(', ')}
                 </p>
               )}
             </div>
@@ -89,12 +88,11 @@ export default function LoginPage() {
             {/* Submit button */}
             <SubmitButton />
 
-            {/* Sign up link */}
+            {/* Back to login link */}
             <div className="text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <a href="/signup" className="text-primary hover:underline">
-                Sign up
-              </a>
+              <Link href="/login" className="text-primary hover:underline">
+                Back to login
+              </Link>
             </div>
           </form>
         </CardContent>

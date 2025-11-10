@@ -44,6 +44,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register new organization
+         * @description Self-service registration - creates organization and first employee with admin role
+         */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/check-slug": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check organization slug availability
+         * @description Check if an organization slug is available for registration
+         */
+        get: operations["checkSlugAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -79,6 +119,150 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request password reset link
+         * @description Sends a password reset email to the provided address (if it exists). Always returns success to prevent email enumeration.
+         */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/verify-reset-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify password reset token
+         * @description Checks if a password reset token is valid (not expired, not used)
+         */
+        get: operations["verifyResetToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset password using token
+         * @description Updates the employee's password using a valid reset token. Marks token as used.
+         */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List invitations
+         * @description Get paginated list of invitations for current organization (admin only)
+         */
+        get: operations["listInvitations"];
+        put?: never;
+        /**
+         * Create invitation
+         * @description Create an invitation for a new employee (admin only, rate limited to 20/day)
+         */
+        post: operations["createInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get invitation by token
+         * @description Validate invitation token and get details (public endpoint)
+         */
+        get: operations["getInvitationByToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/{token}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept invitation
+         * @description Accept invitation and create employee account (public endpoint)
+         */
+        post: operations["acceptInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Cancel invitation
+         * @description Cancel a pending invitation (admin only)
+         */
+        delete: operations["cancelInvitation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -815,6 +999,198 @@ export interface components {
             /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
             token: string;
             /** Format: date-time */
+            expires_at: string;
+            employee: components["schemas"]["Employee"];
+        };
+        RegisterRequest: {
+            /**
+             * Format: email
+             * @description Employee email address (must be unique)
+             * @example alice@acme.com
+             */
+            email: string;
+            /**
+             * Format: password
+             * @description Password (minimum 8 characters)
+             * @example SecurePass123!
+             */
+            password: string;
+            /**
+             * @description Employee full name
+             * @example Alice Smith
+             */
+            full_name: string;
+            /**
+             * @description Organization name
+             * @example ACME Corporation
+             */
+            org_name: string;
+            /**
+             * @description Organization slug (lowercase, alphanumeric, dashes only, must be unique)
+             * @example acme-corp
+             */
+            org_slug: string;
+        };
+        RegisterResponse: {
+            /**
+             * @description JWT authentication token
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            token: string;
+            /**
+             * Format: date-time
+             * @description Token expiration timestamp
+             */
+            expires_at: string;
+            employee: components["schemas"]["Employee"];
+            organization: components["schemas"]["Organization"];
+        };
+        ForgotPasswordRequest: {
+            /**
+             * Format: email
+             * @description Email address to send password reset link to
+             * @example alice@acme.com
+             */
+            email: string;
+        };
+        ForgotPasswordResponse: {
+            /**
+             * @description Generic success message (prevents email enumeration)
+             * @example If an account exists with this email, you will receive a password reset link within a few minutes.
+             */
+            message: string;
+        };
+        VerifyResetTokenResponse: {
+            /**
+             * @description Whether the token is valid (not expired, not used)
+             * @example true
+             */
+            valid: boolean;
+        };
+        ResetPasswordRequest: {
+            /**
+             * @description Password reset token from email
+             * @example abc123xyz456...
+             */
+            token: string;
+            /**
+             * Format: password
+             * @description New password (minimum 8 characters, must include uppercase, number, special character)
+             * @example NewSecurePass123!
+             */
+            new_password: string;
+        };
+        ResetPasswordResponse: {
+            /**
+             * @description Success message
+             * @example Password reset successful
+             */
+            message: string;
+        };
+        CreateInvitationRequest: {
+            /**
+             * Format: email
+             * @description Email address of the person being invited
+             */
+            email: string;
+            /**
+             * Format: uuid
+             * @description Role to assign to the new employee
+             */
+            role_id: string;
+            /**
+             * Format: uuid
+             * @description Optional team to assign the employee to
+             */
+            team_id?: string | null;
+        };
+        Invitation: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            org_id: string;
+            /**
+             * Format: uuid
+             * @description Employee who created the invitation
+             */
+            inviter_id: string;
+            /** Format: email */
+            email: string;
+            /** Format: uuid */
+            role_id: string;
+            /** Format: uuid */
+            team_id?: string | null;
+            /** @description Secure invitation token (64 character hex string) */
+            token: string;
+            /**
+             * @description Current invitation status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "expired" | "cancelled";
+            /**
+             * Format: date-time
+             * @description When the invitation expires (7 days from creation)
+             */
+            expires_at: string;
+            /**
+             * Format: uuid
+             * @description Employee ID who accepted the invitation
+             */
+            accepted_by?: string | null;
+            /**
+             * Format: date-time
+             * @description When the invitation was accepted
+             */
+            accepted_at?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        InvitationListResponse: {
+            invitations: components["schemas"]["Invitation"][];
+            /** @description Total number of invitations */
+            total: number;
+            /** @description Number of results per page */
+            limit: number;
+            /** @description Offset for pagination */
+            offset: number;
+        };
+        InvitationDetails: {
+            /** Format: uuid */
+            id: string;
+            /** @description Name of the organization */
+            org_name: string;
+            /** Format: email */
+            email: string;
+            /** @description Name of the role being assigned */
+            role_name: string;
+            /** @description Name of the team (if assigned) */
+            team_name?: string | null;
+            /** @enum {string} */
+            status: "pending" | "accepted" | "expired" | "cancelled";
+            /**
+             * Format: date-time
+             * @description When the invitation expires
+             */
+            expires_at: string;
+        };
+        AcceptInvitationRequest: {
+            /** @description Full name of the employee */
+            full_name: string;
+            /**
+             * Format: password
+             * @description Password (must be at least 8 characters)
+             */
+            password: string;
+        };
+        AcceptInvitationResponse: {
+            /** @description JWT authentication token */
+            token: string;
+            /**
+             * Format: date-time
+             * @description Token expiration timestamp
+             */
             expires_at: string;
             employee: components["schemas"]["Employee"];
         };
@@ -1722,6 +2098,10 @@ export interface components {
         Page: number;
         /** @description Items per page */
         PerPage: number;
+        /** @description Number of items to return */
+        Limit: number;
+        /** @description Number of items to skip */
+        Offset: number;
         /** @description Filter by status */
         Status: "active" | "suspended" | "inactive";
     };
@@ -1793,6 +2173,104 @@ export interface operations {
             };
         };
     };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Registration successful */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Email or org_slug already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    checkSlugAvailability: {
+        parameters: {
+            query: {
+                /** @description Organization slug to check */
+                slug: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Slug availability status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Whether the slug is available
+                         * @example true
+                         */
+                        available: boolean;
+                    };
+                };
+            };
+            /** @description Invalid slug format */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     logout: {
         parameters: {
             query?: never;
@@ -1840,6 +2318,377 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Success (generic message for security) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgotPasswordResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Too many requests (rate limited) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    verifyResetToken: {
+        parameters: {
+            query: {
+                /** @description The password reset token to verify */
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token is valid */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifyResetTokenResponse"];
+                };
+            };
+            /** @description Token invalid, expired, or already used */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Password reset successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResetPasswordResponse"];
+                };
+            };
+            /** @description Invalid token or validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listInvitations: {
+        parameters: {
+            query?: {
+                /** @description Number of items to return */
+                limit?: components["parameters"]["Limit"];
+                /** @description Number of items to skip */
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of invitations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationListResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden - requires admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description Invitation created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden - requires admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Rate limit exceeded (20 invitations/day) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getInvitationByToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Invitation token (64 character hex string) */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitation details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationDetails"];
+                };
+            };
+            /** @description Invalid token */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation expired or cancelled */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    acceptInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Invitation token */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description Invitation accepted, employee created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptInvitationResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invalid token */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Email already exists or invitation already accepted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation expired or cancelled */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    cancelInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Invitation ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitation cancelled successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden - requires admin role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Cannot cancel accepted invitation */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
