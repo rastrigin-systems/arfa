@@ -101,10 +101,36 @@ make generate-mocks      # Test mocks
 - Pulling changes that modify any of the above
 
 **Important Notes:**
-- ⚠️ Never edit files in `generated/` directory - they are completely overwritten!
-- ✅ The `generated/` directory is NOT committed to git
-- ✅ CI/CD automatically regenerates code on every build
+- ⚠️ Never edit generated files - they are completely overwritten!
+  - `generated/` directory (Go code)
+  - `services/web/lib/api/schema.ts` (TypeScript types)
+  - `docs/` directory (ERD documentation)
+- ✅ Generated code is NOT committed to git (`generated/`, `services/web/lib/api/schema.ts`)
+- ✅ Generated docs ARE committed to git (`docs/` - for GitHub visibility)
+- ✅ CI/CD automatically regenerates everything and fails if docs are stale
 - ✅ This ensures consistency between local and CI environments
+
+### Committing Schema Changes
+
+**Complete workflow:**
+```bash
+# 1. Edit schema
+vim shared/schema/schema.sql
+
+# 2. Reset database and regenerate everything
+make db-reset
+make generate  # Generates code + docs
+
+# 3. Commit source AND docs
+git add shared/schema/schema.sql docs/
+git commit -m "feat: Add notifications table"
+git push
+```
+
+**CI will verify:**
+- ✅ Go code regenerates correctly
+- ✅ ERD docs are up to date (fails if you forgot `make generate-erd`)
+- ✅ TypeScript types regenerate correctly
 
 ### Why No Git Hooks?
 
