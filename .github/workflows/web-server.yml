@@ -59,6 +59,11 @@ jobs:
         working-directory: ./services/web
         run: npm install
 
+      - name: Generate API types from OpenAPI spec
+        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: npm run generate:api
+
       - name: Build application
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
@@ -114,6 +119,11 @@ jobs:
         if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: npm install
+
+      - name: Generate API types from OpenAPI spec
+        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: npm run generate:api
 
       - name: Get Playwright version
         if: steps.check_web.outputs.exists == 'true'
