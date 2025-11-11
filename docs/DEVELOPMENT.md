@@ -82,14 +82,18 @@ These are maintained separately because:
 ### Generation Commands
 
 ```bash
-# Generate everything
+# Backend (Go) - Generate everything
 make generate
 
-# Generate specific parts
+# Backend (Go) - Generate specific parts
 make generate-erd        # Database documentation
 make generate-api        # API types + router
 make generate-db         # Database code
 make generate-mocks      # Test mocks
+
+# Frontend (Web) - Generate TypeScript types
+cd services/web
+npm run generate:api     # Generate from OpenAPI spec
 ```
 
 ### When to Regenerate
