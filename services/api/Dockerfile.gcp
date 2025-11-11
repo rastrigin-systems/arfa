@@ -3,22 +3,37 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /workspace
 
+# Install code generation tools
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest && \
+    go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest && \
+    go install go.uber.org/mock/mockgen@latest
+
+# Copy source files needed for code generation
+COPY shared/openapi/ ./shared/openapi/
+COPY shared/schema/ ./shared/schema/
+COPY sqlc/ ./sqlc/
+
+# Create generated module structure
+RUN mkdir -p generated/api generated/db && \
+    printf 'module github.com/sergeirastrigin/ubik-enterprise/generated\n\ngo 1.24.5\n\nrequire (\n\tgithub.com/go-chi/chi/v5 v5.0.11\n\tgithub.com/google/uuid v1.6.0\n\tgithub.com/oapi-codegen/runtime v1.1.1\n)\n' > generated/go.mod
+
+# Generate API and DB code
+RUN oapi-codegen -package api -generate types,chi-server -o generated/api/server.gen.go shared/openapi/spec.yaml && \
+    cd sqlc && sqlc generate
+
 # Copy workspace files
 COPY go.work go.work.sum ./
 COPY services/api/go.mod services/api/go.sum ./services/api/
 COPY services/cli/go.mod services/cli/go.sum ./services/cli/
 COPY pkg/types/go.mod ./pkg/types/
-COPY generated/go.mod generated/go.sum ./generated/
 
 # Download dependencies
 RUN go work sync
 RUN cd services/api && go mod download
 
-# Copy source code
+# Copy remaining source code
 COPY services/api/ ./services/api/
 COPY pkg/ ./pkg/
-COPY generated/ ./generated/
-COPY shared/openapi/ ./shared/openapi/
 
 # Build binary
 WORKDIR /workspace/services/api
