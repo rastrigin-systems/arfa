@@ -421,8 +421,8 @@ docker ps
 # Check testcontainers can access Docker
 docker run hello-world
 
-# Ensure schema.sql path is correct
-schemaPath, err := filepath.Abs("../../schema.sql")
+# Ensure shared/schema/schema.sql path is correct
+schemaPath, err := filepath.Abs("../../shared/schema/schema.sql")
 ```
 
 ### Coverage Not Calculating

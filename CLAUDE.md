@@ -331,7 +331,7 @@ make generate
 ### Code Generation Pipeline
 
 ```
-schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
+shared/schema/schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
                         ↓
                        sqlc → generated/db/*.go
 
@@ -340,7 +340,7 @@ openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
 
 **When to regenerate:**
 - **CI/CD (automatic):** On every build/test in GitHub Actions
-- **Local (manual):** After changing schema.sql, openapi/spec.yaml, or SQL queries
+- **Local (manual):** After changing shared/schema/schema.sql, openapi/spec.yaml, or SQL queries
 - **After pull:** When pulling changes that modify source files
 
 ```bash
@@ -350,7 +350,7 @@ make generate
 # Or specific parts
 make generate-api  # After changing openapi/spec.yaml
 make generate-db   # After changing SQL queries
-make generate-erd  # After changing schema.sql
+make generate-erd  # After changing shared/schema/schema.sql
 ```
 
 **Note:** The `generated/` directory is NOT committed to git. CI/CD handles generation automatically.
@@ -371,7 +371,7 @@ make generate-erd  # After changing schema.sql
 make generate
 
 # Then commit your source changes (NOT generated/ directory)
-git add schema.sql
+git add shared/schema/schema.sql
 git commit -m "feat: Update schema"
 ```
 

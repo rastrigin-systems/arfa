@@ -19,7 +19,7 @@
 
 ```bash
 # 1. Update database schema
-vim schema.sql
+vim shared/schema/schema.sql
 
 # 2. Apply to database
 make db-reset
@@ -46,7 +46,7 @@ go run cmd/server/main.go
 ### Code Generation Pipeline
 
 ```
-schema.sql → PostgreSQL → tbls → schema.json, README.md, public.*.md, schema.svg
+shared/schema/schema.sql → PostgreSQL → tbls → schema.json, README.md, public.*.md, schema.svg
                         ↓         ↓
                        sqlc      Python script → ERD.md (user-friendly)
                         ↓
@@ -71,7 +71,7 @@ Your code (internal/) → Uses generated types
 **As of v0.3.0, code generation is NO LONGER automatic on commit.**
 
 **Two sources of truth:**
-1. **schema.sql** - Database structure
+1. **shared/schema/schema.sql** - Database structure
 2. **openapi/spec.yaml** - API contract
 
 These are maintained separately because:
@@ -95,7 +95,7 @@ make generate-mocks      # Test mocks
 ### When to Regenerate
 
 **Run `make generate` after:**
-- Changing `schema.sql` (then run `make db-reset`)
+- Changing `shared/schema/schema.sql` (then run `make db-reset`)
 - Changing `openapi/spec.yaml`
 - Changing SQL queries in `sqlc/queries/`
 - Pulling changes that modify any of the above
@@ -184,7 +184,7 @@ Always use `go.uber.org/mock` (matches import in code).
 
 **Solution**:
 ```bash
-# After changing schema.sql
+# After changing shared/schema/schema.sql
 make db-reset              # Apply to database
 make generate-db           # Regenerate DB code
 make generate-mocks        # Regenerate mocks
@@ -227,11 +227,11 @@ Use Row-Level Security (RLS) as additional safety net.
 
 ### 5. Testing Against Real Database
 
-**Problem**: Tests fail locally but schema.sql is correct
+**Problem**: Tests fail locally but shared/schema/schema.sql is correct
 
 **Solution**: Check testcontainers path
 ```go
-schemaPath, err := filepath.Abs("../../schema.sql")
+schemaPath, err := filepath.Abs("../../shared/schema/schema.sql")
 if err != nil {
     t.Fatal(err)
 }
@@ -374,7 +374,7 @@ go build ./...
 
 ```
 ubik-enterprise/
-├── schema.sql                 # Database schema (source of truth)
+├── shared/schema/schema.sql                 # Database schema (source of truth)
 ├── openapi/spec.yaml          # API contract (source of truth)
 │
 ├── generated/                 # ⚠️ AUTO-GENERATED (never edit!)
