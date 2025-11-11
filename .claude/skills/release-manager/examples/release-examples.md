@@ -182,7 +182,7 @@ gh release create $NEW_TAG \
 
 ## 📝 Full Changelog
 
-https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.2.0...v0.3.0
+https://github.com/rastrigin-org/ubik-enterprise/compare/v0.2.0...v0.3.0
 
 ---
 
@@ -201,7 +201,7 @@ echo "## v0.3.0 - Complete Web UI (2025-11-02)
 - GitHub workflow skills
 - 69 commits since v0.2.0
 
-[Release Notes](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.3.0)
+[Release Notes](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.3.0)
 " >> docs/RELEASES.md
 
 git add docs/RELEASES.md CLAUDE.md
@@ -263,7 +263,7 @@ gh release create $VERSION \
 - Agent config validation
 - Employee list pagination
 
-[Full Changelog](https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.3.0...v0.3.1)"
+[Full Changelog](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.3.0...v0.3.1)"
 
 echo "✅ Patch release v0.3.1 complete!"
 ```
@@ -458,7 +458,7 @@ echo ""
 
 echo "---"
 echo ""
-echo "**Full Changelog:** https://github.com/sergei-rastrigin/ubik-enterprise/compare/$LAST_TAG...$NEW_TAG"
+echo "**Full Changelog:** https://github.com/rastrigin-org/ubik-enterprise/compare/$LAST_TAG...$NEW_TAG"
 ```
 
 ## Best Practices Demonstrated

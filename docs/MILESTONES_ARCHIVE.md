@@ -31,12 +31,12 @@ After releasing a milestone:
 
 - Issues: 17 (17 closed, 0 remaining)
 - Status: Archived
-- Release: https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.3.0
+- Release: https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.3.0
 
 
 ## v0.4.0 - Beta Ready (Completed: 2025-11-03)
 
 - Issues: 11 (11 closed, 0 remaining)
 - Status: Archived
-- Release: https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.4.0 - Beta Ready
+- Release: https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.4.0 - Beta Ready
 

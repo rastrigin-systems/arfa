@@ -82,7 +82,7 @@ mutation($parentId: ID!, $childId: ID!) {
 }' -f parentId="$PARENT_NODE_ID" -f childId="$SUB_NODE_ID"
 
 # Step 4: Add to project
-gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$SUB_NUM"
+gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$SUB_NUM"
 
 # Step 5: Update parent issue
 gh issue comment $PARENT_NUM --body "Created subtask #$SUB_NUM"

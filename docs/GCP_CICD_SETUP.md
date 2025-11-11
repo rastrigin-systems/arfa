@@ -91,21 +91,21 @@ Smoke Tests
 
 ### 1. Add GitHub Secret
 
-The service account key has been created locally as `github-actions-key.json`.
+The service account key has been created locally as `credentials/github-actions-key.json`.
 
 **⚠️ IMPORTANT**: This file is gitignored and MUST NOT be committed to the repository.
 
 **To add the secret to GitHub:**
 
-1. Go to: https://github.com/sergei-rastrigin/ubik-enterprise/settings/secrets/actions
+1. Go to: https://github.com/rastrigin-org/ubik-enterprise/settings/secrets/actions
 2. Click **"New repository secret"**
 3. Name: `GCP_SA_KEY`
-4. Value: Copy the **entire contents** of `github-actions-key.json`
+4. Value: Copy the **entire contents** of `credentials/github-actions-key.json`
 5. Click **"Add secret"**
 
 **To view the key locally:**
 ```bash
-cat github-actions-key.json
+cat credentials/github-actions-key.json
 ```
 
 ### 2. Commit and Push Changes
@@ -115,9 +115,9 @@ Once the secret is added to GitHub, commit and push the workflow changes:
 ```bash
 # On a feature branch or main
 git add .github/workflows/ cloudbuild-api.yaml cloudbuild-web.yaml
-git add GCP_CREDENTIALS.md docs/GCP_CICD_SETUP.md
+git add credentials/GCP_CREDENTIALS.md docs/GCP_CICD_SETUP.md
 git add services/web/instrumentation.ts  # Fixed webpack issue
-git add .gitignore  # Added github-actions-key.json
+git add .gitignore  # Added credentials/github-actions-key.json
 
 git commit -m "feat: Add GCP CI/CD deployment workflows
 
@@ -137,7 +137,7 @@ git push origin main
 After pushing, the workflows will trigger automatically:
 
 **View workflow runs:**
-- https://github.com/sergei-rastrigin/ubik-enterprise/actions
+- https://github.com/rastrigin-org/ubik-enterprise/actions
 
 **View Cloud Build logs:**
 ```bash
@@ -273,4 +273,4 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 **Last Updated**: 2025-11-06
 **Status**: ✅ Ready for deployment
-**Documentation**: See GCP_CREDENTIALS.md for all deployment credentials
+**Documentation**: See credentials/GCP_CREDENTIALS.md for all deployment credentials

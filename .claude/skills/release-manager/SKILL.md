@@ -254,7 +254,7 @@ gh release create $VERSION \
 
 ## 📝 Full Changelog
 
-https://github.com/sergei-rastrigin/ubik-enterprise/compare/[PREV_TAG]...$VERSION
+https://github.com/rastrigin-org/ubik-enterprise/compare/[PREV_TAG]...$VERSION
 
 ---
 
@@ -334,7 +334,7 @@ query {
 gh issue comment [ISSUE_NUM] --body "🎉 Released in $VERSION!"
 
 # Post to discussions (if enabled)
-# https://github.com/sergei-rastrigin/ubik-enterprise/discussions
+# https://github.com/rastrigin-org/ubik-enterprise/discussions
 ```
 
 ## Handling Special Cases

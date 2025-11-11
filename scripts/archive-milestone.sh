@@ -165,7 +165,7 @@ cat >> docs/MILESTONES_ARCHIVE.md <<EOF
 
 - Issues: $TOTAL ($CLOSED closed, $OPEN remaining)
 - Status: Archived
-- Release: https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/$MILESTONE
+- Release: https://github.com/rastrigin-org/ubik-enterprise/releases/tag/$MILESTONE
 
 EOF
 

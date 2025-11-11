@@ -87,7 +87,7 @@ Development agents use the Task tool to delegate GitHub operations. When invokin
 **Example Output:**
 ```
 ✅ Created issue #123: Implement JWT authentication
-   URL: https://github.com/sergei-rastrigin/ubik-enterprise/issues/123
+   URL: https://github.com/rastrigin-org/ubik-enterprise/issues/123
    Labels: area/api, type/feature, priority/p0, size/m
    Milestone: v0.3.0
    Status: Todo
@@ -517,7 +517,7 @@ echo "   Added comment documenting CI results"
 - **Workflow Examples:** `.claude/skills/github-task-manager/examples/workflow-examples.md`
 - **Update Script:** `./scripts/update-project-status.sh`
 - **Engineering Roadmap:** https://github.com/users/sergei-rastrigin/projects/3
-- **Repository:** https://github.com/sergei-rastrigin/ubik-enterprise
+- **Repository:** https://github.com/rastrigin-org/ubik-enterprise
 
 ## When to Escalate
 

@@ -133,7 +133,7 @@ mutation {
 
 **Step 4: Add to Project**
 ```bash
-gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$SUB_ISSUE"
+gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$SUB_ISSUE"
 ```
 
 **Step 5: Update Parent Issue**
@@ -195,7 +195,7 @@ PARENT_NODE_ID=$(gh api graphql ... -F number=$PARENT_NUM ...)
 # Create subtasks
 for task in "${SUBTASKS[@]}"; do
   SUB_NUM=$(gh issue create --title "$task" --body "Part of #$PARENT_NUM" ...)
-  gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$SUB_NUM"
+  gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$SUB_NUM"
 done
 
 # Update parent
@@ -406,7 +406,7 @@ ISSUE=$(gh issue create \
   --body "..." | grep -oE '#[0-9]+' | cut -c2-)
 
 # 2. Add to project
-gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$ISSUE"
+gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$ISSUE"
 
 # 3. Set status
 ./scripts/update-project-status.sh --issue $ISSUE --status "Todo"
