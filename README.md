@@ -105,6 +105,8 @@ make help              # Show all commands
 
 **Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
+
 ---
 
 ## Tech Stack
