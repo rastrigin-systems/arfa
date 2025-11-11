@@ -22,8 +22,8 @@ import (
 func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 	ctx := context.Background()
 
-	// Get absolute path to schema.sql (in monorepo shared directory)
-	schemaPath, err := filepath.Abs("../../../../shared/schema/schema.sql")
+	// Get absolute path to schema.sql (in monorepo platform directory)
+	schemaPath, err := filepath.Abs("../../../../platform/database/schema.sql")
 	require.NoError(t, err)
 
 	// Start PostgreSQL container using generic testcontainers API

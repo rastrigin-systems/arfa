@@ -44,7 +44,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/server .
-COPY --from=builder /workspace/shared/openapi ./shared/openapi
+COPY --from=builder /workspace/platform/api-spec ./platform/api-spec
 
 # Set project root for Swagger handler to find spec.yaml
 ENV PROJECT_ROOT=/app

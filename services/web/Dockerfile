@@ -18,8 +18,8 @@ RUN npm ci
 COPY services/web/ .
 
 # Copy OpenAPI spec for type generation
-RUN mkdir -p ../../shared/openapi
-COPY shared/openapi/spec.yaml ../../shared/openapi/spec.yaml
+RUN mkdir -p ../../platform/api-spec
+COPY platform/api-spec/spec.yaml ../../platform/api-spec/spec.yaml
 
 # Generate API types
 RUN npm run generate:api
