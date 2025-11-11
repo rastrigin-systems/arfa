@@ -6,7 +6,7 @@ generate:
   models: true
   chi-server: true
   embedded-spec: true
-output: ../generated/api/server.gen.go
+output: ../../generated/api/server.gen.go
 
 # Additional type generation
 output-options:

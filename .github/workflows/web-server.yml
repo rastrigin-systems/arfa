@@ -7,13 +7,13 @@ on:
       - develop
     paths:
       - 'services/web/**'
-      - 'shared/openapi/**'
+      - 'platform/api-spec/**'
       - '.github/workflows/web-server.yml'
       - 'cloudbuild-web.yaml'
   pull_request:
     paths:
       - 'services/web/**'
-      - 'shared/openapi/**'
+      - 'platform/api-spec/**'
       - '.github/workflows/web-server.yml'
       - 'cloudbuild-web.yaml'
 

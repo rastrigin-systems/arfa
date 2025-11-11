@@ -9,17 +9,16 @@ RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest && \
     go install go.uber.org/mock/mockgen@latest
 
 # Copy source files needed for code generation
-COPY shared/openapi/ ./shared/openapi/
-COPY shared/schema/ ./shared/schema/
-COPY sqlc/ ./sqlc/
+COPY platform/api-spec/ ./platform/api-spec/
+COPY platform/database/ ./platform/database/
 
 # Create generated module structure
 RUN mkdir -p generated/api generated/db && \
     printf 'module github.com/sergeirastrigin/ubik-enterprise/generated\n\ngo 1.24.5\n\nrequire (\n\tgithub.com/go-chi/chi/v5 v5.0.11\n\tgithub.com/google/uuid v1.6.0\n\tgithub.com/oapi-codegen/runtime v1.1.1\n)\n' > generated/go.mod
 
 # Generate API and DB code
-RUN oapi-codegen -package api -generate types,chi-server -o generated/api/server.gen.go shared/openapi/spec.yaml && \
-    cd sqlc && sqlc generate
+RUN oapi-codegen -package api -generate types,chi-server -o generated/api/server.gen.go platform/api-spec/spec.yaml && \
+    cd platform/database/sqlc && sqlc generate
 
 # Copy workspace files
 COPY go.work go.work.sum ./
@@ -44,7 +43,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/server .
-COPY --from=builder /workspace/shared/openapi ./shared/openapi
+COPY --from=builder /workspace/platform/api-spec ./platform/api-spec
 
 # Set project root for Swagger handler to find spec.yaml
 ENV PROJECT_ROOT=/app

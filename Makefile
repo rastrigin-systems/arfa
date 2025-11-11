@@ -204,13 +204,13 @@ generate-setup:
 generate-api: generate-setup
 	@echo "🔧 Generating API code from OpenAPI spec..."
 	@mkdir -p $(GENERATED_DIR)/api
-	oapi-codegen -package api -generate types,chi-server -o $(GENERATED_DIR)/api/server.gen.go shared/openapi/spec.yaml
+	oapi-codegen -package api -generate types,chi-server -o $(GENERATED_DIR)/api/server.gen.go platform/api-spec/spec.yaml
 	@echo "✅ API code generated at $(GENERATED_DIR)/api/"
 
 generate-db: generate-setup
 	@echo "🔧 Generating database code from SQL queries..."
 	@mkdir -p $(GENERATED_DIR)/db
-	cd sqlc && sqlc generate
+	cd platform/database/sqlc && sqlc generate
 	@echo "✅ Database code generated at $(GENERATED_DIR)/db/"
 
 generate-mocks:

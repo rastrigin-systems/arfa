@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "generate:api": "openapi-typescript ../../shared/openapi/spec.yaml -o ./lib/api/schema.ts"
+    "generate:api": "openapi-typescript ../../platform/api-spec/spec.yaml -o ./lib/api/schema.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

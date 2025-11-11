@@ -8,7 +8,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-SEED_FILE="$PROJECT_ROOT/shared/schema/seeds/002_claude_config.sql"
+SEED_FILE="$PROJECT_ROOT/platform/database/seeds/002_claude_config.sql"
 
 # Database connection (use env var or default)
 DATABASE_URL="${DATABASE_URL:-postgres://ubik:ubik_dev_password@localhost:5432/ubik}"
