@@ -18,6 +18,7 @@ erDiagram
     teams ||--o{ employees : "has"
     roles ||--o{ employees : "has"
     employees ||--o{ sessions : "has"
+    employees ||--o{ password_reset_tokens : "has"
     agents ||--o{ agent_tools : "has"
     tools ||--o{ agent_tools : "has"
     agents ||--o{ agent_policies : "has"
@@ -351,12 +352,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 25
+- **Total Tables**: 26
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~204
-- **Foreign Keys**: 38+
-- **Indexes**: 87+
+- **Total Columns**: ~210
+- **Foreign Keys**: 39+
+- **Indexes**: 91+
 
 ## Legend
 
@@ -368,6 +369,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: 2025-11-10 11:36:40
+**Generated**: 2025-11-11 11:59:35
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+

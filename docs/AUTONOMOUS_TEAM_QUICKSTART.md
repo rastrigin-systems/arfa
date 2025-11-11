@@ -33,7 +33,7 @@ A reproducible system for building software with AI agents that:
 
 ```bash
 # Clone Ubik repository (or download agent configs)
-git clone https://github.com/sergei-rastrigin/ubik-enterprise.git
+git clone https://github.com/rastrigin-org/ubik-enterprise.git
 cd ubik-enterprise
 
 # Copy agent configs to your Claude Code setup
@@ -489,7 +489,7 @@ docker run -d --name team -v /path/to/project:/project ai-dev-team
 - [Development Setup Snapshot](./DEV_SETUP_SNAPSHOT.md) - Your current config
 - [Coordinator Agent Spec](./COORDINATOR_AGENT_SPEC.md) - Full architecture
 - [Product Direction Decision](./PRODUCT_DIRECTION_DECISION.md) - Strategic context
-- [Ubik Repository](https://github.com/sergei-rastrigin/ubik-enterprise) - Source code
+- [Ubik Repository](https://github.com/rastrigin-org/ubik-enterprise) - Source code
 
 ---
 

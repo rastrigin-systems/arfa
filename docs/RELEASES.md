@@ -38,8 +38,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Skills + MCP management fully implemented
 
 **Links:**
-- [Git Tag](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.4.0)
-- [Compare with v0.3.0](https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.3.0...v0.4.0)
+- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.4.0)
+- [Compare with v0.3.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.3.0...v0.4.0)
 
 ---
 
@@ -61,8 +61,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - 3 new GitHub workflow skills
 
 **Links:**
-- [Git Tag](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.3.0)
-- [Compare with v0.2.0](https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.2.0...v0.3.0)
+- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.3.0)
+- [Compare with v0.2.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.2.0...v0.3.0)
 
 **Note:** v0.3.0 tag originally pointed to monorepo migration, but was intended for Web UI milestone completion.
 
@@ -92,8 +92,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Docker SDK integration complete
 
 **Links:**
-- [Git Tag](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.2.0)
-- [Compare with v0.1.0](https://github.com/sergei-rastrigin/ubik-enterprise/compare/v0.1.0...v0.2.0)
+- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.2.0)
+- [Compare with v0.1.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.1.0...v0.2.0)
 
 ---
 
@@ -124,8 +124,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - JWT authentication with sessions
 
 **Links:**
-- [Git Tag](https://github.com/sergei-rastrigin/ubik-enterprise/releases/tag/v0.1.0)
-- [Release Notes](https://github.com/sergei-rastrigin/ubik-enterprise/blob/main/docs/MILESTONE_v0.1.md)
+- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.1.0)
+- [Release Notes](https://github.com/rastrigin-org/ubik-enterprise/blob/main/docs/MILESTONE_v0.1.md)
 
 ---
 
@@ -202,7 +202,7 @@ See [Release Manager Skill](../.claude/skills/release-manager/SKILL.md) for comp
 
 ## GitHub Releases
 
-All releases are also published as [GitHub Releases](https://github.com/sergei-rastrigin/ubik-enterprise/releases) with:
+All releases are also published as [GitHub Releases](https://github.com/rastrigin-org/ubik-enterprise/releases) with:
 - Detailed changelogs
 - Downloadable binaries (future)
 - Release notes
@@ -215,7 +215,7 @@ All releases are also published as [GitHub Releases](https://github.com/sergei-r
 - [CLAUDE.md](../CLAUDE.md) - Project overview and current status
 - [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Feature roadmap
 - [Release Manager Skill](../.claude/skills/release-manager/SKILL.md) - Release workflow
-- [GitHub Milestones](https://github.com/sergei-rastrigin/ubik-enterprise/milestones) - Track progress
+- [GitHub Milestones](https://github.com/rastrigin-org/ubik-enterprise/milestones) - Track progress
 
 ---
 

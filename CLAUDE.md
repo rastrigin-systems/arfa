@@ -149,7 +149,6 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 ├── docker-compose.yml            # Local environment
 ├── CLAUDE.md                     # This file - documentation root
 ├── README.md                     # Quick overview
-├── IMPLEMENTATION_ROADMAP.md     # Next endpoints to build
 │
 ├── services/                     # 🎯 Microservices
 │   ├── api/                      # API Server Module
@@ -183,7 +182,6 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 **New to the project?**
 1. **[docs/QUICKSTART.md](./docs/QUICKSTART.md)** - 5-minute setup guide
 2. **[docs/ERD.md](./docs/ERD.md)** - Visual database schema
-3. **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** ⭐ - Next endpoints to build
 
 ### 📖 Core Documentation
 
@@ -724,7 +722,6 @@ curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
 - **v0.5.0:** System Prompts & MCP Management
 - **v1.0.0:** Production Release
 
-**See [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for detailed plan.**
 **See [docs/WORKFLOWS.md](./docs/WORKFLOWS.md) for milestone planning.**
 
 ---
@@ -756,7 +753,6 @@ vim docs/DEVELOPMENT.md
 
 **Key Links:**
 - 🚀 [Get Started](./docs/QUICKSTART.md)
-- 🎯 [Next Tasks](./IMPLEMENTATION_ROADMAP.md)
 - 🧪 [Testing Guide](./docs/TESTING.md)
 - 🔧 [Development Guide](./docs/DEVELOPMENT.md)
 - 📊 [Database ERD](./docs/ERD.md)

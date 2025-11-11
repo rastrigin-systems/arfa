@@ -1,6 +1,6 @@
 # Issue #3 Fix: Employee Creation Integration Test
 
-**Issue:** https://github.com/sergei-rastrigin/ubik-enterprise/issues/3
+**Issue:** https://github.com/rastrigin-org/ubik-enterprise/issues/3
 
 **Status:** ✅ FIXED
 

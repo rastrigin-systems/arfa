@@ -54,7 +54,6 @@ open docs/ERD.md
 - [Database ERD](./docs/ERD.md) - Visual schema
 - [Testing Guide](./docs/TESTING.md) - How to test
 - [Development Guide](./docs/DEVELOPMENT.md) - Development workflow
-- [Next Tasks](./IMPLEMENTATION_ROADMAP.md) - What to build next
 
 ---
 
@@ -102,12 +101,9 @@ ubik-enterprise/
 
 ```bash
 make help              # Show all commands
-make db-up            # Start PostgreSQL
-make generate         # Generate all code (run after pulling changes!)
-make test             # Run tests
-make test-coverage    # View coverage report
-make clean            # Clean generated files
 ```
+
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
 **Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
@@ -118,37 +114,6 @@ make clean            # Clean generated files
 - **Language**: Go 1.24+
 - **Database**: PostgreSQL 15+ (multi-tenant with RLS)
 - **API**: OpenAPI 3.0.3, Chi router
+- **WEB**: Next.js, Tailwind CSS
 - **Code Generation**: oapi-codegen, sqlc, tbls
 - **Testing**: testcontainers-go, gomock
-
----
-
-## Current Status
-
-### Phase 1: ✅ COMPLETE
-- Database schema (20 tables + 3 views)
-- Code generation pipeline
-- Documentation (60+ files)
-
-### Phase 2: ✅ COMPLETE
-- JWT authentication system
-- 43/43 tests passing
-- ~88% code coverage
-- Login, Logout, GetMe endpoints
-- JWT middleware
-
-### Phase 3: 🎯 IN PROGRESS
-- Employee CRUD endpoints
-- Organization management
-
-**See [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for detailed plan.**
-
----
-
-## Contributing
-
-See [CLAUDE.md](./CLAUDE.md) for complete development guide.
-
----
-
-**Last Updated**: 2025-10-29

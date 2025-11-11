@@ -1,5 +1,9 @@
 # Generated code - never commit
 generated/
+services/web/lib/api/schema.ts
+
+# Credentials
+credentials/
 
 # Binary outputs
 bin/
@@ -46,4 +50,4 @@ temp/
 
 # Qdrant vector database storage
 .qdrant/
-github-actions-key.json
+credentials/github-actions-key.json

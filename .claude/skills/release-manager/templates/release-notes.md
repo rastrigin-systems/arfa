@@ -25,8 +25,8 @@ Use this template when creating GitHub Releases with `gh release create`.
 - [Improvement description]
 
 ### Bug Fixes
-- Fix [issue description] ([#123](https://github.com/sergei-rastrigin/ubik-enterprise/issues/123))
-- Fix [issue description] ([#124](https://github.com/sergei-rastrigin/ubik-enterprise/issues/124))
+- Fix [issue description] ([#123](https://github.com/rastrigin-org/ubik-enterprise/issues/123))
+- Fix [issue description] ([#124](https://github.com/rastrigin-org/ubik-enterprise/issues/124))
 
 ## 📈 Statistics
 
@@ -53,7 +53,7 @@ npm install  # if dependencies changed
 
 [Compare view link]
 
-https://github.com/sergei-rastrigin/ubik-enterprise/compare/vX.Y-1.0...vX.Y.0
+https://github.com/rastrigin-org/ubik-enterprise/compare/vX.Y-1.0...vX.Y.0
 
 ---
 
@@ -67,14 +67,14 @@ https://github.com/sergei-rastrigin/ubik-enterprise/compare/vX.Y-1.0...vX.Y.0
 
 Critical bug fixes for vX.Y.0:
 
-- **[Component]**: Fix [issue description] ([#123](https://github.com/sergei-rastrigin/ubik-enterprise/issues/123))
-- **[Component]**: Fix [issue description] ([#124](https://github.com/sergei-rastrigin/ubik-enterprise/issues/124))
+- **[Component]**: Fix [issue description] ([#123](https://github.com/rastrigin-org/ubik-enterprise/issues/123))
+- **[Component]**: Fix [issue description] ([#124](https://github.com/rastrigin-org/ubik-enterprise/issues/124))
 
 ## 📝 Changelog
 
 [Compare view link]
 
-https://github.com/sergei-rastrigin/ubik-enterprise/compare/vX.Y.0...vX.Y.Z
+https://github.com/rastrigin-org/ubik-enterprise/compare/vX.Y.0...vX.Y.Z
 
 ---
 
@@ -135,7 +135,7 @@ https://github.com/sergei-rastrigin/ubik-enterprise/compare/vX.Y.0...vX.Y.Z
 
 ## 📝 Full Changelog
 
-https://github.com/sergei-rastrigin/ubik-enterprise/compare/v(X-1).0.0...vX.0.0
+https://github.com/rastrigin-org/ubik-enterprise/compare/v(X-1).0.0...vX.0.0
 
 ---
 

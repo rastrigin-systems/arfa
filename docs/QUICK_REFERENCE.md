@@ -35,9 +35,6 @@ make db-up
 # Install tools (one-time)
 make install-tools
 
-# Install Git hooks (one-time, auto-generates code on commit)
-make install-hooks
-
 # Generate all code
 make generate
 
@@ -123,9 +120,6 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT version, dirty FROM sc
 ```bash
 # Install code generation tools (one-time)
 make install-tools
-
-# Install Git hooks (one-time, auto-generates code on commit)
-make install-hooks
 ```
 
 ---
@@ -152,9 +146,6 @@ make generate-mocks
 ---
 
 ### When to Regenerate
-
-**Automatic (with Git hooks installed):**
-- On every commit (if source files changed)
 
 **Manual:**
 ```bash
@@ -231,10 +222,10 @@ make build
 cd services/api && go build -o ../../bin/ubik-api ./cmd/server
 
 # Build CLI
-cd services/cli && go build -o ../../bin/ubik ./cmd/ubik
+cd services/cli && go build -o ../../bin/ubik ./cmd/ubik-cli
 
 # Build with specific tags
-go build -tags integration -o bin/ubik-test ./services/cli/cmd/ubik
+go build -tags integration -o bin/ubik-test ./services/cli/cmd/ubik-cli
 ```
 
 ---
@@ -242,14 +233,14 @@ go build -tags integration -o bin/ubik-test ./services/cli/cmd/ubik
 ### Run Services
 
 ```bash
-# Start dev server (once implemented)
+# Start all services with docker compose
 make dev
 
 # Run API server manually
 ./bin/ubik-api
 
 # Run CLI manually
-./bin/ubik <command>
+./bin/ubik-cli <command>
 ```
 
 ---
@@ -270,165 +261,7 @@ go clean -cache
 docker rm -f $(docker ps -aq --filter "name=postgres")
 ```
 
----
-
-## Git Workflow
-
-### Feature Development
-
-```bash
-# Create feature branch
-git checkout main && git pull
-git checkout -b feature/my-feature
-
-# Make changes, commit (Git hook auto-generates code)
-git add .
-git commit -m "feat: Add new feature (#<issue>)"
-
-# Push and create PR
-git push -u origin feature/my-feature
-gh pr create --title "feat: My Feature (#<issue>)" --body "..."
-
-# Wait for CI/CD checks
-gh pr checks --watch
-
-# Merge when ready
-gh pr merge --squash
-```
-
----
-
-### Skip Code Generation
-
-```bash
-# Skip pre-commit hook (not recommended)
-git commit --no-verify -m "your message"
-```
-
 **See:** [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) for complete workflow.
-
----
-
-## Docker Commands
-
-### Container Management
-
-```bash
-# List running containers
-docker ps
-
-# List all containers (including stopped)
-docker ps -a
-
-# View container logs
-docker logs <container-name> -f
-
-# Execute command in container
-docker exec -it <container-name> sh
-
-# Restart container
-docker restart <container-name>
-
-# Remove container
-docker rm -f <container-name>
-
-# Remove all stopped containers
-docker container prune
-```
-
----
-
-### Network Management
-
-```bash
-# List networks
-docker network ls
-
-# Inspect network
-docker network inspect ubik-network
-
-# Create network
-docker network create ubik-network
-
-# Remove network
-docker network rm ubik-network
-```
-
----
-
-### Image Management
-
-```bash
-# List images
-docker images
-
-# Pull image
-docker pull <image-name>
-
-# Remove image
-docker rmi <image-name>
-
-# Remove unused images
-docker image prune
-```
-
----
-
-## MCP Servers
-
-### Management
-
-```bash
-# List configured servers
-claude mcp list
-
-# Get details about a server
-claude mcp get <server-name>
-
-# Add a new MCP server
-claude mcp add <name> -- <command>
-
-# Remove an MCP server
-claude mcp remove <name> -s local
-```
-
----
-
-### GitHub MCP
-
-```bash
-# Verify GitHub MCP is connected
-claude mcp list | grep github
-
-# Re-add if needed
-claude mcp add github \
-  -e GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token) \
-  -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
-
-# Check container
-docker ps | grep github-mcp-server
-docker images | grep github-mcp-server
-```
-
----
-
-### PostgreSQL MCP
-
-```bash
-# Add PostgreSQL MCP for Ubik database
-claude mcp add postgres \
-  -- docker run -i --rm mcp/postgres \
-  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
-
-# Verify connection
-claude mcp list | grep postgres
-
-# Check database is running
-docker ps | grep ubik-postgres
-make db-up  # If not running
-```
-
----
 
 ## Common Tasks
 
@@ -478,53 +311,6 @@ echo 'export UBIK_API_URL=http://localhost:8080' >> ~/.zshrc
 source ~/.zshrc
 ```
 
----
-
-## Helpful Aliases
-
-Add these to your `~/.zshrc` or `~/.bashrc`:
-
-```bash
-# Ubik aliases
-alias ubik-db-up='cd ~/Projects/ubik-enterprise && make db-up'
-alias ubik-db-down='cd ~/Projects/ubik-enterprise && make db-down'
-alias ubik-db-reset='cd ~/Projects/ubik-enterprise && make db-reset'
-alias ubik-test='cd ~/Projects/ubik-enterprise && make test'
-alias ubik-gen='cd ~/Projects/ubik-enterprise && make generate'
-alias ubik-psql='docker exec -it ubik-postgres psql -U ubik -d ubik'
-
-# Docker aliases
-alias d='docker'
-alias dc='docker-compose'
-alias dps='docker ps'
-alias dlogs='docker logs -f'
-
-# Git aliases
-alias gs='git status'
-alias gp='git pull'
-alias gpo='git push origin'
-alias gco='git checkout'
-alias gcb='git checkout -b'
-```
-
----
-
-## Keyboard Shortcuts
-
-### psql
-
-| Shortcut | Action |
-|----------|--------|
-| `\q` | Quit |
-| `\l` | List databases |
-| `\dt` | List tables |
-| `\d <table>` | Describe table |
-| `\du` | List users |
-| `\?` | Help |
-| `\x` | Toggle expanded output |
-
----
-
 ### Make
 
 ```bash
@@ -538,8 +324,6 @@ make <target> VERBOSE=1
 ---
 
 ## See Also
-
-- [QUICKSTART.md](./QUICKSTART.md) - Detailed setup guide
 - [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
 - [TESTING.md](./TESTING.md) - Testing guide
 - [DATABASE.md](./DATABASE.md) - Database operations

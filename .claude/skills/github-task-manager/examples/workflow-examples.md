@@ -34,7 +34,7 @@ ISSUE_NUM=42
 
 # Add to GitHub Project
 gh project item-add 3 --owner sergei-rastrigin \
-  --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$ISSUE_NUM"
+  --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$ISSUE_NUM"
 
 # Set initial status
 ./scripts/update-project-status.sh --issue $ISSUE_NUM --status "Todo"
@@ -334,7 +334,7 @@ BUG_NUM=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
 
 # Add to project and prioritize
 gh project item-add 3 --owner sergei-rastrigin \
-  --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/$BUG_NUM"
+  --url "https://github.com/rastrigin-org/ubik-enterprise/issues/$BUG_NUM"
 
 ./scripts/update-project-status.sh --issue $BUG_NUM --status "Todo"
 

@@ -571,7 +571,7 @@ gh run view $RUN_ID --log
 gh project item-list 3 --owner sergei-rastrigin | grep "#47"
 
 # If not found, add to project
-gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/sergei-rastrigin/ubik-enterprise/issues/47"
+gh project item-add 3 --owner sergei-rastrigin --url "https://github.com/rastrigin-org/ubik-enterprise/issues/47"
 ```
 
 ### Issue: Merge conflicts
