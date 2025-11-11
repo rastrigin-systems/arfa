@@ -331,7 +331,7 @@ make generate
 ### Code Generation Pipeline
 
 ```
-schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
+shared/schema/schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
                         ↓
                        sqlc → generated/db/*.go
 
@@ -341,7 +341,7 @@ openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
 
 **When to regenerate:**
 - **CI/CD (automatic):** On every build/test in GitHub Actions
-- **Local (manual):** After changing schema.sql, openapi/spec.yaml, or SQL queries
+- **Local (manual):** After changing shared/schema/schema.sql, openapi/spec.yaml, or SQL queries
 - **After pull:** When pulling changes that modify source files
 
 ```bash
@@ -369,22 +369,30 @@ npm run generate:api    # After changing openapi/spec.yaml
 
 ### 1. Code Generation
 
-**Never edit files in `generated/`** - they are completely regenerated!
+**Never edit generated files** - they are completely regenerated!
 
-**Manual generation workflow:**
+**After changing database schema:**
 ```bash
-# After changing source files (schema, API spec, SQL queries)
+# 1. Edit the schema
+vim shared/schema/schema.sql
+
+# 2. Regenerate EVERYTHING (code + docs)
 make generate
 
-# Then commit your source changes (NOT generated/ directory)
-git add schema.sql
-git commit -m "feat: Update schema"
+# 3. Commit both schema and docs
+git add shared/schema/schema.sql docs/
+git commit -m "feat: Add new table"
 ```
 
-**CI/CD handles generation:**
-- All GitHub Actions workflows regenerate code automatically
-- `generated/` directory is NOT committed to git
-- This ensures consistency and catches errors in CI
+**What gets committed:**
+- ✅ Source files (`shared/schema/schema.sql`, `openapi/spec.yaml`, SQL queries)
+- ✅ Documentation (`docs/` - ERD, README, per-table docs)
+- ❌ Generated code (`generated/` - NOT committed)
+
+**CI/CD enforces this:**
+- Regenerates Go code automatically (not committed)
+- Regenerates ERD docs and FAILS if they're stale
+- This catches when developers forget to run `make generate-erd`
 
 ---
 

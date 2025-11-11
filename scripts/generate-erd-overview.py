@@ -13,7 +13,6 @@ Output: docs/ERD.md (Mermaid ERD diagram)
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
 
 
 def load_schema(schema_path: Path) -> dict:
@@ -327,7 +326,6 @@ All tables have appropriate indexes on:
 
 ---
 
-**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 **Schema Version**: 1.0.0
 **Database**: PostgreSQL 15+
 """

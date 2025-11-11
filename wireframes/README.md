@@ -4,7 +4,7 @@ ASCII wireframes for the Ubik Enterprise AI Agent Management Platform web interf
 
 ## Overview
 
-These wireframes map directly to the API endpoints defined in `openapi/spec.yaml` and the database schema in `schema.sql`. Each page shows:
+These wireframes map directly to the API endpoints defined in `openapi/spec.yaml` and the database schema in `shared/schema/schema.sql`. Each page shows:
 - Page layout and navigation
 - UI elements and interactions
 - Related API endpoints
@@ -166,6 +166,6 @@ Dashboard
 ## Related Documentation
 
 - **API Spec**: `../openapi/spec.yaml`
-- **Database Schema**: `../schema.sql`
+- **Database Schema**: `../shared/schema/schema.sql`
 - **ERD Diagram**: `../docs/ERD.md`
 - **Project Documentation**: `../CLAUDE.md`

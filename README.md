@@ -71,7 +71,7 @@ OpenAPI 3.0.3 Spec
 ```
 
 **Two sources of truth:**
-1. `schema.sql` - Database structure
+1. `shared/schema/schema.sql` - Database structure
 2. `openapi/spec.yaml` - API contract
 
 ---
@@ -81,7 +81,7 @@ OpenAPI 3.0.3 Spec
 ```
 ubik-enterprise/
 ├── CLAUDE.md              # ⭐ Start here
-├── schema.sql             # Database schema
+├── shared/schema/schema.sql             # Database schema
 ├── openapi/spec.yaml      # API contract
 ├── docs/                  # All documentation
 ├── generated/             # ⚠️ Auto-generated
@@ -103,9 +103,9 @@ ubik-enterprise/
 make help              # Show all commands
 ```
 
-**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `shared/schema/schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
-**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `shared/schema/schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
 ---
 

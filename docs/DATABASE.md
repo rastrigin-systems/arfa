@@ -107,7 +107,7 @@ docker exec -it ubik-postgres psql -U ubik -d ubik
 docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM employees"
 
 # Execute SQL file
-docker exec -i ubik-postgres psql -U ubik -d ubik < schema.sql
+docker exec -i ubik-postgres psql -U ubik -d ubik < shared/schema/schema.sql
 ```
 
 ---

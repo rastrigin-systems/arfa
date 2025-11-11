@@ -37,6 +37,7 @@ coverage.html
 # Documentation artifacts (keep source, ignore generated HTML)
 docs/*.html
 docs/schema/
+docs/schema.json
 
 # Temporary files
 tmp/
