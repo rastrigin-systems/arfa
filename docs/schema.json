@@ -743,6 +743,114 @@
       ]
     },
     {
+      "name": "public.password_reset_tokens",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "uuid_generate_v4()"
+        },
+        {
+          "name": "employee_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "token",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "(now() + '01:00:00'::interval)"
+        },
+        {
+          "name": "used_at",
+          "type": "timestamp without time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "password_reset_tokens_pkey",
+          "def": "CREATE UNIQUE INDEX password_reset_tokens_pkey ON public.password_reset_tokens USING btree (id)",
+          "table": "public.password_reset_tokens",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "password_reset_tokens_token_key",
+          "def": "CREATE UNIQUE INDEX password_reset_tokens_token_key ON public.password_reset_tokens USING btree (token)",
+          "table": "public.password_reset_tokens",
+          "columns": [
+            "token"
+          ]
+        },
+        {
+          "name": "idx_password_reset_tokens_token",
+          "def": "CREATE INDEX idx_password_reset_tokens_token ON public.password_reset_tokens USING btree (token)",
+          "table": "public.password_reset_tokens",
+          "columns": [
+            "token"
+          ]
+        },
+        {
+          "name": "idx_password_reset_tokens_employee_id",
+          "def": "CREATE INDEX idx_password_reset_tokens_employee_id ON public.password_reset_tokens USING btree (employee_id)",
+          "table": "public.password_reset_tokens",
+          "columns": [
+            "employee_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "password_reset_tokens_employee_id_fkey",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
+          "table": "public.password_reset_tokens",
+          "referenced_table": "employees",
+          "columns": [
+            "employee_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "password_reset_tokens_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.password_reset_tokens",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "password_reset_tokens_token_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE (token)",
+          "table": "public.password_reset_tokens",
+          "referenced_table": "",
+          "columns": [
+            "token"
+          ]
+        }
+      ]
+    },
+    {
       "name": "public.agents",
       "type": "BASE TABLE",
       "columns": [
@@ -3434,6 +3542,19 @@
     },
     {
       "table": "public.sessions",
+      "columns": [
+        "employee_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.employees",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "public.password_reset_tokens",
       "columns": [
         "employee_id"
       ],

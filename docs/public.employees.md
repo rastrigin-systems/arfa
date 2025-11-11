@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.password_reset_tokens](public.password_reset_tokens.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | team_id | uuid |  | true |  | [public.teams](public.teams.md) |  |
 | role_id | uuid |  | false |  | [public.roles](public.roles.md) |  |
@@ -55,6 +55,7 @@
 erDiagram
 
 "public.sessions" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.password_reset_tokens" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employee_agent_configs" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employee_policies" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employee_mcp_configs" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
@@ -91,6 +92,14 @@ erDiagram
   varchar_45_ ip_address
   text user_agent
   timestamp_without_time_zone expires_at
+  timestamp_without_time_zone created_at
+}
+"public.password_reset_tokens" {
+  uuid id
+  uuid employee_id FK
+  varchar_64_ token
+  timestamp_without_time_zone expires_at
+  timestamp_without_time_zone used_at
   timestamp_without_time_zone created_at
 }
 "public.employee_agent_configs" {

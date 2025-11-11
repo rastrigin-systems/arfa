@@ -1,5 +1,6 @@
 # Generated code - never commit
 generated/
+services/web/lib/api/schema.ts
 
 # Binary outputs
 bin/

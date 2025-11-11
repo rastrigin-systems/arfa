@@ -10,6 +10,7 @@
 | [public.roles](public.roles.md) | 6 |  | BASE TABLE |
 | [public.employees](public.employees.md) | 14 |  | BASE TABLE |
 | [public.sessions](public.sessions.md) | 7 |  | BASE TABLE |
+| [public.password_reset_tokens](public.password_reset_tokens.md) | 6 |  | BASE TABLE |
 | [public.agents](public.agents.md) | 12 |  | BASE TABLE |
 | [public.tools](public.tools.md) | 8 |  | BASE TABLE |
 | [public.policies](public.policies.md) | 7 |  | BASE TABLE |
@@ -100,6 +101,7 @@ erDiagram
 "public.employees" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
 "public.employees" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
 "public.sessions" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.password_reset_tokens" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.agent_tools" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
 "public.agent_tools" }o--|| "public.tools" : "FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE"
 "public.agent_policies" }o--|| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE"
@@ -196,6 +198,14 @@ erDiagram
   varchar_45_ ip_address
   text user_agent
   timestamp_without_time_zone expires_at
+  timestamp_without_time_zone created_at
+}
+"public.password_reset_tokens" {
+  uuid id
+  uuid employee_id FK
+  varchar_64_ token
+  timestamp_without_time_zone expires_at
+  timestamp_without_time_zone used_at
   timestamp_without_time_zone created_at
 }
 "public.agents" {

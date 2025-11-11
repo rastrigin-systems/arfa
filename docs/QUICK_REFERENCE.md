@@ -35,9 +35,6 @@ make db-up
 # Install tools (one-time)
 make install-tools
 
-# Install Git hooks (one-time, auto-generates code on commit)
-make install-hooks
-
 # Generate all code
 make generate
 
@@ -123,9 +120,6 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT version, dirty FROM sc
 ```bash
 # Install code generation tools (one-time)
 make install-tools
-
-# Install Git hooks (one-time, auto-generates code on commit)
-make install-hooks
 ```
 
 ---
@@ -152,9 +146,6 @@ make generate-mocks
 ---
 
 ### When to Regenerate
-
-**Automatic (with Git hooks installed):**
-- On every commit (if source files changed)
 
 **Manual:**
 ```bash
