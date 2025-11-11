@@ -82,14 +82,18 @@ These are maintained separately because:
 ### Generation Commands
 
 ```bash
-# Generate everything
+# Backend (Go) - Generate everything
 make generate
 
-# Generate specific parts
+# Backend (Go) - Generate specific parts
 make generate-erd        # Database documentation
 make generate-api        # API types + router
 make generate-db         # Database code
 make generate-mocks      # Test mocks
+
+# Frontend (Web) - Generate TypeScript types
+cd services/web
+npm run generate:api     # Generate from OpenAPI spec
 ```
 
 ### When to Regenerate
@@ -101,8 +105,10 @@ make generate-mocks      # Test mocks
 - Pulling changes that modify any of the above
 
 **Important Notes:**
-- ⚠️ Never edit files in `generated/` directory - they are completely overwritten!
-- ✅ The `generated/` directory is NOT committed to git
+- ⚠️ Never edit generated files - they are completely overwritten!
+  - `generated/` directory (Go code)
+  - `services/web/lib/api/schema.ts` (TypeScript types)
+- ✅ Generated code is NOT committed to git
 - ✅ CI/CD automatically regenerates code on every build
 - ✅ This ensures consistency between local and CI environments
 

@@ -336,6 +336,7 @@ schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
                        sqlc → generated/db/*.go
 
 openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
+                  → openapi-typescript → services/web/lib/api/schema.ts
 ```
 
 **When to regenerate:**
@@ -344,16 +345,21 @@ openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
 - **After pull:** When pulling changes that modify source files
 
 ```bash
-# Regenerate everything
-make generate
+# Backend (Go)
+make generate           # Generate everything
+make generate-api       # After changing openapi/spec.yaml
+make generate-db        # After changing SQL queries
+make generate-erd       # After changing schema.sql
 
-# Or specific parts
-make generate-api  # After changing openapi/spec.yaml
-make generate-db   # After changing SQL queries
-make generate-erd  # After changing schema.sql
+# Frontend (Web)
+cd services/web
+npm run generate:api    # After changing openapi/spec.yaml
 ```
 
-**Note:** The `generated/` directory is NOT committed to git. CI/CD handles generation automatically.
+**Note:** Generated code is NOT committed to git:
+- `generated/` directory (Go code)
+- `services/web/lib/api/schema.ts` (TypeScript types)
+- CI/CD handles generation automatically
 
 **See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed development guide.**
 
