@@ -127,6 +127,13 @@ jobs:
       - name: Setup Go code generation tools (with cache)
         uses: ./.github/actions/setup-go-tools
 
+      - name: Install tbls for ERD generation
+        run: |
+          TBLS_VERSION=$(curl -s https://api.github.com/repos/k1LoW/tbls/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          curl -sL "https://github.com/k1LoW/tbls/releases/download/${TBLS_VERSION}/tbls_${TBLS_VERSION}_linux_amd64.tar.gz" | tar xz
+          sudo mv tbls /usr/local/bin/
+          tbls version
+
       - name: Generate ERD documentation
         env:
           DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
