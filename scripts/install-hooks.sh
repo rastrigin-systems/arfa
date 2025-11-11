@@ -1,6 +1,9 @@
 #!/bin/bash
 #
-# Install Git hooks for Ubik Enterprise
+# Git Hooks Information for Ubik Enterprise
+#
+# NOTE: As of v0.3.0, we no longer use git pre-commit hooks for code generation.
+# This script is kept for backward compatibility but does nothing.
 #
 # Usage: ./scripts/install-hooks.sh
 #
@@ -13,41 +16,26 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}📦 Installing Git hooks...${NC}"
-
-# Check if we're in a Git repository
-if [ ! -d ".git" ]; then
-    echo -e "${RED}❌ Not a Git repository${NC}"
-    echo "Please run this script from the repository root"
-    exit 1
-fi
-
-# Create hooks directory if it doesn't exist
-mkdir -p .git/hooks
-
-# Install pre-commit hook
-if [ -f ".git/hooks/pre-commit" ]; then
-    echo -e "${YELLOW}⚠️  Backing up existing pre-commit hook...${NC}"
-    mv .git/hooks/pre-commit .git/hooks/pre-commit.backup
-fi
-
-cp scripts/pre-commit .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-
-echo -e "${GREEN}✓ Pre-commit hook installed${NC}"
-
-# Show what the hook does
+echo -e "${BLUE}ℹ️  Git Hooks Information${NC}"
 echo ""
-echo -e "${BLUE}📝 Pre-commit hook features:${NC}"
-echo "  - Automatically regenerates ERD docs when source models change"
-echo "  - Checks: schema.sql, openapi/spec.yaml, sqlc/queries/*.sql"
-echo "  - Generates: docs/ERD.md, docs/README.md, docs/schema.json, etc."
-echo "  - Adds docs/ to your commit automatically"
+echo -e "${GREEN}✓ No git hooks to install!${NC}"
 echo ""
-echo -e "${BLUE}ℹ️  Note:${NC}"
-echo "  - Go code (generated/) is NOT committed - run 'make generate' locally"
+echo -e "${BLUE}📝 Code Generation Workflow:${NC}"
+echo "  - Code generation is NO LONGER automatic on commit"
+echo "  - Run 'make generate' manually when you change:"
+echo "    • schema.sql (database schema)"
+echo "    • openapi/spec.yaml (API specification)"
+echo "    • sqlc/queries/*.sql (SQL queries)"
 echo ""
-echo -e "${BLUE}💡 To skip the hook (not recommended):${NC}"
-echo "  git commit --no-verify"
+echo -e "${BLUE}🤖 CI/CD Handles Generation:${NC}"
+echo "  - All CI/CD pipelines regenerate code automatically"
+echo "  - This ensures consistency and catches errors early"
+echo "  - generated/ directory is NOT committed to git"
 echo ""
-echo -e "${GREEN}✅ Git hooks installed successfully!${NC}"
+echo -e "${BLUE}💡 When to run 'make generate':${NC}"
+echo "  - After pulling changes to source files"
+echo "  - Before building or running tests locally"
+echo "  - When you modify schema, API spec, or SQL queries"
+echo ""
+echo -e "${BLUE}📚 See docs/DEVELOPMENT.md for more details${NC}"
+echo ""
