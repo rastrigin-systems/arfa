@@ -323,11 +323,11 @@ make clean              # Clean generated files
 ### First-Time Setup
 
 ```bash
-# Install code generation tools (one-time)
+# Install code generation tools (one-time, if you plan to modify schema/API)
 make install-tools
 
-# Install Git hooks for auto code generation (one-time)
-make install-hooks
+# Generate code before building/testing
+make generate
 ```
 
 ### Code Generation Pipeline
@@ -341,8 +341,9 @@ openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
 ```
 
 **When to regenerate:**
-- **Automatic (with Git hooks):** On every commit
-- **Manual:** After changing schema.sql, openapi/spec.yaml, or SQL queries
+- **CI/CD (automatic):** On every build/test in GitHub Actions
+- **Local (manual):** After changing schema.sql, openapi/spec.yaml, or SQL queries
+- **After pull:** When pulling changes that modify source files
 
 ```bash
 # Regenerate everything
@@ -354,6 +355,8 @@ make generate-db   # After changing SQL queries
 make generate-erd  # After changing schema.sql
 ```
 
+**Note:** The `generated/` directory is NOT committed to git. CI/CD handles generation automatically.
+
 **See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed development guide.**
 
 ---
@@ -364,15 +367,20 @@ make generate-erd  # After changing schema.sql
 
 **Never edit files in `generated/`** - they are completely regenerated!
 
-**Git hooks (recommended):**
+**Manual generation workflow:**
 ```bash
-# Install hooks (one-time)
-make install-hooks
+# After changing source files (schema, API spec, SQL queries)
+make generate
 
-# Now code is auto-generated on commit!
+# Then commit your source changes (NOT generated/ directory)
+git add schema.sql
 git commit -m "feat: Update schema"
-# 🪝 Pre-commit hook automatically runs `make generate`
 ```
+
+**CI/CD handles generation:**
+- All GitHub Actions workflows regenerate code automatically
+- `generated/` directory is NOT committed to git
+- This ensures consistency and catches errors in CI
 
 ---
 

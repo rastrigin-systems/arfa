@@ -66,7 +66,9 @@ Your code (internal/) → Uses generated types
 
 ## Code Generation
 
-### Automatic Code Generation
+### Manual Code Generation (No Git Hooks)
+
+**As of v0.3.0, code generation is NO LONGER automatic on commit.**
 
 **Two sources of truth:**
 1. **schema.sql** - Database structure
@@ -92,12 +94,27 @@ make generate-mocks      # Test mocks
 
 ### When to Regenerate
 
-**Always regenerate after:**
-- Changing `schema.sql` → `make db-reset && make generate`
-- Changing `openapi/spec.yaml` → `make generate-api`
-- Changing SQL queries in `sqlc/queries/` → `make generate-db && make generate-mocks`
+**Run `make generate` after:**
+- Changing `schema.sql` (then run `make db-reset`)
+- Changing `openapi/spec.yaml`
+- Changing SQL queries in `sqlc/queries/`
+- Pulling changes that modify any of the above
 
-**Critical**: Never edit files in `generated/` directory - they are completely overwritten!
+**Important Notes:**
+- ⚠️ Never edit files in `generated/` directory - they are completely overwritten!
+- ✅ The `generated/` directory is NOT committed to git
+- ✅ CI/CD automatically regenerates code on every build
+- ✅ This ensures consistency between local and CI environments
+
+### Why No Git Hooks?
+
+**Benefits of manual generation:**
+- ✅ Faster commits (no 5-10 second hook delay)
+- ✅ Simpler setup (no tool installation required immediately)
+- ✅ Cleaner git history (no generated code in commits)
+- ✅ Fewer merge conflicts (generated code doesn't conflict)
+- ✅ Easier PR reviews (only source changes visible)
+- ✅ CI reliability (code always freshly generated)
 
 ---
 

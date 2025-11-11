@@ -6,7 +6,7 @@ help:
 	@echo ""
 	@echo "Setup Commands:"
 	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc, mockgen)"
-	@echo "  make install-hooks    Install Git hooks (auto-regenerate ERD docs on commit)"
+	@echo "  make install-hooks    Show code generation workflow info (no hooks installed)"
 	@echo "  make db-up           Start PostgreSQL with Docker Compose"
 	@echo "  make db-down         Stop PostgreSQL"
 	@echo "  make db-reset        Reset database (drop and recreate)"
@@ -63,9 +63,9 @@ install-tools:
 	@which tbls
 	@which mockgen
 
-# Install Git hooks
+# Show code generation workflow info (no hooks)
 install-hooks:
-	@echo "🪝 Installing Git hooks..."
+	@echo "ℹ️  Code Generation Workflow Information..."
 	@chmod +x scripts/install-hooks.sh
 	@./scripts/install-hooks.sh
 

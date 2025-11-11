@@ -240,10 +240,13 @@ make db-down            # Stop PostgreSQL
 make db-reset           # Reset database (⚠️ deletes all data)
 
 # Code Generation
-make generate           # Generate everything
+make generate           # Generate everything (run after pulling changes!)
 make generate-erd       # Generate ERD only
 make generate-api       # Generate API code only
 make generate-db        # Generate DB code only
+
+# Note: generated/ is NOT committed to git
+# Run 'make generate' after pulling changes to source files
 
 # Development
 make dev                # Start dev server with live reload (once implemented)

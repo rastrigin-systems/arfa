@@ -103,11 +103,13 @@ ubik-enterprise/
 ```bash
 make help              # Show all commands
 make db-up            # Start PostgreSQL
-make generate         # Generate all code
+make generate         # Generate all code (run after pulling changes!)
 make test             # Run tests
 make test-coverage    # View coverage report
 make clean            # Clean generated files
 ```
+
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
 
 ---
 
