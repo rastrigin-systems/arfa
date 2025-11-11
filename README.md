@@ -101,11 +101,6 @@ ubik-enterprise/
 
 ```bash
 make help              # Show all commands
-make db-up            # Start PostgreSQL
-make generate         # Generate all code (run after pulling changes!)
-make test             # Run tests
-make test-coverage    # View coverage report
-make clean            # Clean generated files
 ```
 
 **Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `schema.sql`, `openapi/spec.yaml`, or SQL queries.
@@ -117,5 +112,6 @@ make clean            # Clean generated files
 - **Language**: Go 1.24+
 - **Database**: PostgreSQL 15+ (multi-tenant with RLS)
 - **API**: OpenAPI 3.0.3, Chi router
+- **WEB**: Next.js, Tailwind CSS
 - **Code Generation**: oapi-codegen, sqlc, tbls
 - **Testing**: testcontainers-go, gomock
