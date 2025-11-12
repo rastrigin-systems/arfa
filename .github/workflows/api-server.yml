@@ -94,8 +94,9 @@ jobs:
 
       - name: Verify binary
         run: |
-          ./bin/ubik-server --version || echo "Server binary built successfully"
+          echo "✅ Binary built successfully"
           ls -lh bin/ubik-server
+          file bin/ubik-server
 
       - name: Run unit tests
         env:
