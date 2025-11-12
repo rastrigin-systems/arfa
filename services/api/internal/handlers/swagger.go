@@ -27,7 +27,7 @@ func SwaggerHandler() http.HandlerFunc {
 // SpecHandler serves the OpenAPI spec file
 func SpecHandler() http.HandlerFunc {
 	projectRoot := getProjectRoot()
-	specPath := filepath.Join(projectRoot, "shared", "openapi", "spec.yaml")
+	specPath := filepath.Join(projectRoot, "platform", "api-spec", "spec.yaml")
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Read the spec file
