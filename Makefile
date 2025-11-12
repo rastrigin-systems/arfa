@@ -247,7 +247,7 @@ check-drift:
 test:
 	@echo "🧪 Running all tests with coverage..."
 	@echo "Testing API server..."
-	cd services/api && go test -v -race -coverprofile=../../coverage-api.out ./...
+	cd services/api && $(MAKE) test
 	@echo ""
 	@echo "Testing CLI client..."
 	cd services/cli && go test -v -race -coverprofile=../../coverage-cli.out ./...
@@ -262,11 +262,11 @@ test:
 
 test-unit:
 	@echo "⚡ Running API unit tests (fast)..."
-	cd services/api && go test -v -short -race ./internal/...
+	cd services/api && $(MAKE) test-unit
 
 test-integration:
 	@echo "🔄 Running API integration tests (requires Docker)..."
-	cd services/api && go test -v -run Integration ./tests/integration/...
+	cd services/api && $(MAKE) test-integration
 
 test-cli:
 	@echo "🧪 Running CLI tests..."
@@ -343,8 +343,7 @@ build: build-server build-cli build-web
 
 build-server: generate-api generate-db
 	@echo "🔨 Building server binary..."
-	@mkdir -p bin
-	cd services/api && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-server cmd/server/main.go
+	cd services/api && $(MAKE) build
 	@echo "✅ Server built: bin/ubik-server"
 
 build-cli: generate-api generate-db
@@ -413,11 +412,18 @@ format:
 	gofmt -s -w .
 	goimports -w .
 
-# Docker build
+# Docker targets (delegate to service)
 docker-build:
 	@echo "🐳 Building Docker image..."
-	docker build -t ubik-api:latest .
-	@echo "✅ Docker image built: ubik-api:latest"
+	cd services/api && $(MAKE) docker-build
+
+docker-test:
+	@echo "🧪 Testing Docker image..."
+	cd services/api && $(MAKE) docker-test
+
+docker-run:
+	@echo "🚀 Running Docker container..."
+	cd services/api && $(MAKE) docker-run
 
 # Initialize new project
 init: install-tools db-up
