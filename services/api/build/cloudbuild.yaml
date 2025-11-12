@@ -8,7 +8,7 @@ steps:
       - '-t'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/api:$BUILD_ID'
       - '-f'
-      - 'services/api/Dockerfile.gcp'
+      - 'services/api/build/Dockerfile.gcp'
       - '.'
     timeout: 600s
 
