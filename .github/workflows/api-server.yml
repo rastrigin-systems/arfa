@@ -13,7 +13,7 @@ on:
       - 'platform/api-spec/**'
       - 'go.work'
       - '.github/workflows/api-server.yml'
-      - 'cloudbuild-api.yaml'
+      - 'services/api/build/cloudbuild.yaml'
   pull_request:
     paths:
       - 'services/api/**'
@@ -23,7 +23,7 @@ on:
       - 'platform/api-spec/**'
       - 'go.work'
       - '.github/workflows/api-server.yml'
-      - 'cloudbuild-api.yaml'
+      - 'services/api/build/cloudbuild.yaml'
 
 # Ensure only one deployment runs at a time for API service
 # Deployments queue and run in merge order to prevent race conditions
@@ -222,7 +222,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           BUILD_ID=$(gcloud builds submit \
-            --config=cloudbuild-api.yaml \
+            --config=services/api/build/cloudbuild.yaml \
             --project=ubik-enterprise-prod \
             --async \
             --format='value(id)' \
