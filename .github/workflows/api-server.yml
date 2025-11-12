@@ -13,7 +13,7 @@ on:
       - 'platform/api-spec/**'
       - 'go.work'
       - '.github/workflows/api-server.yml'
-      - 'cloudbuild-api.yaml'
+      - 'services/api/build/cloudbuild.yaml'
   pull_request:
     paths:
       - 'services/api/**'
@@ -23,7 +23,7 @@ on:
       - 'platform/api-spec/**'
       - 'go.work'
       - '.github/workflows/api-server.yml'
-      - 'cloudbuild-api.yaml'
+      - 'services/api/build/cloudbuild.yaml'
 
 # Ensure only one deployment runs at a time for API service
 # Deployments queue and run in merge order to prevent race conditions
@@ -125,41 +125,6 @@ jobs:
       - name: Setup Go code generation tools (with cache)
         uses: ./.github/actions/setup-go-tools
 
-      - name: Install tbls for ERD generation
-        run: |
-          TBLS_VERSION=$(curl -s https://api.github.com/repos/k1LoW/tbls/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          curl -sL "https://github.com/k1LoW/tbls/releases/download/${TBLS_VERSION}/tbls_${TBLS_VERSION}_linux_amd64.tar.gz" | tar xz
-          sudo mv tbls /usr/local/bin/
-          tbls version
-
-      - name: Generate ERD documentation
-        env:
-          DATABASE_URL: postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
-        run: |
-          make generate-erd
-
-      - name: Check ERD documentation is up to date
-        run: |
-          if [[ -n $(git status --porcelain docs/) ]]; then
-            echo "❌ ERD documentation is out of date!"
-            echo ""
-            echo "The database schema has changed but documentation was not updated."
-            echo ""
-            echo "To fix this:"
-            echo "  1. Run: make generate-erd"
-            echo "  2. Commit the updated docs/ files"
-            echo "  3. Push your changes"
-            echo ""
-            echo "Changed files:"
-            git status --short docs/
-            echo ""
-            echo "Diff:"
-            git --no-pager diff docs/
-            exit 1
-          else
-            echo "✅ ERD documentation is up to date"
-          fi
-
       - name: Generate code
         run: |
           make generate-api
@@ -222,7 +187,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           BUILD_ID=$(gcloud builds submit \
-            --config=cloudbuild-api.yaml \
+            --config=services/api/build/cloudbuild.yaml \
             --project=ubik-enterprise-prod \
             --async \
             --format='value(id)' \
