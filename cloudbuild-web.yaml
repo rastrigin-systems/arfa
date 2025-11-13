@@ -10,7 +10,7 @@ steps:
       - '--target'
       - 'production'
       - '-f'
-      - 'services/web/Dockerfile'
+      - 'services/web/build/Dockerfile'
       - '.'
     timeout: 900s
 

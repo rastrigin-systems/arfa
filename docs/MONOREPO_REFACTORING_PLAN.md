@@ -130,7 +130,7 @@ ubik-enterprise/                      # Monorepo root
   - `cloudbuild.yaml` at root (should be per-service)
   - `docker-compose.yml` at root (orchestration OK, but references services)
   - `services/api/Dockerfile.gcp` only (no local dev Dockerfile)
-  - `services/web/Dockerfile` only
+  - `services/web/build/Dockerfile` only
 - Tests not fully co-located with services
 - Service-specific scripts not co-located
 
