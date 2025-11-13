@@ -270,7 +270,7 @@ test-integration:
 
 test-cli:
 	@echo "🧪 Running CLI tests..."
-	cd services/cli && go test -v -race ./internal/...
+	cd services/cli && $(MAKE) test
 
 test-web:
 	@echo "🧪 Running Next.js tests..."
@@ -346,11 +346,9 @@ build-server: generate-api generate-db
 	cd services/api && $(MAKE) build
 	@echo "✅ Server built: bin/ubik-server"
 
-build-cli: generate-api generate-db
+build-cli:
 	@echo "🔨 Building CLI binary..."
-	@mkdir -p bin
-	cd services/cli && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-cli cmd/ubik/main.go
-	@echo "✅ CLI built: bin/ubik-cli"
+	cd services/cli && $(MAKE) build
 	@echo ""
 	@echo "Try it out:"
 	@echo "  ./bin/ubik-cli --help"
@@ -367,30 +365,13 @@ build-web:
 	@echo "To run production build:"
 	@echo "  cd services/web && npm start"
 
-install-cli: build-cli
-	@echo "📦 Installing ubik CLI to /usr/local/bin..."
-	@if [ -w /usr/local/bin ]; then \
-		cp bin/ubik-cli /usr/local/bin/ubik; \
-		chmod +x /usr/local/bin/ubik; \
-	else \
-		sudo cp bin/ubik-cli /usr/local/bin/ubik; \
-		sudo chmod +x /usr/local/bin/ubik; \
-	fi
-	@echo "✅ Installation complete!"
-	@echo ""
-	@echo "Try it out:"
-	@echo "  ubik --version"
-	@echo "  ubik --help"
-	@echo "  ubik login"
+install-cli:
+	@echo "📦 Installing ubik CLI..."
+	cd services/cli && $(MAKE) install
 
 uninstall-cli:
 	@echo "🗑️  Uninstalling ubik CLI..."
-	@if [ -w /usr/local/bin ]; then \
-		rm -f /usr/local/bin/ubik; \
-	else \
-		sudo rm -f /usr/local/bin/ubik; \
-	fi
-	@echo "✅ Uninstalled successfully"
+	cd services/cli && $(MAKE) uninstall
 
 # Cleanup
 clean:
