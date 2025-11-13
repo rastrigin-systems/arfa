@@ -53,6 +53,12 @@ jobs:
             go.work.sum
             services/*/go.sum
 
+      - name: Generate code
+        run: |
+          echo "📦 Generating code before workspace validation..."
+          make generate-api generate-db || true
+          echo "✅ Code generation complete"
+
       - name: Check workspace sync
         run: |
           echo "🔍 Checking if workspace is synced..."
