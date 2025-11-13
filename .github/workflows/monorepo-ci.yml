@@ -211,6 +211,9 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      security-events: write  # Required to upload SARIF results
+      contents: read          # Required to checkout code
 
     steps:
       - name: Checkout code
