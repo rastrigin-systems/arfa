@@ -255,11 +255,11 @@ jobs:
           required_docs=(
             "README.md"
             "CLAUDE.md"
-            "docs/QUICKSTART.md"
             "docs/ERD.md"
             "docs/DEVELOPMENT.md"
             "docs/TESTING.md"
             "docs/DEV_WORKFLOW.md"
+            "docs/DATABASE.md"
           )
 
           missing=0
