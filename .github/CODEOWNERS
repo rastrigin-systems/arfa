@@ -1,0 +1,114 @@
+# Code Ownership for Ubik Enterprise
+#
+# This file defines code ownership for the monorepo.
+# Review requests are automatically sent to code owners when PRs touch their areas.
+#
+# Syntax: <path-pattern> <@owner> <@owner> ...
+# The last matching pattern takes precedence.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# =============================================================================
+# Default Owners
+# =============================================================================
+
+# Default owners for everything in the repo
+* @rastrigin-org/ubik-maintainers
+
+# =============================================================================
+# Services
+# =============================================================================
+
+# API Service (backend, database, handlers, middleware)
+/services/api/ @rastrigin-org/api-team
+/services/api/cmd/ @rastrigin-org/api-team
+/services/api/internal/ @rastrigin-org/api-team
+
+# CLI Service (client application, Docker integration)
+/services/cli/ @rastrigin-org/cli-team
+/services/cli/cmd/ @rastrigin-org/cli-team
+/services/cli/internal/ @rastrigin-org/cli-team
+
+# Web Service (Next.js frontend)
+/services/web/ @rastrigin-org/web-team
+/services/web/app/ @rastrigin-org/web-team
+/services/web/components/ @rastrigin-org/web-team
+/services/web/lib/ @rastrigin-org/web-team
+
+# =============================================================================
+# Platform & Shared Code
+# =============================================================================
+
+# Shared types and interfaces
+/pkg/ @rastrigin-org/platform-team
+
+# Generated code (API, DB, mocks)
+/generated/ @rastrigin-org/platform-team
+
+# Platform resources
+/platform/ @rastrigin-org/platform-team
+/platform/api-spec/ @rastrigin-org/api-team @rastrigin-org/platform-team
+/platform/database/ @rastrigin-org/api-team @rastrigin-org/platform-team
+/platform/docker-images/ @rastrigin-org/devops-team @rastrigin-org/platform-team
+
+# =============================================================================
+# Infrastructure & CI/CD
+# =============================================================================
+
+# GitHub Actions workflows
+/.github/workflows/ @rastrigin-org/devops-team
+
+# Docker and deployment
+/docker/ @rastrigin-org/devops-team
+/docker-compose.yml @rastrigin-org/devops-team
+cloudbuild*.yaml @rastrigin-org/devops-team
+Dockerfile* @rastrigin-org/devops-team
+
+# Build and automation scripts
+/scripts/ @rastrigin-org/platform-team @rastrigin-org/devops-team
+Makefile @rastrigin-org/platform-team @rastrigin-org/devops-team
+
+# Go workspace configuration
+go.work @rastrigin-org/platform-team
+go.work.sum @rastrigin-org/platform-team
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+# High-level documentation
+/docs/ @rastrigin-org/platform-team
+/CLAUDE.md @rastrigin-org/platform-team
+/README.md @rastrigin-org/platform-team
+/CHANGELOG.md @rastrigin-org/platform-team
+
+# Wireframes and design docs
+/docs/wireframes/ @rastrigin-org/web-team
+/wireframes/ @rastrigin-org/web-team
+
+# API documentation
+/docs/*API*.md @rastrigin-org/api-team
+/docs/*api*.md @rastrigin-org/api-team
+
+# CLI documentation
+/docs/*CLI*.md @rastrigin-org/cli-team
+/docs/*cli*.md @rastrigin-org/cli-team
+
+# Database documentation
+/docs/*DATABASE*.md @rastrigin-org/api-team
+/docs/*database*.md @rastrigin-org/api-team
+/docs/ERD.md @rastrigin-org/api-team
+/docs/README.md @rastrigin-org/api-team
+/docs/public.*.md @rastrigin-org/api-team
+
+# =============================================================================
+# Configuration
+# =============================================================================
+
+# AI Agent configurations
+/.claude/ @rastrigin-org/platform-team
+
+# Development environment
+.env* @rastrigin-org/devops-team
+.gcloudignore @rastrigin-org/devops-team
+.air.toml @rastrigin-org/devops-team
