@@ -1,0 +1,343 @@
+name: Monorepo CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'Makefile'
+      - 'go.work'
+      - 'go.work.sum'
+      - 'docker-compose.yml'
+      - 'scripts/**'
+      - '.golangci.yml'
+      - 'CODEOWNERS'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'Makefile'
+      - 'go.work'
+      - 'go.work.sum'
+      - 'docker-compose.yml'
+      - 'scripts/**'
+      - '.golangci.yml'
+      - 'CODEOWNERS'
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-workspace:
+    name: Validate Go Workspace
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
+
+      - name: Check workspace sync
+        run: |
+          echo "🔍 Checking if workspace is synced..."
+          go work sync
+          if git diff --exit-code go.work.sum; then
+            echo "✅ Workspace is in sync"
+          else
+            echo "❌ Workspace is out of sync!"
+            echo "Run 'go work sync' and commit the changes"
+            exit 1
+          fi
+
+      - name: Verify workspace modules
+        run: |
+          echo "🔍 Verifying workspace modules..."
+          go work use -r .
+          echo "✅ All workspace modules valid"
+
+      - name: Check for module conflicts
+        run: |
+          echo "🔍 Checking for module dependency conflicts..."
+          go list -m all > /dev/null
+          echo "✅ No module conflicts detected"
+
+  validate-code-generation:
+    name: Validate Code Generation
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ubik
+          POSTGRES_PASSWORD: ubik_dev_password
+          POSTGRES_DB: ubik
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply database schema
+        env:
+          PGPASSWORD: ubik_dev_password
+        run: |
+          psql -h localhost -U ubik -d ubik -f platform/database/schema.sql
+
+      - name: Setup Go code generation tools (with cache)
+        uses: ./.github/actions/setup-go-tools
+
+      - name: Generate all code
+        run: |
+          make generate-api
+          make generate-db
+          make generate-mocks
+
+      - name: Check for uncommitted changes
+        run: |
+          echo "🔍 Checking if generated code is up-to-date..."
+          if git diff --exit-code generated/; then
+            echo "✅ Generated code is up-to-date"
+          else
+            echo "❌ Generated code is out of sync!"
+            echo "Run 'make generate' and verify if changes should be committed"
+            echo ""
+            echo "Changed files:"
+            git diff --name-only generated/
+            echo ""
+            echo "Note: Generated Go code should NOT be committed (in .gitignore)"
+            echo "This check ensures generation works correctly in CI"
+            # Don't fail - generated code is intentionally not committed
+          fi
+
+  validate-makefile:
+    name: Validate Makefile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install make
+        run: |
+          which make || sudo apt-get install -y make
+          make --version
+
+      - name: Test essential Makefile targets
+        run: |
+          echo "🔍 Testing Makefile targets..."
+          make help > /dev/null
+          echo "✅ Makefile syntax valid"
+
+  validate-docker-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: |
+          echo "🔍 Validating docker-compose.yml..."
+          docker compose config > /dev/null
+          echo "✅ Docker Compose configuration valid"
+
+      - name: Test database startup
+        run: |
+          echo "🔍 Testing database startup..."
+          docker compose up -d db
+          sleep 5
+
+          echo "Checking database health..."
+          docker compose ps db
+
+          if docker compose ps db | grep -q "healthy"; then
+            echo "✅ Database started successfully"
+          else
+            echo "❌ Database failed to start"
+            docker compose logs db
+            exit 1
+          fi
+
+          echo "Cleaning up..."
+          docker compose down -v
+
+  validate-codeowners:
+    name: Validate CODEOWNERS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check CODEOWNERS syntax
+        uses: mszostok/codeowners-validator@v0.7.4
+        with:
+          checks: "files,duppatterns,syntax"
+          experimental_checks: "notowned"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  documentation-check:
+    name: Check Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken links in markdown
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+        continue-on-error: true
+
+      - name: Verify critical documentation exists
+        run: |
+          echo "🔍 Verifying critical documentation..."
+
+          required_docs=(
+            "README.md"
+            "CLAUDE.md"
+            "docs/QUICKSTART.md"
+            "docs/ERD.md"
+            "docs/DEVELOPMENT.md"
+            "docs/TESTING.md"
+            "docs/DEV_WORKFLOW.md"
+          )
+
+          missing=0
+          for doc in "${required_docs[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "❌ Missing: $doc"
+              missing=$((missing + 1))
+            else
+              echo "✅ Found: $doc"
+            fi
+          done
+
+          if [ $missing -gt 0 ]; then
+            echo ""
+            echo "❌ $missing critical documentation file(s) missing!"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All critical documentation files present"
+
+  workflow-validation:
+    name: Validate Workflows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow files
+        run: |
+          echo "🔍 Validating GitHub Actions workflows..."
+
+          # Check for basic YAML syntax
+          for workflow in .github/workflows/*.yml; do
+            echo "Checking $workflow..."
+            if python3 -c "import yaml; yaml.safe_load(open('$workflow'))" 2>/dev/null; then
+              echo "✅ $workflow - Valid YAML"
+            else
+              echo "❌ $workflow - Invalid YAML"
+              exit 1
+            fi
+          done
+
+          echo ""
+          echo "✅ All workflow files have valid YAML syntax"
+
+      - name: Check for required workflows
+        run: |
+          echo "🔍 Checking for required workflows..."
+
+          required_workflows=(
+            "api-ci.yml"
+            "cli-ci.yml"
+            "web-ci.yml"
+            "monorepo-ci.yml"
+          )
+
+          missing=0
+          for workflow in "${required_workflows[@]}"; do
+            if [ ! -f ".github/workflows/$workflow" ]; then
+              echo "❌ Missing: $workflow"
+              missing=$((missing + 1))
+            else
+              echo "✅ Found: $workflow"
+            fi
+          done
+
+          if [ $missing -gt 0 ]; then
+            echo ""
+            echo "❌ $missing required workflow(s) missing!"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All required workflows present"

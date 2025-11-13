@@ -1,32 +1,34 @@
-name: Web Server
+name: Web Service CI
 
 on:
   push:
     branches:
       - main
       - develop
+      - 'feature/**'
     paths:
       - 'services/web/**'
       - 'platform/api-spec/**'
-      - '.github/workflows/web-server.yml'
-      - 'cloudbuild-web.yaml'
+      - '.github/workflows/web-ci.yml'
   pull_request:
+    branches:
+      - main
     paths:
       - 'services/web/**'
       - 'platform/api-spec/**'
-      - '.github/workflows/web-server.yml'
-      - 'cloudbuild-web.yaml'
+      - '.github/workflows/web-ci.yml'
 
-# Ensure only one deployment runs at a time for Web service
-# Deployments queue and run in merge order to prevent race conditions
+# Cancel in-progress runs for the same PR
 concurrency:
-  group: deploy-web-production
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build
+  check-exists:
+    name: Check Web Directory
     runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check_web.outputs.exists }}
 
     steps:
       - name: Checkout code
@@ -41,8 +43,17 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: check-exists
+    if: needs.check-exists.outputs.exists == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
-        if: steps.check_web.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -50,60 +61,105 @@ jobs:
           cache-dependency-path: services/web/package-lock.json
 
       - name: Clean npm cache (workaround for rollup optional deps bug)
-        if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: rm -rf node_modules package-lock.json
 
       - name: Install dependencies
-        if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: npm install
 
       - name: Generate API types from OpenAPI spec
-        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: npm run generate:api
+
+      - name: Run ESLint
+        working-directory: ./services/web
+        run: npm run lint
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: check-exists
+    if: needs.check-exists.outputs.exists == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/web/package-lock.json
+
+      - name: Clean npm cache (workaround for rollup optional deps bug)
+        working-directory: ./services/web
+        run: rm -rf node_modules package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./services/web
+        run: npm install
+
+      - name: Generate API types from OpenAPI spec
+        working-directory: ./services/web
+        run: npm run generate:api
+
+      - name: Run TypeScript type check
+        working-directory: ./services/web
+        run: npm run type-check
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [check-exists, lint, type-check]
+    if: needs.check-exists.outputs.exists == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/web/package-lock.json
+
+      - name: Clean npm cache (workaround for rollup optional deps bug)
+        working-directory: ./services/web
+        run: rm -rf node_modules package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./services/web
+        run: npm install
+
+      - name: Generate API types from OpenAPI spec
         working-directory: ./services/web
         run: npm run generate:api
 
       - name: Build application
-        if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: npm run build
 
       - name: Upload build artifact
-        if: steps.check_web.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: services/web/.next/
           retention-days: 7
 
-      - name: Placeholder message
-        if: steps.check_web.outputs.exists == 'false'
-        run: |
-          echo "📝 Web server not yet implemented"
-          echo "This workflow will activate when 'web/' directory is created"
-          echo "Expected stack: Next.js 14, React, TypeScript, Tailwind CSS"
-
-  test:
-    name: Test
+  test-unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: [check-exists, lint, type-check]
+    if: needs.check-exists.outputs.exists == 'true'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if web directory exists
-        id: check_web
-        run: |
-          if [ -d "services/web" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Node.js
-        if: steps.check_web.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -111,28 +167,65 @@ jobs:
           cache-dependency-path: services/web/package-lock.json
 
       - name: Clean npm cache (workaround for rollup optional deps bug)
-        if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: rm -rf node_modules package-lock.json
 
       - name: Install dependencies
-        if: steps.check_web.outputs.exists == 'true'
         working-directory: ./services/web
         run: npm install
 
       - name: Generate API types from OpenAPI spec
-        if: steps.check_web.outputs.exists == 'true'
+        working-directory: ./services/web
+        run: npm run generate:api
+
+      - name: Run unit tests
+        working-directory: ./services/web
+        run: npm run test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          files: ./services/web/coverage/coverage-final.json
+          flags: web-unit
+          name: web-unit-coverage
+        continue-on-error: true
+
+  test-e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: needs.check-exists.outputs.exists == 'true' && false  # Temporarily disabled - requires backend API
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/web/package-lock.json
+
+      - name: Clean npm cache (workaround for rollup optional deps bug)
+        working-directory: ./services/web
+        run: rm -rf node_modules package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./services/web
+        run: npm install
+
+      - name: Generate API types from OpenAPI spec
         working-directory: ./services/web
         run: npm run generate:api
 
       - name: Get Playwright version
-        if: steps.check_web.outputs.exists == 'true'
         id: playwright-version
         working-directory: ./services/web
         run: echo "version=$(npm list @playwright/test --depth=0 | grep @playwright/test | sed 's/.*@//')" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
-        if: steps.check_web.outputs.exists == 'true'
         uses: actions/cache@v4
         id: playwright-cache
         with:
@@ -142,82 +235,39 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
-        if: steps.check_web.outputs.exists == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ./services/web
         run: npx playwright install --with-deps chromium
 
-      - name: Run linter
-        if: steps.check_web.outputs.exists == 'true'
-        working-directory: ./services/web
-        run: npm run lint
-
-      - name: Run type check
-        if: steps.check_web.outputs.exists == 'true'
-        working-directory: ./services/web
-        run: npm run type-check
-
-      - name: Run unit tests
-        if: steps.check_web.outputs.exists == 'true'
-        working-directory: ./services/web
-        run: npm run test
-
       - name: Run E2E tests
-        if: steps.check_web.outputs.exists == 'true' && false  # Temporarily disabled - requires backend API
         working-directory: ./services/web
         run: npm run test:e2e
 
-      - name: Upload coverage
-        if: steps.check_web.outputs.exists == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./services/web/coverage/coverage-final.json
-          flags: web-server
-          name: web-server-coverage
-        continue-on-error: true
-
-      - name: Not ready for testing
-        if: steps.check_web.outputs.exists == 'false'
-        run: |
-          echo "⏸️ Web server tests will run when implemented"
-
-  deploy:
-    name: Deploy to GCP Cloud Run
+  docker-build:
+    name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [build, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build, test-unit]
+    if: needs.check-exists.outputs.exists == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if web directory exists
-        id: check_web
-        run: |
-          if [ -d "services/web" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Authenticate to Google Cloud
-        if: steps.check_web.outputs.exists == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: steps.check_web.outputs.exists == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        if: steps.check_web.outputs.exists == 'true'
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build and push Docker image
-        if: steps.check_web.outputs.exists == 'true'
         run: |
           BUILD_ID=$(gcloud builds submit \
-            --config=cloudbuild-web.yaml \
+            --config=services/web/build/cloudbuild.yaml \
             --project=ubik-enterprise-prod \
             --async \
             --format='value(id)' \
@@ -226,7 +276,6 @@ jobs:
           echo "🔨 Cloud Build started: $BUILD_ID"
 
       - name: Wait for build to complete
-        if: steps.check_web.outputs.exists == 'true'
         run: |
           echo "⏳ Waiting for Cloud Build $BUILD_ID to complete..."
           for i in {1..90}; do
@@ -248,8 +297,22 @@ jobs:
           echo "⏰ Timeout waiting for build to complete"
           exit 1
 
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Deploy to Cloud Run
-        if: steps.check_web.outputs.exists == 'true'
         run: |
           gcloud run deploy ubik-web \
             --image=us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/web:latest \
@@ -266,14 +329,21 @@ jobs:
             --project=ubik-enterprise-prod
 
       - name: Run smoke tests
-        if: steps.check_web.outputs.exists == 'true'
         run: |
           WEB_URL=$(gcloud run services describe ubik-web --region=us-central1 --project=ubik-enterprise-prod --format='value(status.url)')
           echo "🔍 Testing Web UI at $WEB_URL"
           curl -f "$WEB_URL" || exit 1
           echo "✅ Web UI health check passed"
 
-      - name: Not ready for deployment
-        if: steps.check_web.outputs.exists == 'false'
+  not-ready:
+    name: Service Not Ready
+    runs-on: ubuntu-latest
+    needs: check-exists
+    if: needs.check-exists.outputs.exists == 'false'
+
+    steps:
+      - name: Placeholder message
         run: |
-          echo "⏸️ Web server deployment will be configured when implemented"
+          echo "📝 Web service not yet fully implemented"
+          echo "This workflow will activate when 'services/web/' directory is ready"
+          echo "Expected stack: Next.js 14, React, TypeScript, Tailwind CSS"

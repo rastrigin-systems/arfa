@@ -1,37 +1,74 @@
-name: API Server
+name: API Service CI
 
 on:
   push:
     branches:
       - main
       - develop
+      - 'feature/**'
     paths:
       - 'services/api/**'
-      - 'pkg/types/**'
-      - 'generated/**'
       - 'platform/database/**'
       - 'platform/api-spec/**'
+      - 'pkg/**'
       - 'go.work'
-      - '.github/workflows/api-server.yml'
-      - 'services/api/build/cloudbuild.yaml'
+      - 'go.work.sum'
+      - '.github/workflows/api-ci.yml'
   pull_request:
+    branches:
+      - main
     paths:
       - 'services/api/**'
-      - 'pkg/types/**'
-      - 'generated/**'
       - 'platform/database/**'
       - 'platform/api-spec/**'
+      - 'pkg/**'
       - 'go.work'
-      - '.github/workflows/api-server.yml'
-      - 'services/api/build/cloudbuild.yaml'
+      - 'go.work.sum'
+      - '.github/workflows/api-ci.yml'
 
 # Ensure only one deployment runs at a time for API service
 # Deployments queue and run in merge order to prevent race conditions
 concurrency:
-  group: deploy-api-production
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
+
+      - name: Setup Go code generation tools (with cache)
+        uses: ./.github/actions/setup-go-tools
+
+      - name: Generate code
+        run: |
+          make generate-api
+          make generate-db
+          make generate-mocks
+
+      - name: Sync workspace
+        run: go work sync
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: services/api
+          args: --timeout=5m
+
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -127,22 +164,61 @@ jobs:
           name: api-server-coverage
         continue-on-error: true
 
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubik-server
+          path: bin/ubik-server
+          retention-days: 7
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, build-and-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ubik
+          POSTGRES_PASSWORD: ubik_dev_password
+          POSTGRES_DB: ubik
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply database schema
+        env:
+          PGPASSWORD: ubik_dev_password
+        run: |
+          psql -h localhost -U ubik -d ubik -f platform/database/schema.sql
+
       - name: Authenticate to Google Cloud
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           IMAGE_TAG: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:${{ github.sha }}
           IMAGE_LATEST: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:latest
@@ -152,7 +228,6 @@ jobs:
           echo "✅ Docker image built: $IMAGE_TAG"
 
       - name: Test Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           IMAGE_TAG: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:${{ github.sha }}
         run: |
@@ -160,7 +235,7 @@ jobs:
           # Start container
           docker run -d --name api-test \
             -p 8080:8080 \
-            -e DATABASE_URL="postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" \
+            -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
             -e PORT=8080 \
             --network host \
             $IMAGE_TAG
@@ -190,7 +265,6 @@ jobs:
           docker rm api-test
 
       - name: Push Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           IMAGE_TAG: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:${{ github.sha }}
           IMAGE_LATEST: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:latest
@@ -200,17 +274,10 @@ jobs:
           docker push $IMAGE_LATEST
           echo "✅ Docker image pushed: $IMAGE_TAG"
 
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ubik-server
-          path: bin/ubik-server
-          retention-days: 7
-
   deploy:
-    name: Deploy to GCP Cloud Run
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: docker-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
