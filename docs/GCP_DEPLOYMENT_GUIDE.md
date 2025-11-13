@@ -144,7 +144,7 @@ docker push $REGION-docker.pkg.dev/$PROJECT_ID/ubik-images/api:latest
 ```bash
 # Build web service
 docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest \
-  -f services/web/Dockerfile .
+  -f services/web/build/Dockerfile .
 
 # Push to Artifact Registry
 docker push $REGION-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest
@@ -246,9 +246,9 @@ EXPOSE 8080
 CMD ["./server"]
 ```
 
-### services/web/Dockerfile (already exists)
+### services/web/build/Dockerfile (already exists)
 
-The existing `services/web/Dockerfile` should work as-is for GCP.
+The existing `services/web/build/Dockerfile` should work as-is for GCP.
 
 ---
 
@@ -323,7 +323,7 @@ steps:
   # Build Web
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/ubik-images/web:$SHORT_SHA',
-           '-f', 'services/web/Dockerfile', '.']
+           '-f', 'services/web/build/Dockerfile', '.']
 
   # Push images
   - name: 'gcr.io/cloud-builders/docker'

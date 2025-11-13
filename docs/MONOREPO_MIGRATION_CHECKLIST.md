@@ -259,7 +259,7 @@ install-cli:
 
 ```bash
 mkdir -p services/web/build
-git mv services/web/Dockerfile services/web/build/
+git mv services/web/build/Dockerfile services/web/build/  # Already moved
 ```
 
 - [ ] Create `services/web/build/cloudbuild.yaml`
