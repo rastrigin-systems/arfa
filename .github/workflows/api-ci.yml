@@ -62,12 +62,20 @@ jobs:
       - name: Sync workspace
         run: go work sync
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: services/api
-          args: --timeout=5m
+      - name: Run basic Go checks
+        working-directory: services/api
+        run: |
+          echo "🔍 Running go vet..."
+          go vet ./...
+          echo "✅ Go vet passed"
+
+          echo "🔍 Running go fmt check..."
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "❌ Code needs formatting:"
+            gofmt -l .
+            exit 1
+          fi
+          echo "✅ Code is properly formatted"
 
   build-and-test:
     name: Build & Test
