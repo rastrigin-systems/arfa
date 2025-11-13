@@ -1,7 +1,6 @@
 go 1.24.5
 
 use (
-	./generated
 	./pkg/types
 	./services/api
 	./services/cli
