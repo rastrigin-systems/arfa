@@ -19,42 +19,43 @@
 
 ```bash
 # 1. Update database schema
-vim shared/schema/schema.sql
+vim platform/database/schema.sql
 
 # 2. Apply to database
 make db-reset
 
 # 3. Update OpenAPI spec (if API changes)
-vim openapi/spec.yaml
+vim platform/api-spec/spec.yaml
 
 # 4. Update SQL queries (if needed)
-vim sqlc/queries/employees.sql
+vim platform/database/sqlc/queries/employees.sql
 
 # 5. Regenerate all code
 make generate
 
-# 6. Implement handlers
-vim internal/handlers/employees.go
+# 6. Implement handlers (for API service)
+vim services/api/internal/handlers/employees.go
 
 # 7. Run tests
 make test
 
-# 8. Build and test locally
-go run cmd/server/main.go
+# 8. Build and test locally (for API service)
+cd services/api && go run cmd/server/main.go
 ```
 
 ### Code Generation Pipeline
 
 ```
-shared/schema/schema.sql → PostgreSQL → tbls → schema.json, README.md, public.*.md, schema.svg
-                        ↓         ↓
-                       sqlc      Python script → ERD.md (user-friendly)
-                        ↓
-                  generated/db/*.go
+platform/database/schema.sql → PostgreSQL → tbls → schema.json, README.md, public.*.md, schema.svg
+                             ↓         ↓
+                            sqlc      Python script → ERD.md (user-friendly)
+                             ↓
+                       generated/db/*.go
 
-openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
+platform/api-spec/spec.yaml → oapi-codegen → generated/api/server.gen.go
+                            → openapi-typescript → services/web/lib/api/schema.ts
 
-Your code (internal/) → Uses generated types
+Services (services/*/) → Use generated types
 ```
 
 **ERD Documentation:**
@@ -71,8 +72,8 @@ Your code (internal/) → Uses generated types
 **As of v0.3.0, code generation is NO LONGER automatic on commit.**
 
 **Two sources of truth:**
-1. **shared/schema/schema.sql** - Database structure
-2. **openapi/spec.yaml** - API contract
+1. **platform/database/schema.sql** - Database structure
+2. **platform/api-spec/spec.yaml** - API contract
 
 These are maintained separately because:
 - DB tables ≠ API DTOs (different concerns)
@@ -99,9 +100,9 @@ npm run generate:api     # Generate from OpenAPI spec
 ### When to Regenerate
 
 **Run `make generate` after:**
-- Changing `shared/schema/schema.sql` (then run `make db-reset`)
-- Changing `openapi/spec.yaml`
-- Changing SQL queries in `sqlc/queries/`
+- Changing `platform/database/schema.sql` (then run `make db-reset`)
+- Changing `platform/api-spec/spec.yaml`
+- Changing SQL queries in `platform/database/sqlc/queries/`
 - Pulling changes that modify any of the above
 
 **Important Notes:**
@@ -119,14 +120,14 @@ npm run generate:api     # Generate from OpenAPI spec
 **Complete workflow:**
 ```bash
 # 1. Edit schema
-vim shared/schema/schema.sql
+vim platform/database/schema.sql
 
 # 2. Reset database and regenerate everything
 make db-reset
 make generate  # Generates code + docs
 
 # 3. Commit source AND docs
-git add shared/schema/schema.sql docs/
+git add platform/database/schema.sql docs/
 git commit -m "feat: Add notifications table"
 git push
 ```
@@ -214,7 +215,7 @@ Always use `go.uber.org/mock` (matches import in code).
 
 **Solution**:
 ```bash
-# After changing shared/schema/schema.sql
+# After changing platform/database/schema.sql
 make db-reset              # Apply to database
 make generate-db           # Regenerate DB code
 make generate-mocks        # Regenerate mocks
@@ -257,11 +258,11 @@ Use Row-Level Security (RLS) as additional safety net.
 
 ### 5. Testing Against Real Database
 
-**Problem**: Tests fail locally but shared/schema/schema.sql is correct
+**Problem**: Tests fail locally but platform/database/schema.sql is correct
 
 **Solution**: Check testcontainers path
 ```go
-schemaPath, err := filepath.Abs("../../shared/schema/schema.sql")
+schemaPath, err := filepath.Abs("../../platform/database/schema.sql")
 if err != nil {
     t.Fatal(err)
 }
@@ -288,7 +289,7 @@ if err != nil {
 **sqlc generates type-safe Go code from SQL:**
 
 ```sql
--- sqlc/queries/employees.sql
+-- platform/database/sqlc/queries/employees.sql
 -- name: GetEmployee :one
 SELECT * FROM employees WHERE id = $1 AND org_id = $2;
 
@@ -404,8 +405,8 @@ go build ./...
 
 ```
 ubik-enterprise/
-├── shared/schema/schema.sql                 # Database schema (source of truth)
-├── openapi/spec.yaml          # API contract (source of truth)
+├── platform/database/schema.sql             # Database schema (source of truth)
+├── platform/api-spec/spec.yaml              # API contract (source of truth)
 │
 ├── generated/                 # ⚠️ AUTO-GENERATED (never edit!)
 │   ├── api/                   # From OpenAPI

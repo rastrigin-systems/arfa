@@ -32,7 +32,7 @@ echo $?  # Should be 0
 docker run --rm ubik-api-test ls -la /app/
 
 # Check for specific files
-docker run --rm ubik-api-test ls -la /app/shared/openapi/spec.yaml
+docker run --rm ubik-api-test ls -la /app/platform/api-spec/spec.yaml
 docker run --rm ubik-api-test ls -la /app/server
 
 # Verify environment variables
