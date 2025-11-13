@@ -152,17 +152,18 @@ ubik-enterprise/                  # 🌟 Monorepo Root
 │
 ├── services/                     # 🎯 Microservices
 │   ├── api/                      # API Server Module
-│   └── cli/                      # CLI Client Module
+│   ├── cli/                      # CLI Client Module
+│   └── web/                      # Web UI Module (Next.js)
 │
 ├── pkg/types/                    # 📦 Shared Go Code
-├── shared/                       # 🔧 Cross-language Shared
-│   ├── openapi/spec.yaml         # OpenAPI 3.0.3 spec
-│   └── schema/schema.sql         # PostgreSQL schema
+├── platform/                     # 🔧 Platform Resources
+│   ├── api-spec/                 # OpenAPI 3.0.3 spec
+│   ├── database/                 # PostgreSQL schema & migrations
+│   └── docker-images/            # Docker image definitions
 │
 ├── generated/                    # ⚠️ AUTO-GENERATED (don't edit!)
-├── sqlc/                         # SQL queries
 ├── docs/                         # Documentation
-└── scripts/                      # Utility scripts
+└── scripts/                      # Cross-cutting utility scripts
 ```
 
 **See project structure details in specific service README files.**
@@ -331,29 +332,29 @@ make generate
 ### Code Generation Pipeline
 
 ```
-shared/schema/schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
-                        ↓
-                       sqlc → generated/db/*.go
+platform/database/schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
+                             ↓
+                            sqlc → generated/db/*.go
 
-openapi/spec.yaml → oapi-codegen → generated/api/server.gen.go
-                  → openapi-typescript → services/web/lib/api/schema.ts
+platform/api-spec/spec.yaml → oapi-codegen → generated/api/server.gen.go
+                            → openapi-typescript → services/web/lib/api/schema.ts
 ```
 
 **When to regenerate:**
 - **CI/CD (automatic):** On every build/test in GitHub Actions
-- **Local (manual):** After changing shared/schema/schema.sql, openapi/spec.yaml, or SQL queries
+- **Local (manual):** After changing platform/database/schema.sql, platform/api-spec/spec.yaml, or SQL queries
 - **After pull:** When pulling changes that modify source files
 
 ```bash
 # Backend (Go)
 make generate           # Generate everything
-make generate-api       # After changing openapi/spec.yaml
+make generate-api       # After changing platform/api-spec/spec.yaml
 make generate-db        # After changing SQL queries
-make generate-erd       # After changing schema.sql
+make generate-erd       # After changing platform/database/schema.sql
 
 # Frontend (Web)
 cd services/web
-npm run generate:api    # After changing openapi/spec.yaml
+npm run generate:api    # After changing platform/api-spec/spec.yaml
 ```
 
 **Note:** Generated code is NOT committed to git:
@@ -374,18 +375,18 @@ npm run generate:api    # After changing openapi/spec.yaml
 **After changing database schema:**
 ```bash
 # 1. Edit the schema
-vim shared/schema/schema.sql
+vim platform/database/schema.sql
 
 # 2. Regenerate EVERYTHING (code + docs)
 make generate
 
 # 3. Commit both schema and docs
-git add shared/schema/schema.sql docs/
+git add platform/database/schema.sql docs/
 git commit -m "feat: Add new table"
 ```
 
 **What gets committed:**
-- ✅ Source files (`shared/schema/schema.sql`, `openapi/spec.yaml`, SQL queries)
+- ✅ Source files (`platform/database/schema.sql`, `platform/api-spec/spec.yaml`, SQL queries)
 - ✅ Documentation (`docs/` - ERD, README, per-table docs)
 - ❌ Generated code (`generated/` - NOT committed)
 
@@ -558,7 +559,7 @@ docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
 
 # 2. Verify files are in the image
 docker run --rm ubik-api-test ls -la /app/
-docker run --rm ubik-api-test ls -la /app/shared/openapi/
+docker run --rm ubik-api-test ls -la /app/platform/api-spec/
 
 # 3. Test container locally
 docker run --rm -p 8080:8080 \
@@ -746,8 +747,8 @@ curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
 
 **Always update when:**
 - Adding new tables → Regenerate ERD: `make generate-erd`
-- Adding API endpoints → Update `openapi/spec.yaml`
-- Adding SQL queries → Add to `sqlc/queries/*.sql`
+- Adding API endpoints → Update `platform/api-spec/spec.yaml`
+- Adding SQL queries → Add to `platform/database/sqlc/queries/*.sql`
 - Changing architecture → Update this file (CLAUDE.md)
 
 **How to update:**
