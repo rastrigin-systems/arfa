@@ -201,7 +201,7 @@ gcloud sql connect ubik-postgres --user=postgres
 
 # Run in psql:
 \c ubik
-\i /path/to/shared/schema/schema.sql
+\i /path/to/platform/database/schema.sql
 \q
 ```
 

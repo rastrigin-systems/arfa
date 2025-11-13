@@ -59,6 +59,8 @@ open docs/ERD.md
 
 ## Architecture
 
+**Go Workspace Monorepo** with self-contained services:
+
 ```
 PostgreSQL (20 tables + 3 views)
     ↓
@@ -71,29 +73,45 @@ OpenAPI 3.0.3 Spec
 ```
 
 **Two sources of truth:**
-1. `shared/schema/schema.sql` - Database structure
-2. `openapi/spec.yaml` - API contract
+1. `platform/database/schema.sql` - Database structure
+2. `platform/api-spec/spec.yaml` - API contract
+
+**Services:**
+- **API Server** - REST API (see [services/api/README.md](./services/api/README.md))
+- **CLI Client** - Command-line tool (see [services/cli/README.md](./services/cli/README.md))
+- **Web UI** - Next.js frontend (see [services/web/README.md](./services/web/README.md))
 
 ---
 
 ## Project Structure
 
 ```
-ubik-enterprise/
-├── CLAUDE.md              # ⭐ Start here
-├── shared/schema/schema.sql             # Database schema
-├── openapi/spec.yaml      # API contract
-├── docs/                  # All documentation
-├── generated/             # ⚠️ Auto-generated
-├── internal/              # Your code here
-│   ├── handlers/
-│   ├── auth/
-│   └── middleware/
-├── tests/
-│   ├── integration/
-│   └── testutil/
-└── cmd/server/            # API server
+ubik-enterprise/                  # 🌟 Monorepo Root
+├── CLAUDE.md                     # ⭐ Complete documentation hub
+├── README.md                     # This file
+│
+├── services/                     # 🎯 Self-contained services
+│   ├── api/                      # API Server (Go)
+│   ├── cli/                      # CLI Client (Go)
+│   └── web/                      # Web UI (Next.js)
+│
+├── platform/                     # 🔧 Shared platform resources
+│   ├── api-spec/                 # OpenAPI 3.0.3 spec
+│   ├── database/                 # PostgreSQL schema & sqlc queries
+│   └── docker-images/            # Docker image definitions
+│
+├── pkg/types/                    # 📦 Shared Go types
+├── generated/                    # ⚠️ AUTO-GENERATED (don't edit!)
+├── docs/                         # 📚 Documentation
+└── scripts/                      # 🛠️ Build & utility scripts
 ```
+
+**Each service is self-contained** with its own:
+- `README.md` - Service-specific documentation
+- `go.mod` - Independent dependencies
+- `internal/` - Service implementation
+- `tests/` - Service tests
+- Build & deployment configs
 
 ---
 
@@ -103,9 +121,7 @@ ubik-enterprise/
 make help              # Show all commands
 ```
 
-**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `shared/schema/schema.sql`, `openapi/spec.yaml`, or SQL queries.
-
-**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `shared/schema/schema.sql`, `openapi/spec.yaml`, or SQL queries.
+**Note:** The `generated/` directory is NOT committed to git. Always run `make generate` after pulling changes that modify `platform/database/schema.sql`, `platform/api-spec/spec.yaml`, or SQL queries.
 
 ---
 

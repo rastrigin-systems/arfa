@@ -120,13 +120,13 @@ go test -v -short ./internal/handlers
 
 ```bash
 # Add SQL queries if needed
-vim sqlc/queries/employees.sql
+vim platform/database/sqlc/queries/employees.sql
 
 # Regenerate DB code and mocks
 make generate-db && make generate-mocks
 
-# Implement handler
-vim internal/handlers/employees.go
+# Implement handler (for API service)
+vim services/api/internal/handlers/employees.go
 
 # Run tests - they should PASS
 go test -v -short ./internal/handlers
@@ -421,8 +421,8 @@ docker ps
 # Check testcontainers can access Docker
 docker run hello-world
 
-# Ensure shared/schema/schema.sql path is correct
-schemaPath, err := filepath.Abs("../../shared/schema/schema.sql")
+# Ensure platform/database/schema.sql path is correct
+schemaPath, err := filepath.Abs("../../platform/database/schema.sql")
 ```
 
 ### Coverage Not Calculating

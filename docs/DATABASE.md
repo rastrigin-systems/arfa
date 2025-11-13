@@ -107,7 +107,7 @@ docker exec -it ubik-postgres psql -U ubik -d ubik
 docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM employees"
 
 # Execute SQL file
-docker exec -i ubik-postgres psql -U ubik -d ubik < shared/schema/schema.sql
+docker exec -i ubik-postgres psql -U ubik -d ubik < platform/database/schema.sql
 ```
 
 ---
@@ -255,7 +255,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ### Migrations
 
-**Location:** `shared/schema/migrations/`
+**Location:** `platform/database/migrations/`
 
 **File naming:** `YYYYMMDDHHMMSS_description.up.sql` and `YYYYMMDDHHMMSS_description.down.sql`
 
@@ -263,7 +263,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # Create new migration files
-migrate create -ext sql -dir shared/schema/migrations -seq add_user_table
+migrate create -ext sql -dir platform/database/migrations -seq add_user_table
 ```
 
 **Apply migrations:**
@@ -273,7 +273,7 @@ migrate create -ext sql -dir shared/schema/migrations -seq add_user_table
 make db-migrate
 
 # Or manually
-migrate -path shared/schema/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" up
+migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" up
 ```
 
 **Rollback migrations:**
@@ -283,7 +283,7 @@ migrate -path shared/schema/migrations -database "postgres://ubik:ubik_dev_passw
 make db-rollback
 
 # Or manually
-migrate -path shared/schema/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" down 1
+migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" down 1
 ```
 
 ---
@@ -305,7 +305,7 @@ make generate-erd
 ```
 
 **Update after schema changes:**
-1. Modify `shared/schema/schema.sql`
+1. Modify `platform/database/schema.sql`
 2. Run `make db-reset` to apply changes
 3. Run `make generate-erd` to update docs
 4. Commit schema + docs together

@@ -149,10 +149,10 @@ make generate-mocks
 
 **Manual:**
 ```bash
-# After changing shared/schema/schema.sql
+# After changing platform/database/schema.sql
 make db-reset && make generate-db && make generate-mocks
 
-# After changing openapi/spec.yaml
+# After changing platform/api-spec/spec.yaml
 make generate-api
 
 # After changing SQL queries
