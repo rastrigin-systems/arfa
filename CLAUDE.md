@@ -4,32 +4,21 @@
 
 ---
 
-## 📑 Table of Contents
+## Quick Navigation
 
-### Foundation
-- [System Overview](#system-overview)
-- [Architecture](#architecture)
-- [Database Schema](#database-schema)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
+**Working on a specific service?**
+- 🔧 **API Development** → [services/api/CLAUDE.md](./services/api/CLAUDE.md)
+- 💻 **CLI Development** → [services/cli/CLAUDE.md](./services/cli/CLAUDE.md)
+- 🎨 **Web UI Development** → [services/web/CLAUDE.md](./services/web/CLAUDE.md)
 
-### Documentation & Resources
-- [Documentation Map](#-documentation-map)
-- [Quick Start](#quick-start)
+**New to the project?**
+1. [docs/QUICKSTART.md](./docs/QUICKSTART.md) - 5-minute setup
+2. [docs/ERD.md](./docs/ERD.md) - Database schema visualization
 
-### Development
-- [Development Essentials](#development-essentials)
-- [Critical Rules](#critical-rules)
-
-### Status & Roadmap
-- [Current Status](#current-status)
-- [Roadmap](#roadmap)
-
----
-
-# FOUNDATION
-
-*Stable foundation of the system - rarely changes*
+**Common tasks:**
+- [docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md) - Command reference
+- [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) - PR workflow
+- [docs/TESTING.md](./docs/TESTING.md) - Testing guide
 
 ---
 
@@ -37,78 +26,284 @@
 
 ### Purpose
 
-Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Code, Cursor, Windsurf, etc.) and MCP server configurations for their employees.
+Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Code, Cursor, Windsurf) and MCP server configurations for employees.
 
-**Core Value**: Centralized control, policy enforcement, and visibility into AI agent usage across an organization.
+**Core Value:** Centralized control, policy enforcement, and visibility into AI agent usage across organizations.
 
-### What This Platform Does
+### Architecture
 
-**For Companies:**
-- Manage employees, teams, and roles
-- Control which AI agents employees can use
-- Configure MCP servers and access per employee
-- Set usage policies (path restrictions, rate limits, cost limits)
-- Approve/reject employee requests for new agents or MCPs
-- Track usage, costs, and activity across the organization
-- Enforce compliance and security policies
+```
+Go Workspace Monorepo
+├── services/api/       (REST API + WebSocket)
+├── services/cli/       (Employee CLI tool)
+├── services/web/       (Next.js admin UI)
+├── pkg/types/          (Shared Go types)
+├── platform/           (Schema, API spec, database)
+└── generated/          (Auto-generated code, not committed)
+```
 
-**For Employees:**
-- Sync agent configurations to local machines via CLI
-- Request access to new agents or MCP servers
-- View their assigned agents and policies
-- Use AI agents with centrally-managed configurations
+**Code Generation Pipeline:**
+```
+platform/database/schema.sql → sqlc → generated/db/*.go
+platform/api-spec/spec.yaml → oapi-codegen → generated/api/*.go
+                            → openapi-typescript → services/web/lib/api/schema.ts
+```
 
-### Design Decisions
+**Database:** PostgreSQL 15+ with 20 tables + 3 views, Row-Level Security for multi-tenancy
 
-**Authentication Model**: Self-service employees with passwords (no separate admin tier)
-- Each employee manages their own configs
-- Roles define permissions (member, approver)
-- No admin/user distinction - everyone is an employee
-- Multi-tenant via org_id scoping
+**Tech Stack:** Go 1.24+, Next.js 14, PostgreSQL, Docker, OpenAPI 3.0.3
 
 ---
 
-## Architecture
+## Essential Commands
 
-### System Design
+```bash
+# First-time setup
+make db-up              # Start PostgreSQL
+make install-tools      # Install code generation tools (one-time)
+make install-hooks      # Install git hooks (one-time)
+make generate           # Generate all code from schema/spec
 
-```
-🌟 Go Workspace Monorepo
-    ├─→ services/api/       (API Server Module)
-    ├─→ services/cli/       (CLI Client Module)
-    ├─→ pkg/types/          (Shared Types Module)
-    └─→ generated/          (Generated Code Module)
+# Development
+make test               # Run all tests
+make build              # Build all services
+make clean              # Clean generated files
 
-PostgreSQL Schema (DB source of truth)
-    ↓
-    ├─→ tbls → schema.json, README.md, public.*.md, schema.svg (auto-generated)
-    ├─→ Python script → ERD.md (from schema.json, auto-generated)
-    └─→ sqlc → Type-safe Go database code → generated/db/
+# Database
+make db-reset           # Reset database (⚠️ deletes data)
 
-OpenAPI Spec (API source of truth)
-    ↓
-    └─→ oapi-codegen → Go API types + Chi server → generated/api/
-
-Services consume generated code
-    ↓
-    ├─→ services/api/ imports generated/api, generated/db, pkg/types
-    └─→ services/cli/ imports pkg/types (no DB/API deps!)
+# Code generation (after schema/API changes)
+make generate           # Regenerate everything
+make generate-api       # API code only
+make generate-db        # Database code only
+make generate-erd       # Documentation only
 ```
 
-**Monorepo Benefits:**
-- **Cleaner Dependencies**: CLI doesn't carry 50+ server deps
-- **Independent Versioning**: API v0.5 + CLI v1.0 possible
-- **Smaller Binaries**: CLI binary ~60% smaller (no DB drivers, HTTP handlers)
-- **Better Modularity**: Clear service boundaries
-- **Future-Ready**: Easy to add web UI, workers, etc.
+**See [docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md) for complete command reference.**
 
-**Hybrid Schema/API**: Database schema and API spec maintained separately, both generate code automatically.
+---
+
+## Critical Rules
+
+### 1. Code Generation
+
+**NEVER edit generated files** - they are completely regenerated!
+
+**Generated code (NOT committed to git):**
+- `generated/` directory (Go API + DB code)
+- `services/web/lib/api/schema.ts` (TypeScript types)
+
+**After changing schema or API spec:**
+```bash
+# 1. Edit source files
+vim platform/database/schema.sql
+vim platform/api-spec/spec.yaml
+
+# 2. Regenerate everything
+make generate
+
+# 3. Commit source files + docs (not generated code)
+git add platform/ docs/
+git commit -m "feat: Add new endpoint"
+```
+
+**IMPORTANT:** CI/CD regenerates code automatically and FAILS if docs are stale.
+
+---
+
+### 2. Multi-Tenancy
+
+**CRITICAL:** All database queries MUST be organization-scoped to prevent data leakage.
+
+```go
+// ✅ GOOD - Scoped to organization
+employees, err := db.ListEmployees(ctx, orgID, status)
+
+// ❌ BAD - Exposes all organizations!
+employees, err := db.ListAllEmployees(ctx)
+```
+
+Row-Level Security (RLS) policies provide safety net, but queries MUST include `org_id`.
+
+**See [docs/DATABASE.md](./docs/DATABASE.md#multi-tenancy) for details.**
+
+---
+
+### 3. Test-Driven Development (TDD)
+
+**CRITICAL: ALWAYS write tests BEFORE implementation**
+
+**Mandatory TDD workflow:**
+1. ✅ Write failing test FIRST
+2. ✅ Implement minimal code to pass test
+3. ✅ Refactor with tests passing
+4. ❌ NEVER write implementation before tests
+
+**Target coverage:** 85% overall (excluding generated code)
+
+**See [docs/TESTING.md](./docs/TESTING.md) for complete testing guide.**
+
+---
+
+### 4. Pull Request Workflow
+
+**CRITICAL: ALL code changes MUST go through Pull Requests**
+
+Branch protection BLOCKS direct commits to `main`.
+
+**Required steps for EVERY change:**
+1. ✅ Create feature branch: `feature/{issue-number}-{description}`
+2. ✅ Implement changes following TDD
+3. ✅ Run tests locally: `make test`
+4. ✅ Commit with descriptive message
+5. ✅ Push branch
+6. ✅ Create PR with proper title: `feat: Description (#123)`
+7. ✅ Wait for CI/CD checks to pass
+8. ✅ Merge when approved
+
+**IMPORTANT:** PR title MUST include issue number for automatic linking: `feat: Add login endpoint (#123)`
+
+**See [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) for complete workflow.**
+
+---
+
+### 5. UI Development
+
+**CRITICAL: Wireframes required for ALL UI changes**
+
+**Mandatory UI workflow:**
+1. ✅ Request wireframes from **product-designer agent** FIRST
+2. ✅ Wait for wireframes approval
+3. ✅ Implement UI matching wireframes exactly
+4. ❌ NEVER implement UI without wireframes
+
+**Wireframe location:** `docs/wireframes/`
+
+**See [services/web/CLAUDE.md](./services/web/CLAUDE.md) for Web UI development details.**
+**See [.claude/agents/product-designer.md](./.claude/agents/product-designer.md) for designer agent.**
+
+---
+
+### 6. Debugging
+
+**Golden Rule: Check the Data, Not Just the Code**
+
+When tests or operations fail unexpectedly:
+1. ✅ Add request/response logging FIRST
+2. ✅ Verify database state (foreign keys, seed data)
+3. ✅ Check for stale cache (`~/.ubik/`, binaries)
+4. ✅ Rebuild binaries
+
+**Common pitfalls:**
+- ❌ Assuming code is wrong when data is wrong
+- ❌ Testing with stale binaries
+- ❌ Not checking cache invalidation
+
+**See [docs/DEBUGGING.md](./docs/DEBUGGING.md) for complete debugging guide.**
+
+---
+
+### 7. Docker Testing
+
+**CRITICAL: ALWAYS test Docker builds locally before deploying**
+
+```bash
+# 1. Build image
+docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
+
+# 2. Verify files in image
+docker run --rm ubik-api-test ls -la /app/platform/api-spec/
+
+# 3. Test container
+docker run --rm -p 8080:8080 ubik-api-test
+
+# 4. Verify endpoints
+curl http://localhost:8080/api/v1/health
+```
+
+**When Docker testing is required:**
+- ✅ ANY Dockerfile change
+- ✅ ANY cloudbuild.yaml change
+- ✅ New API endpoints
+- ✅ New file resources needed
+
+**See [docs/DOCKER_TESTING_CHECKLIST.md](./docs/DOCKER_TESTING_CHECKLIST.md) for complete guide.**
+
+---
+
+### 8. Tool Selection
+
+**CRITICAL: Choose the right tool for the task**
+
+**Context cost awareness:**
+- Playwright snapshot: ~12,000 tokens
+- Screenshot: ~1,000 tokens
+- Curl: ~100 tokens
+
+**Golden rule: Use the simplest tool that accomplishes the task**
+
+**API testing:**
+```bash
+# ✅ GOOD - Efficient
+curl http://localhost:8080/api/v1/health
+
+# ❌ BAD - Wastes ~50k tokens
+# Using Playwright to test API endpoints
+```
+
+**Best practices:**
+1. Test APIs with curl, not Playwright
+2. Use screenshots for visual verification
+3. Minimize page snapshots
+4. Monitor token usage
+
+---
+
+## Documentation Map
+
+### Getting Started
+- **[docs/QUICKSTART.md](./docs/QUICKSTART.md)** - 5-minute setup guide
+- **[docs/ERD.md](./docs/ERD.md)** - Database schema visualization
+
+### Development
+- **[docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md)** - Command cheat sheet
+- **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** - Development workflow
+- **[docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md)** ⭐ - PR workflow (mandatory)
+- **[docs/TESTING.md](./docs/TESTING.md)** ⭐ - Testing guide (TDD workflow)
+- **[docs/DEBUGGING.md](./docs/DEBUGGING.md)** - Debugging strategies
+
+### Database
+- **[docs/DATABASE.md](./docs/DATABASE.md)** - Database operations
+- **[docs/ERD.md](./docs/ERD.md)** - Visual schema (auto-generated)
+- **[docs/README.md](./docs/README.md)** - Technical reference (auto-generated)
+- **[docs/public.*.md](./docs/)** - Per-table docs (auto-generated)
+
+### Service Documentation
+- **[services/api/CLAUDE.md](./services/api/CLAUDE.md)** - API server development
+- **[services/cli/CLAUDE.md](./services/cli/CLAUDE.md)** - CLI client development
+- **[services/web/CLAUDE.md](./services/web/CLAUDE.md)** - Web UI development
+
+### CLI Documentation
+- **[docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md)** - CLI architecture
+- **[docs/CLI_PHASE1_COMPLETE.md](./docs/CLI_PHASE1_COMPLETE.md)** - Phase 1 details
+- **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** - Phase 2 details
+- **[docs/CLI_PHASE3_COMPLETE.md](./docs/CLI_PHASE3_COMPLETE.md)** - Phase 3 details
+- **[docs/CLI_PHASE4_COMPLETE.md](./docs/CLI_PHASE4_COMPLETE.md)** - Phase 4 details
+
+### Operations
+- **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning
+- **[.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md)** - Release workflow
+- **[docs/RELEASES.md](./docs/RELEASES.md)** - Release history
+
+### AI Agents
+- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend development
+- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend development
+- **[.claude/agents/product-designer.md](./.claude/agents/product-designer.md)** - UI/UX design
+- **[.claude/agents/README.md](./.claude/agents/README.md)** - Complete agent documentation
 
 ---
 
 ## Database Schema
-
-### Overview
 
 **20 Tables + 3 Views**
 
@@ -123,614 +318,22 @@ Services consume generated code
 | **Views** | v_employee_agents, v_employee_mcps, v_pending_approvals | 3 |
 
 **See [docs/ERD.md](./docs/ERD.md) for complete visual schema.**
-**See [docs/DATABASE.md](./docs/DATABASE.md) for database operations and best practices.**
-
----
-
-## Technology Stack
-
-- **Language:** Go 1.24+
-- **Database:** PostgreSQL 15+ (multi-tenant with RLS) - 20 tables + 3 views
-- **API Specification:** OpenAPI 3.0.3
-- **Code Generation:** oapi-codegen, sqlc, tbls
-- **HTTP Router:** Chi
-- **Testing:** testcontainers-go, gomock
-- **Web UI:** Next.js 14 (future)
-- **Deployment:** Docker, Docker Compose
-
----
-
-## Project Structure
-
-```
-ubik-enterprise/                  # 🌟 Monorepo Root
-├── go.work                       # Go workspace configuration
-├── Makefile                      # Automation commands
-├── docker-compose.yml            # Local environment
-├── CLAUDE.md                     # This file - documentation root
-├── README.md                     # Quick overview
-│
-├── services/                     # 🎯 Microservices
-│   ├── api/                      # API Server Module
-│   ├── cli/                      # CLI Client Module
-│   └── web/                      # Web UI Module (Next.js)
-│
-├── pkg/types/                    # 📦 Shared Go Code
-├── platform/                     # 🔧 Platform Resources
-│   ├── api-spec/                 # OpenAPI 3.0.3 spec
-│   ├── database/                 # PostgreSQL schema & migrations
-│   └── docker-images/            # Docker image definitions
-│
-├── generated/                    # ⚠️ AUTO-GENERATED (don't edit!)
-├── docs/                         # Documentation
-└── scripts/                      # Cross-cutting utility scripts
-```
-
-**See project structure details in specific service README files.**
-
----
-
-# DOCUMENTATION
-
-*Links to all project documentation organized by purpose*
-
----
-
-## 📚 Documentation Map
-
-### 🔥 START HERE
-
-**New to the project?**
-1. **[docs/QUICKSTART.md](./docs/QUICKSTART.md)** - 5-minute setup guide
-2. **[docs/ERD.md](./docs/ERD.md)** - Visual database schema
-
-### 📖 Core Documentation
-
-**Development:**
-- **[docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md)** - Commands and operations cheat sheet
-- **[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)** - Development workflow and best practices
-- **[docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md)** ⭐ - Standard PR & Git workflow (mandatory)
-- **[docs/TESTING.md](./docs/TESTING.md)** ⭐ - Complete testing guide (TDD workflow, patterns, commands)
-- **[docs/DEBUGGING.md](./docs/DEBUGGING.md)** - Debugging strategies and common pitfalls
-
-**Database:**
-- **[docs/DATABASE.md](./docs/DATABASE.md)** - Database operations, access, and best practices
-- **[docs/ERD.md](./docs/ERD.md)** ⭐ - User-friendly ERD with categories (auto-generated)
-- **[docs/README.md](./docs/README.md)** - Technical reference with table index (auto-generated by tbls)
-- **[docs/public.*.md](./docs/)** - Per-table documentation (27 files, auto-generated by tbls)
-
-**Operations:**
-- **[docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md)** - MCP server setup and configuration
-- **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning, releases, task management
-
-**CLI:**
-- **[docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md)** - CLI architecture and design
-- **[docs/CLI_PHASE1_COMPLETE.md](./docs/CLI_PHASE1_COMPLETE.md)** - CLI Phase 1 details
-- **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** - CLI Phase 2 details
-- **[docs/CLI_PHASE3_COMPLETE.md](./docs/CLI_PHASE3_COMPLETE.md)** - CLI Phase 3 details
-- **[docs/CLI_PHASE4_COMPLETE.md](./docs/CLI_PHASE4_COMPLETE.md)** - CLI Phase 4 details
-
-### 🚀 Release Management
-
-- **[.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md)** ⭐ - Release workflow and versioning
-- **[docs/RELEASES.md](./docs/RELEASES.md)** - Complete release history and notes
-- **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning and transitions
-
-### 🤖 AI Agent Configurations
-
-- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend API development
-- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend/Next.js development
-- **[.claude/agents/product-designer.md](./.claude/agents/product-designer.md)** - Wireframes, UI/UX design & accessibility
-- **[.claude/agents/coordinator.md](./.claude/agents/coordinator.md)** - Autonomous team orchestration
-- **[.claude/agents/tech-lead.md](./.claude/agents/tech-lead.md)** - Architecture & technical leadership
-- **[.claude/agents/product-strategist.md](./.claude/agents/product-strategist.md)** - Feature prioritization
-- **[.claude/agents/pr-reviewer.md](./.claude/agents/pr-reviewer.md)** - Code review & QA
-
-**See [.claude/agents/README.md](./.claude/agents/README.md) for complete agent documentation.**
-
----
-
-## Quick Start
-
-### First-Time Setup
-
-```bash
-# Start database
-cd ubik-enterprise
-make db-up
-
-# Install tools (one-time)
-make install-tools
-
-# Install Git hooks (one-time, auto-generates code on commit)
-make install-hooks
-
-# Generate all code
-make generate
-
-# Run tests
-make test
-
-# View documentation
-open docs/ERD.md
-```
-
-**See [docs/QUICKSTART.md](./docs/QUICKSTART.md) for detailed setup guide.**
-
-### Essential Commands
-
-```bash
-# Database
-make db-up              # Start PostgreSQL
-make db-down            # Stop PostgreSQL
-make db-reset           # Reset database (⚠️ deletes data)
-
-# Code Generation
-make generate           # Generate everything (ERD + API + DB + Mocks)
-
-# Testing
-make test               # Run all tests with coverage
-make test-unit          # Run unit tests only (fast)
-make test-integration   # Run integration tests (requires Docker)
-
-# Development
-make build              # Build binaries
-make clean              # Clean generated files
-```
-
-**See [docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md) for complete command reference.**
-
-### MCP Servers
-
-**Currently Configured:**
-- ✅ **github** - GitHub operations (issues, PRs, repos, code search)
-- ✅ **playwright** - Browser automation and web interaction
-- ✅ **qdrant** - Vector search and knowledge management (ACTIVE - use for all knowledge operations!)
-- ✅ **gcloud** - Google Cloud Platform operations (projects, services, compute, storage)
-- ✅ **observability** - Google Cloud monitoring and logging
-- ⚠️ **postgres** - Database operations (manual setup)
-
-**See [docs/MCP_SERVERS.md](./docs/MCP_SERVERS.md) for complete setup and usage guide.**
-
----
-
-# DEVELOPMENT
-
-*Essential information for working with the codebase*
-
----
-
-## Development Essentials
-
-### Standard Workflow
-
-**⚠️ MANDATORY: ALL code changes MUST follow the standard PR workflow.**
-
-**Quick summary - Required steps for EVERY change:**
-1. ✅ Create feature branch from `main`
-2. ✅ Implement changes (following TDD)
-3. ✅ Run tests locally
-4. ✅ Commit with descriptive message
-5. ✅ Push to remote
-6. ✅ Create Pull Request
-7. ✅ Wait for CI/CD checks to pass
-8. ✅ Review and merge
-9. ✅ Delete feature branch
-
-**See [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) for the complete mandatory workflow.**
-
-### First-Time Setup
-
-```bash
-# Install code generation tools (one-time, if you plan to modify schema/API)
-make install-tools
-
-# Generate code before building/testing
-make generate
-```
-
-### Code Generation Pipeline
-
-```
-platform/database/schema.sql → PostgreSQL → tbls → ERD docs (auto-generated)
-                             ↓
-                            sqlc → generated/db/*.go
-
-platform/api-spec/spec.yaml → oapi-codegen → generated/api/server.gen.go
-                            → openapi-typescript → services/web/lib/api/schema.ts
-```
-
-**When to regenerate:**
-- **CI/CD (automatic):** On every build/test in GitHub Actions
-- **Local (manual):** After changing platform/database/schema.sql, platform/api-spec/spec.yaml, or SQL queries
-- **After pull:** When pulling changes that modify source files
-
-```bash
-# Backend (Go)
-make generate           # Generate everything
-make generate-api       # After changing platform/api-spec/spec.yaml
-make generate-db        # After changing SQL queries
-make generate-erd       # After changing platform/database/schema.sql
-
-# Frontend (Web)
-cd services/web
-npm run generate:api    # After changing platform/api-spec/spec.yaml
-```
-
-**Note:** Generated code is NOT committed to git:
-- `generated/` directory (Go code)
-- `services/web/lib/api/schema.ts` (TypeScript types)
-- CI/CD handles generation automatically
-
-**See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed development guide.**
-
----
-
-## Critical Rules
-
-### 1. Code Generation
-
-**Never edit generated files** - they are completely regenerated!
-
-**After changing database schema:**
-```bash
-# 1. Edit the schema
-vim platform/database/schema.sql
-
-# 2. Regenerate EVERYTHING (code + docs)
-make generate
-
-# 3. Commit both schema and docs
-git add platform/database/schema.sql docs/
-git commit -m "feat: Add new table"
-```
-
-**What gets committed:**
-- ✅ Source files (`platform/database/schema.sql`, `platform/api-spec/spec.yaml`, SQL queries)
-- ✅ Documentation (`docs/` - ERD, README, per-table docs)
-- ❌ Generated code (`generated/` - NOT committed)
-
-**CI/CD enforces this:**
-- Regenerates Go code automatically (not committed)
-- Regenerates ERD docs and FAILS if they're stale
-- This catches when developers forget to run `make generate-erd`
-
----
-
-### 2. Multi-Tenancy
-
-**All queries must be org-scoped:**
-
-```go
-// ✅ GOOD - Scoped to organization
-employees, err := db.ListEmployees(ctx, orgID, status)
-
-// ❌ BAD - Exposes all orgs!
-employees, err := db.ListAllEmployees(ctx)
-```
-
-Use Row-Level Security (RLS) policies as safety net.
-
-**See [docs/DATABASE.md](./docs/DATABASE.md#multi-tenancy) for RLS details.**
-
----
-
-### 3. Testing Strategy
-
-**⚠️ CRITICAL: ALWAYS FOLLOW STRICT TDD (Test-Driven Development)**
-
-**Mandatory TDD Workflow:**
-```
-✅ 1. Write failing tests FIRST
-✅ 2. Implement minimal code to pass tests
-✅ 3. Refactor with tests passing
-❌ NEVER write implementation before tests
-```
-
-**Target Coverage:** 85% overall (excluding generated code)
-
-**See [docs/TESTING.md](./docs/TESTING.md) for complete testing guide with TDD workflow.**
-
----
-
-### 4. UI Development
-
-**⚠️ CRITICAL: Wireframes Required for All UI Changes**
-
-**Mandatory UI Workflow:**
-- ✅ Request wireframes from **product-designer agent** FIRST (for new pages)
-- ✅ Request updated wireframes from **product-designer agent** (for page changes)
-- ✅ Wait for wireframes before starting implementation
-- ✅ Implement UI matching wireframes exactly
-- ❌ NEVER implement new UI without wireframes from product-designer
-
-**Wireframe Location:** `docs/wireframes/` directory
-
-**Product Designer Agent:** Senior UX/UI expert responsible for all wireframes, user flows, and accessibility compliance.
-
-**See:**
-- [.claude/agents/product-designer.md](./.claude/agents/product-designer.md) - Product designer agent configuration
-- [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#ui-development) - Complete UI workflow
-
----
-
-### 5. Release Management
-
-**Use the Release Manager Skill for all releases** - ensures consistency across all agents.
-
-**Quick Release Checklist:**
-- ✅ All CI/CD checks passing
-- ✅ All tests passing
-- ✅ Milestone issues closed
-- ✅ On main branch, clean working tree
-- ✅ Documentation updated
-- ✅ Create annotated git tag
-- ✅ Push tag to remote
-- ✅ Create GitHub Release
-
-**See [.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md) for complete workflow.**
-**See [docs/WORKFLOWS.md](./docs/WORKFLOWS.md) for milestone planning.**
-
----
-
-### 6. Debugging Best Practices
-
-**The Golden Rule: Check the Data, Not Just the Code**
-
-When integration tests or CLI operations fail unexpectedly:
-
-1. ✅ **Add Request/Response Logging First**
-2. ✅ **Verify Database State** - Foreign keys, seed data
-3. ✅ **Check for Stale Cache** - `~/.ubik/`, binaries
-4. ✅ **Rebuild Binaries** - Ensure latest code
-
-**Common Pitfalls:**
-- ❌ Assuming code is wrong when data is wrong
-- ❌ Not checking cache invalidation
-- ❌ Testing with stale binaries
-- ❌ Missing org-level configurations
-
-**See [docs/DEBUGGING.md](./docs/DEBUGGING.md) for complete debugging guide with real-world examples.**
-
----
-
-### 7. PR-Based Development Workflow
-
-**⚠️ CRITICAL: ALL code changes MUST go through Pull Requests**
-
-**Branch Protection Enforcement:**
-- ✅ Direct commits to `main` are **BLOCKED** by branch protection
-- ✅ All changes require Pull Request approval
-- ✅ Branches auto-delete after PR merge
-
-**Mandatory PR Workflow:**
-
-1. **Create Feature Branch:**
-   ```bash
-   # Format: feature/{issue-number}-{description}
-   git checkout -b feature/138-update-prompts
-   ```
-
-2. **PR Title Format (REQUIRED):**
-   ```
-   feat: Description (#138)
-   fix: Bug description (#139)
-   chore: Maintenance task (#140)
-   ```
-   **The issue number in title is critical for automatic linking!**
-
-3. **Automatic Status Transitions (GitHub Actions):**
-   - ✅ PR opened → Issue gets `status/in-review` label + comment
-   - ✅ PR merged → Issue gets `status/done` label, closes automatically
-   - ✅ Branch deleted automatically after merge
-
-4. **CI Checks (MANDATORY):**
-   - ✅ All tests must pass
-   - ✅ Lint checks must pass
-   - ✅ Build must succeed
-   - ❌ **NEVER merge with failing CI**
-
-**What's Automated:**
-- Issue status updates (`status/in-review`, `status/done`)
-- Issue closure (via `Closes #123` or PR title)
-- Branch deletion after merge
-- Status comments on issues
-
-**What You Still Do:**
-- Create feature branch
-- Write code following TDD
-- Create PR with proper title format
-- Wait for CI checks to pass
-- Merge PR when approved
-
-**See [docs/DEV_WORKFLOW.md](./docs/DEV_WORKFLOW.md) for complete workflow guide.**
-
----
-
-### 8. Docker Testing
-
-**⚠️ CRITICAL: ALWAYS Test Docker Builds Locally Before Deploying**
-
-**Mandatory Docker Testing Workflow:**
-
-```bash
-# 1. Build Docker image locally
-docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
-
-# 2. Verify files are in the image
-docker run --rm ubik-api-test ls -la /app/
-docker run --rm ubik-api-test ls -la /app/platform/api-spec/
-
-# 3. Test container locally
-docker run --rm -p 8080:8080 \
-  -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
-  ubik-api-test
-
-# 4. Verify endpoints work
-curl http://localhost:8080/api/v1/health
-curl http://localhost:8080/api/docs/
-```
-
-**Why This Matters:**
-- ❌ Local build ≠ Docker build
-- ❌ Files in local filesystem may not be in Docker image
-- ❌ Routes may behave differently in containers
-- ✅ Testing Docker locally catches environment-specific bugs
-
-**When Docker Testing is Required:**
-- ✅ ANY change to Dockerfile
-- ✅ ANY change to cloudbuild.yaml
-- ✅ New API endpoints added
-- ✅ New file resources needed (configs, specs, images)
-- ✅ Environment variable changes
-
-**See [docs/DOCKER_TESTING_CHECKLIST.md](./docs/DOCKER_TESTING_CHECKLIST.md) for complete Docker testing guide.**
-
----
-
-### 8. Context Efficiency & Tool Selection
-
-**⚠️ CRITICAL: Choose the Right Tool for the Task**
-
-**Context Usage Awareness:**
-
-Different tools have vastly different context costs:
-
-```
-Playwright browser snapshot:  ~12,000 tokens (Swagger UI page)
-Screenshot:                   ~1,000 tokens
-Curl API test:               ~100 tokens
-```
-
-**Golden Rule: Use the simplest tool that accomplishes the task**
-
-**For API Testing:**
-```bash
-# ✅ GOOD - Direct and efficient
-curl http://localhost:8080/api/v1/health
-
-# ❌ BAD - Wastes ~50k tokens for same result
-# playwright navigate → click endpoint → try it out → execute
-```
-
-**For UI Verification:**
-```bash
-# ✅ GOOD - Visual confirmation
-browser_navigate + browser_take_screenshot  # ~1k tokens
-
-# ❌ BAD - Full accessibility tree
-browser_navigate + analyze full snapshot    # ~12k tokens
-```
-
-**When to Use Each Tool:**
-
-**Playwright (browser automation):**
-- ✅ Testing UI interactions (forms, buttons, navigation)
-- ✅ Visual regression testing (screenshots)
-- ✅ E2E workflows requiring browser state
-- ❌ API endpoint testing (use curl)
-- ❌ Browsing complex pages (use screenshots)
-
-**Curl (HTTP requests):**
-- ✅ API endpoint testing
-- ✅ Health checks
-- ✅ Quick response verification
-- ✅ Testing authentication flows
-
-**Read/Grep (file operations):**
-- ✅ Searching code
-- ✅ Verifying file contents
-- ✅ Configuration inspection
-
-**Best Practices:**
-1. **Test APIs with curl, not Playwright**
-2. **Use screenshots for visual verification**
-3. **Minimize page snapshots** - only when you need to interact with specific elements
-4. **Chain operations efficiently** - navigate → act → verify, don't browse
-5. **Monitor token usage** - if a single operation uses >5k tokens, consider alternatives
-
-**Example - Testing Swagger UI:**
-
-```bash
-# ❌ BAD - Uses ~48k tokens
-playwright navigate to /api/docs
-playwright click health endpoint      # 12k tokens
-playwright click "Try it out"         # 12k tokens
-playwright click "Execute"            # 12k tokens
-verify response                       # 12k tokens
-
-# ✅ GOOD - Uses ~2k tokens
-playwright navigate to /api/docs      # 12k tokens (verify UI loads)
-playwright take_screenshot            # 1k tokens
-curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
-```
-
-**Token Budget Awareness:**
-- 200k token context limit
-- Large Playwright snapshots can consume 5-10% per interaction
-- 4-5 page loads = 50k tokens = 25% of context
-- Be mindful and efficient
-
----
-
-# STATUS & ROADMAP
-
-*Current progress and next steps*
 
 ---
 
 ## Current Status
 
+**Version:** 0.2.0
 **Last Updated:** 2025-11-05
-**Version:** 0.2.0 🎉
-**Status:** 🟢 **CLI Phase 4 Complete - Ready for v0.2.0 Release**
-**Git Tag:** `v0.1.0` (v0.2.0 tag pending)
+**Status:** CLI Phase 4 Complete - Ready for v0.2.0 Release
 
-### 🎉 Milestone v0.1.0 Released!
+### Completed
+- ✅ **Phase 1:** Database schema, code generation, documentation
+- ✅ **Phase 2:** API (v0.1.0) - 39 endpoints, 144+ tests, 73-88% coverage
+- ✅ **Phase 3:** CLI (v0.2.0) - Authentication, sync, Docker integration, 79 tests
 
-**39 API endpoints implemented** | **144+ tests passing** | **73-88% coverage**
-
-**See [docs/MILESTONE_v0.1.md](./docs/MILESTONE_v0.1.md) for complete release notes.**
-
-### Key Achievements
-
-**Phase 1 - Foundation ✅**
-- Complete database schema (20 tables + 3 views)
-- Code generation pipeline
-- OpenAPI spec for all endpoints
-- Local development environment
-
-**Phase 2 - API ✅ (v0.1.0)**
-- Complete authentication system (JWT + sessions)
-- Employee, Organization, Team, Role management
-- Agent catalog and configurations
-- 144+ tests passing, 73-88% coverage
-
-**Phase 3 - CLI ✅ (v0.2.0)**
-- Authentication (`ubik login`, `ubik logout`)
-- Config sync (`ubik sync`)
-- Docker integration (container management)
-- Interactive mode (`ubik` command)
-- Agent management (`ubik agents`)
-- **79 tests passing, 100% pass rate**
-
-**See [docs/CLI_PHASE4_COMPLETE.md](./docs/CLI_PHASE4_COMPLETE.md) for CLI v0.2.0 details.**
-
----
-
-## Roadmap
-
-### Completed ✅
-- **Phase 1:** Database schema, code generation, documentation
-- **Phase 2:** Authentication, Employee/Org/Team/Role APIs (v0.1.0)
-- **Phase 3:** CLI client (v0.2.0)
-
-### In Progress 🎯
-- **v0.3.0:** Web UI Foundation
-  - Next.js 14 + shadcn/ui
-  - Authentication & session management
-  - Agent catalog page
-  - Configuration management UI
+### In Progress
+- 🎯 **v0.3.0:** Web UI Foundation - Next.js 14, authentication, agent catalog
 
 ### Planned
 - **v0.4.0:** Analytics & Approvals
@@ -738,6 +341,7 @@ curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
 - **v1.0.0:** Production Release
 
 **See [docs/WORKFLOWS.md](./docs/WORKFLOWS.md) for milestone planning.**
+**See [docs/RELEASES.md](./docs/RELEASES.md) for release history.**
 
 ---
 
@@ -746,30 +350,25 @@ curl http://localhost:8080/api/v1/health  # 100 tokens (test endpoint)
 ### When to Update Docs
 
 **Always update when:**
-- Adding new tables → Regenerate ERD: `make generate-erd`
+- Adding tables → `make generate-erd`
 - Adding API endpoints → Update `platform/api-spec/spec.yaml`
 - Adding SQL queries → Add to `platform/database/sqlc/queries/*.sql`
-- Changing architecture → Update this file (CLAUDE.md)
+- Changing architecture → Update CLAUDE.md files
 
 **How to update:**
 ```bash
-# Database docs (auto-generated)
-make generate-erd
+# Auto-generated docs
+make generate-erd       # Regenerate ERD and schema docs
 
-# Manual docs (update manually)
+# Manual docs
 vim CLAUDE.md
-vim docs/TESTING.md
-vim docs/DEVELOPMENT.md
+vim services/*/CLAUDE.md
+vim docs/*.md
 ```
 
 ---
 
-**For implementation details, see linked documents above.**
-
-**Key Links:**
-- 🚀 [Get Started](./docs/QUICKSTART.md)
-- 🧪 [Testing Guide](./docs/TESTING.md)
-- 🔧 [Development Guide](./docs/DEVELOPMENT.md)
-- 📊 [Database ERD](./docs/ERD.md)
-- 📖 [Quick Reference](./docs/QUICK_REFERENCE.md)
-- 🔍 [Debugging Guide](./docs/DEBUGGING.md)
+**For service-specific details, see:**
+- [services/api/CLAUDE.md](./services/api/CLAUDE.md) - API server development
+- [services/cli/CLAUDE.md](./services/cli/CLAUDE.md) - CLI client development
+- [services/web/CLAUDE.md](./services/web/CLAUDE.md) - Web UI development
