@@ -283,13 +283,6 @@ curl http://localhost:8080/api/v1/health
 - **[services/cli/CLAUDE.md](./services/cli/CLAUDE.md)** - CLI client development
 - **[services/web/CLAUDE.md](./services/web/CLAUDE.md)** - Web UI development
 
-### CLI Documentation
-- **[docs/CLI_CLIENT.md](./docs/CLI_CLIENT.md)** - CLI architecture
-- **[docs/CLI_PHASE1_COMPLETE.md](./docs/CLI_PHASE1_COMPLETE.md)** - Phase 1 details
-- **[docs/CLI_PHASE2_COMPLETE.md](./docs/CLI_PHASE2_COMPLETE.md)** - Phase 2 details
-- **[docs/CLI_PHASE3_COMPLETE.md](./docs/CLI_PHASE3_COMPLETE.md)** - Phase 3 details
-- **[docs/CLI_PHASE4_COMPLETE.md](./docs/CLI_PHASE4_COMPLETE.md)** - Phase 4 details
-
 ### Operations
 - **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning
 - **[.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md)** - Release workflow
