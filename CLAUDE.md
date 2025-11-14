@@ -1,6 +1,6 @@
 # Ubik Enterprise — AI Agent Management Platform
 
-**Multi-tenant SaaS platform for centralized AI agent and MCP configuration management**
+**Multi-tenant SaaS platform for centralized AI agent configuration management**
 
 ---
 
@@ -26,7 +26,7 @@
 
 ### Purpose
 
-Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Code, Cursor, Windsurf) and MCP server configurations for employees.
+Multi-tenant SaaS platform for companies to centrally manage AI agent (Claude Code, Cursor, Windsurf) configurations for employees.
 
 **Core Value:** Centralized control, policy enforcement, and visibility into AI agent usage across organizations.
 
@@ -57,27 +57,7 @@ platform/api-spec/spec.yaml → oapi-codegen → generated/api/*.go
 
 ## Essential Commands
 
-```bash
-# First-time setup
-make db-up              # Start PostgreSQL
-make install-tools      # Install code generation tools (one-time)
-make install-hooks      # Install git hooks (one-time)
-make generate           # Generate all code from schema/spec
-
-# Development
-make test               # Run all tests
-make build              # Build all services
-make clean              # Clean generated files
-
-# Database
-make db-reset           # Reset database (⚠️ deletes data)
-
-# Code generation (after schema/API changes)
-make generate           # Regenerate everything
-make generate-api       # API code only
-make generate-db        # Database code only
-make generate-erd       # Documentation only
-```
+Run `make` to see all available commands.
 
 **See [docs/QUICK_REFERENCE.md](./docs/QUICK_REFERENCE.md) for complete command reference.**
 
@@ -147,7 +127,7 @@ Row-Level Security (RLS) policies provide safety net, but queries MUST include `
 
 ### 4. Pull Request Workflow
 
-**CRITICAL: ALL code changes MUST go through Pull Requests**
+**CRITICAL:** ALL code changes MUST go through Pull Requests
 
 Branch protection BLOCKS direct commits to `main`.
 
@@ -169,13 +149,14 @@ Branch protection BLOCKS direct commits to `main`.
 
 ### 5. UI Development
 
-**CRITICAL: Wireframes required for ALL UI changes**
+**CRITICAL:** User stories first, THEN wireframes, THEN implementation
 
 **Mandatory UI workflow:**
-1. ✅ Request wireframes from **product-designer agent** FIRST
-2. ✅ Wait for wireframes approval
-3. ✅ Implement UI matching wireframes exactly
-4. ❌ NEVER implement UI without wireframes
+1. ✅ Define user stories FIRST
+2. ✅ Request wireframes from **product-designer agent**
+3. ✅ Wait for wireframes approval
+4. ✅ Implement UI matching wireframes exactly
+5. ❌ NEVER implement UI without wireframes
 
 **Wireframe location:** `docs/wireframes/`
 
@@ -205,7 +186,7 @@ When tests or operations fail unexpectedly:
 
 ### 7. Docker Testing
 
-**CRITICAL: ALWAYS test Docker builds locally before deploying**
+**CRITICAL:** ALWAYS test Docker builds locally before deploying
 
 ```bash
 # 1. Build image
@@ -233,29 +214,9 @@ curl http://localhost:8080/api/v1/health
 
 ### 8. Tool Selection
 
-**CRITICAL: Choose the right tool for the task**
+**CRITICAL:** Choose the right tool for the task
 
-**Context cost awareness:**
-- Playwright snapshot: ~12,000 tokens
-- Screenshot: ~1,000 tokens
-- Curl: ~100 tokens
-
-**Golden rule: Use the simplest tool that accomplishes the task**
-
-**API testing:**
-```bash
-# ✅ GOOD - Efficient
-curl http://localhost:8080/api/v1/health
-
-# ❌ BAD - Wastes ~50k tokens
-# Using Playwright to test API endpoints
-```
-
-**Best practices:**
-1. Test APIs with curl, not Playwright
-2. Use screenshots for visual verification
-3. Minimize page snapshots
-4. Monitor token usage
+**Golden rule:** Use the simplest tool that accomplishes the task (curl for APIs, screenshots for visual verification)
 
 ---
 
@@ -281,18 +242,12 @@ curl http://localhost:8080/api/v1/health
 ### Service Documentation
 - **[services/api/CLAUDE.md](./services/api/CLAUDE.md)** - API server development
 - **[services/cli/CLAUDE.md](./services/cli/CLAUDE.md)** - CLI client development
-- **[services/web/CLAUDE.md](./services/web/CLAUDE.md)** - Web UI development
+- **[services/web/CLAUDE.md](./services/web/CLAUDE.md)** - Web UI development (user stories → wireframes → implementation)
 
 ### Operations
 - **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** - Milestone planning
 - **[.claude/skills/release-manager/SKILL.md](./.claude/skills/release-manager/SKILL.md)** - Release workflow
 - **[docs/RELEASES.md](./docs/RELEASES.md)** - Release history
-
-### AI Agents
-- **[.claude/agents/go-backend-developer.md](./.claude/agents/go-backend-developer.md)** - Backend development
-- **[.claude/agents/frontend-developer.md](./.claude/agents/frontend-developer.md)** - Frontend development
-- **[.claude/agents/product-designer.md](./.claude/agents/product-designer.md)** - UI/UX design
-- **[.claude/agents/README.md](./.claude/agents/README.md)** - Complete agent documentation
 
 ---
 
@@ -304,7 +259,7 @@ curl http://localhost:8080/api/v1/health
 |----------|--------|-------|
 | Core Organization | organizations, subscriptions, teams, roles, employees | 5 |
 | Agent Management | agent_catalog, tools, policies, agent_tools, agent_policies, team_policies, employee_agent_configs | 7 |
-| MCP Configuration | mcp_categories, mcp_catalog, employee_mcp_configs | 3 |
+| Configuration | mcp_categories, mcp_catalog, employee_mcp_configs | 3 |
 | Authentication | sessions | 1 |
 | Approvals | agent_requests, approvals | 2 |
 | Analytics | activity_logs, usage_records | 2 |
@@ -314,52 +269,6 @@ curl http://localhost:8080/api/v1/health
 
 ---
 
-## Current Status
-
-**Version:** 0.2.0
-**Last Updated:** 2025-11-05
-**Status:** CLI Phase 4 Complete - Ready for v0.2.0 Release
-
-### Completed
-- ✅ **Phase 1:** Database schema, code generation, documentation
-- ✅ **Phase 2:** API (v0.1.0) - 39 endpoints, 144+ tests, 73-88% coverage
-- ✅ **Phase 3:** CLI (v0.2.0) - Authentication, sync, Docker integration, 79 tests
-
-### In Progress
-- 🎯 **v0.3.0:** Web UI Foundation - Next.js 14, authentication, agent catalog
-
-### Planned
-- **v0.4.0:** Analytics & Approvals
-- **v0.5.0:** System Prompts & MCP Management
-- **v1.0.0:** Production Release
-
-**See [docs/WORKFLOWS.md](./docs/WORKFLOWS.md) for milestone planning.**
-**See [docs/RELEASES.md](./docs/RELEASES.md) for release history.**
-
----
-
-## Documentation Standards
-
-### When to Update Docs
-
-**Always update when:**
-- Adding tables → `make generate-erd`
-- Adding API endpoints → Update `platform/api-spec/spec.yaml`
-- Adding SQL queries → Add to `platform/database/sqlc/queries/*.sql`
-- Changing architecture → Update CLAUDE.md files
-
-**How to update:**
-```bash
-# Auto-generated docs
-make generate-erd       # Regenerate ERD and schema docs
-
-# Manual docs
-vim CLAUDE.md
-vim services/*/CLAUDE.md
-vim docs/*.md
-```
-
----
 
 **For service-specific details, see:**
 - [services/api/CLAUDE.md](./services/api/CLAUDE.md) - API server development

@@ -13,7 +13,6 @@ Multi-tenant REST API providing authentication, organization management, agent c
 - JWT-based authentication with session management
 - Multi-tenant organization, team, employee management
 - AI agent configuration management
-- MCP server configuration
 - Approval workflows
 - Activity logging and usage analytics
 - WebSocket for real-time updates
@@ -22,26 +21,7 @@ Multi-tenant REST API providing authentication, organization management, agent c
 
 ## Essential Commands
 
-```bash
-# From services/api/ directory
-make build              # Build server binary to ../../bin/ubik-server
-make test               # Run all tests with coverage
-make test-unit          # Unit tests only (fast)
-make test-integration   # Integration tests (requires Docker)
-make coverage           # View coverage report
-
-# From repository root
-make db-up              # Start PostgreSQL
-make db-reset           # Reset database (⚠️ deletes data)
-make generate           # Regenerate all code (after schema/API changes)
-make generate-api       # Regenerate API code only
-make generate-db        # Regenerate database code only
-
-# Docker testing
-make docker-build       # Build Docker image
-make docker-test        # Verify image contents
-make docker-run         # Run container locally
-```
+Run `make` to see available commands (from services/api/ or repository root).
 
 ---
 
@@ -451,28 +431,8 @@ gcloud builds submit --config=cloudbuild-api.yaml
 
 ## Related Documentation
 
-**Root Documentation:**
-- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview, critical rules
-- [../../docs/QUICKSTART.md](../../docs/QUICKSTART.md) - First-time setup
-- [../../docs/QUICK_REFERENCE.md](../../docs/QUICK_REFERENCE.md) - Command reference
-
-**Development:**
-- [../../docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) - Development workflow
-- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow (mandatory)
-- [../../docs/TESTING.md](../../docs/TESTING.md) - Complete testing guide
-- [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) - Debugging strategies
-
-**Database:**
-- [../../docs/DATABASE.md](../../docs/DATABASE.md) - Database operations
-- [../../docs/ERD.md](../../docs/ERD.md) - Visual schema
-
-**Other Services:**
-- [../cli/CLAUDE.md](../cli/CLAUDE.md) - CLI client development
+- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview
+- [../../docs/TESTING.md](../../docs/TESTING.md) - Testing guide
+- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow
+- [../cli/CLAUDE.md](../cli/CLAUDE.md) - CLI development
 - [../web/CLAUDE.md](../web/CLAUDE.md) - Web UI development
-
----
-
-**Quick Links:**
-- API Docs (local): http://localhost:8080/api/docs
-- Adminer (DB UI): http://localhost:8081
-- Database: `postgres://ubik:ubik_dev_password@localhost:5432/ubik`

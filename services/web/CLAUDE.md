@@ -14,7 +14,6 @@ Next.js 14 admin panel providing web-based management interface for organization
 - Dashboard for central management hub
 - Employee, team, organization management
 - Agent configuration UI
-- MCP server management
 - Approval workflows
 - Analytics and usage tracking
 - Dark mode support
@@ -25,21 +24,7 @@ Next.js 14 admin panel providing web-based management interface for organization
 
 ## Essential Commands
 
-```bash
-# From services/web/ directory
-npm install             # Install dependencies
-npm run dev            # Start development server (http://localhost:3000)
-npm run build          # Production build
-npm start              # Start production server
-npm run type-check     # TypeScript type checking
-npm run lint           # ESLint
-npm test               # Unit tests (Vitest)
-npm run test:e2e       # E2E tests (Playwright)
-npm run generate:api   # Generate TypeScript types from OpenAPI spec
-
-# From repository root
-make dev-web           # Start web dev server
-```
+Run `make` to see available commands (from services/web/ or repository root).
 
 ---
 
@@ -173,29 +158,31 @@ export async function logout() {
 
 ## UI Development Workflow
 
-**CRITICAL: Wireframes required for ALL UI changes**
+**CRITICAL:** User stories first, THEN wireframes, THEN implementation
 
 ### Mandatory Workflow
 
-1. **Request wireframes FIRST:**
-   - For new pages: Request from **product-designer agent**
-   - For page changes: Request updated wireframes
+1. **Define user stories FIRST:**
+   - What user needs to accomplish
+   - Who the user is
+   - Why they need this feature
+
+2. **Request wireframes from product-designer agent:**
+   - Provide user stories
    - Location: `../../docs/wireframes/`
 
-2. **Wait for wireframes approval:**
-   - Review wireframes with team
-   - Get designer sign-off
+3. **Wait for wireframes approval:**
+   - Review wireframes
    - Understand user flows
 
-3. **Implement UI matching wireframes:**
+4. **Implement UI matching wireframes:**
    - Use shadcn/ui components
    - Follow Tailwind CSS conventions
    - Maintain accessibility standards
 
-4. **NEVER implement without wireframes:**
+5. **NEVER implement without user stories + wireframes:**
    - ❌ No ad-hoc UI design
-   - ❌ No "I'll just make it look nice"
-   - ✅ Always follow approved wireframes
+   - ✅ Always follow approved process
 
 **See [../../.claude/agents/product-designer.md](../../.claude/agents/product-designer.md) for designer agent.**
 
@@ -273,38 +260,6 @@ test('user can login', async ({ page }) => {
 
 ---
 
-## Accessibility
-
-**CRITICAL: WCAG AA compliance is mandatory**
-
-### Requirements
-
-- ✅ Semantic HTML (`<nav>`, `<main>`, `<button>`)
-- ✅ Proper ARIA labels and roles
-- ✅ Keyboard navigation support
-- ✅ Focus visible indicators
-- ✅ Screen reader friendly
-- ✅ Sufficient color contrast
-- ✅ Responsive text sizing
-
-### Testing
-
-**Tools:**
-- axe DevTools (automated)
-- Manual keyboard navigation
-- Screen reader (VoiceOver, NVDA)
-
-**Keyboard testing:**
-```bash
-# Navigate with Tab key
-# Activate with Enter/Space
-# Close with Escape
-# Navigate menus with arrows
-```
-
-**See [../../.claude/agents/product-designer.md](../../.claude/agents/product-designer.md) for accessibility requirements.**
-
----
 
 ## Styling
 
@@ -349,18 +304,19 @@ Implemented using `next-themes`:
 
 ### Adding New Page
 
-1. **Request wireframes from product-designer agent**
-2. **Wait for approval**
-3. **Create route:**
+1. **Define user stories**
+2. **Request wireframes from product-designer agent**
+3. **Wait for approval**
+4. **Create route:**
    ```typescript
    // app/(dashboard)/employees/page.tsx
    export default function EmployeesPage() {
      return <div>Employees</div>
    }
    ```
-4. **Add to navigation**
-5. **Write tests**
-6. **Implement UI matching wireframes**
+5. **Add to navigation**
+6. **Write tests**
+7. **Implement UI matching wireframes**
 
 ### Adding Form
 
@@ -409,21 +365,7 @@ export function EmployeeForm() {
 
 ## Common Pitfalls
 
-### 1. Token Usage
-
-```bash
-# ❌ BAD - Using Playwright for API testing
-# Uses ~12,000 tokens per page snapshot
-playwright navigate → click → test
-
-# ✅ GOOD - Use curl for API, Playwright for UI only
-curl http://localhost:8080/api/v1/health  # 100 tokens
-playwright take_screenshot  # 1,000 tokens
-```
-
-**See [../../CLAUDE.md](../../CLAUDE.md#8-tool-selection) for tool selection guide.**
-
-### 2. Server/Client Component Confusion
+### 1. Server/Client Component Confusion
 
 ```typescript
 // ❌ BAD - Using useState in Server Component
@@ -438,24 +380,24 @@ export default function Page() {
 }
 ```
 
-### 3. Missing Wireframes
+### 2. Missing User Stories/Wireframes
 
 ```typescript
-// ❌ BAD - Implementing UI without wireframes
+// ❌ BAD - Implementing UI without user stories + wireframes
 // Just making it up as I go...
 
-// ✅ GOOD - Following approved wireframes
-// Implementing based on docs/wireframes/employees-list.png
+// ✅ GOOD - Following user stories → wireframes → implementation
+// Based on user story + docs/wireframes/employees-list.png
 ```
 
-### 4. Stale Types
+### 3. Stale Types
 
 ```bash
 # ✅ Regenerate after API spec changes
 npm run generate:api
 ```
 
-### 5. API Not Running
+### 4. API Not Running
 
 ```bash
 # ✅ Start API server (from root)
@@ -510,30 +452,9 @@ gcloud builds submit --config=cloudbuild-web.yaml
 
 ## Related Documentation
 
-**Root Documentation:**
-- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview, critical rules
-- [../../docs/QUICKSTART.md](../../docs/QUICKSTART.md) - First-time setup
-- [../../docs/QUICK_REFERENCE.md](../../docs/QUICK_REFERENCE.md) - Command reference
-
-**Development:**
-- [../../docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) - Development workflow
-- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow (mandatory)
-- [../../docs/TESTING.md](../../docs/TESTING.md) - Complete testing guide
-- [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) - Debugging strategies
-
-**Design:**
+- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview
+- [../../docs/TESTING.md](../../docs/TESTING.md) - Testing guide
+- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow
 - [../../.claude/agents/product-designer.md](../../.claude/agents/product-designer.md) - Product designer agent
-- [../../docs/wireframes/](../../docs/wireframes/) - UI wireframes
-
-**Other Services:**
-- [../api/CLAUDE.md](../api/CLAUDE.md) - API server development
-- [../cli/CLAUDE.md](../cli/CLAUDE.md) - CLI client development
-
----
-
-**Quick Links:**
-- Next.js Docs: https://nextjs.org/docs
-- shadcn/ui: https://ui.shadcn.com
-- Tailwind CSS: https://tailwindcss.com
-- API Docs (local): http://localhost:8080/api/docs
-- Web UI (local): http://localhost:3000
+- [../api/CLAUDE.md](../api/CLAUDE.md) - API development
+- [../cli/CLAUDE.md](../cli/CLAUDE.md) - CLI development

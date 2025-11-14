@@ -11,8 +11,8 @@ Self-contained Go CLI that allows employees to sync AI agent configurations from
 
 **Key capabilities:**
 - Secure authentication (login/logout with JWT)
-- Configuration sync (download agent configs, MCP settings)
-- Docker integration (manage MCP server containers)
+- Configuration sync (download agent configs)
+- Docker integration (manage server containers)
 - Interactive mode (user-friendly interface)
 - Agent management (list, inspect configured agents)
 - Activity logging (track CLI usage)
@@ -23,41 +23,7 @@ Self-contained Go CLI that allows employees to sync AI agent configurations from
 
 ## Essential Commands
 
-```bash
-# From services/cli/ directory
-make build              # Build CLI to ../../bin/ubik-cli
-make test               # Run all tests
-make test-unit          # Unit tests only (fast)
-make test-integration   # Integration tests
-make coverage           # View coverage report
-make install            # Install to /usr/local/bin/ubik
-make uninstall          # Remove from system
-
-# From repository root
-make build-cli          # Build CLI
-make install-cli        # Install CLI to system
-make uninstall-cli      # Remove from system
-```
-
-### Using the CLI
-
-```bash
-# Authentication
-ubik login              # Login to platform
-ubik logout             # Clear session
-
-# Configuration sync
-ubik sync               # Sync all configurations
-ubik sync --agent claude  # Sync specific agent
-ubik sync --dry-run     # Show what would be synced
-
-# Agent management
-ubik agents             # List configured agents
-ubik agents show claude-code  # Show agent details
-
-# Interactive mode
-ubik                    # Launch interactive interface
-```
+Run `make` to see available commands (from services/cli/ or repository root).
 
 ---
 
@@ -92,7 +58,7 @@ services/cli/
 │   ├── agents.go       # Agent management
 │   ├── docker.go       # Docker SDK wrapper
 │   ├── container.go    # Container lifecycle
-│   ├── proxy.go        # MCP proxy server
+│   ├── proxy.go        # Proxy server
 │   ├── config.go       # Local config management
 │   └── workspace.go    # Workspace detection
 └── tests/
@@ -484,28 +450,8 @@ make build-all
 
 ## Related Documentation
 
-**Root Documentation:**
-- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview, critical rules
-- [../../docs/QUICKSTART.md](../../docs/QUICKSTART.md) - First-time setup
-- [../../docs/QUICK_REFERENCE.md](../../docs/QUICK_REFERENCE.md) - Command reference
-
-**Development:**
-- [../../docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) - Development workflow
-- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow (mandatory)
-- [../../docs/TESTING.md](../../docs/TESTING.md) - Complete testing guide
-- [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) - Debugging strategies
-
-**CLI Specific:**
-- [../../docs/CLI_CLIENT.md](../../docs/CLI_CLIENT.md) - CLI architecture
-- [../../docs/CLI_PHASE4_COMPLETE.md](../../docs/CLI_PHASE4_COMPLETE.md) - Latest phase details
-
-**Other Services:**
-- [../api/CLAUDE.md](../api/CLAUDE.md) - API server development
+- [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview
+- [../../docs/TESTING.md](../../docs/TESTING.md) - Testing guide
+- [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow
+- [../api/CLAUDE.md](../api/CLAUDE.md) - API development
 - [../web/CLAUDE.md](../web/CLAUDE.md) - Web UI development
-
----
-
-**Quick Links:**
-- API Docs (local): http://localhost:8080/api/docs
-- CLI Config: `~/.ubik/config.json`
-- CLI Logs: `~/.ubik/logs/`
