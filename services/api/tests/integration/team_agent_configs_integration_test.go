@@ -406,7 +406,7 @@ func TestUpdateTeamAgentConfig_Integration_Success(t *testing.T) {
 	// Update config
 	isEnabled := false
 	newConfig := map[string]interface{}{
-		"max_tokens": float64(8000),
+		"max_tokens":  float64(8000),
 		"temperature": 0.9,
 	}
 	reqBody := api.UpdateTeamAgentConfigRequest{

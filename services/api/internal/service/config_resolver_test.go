@@ -31,8 +31,8 @@ func TestResolveAgentConfig_OrgOnly(t *testing.T) {
 
 	// Mock employee
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false}, // No team
 	}
 
@@ -46,10 +46,10 @@ func TestResolveAgentConfig_OrgOnly(t *testing.T) {
 
 	// Mock org config
 	orgConfig := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agentID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agentID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
 		IsEnabled: true,
 	}
 
@@ -95,8 +95,8 @@ func TestResolveAgentConfig_TeamOverride(t *testing.T) {
 
 	// Mock employee with team
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
 	}
 
@@ -109,10 +109,10 @@ func TestResolveAgentConfig_TeamOverride(t *testing.T) {
 
 	// Org config (base)
 	orgConfig := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agentID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agentID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
 		IsEnabled: true,
 	}
 
@@ -148,9 +148,9 @@ func TestResolveAgentConfig_TeamOverride(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 	assert.True(t, result.IsEnabled)
-	assert.Equal(t, "claude-3-5-sonnet-20241022", result.Config["model"])      // From org
-	assert.Equal(t, float64(0.5), result.Config["temperature"])                 // From team (overridden)
-	assert.Equal(t, float64(8192), result.Config["max_tokens"])                 // From org
+	assert.Equal(t, "claude-3-5-sonnet-20241022", result.Config["model"]) // From org
+	assert.Equal(t, float64(0.5), result.Config["temperature"])           // From team (overridden)
+	assert.Equal(t, float64(8192), result.Config["max_tokens"])           // From org
 }
 
 // TestResolveAgentConfig_EmployeeOverride tests full hierarchy
@@ -168,8 +168,8 @@ func TestResolveAgentConfig_EmployeeOverride(t *testing.T) {
 	teamID := uuid.New()
 
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
 	}
 
@@ -182,10 +182,10 @@ func TestResolveAgentConfig_EmployeeOverride(t *testing.T) {
 
 	// Org config (base)
 	orgConfig := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agentID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agentID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022","temperature":0.2,"max_tokens":8192}`),
 		IsEnabled: true,
 	}
 
@@ -234,9 +234,9 @@ func TestResolveAgentConfig_EmployeeOverride(t *testing.T) {
 	// Verify - should have merged all three levels
 	require.NoError(t, err)
 	assert.True(t, result.IsEnabled)
-	assert.Equal(t, "claude-3-5-sonnet-20241022", result.Config["model"])      // From org
-	assert.Equal(t, float64(0.5), result.Config["temperature"])                 // From team
-	assert.Equal(t, float64(16384), result.Config["max_tokens"])               // From employee (overridden)
+	assert.Equal(t, "claude-3-5-sonnet-20241022", result.Config["model"]) // From org
+	assert.Equal(t, float64(0.5), result.Config["temperature"])           // From team
+	assert.Equal(t, float64(16384), result.Config["max_tokens"])          // From employee (overridden)
 }
 
 // TestResolveAgentConfig_DisabledAtTeam tests that disabled at team level makes agent disabled
@@ -254,8 +254,8 @@ func TestResolveAgentConfig_DisabledAtTeam(t *testing.T) {
 	teamID := uuid.New()
 
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
 	}
 
@@ -268,10 +268,10 @@ func TestResolveAgentConfig_DisabledAtTeam(t *testing.T) {
 
 	// Org config (enabled)
 	orgConfig := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agentID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agentID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
 		IsEnabled: true,
 	}
 
@@ -324,8 +324,8 @@ func TestResolveAgentConfig_SystemPrompts(t *testing.T) {
 	teamID := uuid.New()
 
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
 	}
 
@@ -337,10 +337,10 @@ func TestResolveAgentConfig_SystemPrompts(t *testing.T) {
 	}
 
 	orgConfig := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agentID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agentID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
 		IsEnabled: true,
 	}
 
@@ -412,8 +412,8 @@ func TestResolveAgentConfig_NoOrgConfig(t *testing.T) {
 	orgID := uuid.New()
 
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},
 	}
 
@@ -456,31 +456,31 @@ func TestResolveEmployeeAgents(t *testing.T) {
 	agent2ID := uuid.New()
 
 	employee := db.Employee{
-		ID:    employeeID,
-		OrgID: orgID,
+		ID:     employeeID,
+		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},
 	}
 
 	// Two org configs
 	orgConfigs := []db.ListOrgAgentConfigsRow{
 		{
-			ID:      uuid.New(),
-			OrgID:   orgID,
-			AgentID: agent1ID,
-			Config:  []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
-			IsEnabled: true,
-			AgentName: "Claude Code",
-			AgentType: "claude-code",
+			ID:            uuid.New(),
+			OrgID:         orgID,
+			AgentID:       agent1ID,
+			Config:        []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+			IsEnabled:     true,
+			AgentName:     "Claude Code",
+			AgentType:     "claude-code",
 			AgentProvider: "anthropic",
 		},
 		{
-			ID:      uuid.New(),
-			OrgID:   orgID,
-			AgentID: agent2ID,
-			Config:  []byte(`{"model":"gpt-4o"}`),
-			IsEnabled: true,
-			AgentName: "Cursor",
-			AgentType: "cursor",
+			ID:            uuid.New(),
+			OrgID:         orgID,
+			AgentID:       agent2ID,
+			Config:        []byte(`{"model":"gpt-4o"}`),
+			IsEnabled:     true,
+			AgentName:     "Cursor",
+			AgentType:     "cursor",
 			AgentProvider: "openai",
 		},
 	}
@@ -500,18 +500,18 @@ func TestResolveEmployeeAgents(t *testing.T) {
 	}
 
 	orgConfig1 := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agent1ID,
-		Config:  []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agent1ID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
 		IsEnabled: true,
 	}
 
 	orgConfig2 := db.OrgAgentConfig{
-		ID:      uuid.New(),
-		OrgID:   orgID,
-		AgentID: agent2ID,
-		Config:  []byte(`{"model":"gpt-4o"}`),
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agent2ID,
+		Config:    []byte(`{"model":"gpt-4o"}`),
 		IsEnabled: true,
 	}
 

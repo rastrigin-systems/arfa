@@ -236,4 +236,3 @@ func TestListLogs_WithSessionFilter(t *testing.T) {
 	// Verify response
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
-

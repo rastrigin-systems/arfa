@@ -3,7 +3,7 @@ package logging
 import (
 	"context"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 )
 
 // PlatformAPIClient adapts the CLI PlatformClient to the logging APIClient interface

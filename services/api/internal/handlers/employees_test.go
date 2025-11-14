@@ -75,10 +75,10 @@ func TestListEmployees_Success(t *testing.T) {
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), db.ListEmployeesParams{
 			OrgID:       orgID,
-			Status:      nil,                                        // No status filter (*string = nil)
-			TeamID:      pgtype.UUID{Valid: false},                  // No team filter
-			QueryLimit:  50,                                         // Default limit
-			QueryOffset: 0,                                          // Default offset
+			Status:      nil,                       // No status filter (*string = nil)
+			TeamID:      pgtype.UUID{Valid: false}, // No team filter
+			QueryLimit:  50,                        // Default limit
+			QueryOffset: 0,                         // Default offset
 		}).
 		Return(employees, nil)
 
@@ -154,7 +154,7 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 	mockDB.EXPECT().
 		ListEmployees(gomock.Any(), db.ListEmployeesParams{
 			OrgID:       orgID,
-			Status:      &activeStatus,                              // Status filter applied (*string)
+			Status:      &activeStatus, // Status filter applied (*string)
 			TeamID:      pgtype.UUID{Valid: false},
 			QueryLimit:  50,
 			QueryOffset: 0,
@@ -202,8 +202,8 @@ func TestListEmployees_Pagination(t *testing.T) {
 			OrgID:       orgID,
 			Status:      nil,
 			TeamID:      pgtype.UUID{Valid: false},
-			QueryLimit:  10,  // Custom limit
-			QueryOffset: 20,  // Custom offset
+			QueryLimit:  10, // Custom limit
+			QueryOffset: 20, // Custom offset
 		}).
 		Return([]db.ListEmployeesRow{}, nil)
 
@@ -761,15 +761,15 @@ func TestUpdateEmployee_Success(t *testing.T) {
 			assert.Equal(t, newName, params.FullName)
 
 			return db.Employee{
-				ID:           empID,
-				OrgID:        orgID,
-				Email:        "user@example.com",
-				FullName:     newName,
-				RoleID:       roleID,
-				Status:       "active",
-				Preferences:  []byte("{}"),
-				CreatedAt:    pgtype.Timestamp{Valid: true},
-				UpdatedAt:    pgtype.Timestamp{Valid: true},
+				ID:          empID,
+				OrgID:       orgID,
+				Email:       "user@example.com",
+				FullName:    newName,
+				RoleID:      roleID,
+				Status:      "active",
+				Preferences: []byte("{}"),
+				CreatedAt:   pgtype.Timestamp{Valid: true},
+				UpdatedAt:   pgtype.Timestamp{Valid: true},
 			}, nil
 		})
 
@@ -837,16 +837,16 @@ func TestUpdateEmployee_MultipleFields(t *testing.T) {
 			assert.Equal(t, teamID[:], params.TeamID.Bytes[:])
 
 			return db.Employee{
-				ID:           empID,
-				OrgID:        orgID,
-				Email:        "user@example.com",
-				FullName:     "New Name",
-				RoleID:       newRoleID,
-				Status:       "suspended",
-				TeamID:       params.TeamID,
-				Preferences:  []byte("{}"),
-				CreatedAt:    pgtype.Timestamp{Valid: true},
-				UpdatedAt:    pgtype.Timestamp{Valid: true},
+				ID:          empID,
+				OrgID:       orgID,
+				Email:       "user@example.com",
+				FullName:    "New Name",
+				RoleID:      newRoleID,
+				Status:      "suspended",
+				TeamID:      params.TeamID,
+				Preferences: []byte("{}"),
+				CreatedAt:   pgtype.Timestamp{Valid: true},
+				UpdatedAt:   pgtype.Timestamp{Valid: true},
 			}, nil
 		})
 

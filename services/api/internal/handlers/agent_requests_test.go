@@ -192,10 +192,10 @@ func TestListAgentRequests_Success_NoFilters(t *testing.T) {
 	// Expect list query with no filters, default pagination
 	mockDB.EXPECT().
 		ListAgentRequests(gomock.Any(), db.ListAgentRequestsParams{
-			Status:      nil, // No status filter
+			Status:      nil,                       // No status filter
 			EmployeeID:  pgtype.UUID{Valid: false}, // No employee filter
-			QueryLimit:  100, // Default limit from handler
-			QueryOffset: 0,   // Default offset
+			QueryLimit:  100,                       // Default limit from handler
+			QueryOffset: 0,                         // Default offset
 		}).
 		Return(requests, nil)
 

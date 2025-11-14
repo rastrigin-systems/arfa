@@ -186,10 +186,10 @@ func TestConfigCascade_OrgAndTeam(t *testing.T) {
 	assert.True(t, resolved.IsEnabled)
 
 	// Verify config cascade: org → team
-	assert.Equal(t, "claude-3-5-sonnet-20241022", resolved.Config["model"])      // from org
-	assert.Equal(t, float64(0.5), resolved.Config["temperature"])                 // from team (overridden!)
-	assert.Equal(t, float64(8192), resolved.Config["max_tokens"])                 // from team (overridden!)
-	assert.Equal(t, float64(100), resolved.Config["rate_limit_per_hour"])        // from org (inherited)
+	assert.Equal(t, "claude-3-5-sonnet-20241022", resolved.Config["model"]) // from org
+	assert.Equal(t, float64(0.5), resolved.Config["temperature"])           // from team (overridden!)
+	assert.Equal(t, float64(8192), resolved.Config["max_tokens"])           // from team (overridden!)
+	assert.Equal(t, float64(100), resolved.Config["rate_limit_per_hour"])   // from org (inherited)
 
 	t.Logf("✅ Org + Team cascade test passed")
 	t.Logf("   - model: %v (from org)", resolved.Config["model"])
@@ -297,11 +297,11 @@ func TestConfigCascade_FullHierarchy(t *testing.T) {
 	assert.True(t, resolved.IsEnabled)
 
 	// Verify FULL cascade: org → team → employee
-	assert.Equal(t, "claude-3-5-sonnet-20241022", resolved.Config["model"])      // from org (inherited)
-	assert.Equal(t, float64(0.5), resolved.Config["temperature"])                 // from team (team override)
-	assert.Equal(t, float64(16384), resolved.Config["max_tokens"])               // from employee (final override!)
-	assert.Equal(t, float64(100), resolved.Config["rate_limit_per_hour"])        // from org (inherited)
-	assert.Equal(t, float64(75.0), resolved.Config["cost_limit_daily_usd"])      // from team (team override)
+	assert.Equal(t, "claude-3-5-sonnet-20241022", resolved.Config["model"]) // from org (inherited)
+	assert.Equal(t, float64(0.5), resolved.Config["temperature"])           // from team (team override)
+	assert.Equal(t, float64(16384), resolved.Config["max_tokens"])          // from employee (final override!)
+	assert.Equal(t, float64(100), resolved.Config["rate_limit_per_hour"])   // from org (inherited)
+	assert.Equal(t, float64(75.0), resolved.Config["cost_limit_daily_usd"]) // from team (team override)
 
 	t.Logf("✅ Full cascade (org → team → employee) test passed")
 	t.Logf("   📋 Resolved config:")
