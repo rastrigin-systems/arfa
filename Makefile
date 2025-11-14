@@ -63,11 +63,12 @@ install-tools:
 	@which tbls
 	@which mockgen
 
-# Show code generation workflow info (no hooks)
+# Git hooks are managed automatically by pre-commit framework
+# No manual installation needed
 install-hooks:
-	@echo "ℹ️  Code Generation Workflow Information..."
-	@chmod +x scripts/install-hooks.sh
-	@./scripts/install-hooks.sh
+	@echo "ℹ️  Git hooks are installed automatically in .git/hooks/"
+	@echo "   Pre-commit hook regenerates code when schema/API changes"
+	@echo "   No additional setup required"
 
 # Database management
 db-up:

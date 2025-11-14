@@ -14,14 +14,11 @@ This directory contains **cross-cutting scripts** that operate across multiple s
 
 ## Project Management
 
-- **`archive-milestone.sh`** - Closes and archives all issues from a completed milestone
-- **`start-milestone.sh`** - Creates a new milestone and populates it with prioritized issues
-- **`split-large-tasks.sh`** - Helper for breaking down large tasks into subtasks
 - **`update-project-status.sh`** - Updates GitHub Project status for an issue
 
-## Git & Development Workflow
-
-- **`install-hooks.sh`** - Git hooks installation script (deprecated as of v0.3.0)
+> **Note:** Milestone management (`archive-milestone.sh`, `start-milestone.sh`, `split-large-tasks.sh`)
+> has been replaced by the **github-task-manager** skill and **release-manager** skill.
+> See `.claude/skills/` for modern workflow automation.
 
 ---
 
@@ -40,8 +37,7 @@ This directory contains **cross-cutting scripts** that operate across multiple s
 Most scripts include usage instructions in their headers. Run with `--help` or `-h` for more information:
 
 ```bash
-./scripts/archive-milestone.sh --help
-./scripts/start-milestone.sh --help
+./scripts/update-project-status.sh --help
 ```
 
 ## Prerequisites
