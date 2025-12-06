@@ -13,6 +13,18 @@ vi.mock('@/lib/hooks/useActivityLogs', () => ({
   })),
 }));
 
+vi.mock('@/lib/hooks/useEmployees', () => ({
+  useEmployees: vi.fn(() => ({
+    data: { employees: [], total: 0 },
+  })),
+}));
+
+vi.mock('@/lib/hooks/useAgents', () => ({
+  useAgents: vi.fn(() => ({
+    data: { agents: [], total: 0 },
+  })),
+}));
+
 vi.mock('@/lib/hooks/useLogWebSocket', () => ({
   useLogWebSocket: vi.fn(() => ({
     connected: true,
