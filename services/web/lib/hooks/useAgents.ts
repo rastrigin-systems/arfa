@@ -17,8 +17,6 @@ export interface AgentsParams {
 export interface AgentsResponse {
   agents: Agent[];
   total: number;
-  page: number;
-  limit: number;
 }
 
 export function useAgents(params: AgentsParams) {

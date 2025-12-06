@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
   try {
     // Assuming /agents endpoint exists and follows similar pattern
     const { data, error } = await apiClient.GET('/agents', {
-      params: { query },
       headers: {
         Authorization: `Bearer ${token}`,
       },
