@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Download, Loader2 } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
 
 interface ExportMenuProps {
   filters: {
@@ -33,33 +32,24 @@ export function ExportMenu({ filters }: ExportMenuProps) {
     setIsExporting(true);
 
     try {
-      type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced';
-      type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin';
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (filters.session_id) params.append('session_id', filters.session_id);
+      if (filters.employee_id) params.append('employee_id', filters.employee_id);
+      if (filters.agent_id) params.append('agent_id', filters.agent_id);
+      if (filters.event_type) params.append('event_type', filters.event_type);
+      if (filters.event_category) params.append('event_category', filters.event_category);
+      if (filters.start_date) params.append('start_date', filters.start_date);
+      if (filters.end_date) params.append('end_date', filters.end_date);
+      if (filters.search) params.append('search', filters.search);
 
-      const { data, error } = await apiClient.GET('/logs/export', {
-        params: {
-          query: {
-            format,
-            session_id: filters.session_id,
-            employee_id: filters.employee_id,
-            agent_id: filters.agent_id,
-            event_type: filters.event_type as EventType,
-            event_category: filters.event_category as EventCategory,
-            start_date: filters.start_date,
-            end_date: filters.end_date,
-          },
-        },
-      });
+      const response = await fetch(`/api/logs/export?${params.toString()}`);
 
-      if (error) {
+      if (!response.ok) {
         throw new Error('Failed to export logs');
       }
 
-      // Create a blob and download
-      const blob = new Blob([data as BlobPart], {
-        type: format === 'json' ? 'application/json' : 'text/csv',
-      });
-
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
