@@ -63,7 +63,7 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify files were created
-	agentsDir := filepath.Join(tempDir, ".ubik", "agents")
+	agentsDir := filepath.Join(tempDir, ".ubik", "config", "agents")
 	_, err = os.Stat(agentsDir)
 	require.NoError(t, err)
 
