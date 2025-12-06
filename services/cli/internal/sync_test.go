@@ -22,10 +22,10 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	// Create test agent configs
 	configs := []AgentConfig{
 		{
-			AgentID:    "agent-1",
-			AgentName:  "Claude Code",
-			AgentType:  "claude-code",
-			IsEnabled:  true,
+			AgentID:   "agent-1",
+			AgentName: "Claude Code",
+			AgentType: "claude-code",
+			IsEnabled: true,
 			Configuration: map[string]interface{}{
 				"model": "claude-3-5-sonnet-20241022",
 			},
@@ -42,10 +42,10 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 			},
 		},
 		{
-			AgentID:    "agent-2",
-			AgentName:  "Aider",
-			AgentType:  "aider",
-			IsEnabled:  false,
+			AgentID:   "agent-2",
+			AgentName: "Aider",
+			AgentType: "aider",
+			IsEnabled: false,
 			Configuration: map[string]interface{}{
 				"version": "0.15.0",
 			},

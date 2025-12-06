@@ -74,17 +74,17 @@ func TestCreateInvitation_Success(t *testing.T) {
 			assert.Len(t, params.Token, 64)  // 256 bits = 64 hex chars
 
 			return db.Invitation{
-				ID:         createdInvitationID,
-				OrgID:      params.OrgID,
-				InviterID:  params.InviterID,
-				Email:      params.Email,
-				RoleID:     params.RoleID,
-				TeamID:     params.TeamID,
-				Token:      params.Token,
-				Status:     "pending",
-				ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true},
-				CreatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
-				UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
+				ID:        createdInvitationID,
+				OrgID:     params.OrgID,
+				InviterID: params.InviterID,
+				Email:     params.Email,
+				RoleID:    params.RoleID,
+				TeamID:    params.TeamID,
+				Token:     params.Token,
+				Status:    "pending",
+				ExpiresAt: pgtype.Timestamp{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true},
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			}, nil
 		})
 

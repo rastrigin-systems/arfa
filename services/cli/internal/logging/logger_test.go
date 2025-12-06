@@ -40,10 +40,10 @@ func TestNewLogger(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &Config{
-				Enabled:    tt.enabled,
-				BatchSize:  100,
+				Enabled:       tt.enabled,
+				BatchSize:     100,
 				BatchInterval: 5 * time.Second,
-				QueueDir:   t.TempDir(),
+				QueueDir:      t.TempDir(),
 			}
 
 			logger, err := NewLogger(config, nil)
@@ -69,10 +69,10 @@ func TestLoggerDisabledViaEnv(t *testing.T) {
 	defer os.Unsetenv("UBIK_NO_LOGGING")
 
 	config := &Config{
-		Enabled:    true, // explicitly enabled in config
-		BatchSize:  100,
+		Enabled:       true, // explicitly enabled in config
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	logger, err := NewLogger(config, nil)
@@ -83,10 +83,10 @@ func TestLoggerDisabledViaEnv(t *testing.T) {
 // TestSessionTracking tests session start/end events
 func TestSessionTracking(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -140,10 +140,10 @@ func TestSessionTracking(t *testing.T) {
 // TestStdinCapture tests capturing stdin
 func TestStdinCapture(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -189,10 +189,10 @@ func TestStdinCapture(t *testing.T) {
 // TestIOCapture tests capturing stdin/stdout/stderr
 func TestIOCapture(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -251,10 +251,10 @@ func TestIOCapture(t *testing.T) {
 // TestBatchSending tests batching behavior
 func TestBatchSending(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  5, // small batch for testing
+		Enabled:       true,
+		BatchSize:     5,                // small batch for testing
 		BatchInterval: 10 * time.Second, // long interval, we'll hit size limit first
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -298,17 +298,17 @@ func TestOfflineQueue(t *testing.T) {
 	queueDir := t.TempDir()
 
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   queueDir,
-		MaxRetries: 2, // Fast retries for testing
-		RetryBackoff: 50 * time.Millisecond,
+		QueueDir:      queueDir,
+		MaxRetries:    2, // Fast retries for testing
+		RetryBackoff:  50 * time.Millisecond,
 	}
 
 	// Create API client that always fails
 	mockAPI := &mockAPIClient{
-		logs:      make([]LogEntry, 0),
+		logs:       make([]LogEntry, 0),
 		shouldFail: true,
 	}
 
@@ -364,11 +364,11 @@ func TestOfflineQueue(t *testing.T) {
 // TestRetryWithBackoff tests exponential backoff retry logic
 func TestRetryWithBackoff(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
-		MaxRetries: 3,
+		QueueDir:      t.TempDir(),
+		MaxRetries:    3,
 	}
 
 	mockAPI := &mockAPIClient{
@@ -401,10 +401,10 @@ func TestRetryWithBackoff(t *testing.T) {
 // TestConcurrentLogging tests thread safety
 func TestConcurrentLogging(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -451,10 +451,10 @@ func TestConcurrentLogging(t *testing.T) {
 // TestLoggerClose tests cleanup on close
 func TestLoggerClose(t *testing.T) {
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   t.TempDir(),
+		QueueDir:      t.TempDir(),
 	}
 
 	mockAPI := &mockAPIClient{
@@ -483,17 +483,17 @@ func TestQueuePersistence(t *testing.T) {
 	queueDir := t.TempDir()
 
 	config := &Config{
-		Enabled:    true,
-		BatchSize:  100,
+		Enabled:       true,
+		BatchSize:     100,
 		BatchInterval: 5 * time.Second,
-		QueueDir:   queueDir,
-		MaxRetries: 2, // Fast retries for testing
-		RetryBackoff: 50 * time.Millisecond,
+		QueueDir:      queueDir,
+		MaxRetries:    2, // Fast retries for testing
+		RetryBackoff:  50 * time.Millisecond,
 	}
 
 	// First logger with failing API
 	mockAPI1 := &mockAPIClient{
-		logs:      make([]LogEntry, 0),
+		logs:       make([]LogEntry, 0),
 		shouldFail: true,
 	}
 
@@ -515,7 +515,7 @@ func TestQueuePersistence(t *testing.T) {
 
 	// Second logger with working API
 	mockAPI2 := &mockAPIClient{
-		logs:      make([]LogEntry, 0),
+		logs:       make([]LogEntry, 0),
 		shouldFail: false,
 	}
 

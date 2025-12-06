@@ -34,16 +34,16 @@ func TestGetCurrentSubscription_Success(t *testing.T) {
 
 	// Create mock subscription
 	subscription := db.Subscription{
-		ID:                  subID,
-		OrgID:               orgID,
-		PlanType:            "professional",
-		MonthlyBudgetUsd:    mustParseInt(t, 100000), // $1000.00
-		CurrentSpendingUsd:  mustParseInt(t, 45000),  // $450.00
-		BillingPeriodStart:  pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
-		BillingPeriodEnd:    pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
-		Status:              "active",
-		CreatedAt:           pgtype.Timestamp{Time: time.Now().AddDate(0, -1, 0), Valid: true},
-		UpdatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
+		ID:                 subID,
+		OrgID:              orgID,
+		PlanType:           "professional",
+		MonthlyBudgetUsd:   mustParseInt(t, 100000), // $1000.00
+		CurrentSpendingUsd: mustParseInt(t, 45000),  // $450.00
+		BillingPeriodStart: pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
+		BillingPeriodEnd:   pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
+		Status:             "active",
+		CreatedAt:          pgtype.Timestamp{Time: time.Now().AddDate(0, -1, 0), Valid: true},
+		UpdatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 
 	// Mock subscription query
@@ -106,16 +106,16 @@ func TestGetCurrentSubscription_ZeroBudget(t *testing.T) {
 
 	// Create subscription with zero budget
 	subscription := db.Subscription{
-		ID:                  subID,
-		OrgID:               orgID,
-		PlanType:            "free",
-		MonthlyBudgetUsd:    mustParseInt(t, 0),       // $0.00
-		CurrentSpendingUsd:  mustParseInt(t, 1000),    // $10.00
-		BillingPeriodStart:  pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
-		BillingPeriodEnd:    pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
-		Status:              "active",
-		CreatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
-		UpdatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
+		ID:                 subID,
+		OrgID:              orgID,
+		PlanType:           "free",
+		MonthlyBudgetUsd:   mustParseInt(t, 0),    // $0.00
+		CurrentSpendingUsd: mustParseInt(t, 1000), // $10.00
+		BillingPeriodStart: pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
+		BillingPeriodEnd:   pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
+		Status:             "active",
+		CreatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 
 	mockDB.EXPECT().
@@ -153,16 +153,16 @@ func TestGetCurrentSubscription_FullBudgetSpent(t *testing.T) {
 
 	// Create subscription with budget fully spent
 	subscription := db.Subscription{
-		ID:                  subID,
-		OrgID:               orgID,
-		PlanType:            "starter",
-		MonthlyBudgetUsd:    mustParseInt(t, 50000),  // $500.00
-		CurrentSpendingUsd:  mustParseInt(t, 50000),  // $500.00 (100%)
-		BillingPeriodStart:  pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
-		BillingPeriodEnd:    pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
-		Status:              "active",
-		CreatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
-		UpdatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
+		ID:                 subID,
+		OrgID:              orgID,
+		PlanType:           "starter",
+		MonthlyBudgetUsd:   mustParseInt(t, 50000), // $500.00
+		CurrentSpendingUsd: mustParseInt(t, 50000), // $500.00 (100%)
+		BillingPeriodStart: pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
+		BillingPeriodEnd:   pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
+		Status:             "active",
+		CreatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 
 	mockDB.EXPECT().
@@ -200,16 +200,16 @@ func TestGetCurrentSubscription_OverBudget(t *testing.T) {
 
 	// Create subscription with spending over budget
 	subscription := db.Subscription{
-		ID:                  subID,
-		OrgID:               orgID,
-		PlanType:            "starter",
-		MonthlyBudgetUsd:    mustParseInt(t, 50000),  // $500.00
-		CurrentSpendingUsd:  mustParseInt(t, 65000),  // $650.00 (130%)
-		BillingPeriodStart:  pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
-		BillingPeriodEnd:    pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
-		Status:              "active",
-		CreatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
-		UpdatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
+		ID:                 subID,
+		OrgID:              orgID,
+		PlanType:           "starter",
+		MonthlyBudgetUsd:   mustParseInt(t, 50000), // $500.00
+		CurrentSpendingUsd: mustParseInt(t, 65000), // $650.00 (130%)
+		BillingPeriodStart: pgtype.Timestamp{Time: time.Now().AddDate(0, 0, -15), Valid: true},
+		BillingPeriodEnd:   pgtype.Timestamp{Time: time.Now().AddDate(0, 0, 15), Valid: true},
+		Status:             "active",
+		CreatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 
 	mockDB.EXPECT().
@@ -315,16 +315,16 @@ func TestGetCurrentSubscription_DifferentPlanTypes(t *testing.T) {
 			subID := uuid.New()
 
 			subscription := db.Subscription{
-				ID:                  subID,
-				OrgID:               orgID,
-				PlanType:            tc.planType,
-				MonthlyBudgetUsd:    mustParseInt(t, 100000),
-				CurrentSpendingUsd:  mustParseInt(t, 25000),
-				BillingPeriodStart:  pgtype.Timestamp{Time: time.Now(), Valid: true},
-				BillingPeriodEnd:    pgtype.Timestamp{Time: time.Now(), Valid: true},
-				Status:              tc.status,
-				CreatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
-				UpdatedAt:           pgtype.Timestamp{Time: time.Now(), Valid: true},
+				ID:                 subID,
+				OrgID:              orgID,
+				PlanType:           tc.planType,
+				MonthlyBudgetUsd:   mustParseInt(t, 100000),
+				CurrentSpendingUsd: mustParseInt(t, 25000),
+				BillingPeriodStart: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				BillingPeriodEnd:   pgtype.Timestamp{Time: time.Now(), Valid: true},
+				Status:             tc.status,
+				CreatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt:          pgtype.Timestamp{Time: time.Now(), Valid: true},
 			}
 
 			mockDB.EXPECT().

@@ -531,9 +531,9 @@ func TestRegister_Success(t *testing.T) {
 		CreateOrganization(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, params db.CreateOrganizationParams) (db.Organization, error) {
 			return db.Organization{
-				ID:   orgID,
-				Name: params.Name,
-				Slug: params.Slug,
+				ID:        orgID,
+				Name:      params.Name,
+				Slug:      params.Slug,
 				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
 				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			}, nil

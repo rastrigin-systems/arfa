@@ -50,11 +50,11 @@ func TestWorkspaceService_SelectWorkspace(t *testing.T) {
 			errorContains: "does not exist",
 		},
 		{
-			name:          "Empty string after trimming uses default",
-			input:         "  \n",
-			defaultPath:   ".",
-			expectedPath:  ".",
-			shouldError:   false,
+			name:         "Empty string after trimming uses default",
+			input:        "  \n",
+			defaultPath:  ".",
+			expectedPath: ".",
+			shouldError:  false,
 		},
 	}
 

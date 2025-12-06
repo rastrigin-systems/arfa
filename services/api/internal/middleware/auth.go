@@ -16,8 +16,8 @@ import (
 type contextKey string
 
 const (
-	employeeIDKey contextKey = "employee_id"
-	orgIDKey      contextKey = "org_id"
+	employeeIDKey  contextKey = "employee_id"
+	orgIDKey       contextKey = "org_id"
 	sessionDataKey contextKey = "session_data"
 )
 

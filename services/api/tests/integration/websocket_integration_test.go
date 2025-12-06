@@ -21,8 +21,8 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
 	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/tests/testutil"
 	ws "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
+	"github.com/sergeirastrigin/ubik-enterprise/services/api/tests/testutil"
 )
 
 func TestWebSocketIntegration(t *testing.T) {
@@ -229,7 +229,6 @@ func TestWebSocketIntegration(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
-
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		require.Equal(t, http.StatusCreated, w.Code)
@@ -288,7 +287,6 @@ func TestWebSocketIntegration(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/logs", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
-
 
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)

@@ -20,15 +20,15 @@ func NewSyncHandler(database db.Querier) *SyncHandler {
 
 // AgentConfig represents an agent configuration in the sync response
 type AgentConfig struct {
-	ID             string                 `json:"id"`
-	Name           string                 `json:"name"`
-	Type           string                 `json:"type"`
-	Filename       string                 `json:"filename"`
-	Content        string                 `json:"content,omitempty"`
-	Config         map[string]interface{} `json:"config"`
-	Provider       string                 `json:"provider"`
-	IsEnabled      bool                   `json:"is_enabled"`
-	Version        string                 `json:"version"`
+	ID        string                 `json:"id"`
+	Name      string                 `json:"name"`
+	Type      string                 `json:"type"`
+	Filename  string                 `json:"filename"`
+	Content   string                 `json:"content,omitempty"`
+	Config    map[string]interface{} `json:"config"`
+	Provider  string                 `json:"provider"`
+	IsEnabled bool                   `json:"is_enabled"`
+	Version   string                 `json:"version"`
 }
 
 // SkillConfig represents a skill configuration in the sync response
@@ -45,15 +45,15 @@ type SkillConfig struct {
 
 // MCPServerConfig represents an MCP server configuration in the sync response
 type MCPServerConfig struct {
-	ID               string                 `json:"id"`
-	Name             string                 `json:"name"`
-	Provider         string                 `json:"provider"`
-	Version          string                 `json:"version"`
-	Description      string                 `json:"description,omitempty"`
-	DockerImage      string                 `json:"docker_image"`
-	Config           map[string]interface{} `json:"config"`
-	RequiredEnvVars  []string               `json:"required_env_vars,omitempty"`
-	IsEnabled        bool                   `json:"is_enabled"`
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	Provider        string                 `json:"provider"`
+	Version         string                 `json:"version"`
+	Description     string                 `json:"description,omitempty"`
+	DockerImage     string                 `json:"docker_image"`
+	Config          map[string]interface{} `json:"config"`
+	RequiredEnvVars []string               `json:"required_env_vars,omitempty"`
+	IsEnabled       bool                   `json:"is_enabled"`
 }
 
 // ClaudeCodeSyncResponse represents the complete sync response

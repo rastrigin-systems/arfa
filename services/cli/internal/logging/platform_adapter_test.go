@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

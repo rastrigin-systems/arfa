@@ -15,18 +15,18 @@ import (
 
 // loggerImpl implements the Logger interface
 type loggerImpl struct {
-	config      *Config
-	api         APIClient
-	sessionID   uuid.UUID
-	agentID     string
-	startTime   time.Time
-	buffer      []LogEntry
-	bufferMu    sync.Mutex
-	done        chan struct{}
-	wg          sync.WaitGroup
-	queueDir    string
-	ctx         context.Context
-	cancel      context.CancelFunc
+	config    *Config
+	api       APIClient
+	sessionID uuid.UUID
+	agentID   string
+	startTime time.Time
+	buffer    []LogEntry
+	bufferMu  sync.Mutex
+	done      chan struct{}
+	wg        sync.WaitGroup
+	queueDir  string
+	ctx       context.Context
+	cancel    context.CancelFunc
 }
 
 // NewLogger creates a new logger instance
@@ -71,13 +71,13 @@ func NewLogger(config *Config, api APIClient) (Logger, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	logger := &loggerImpl{
-		config:    config,
-		api:       api,
-		buffer:    make([]LogEntry, 0, config.BatchSize),
-		done:      make(chan struct{}),
-		queueDir:  config.QueueDir,
-		ctx:       ctx,
-		cancel:    cancel,
+		config:   config,
+		api:      api,
+		buffer:   make([]LogEntry, 0, config.BatchSize),
+		done:     make(chan struct{}),
+		queueDir: config.QueueDir,
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 
 	// Start background workers
@@ -111,7 +111,7 @@ func (l *loggerImpl) EndSession() {
 	duration := time.Since(l.startTime)
 
 	l.LogEvent("session_end", "session", "", map[string]interface{}{
-		"end_time": time.Now(),
+		"end_time":         time.Now(),
 		"duration_seconds": duration.Seconds(),
 	})
 }
@@ -119,8 +119,8 @@ func (l *loggerImpl) EndSession() {
 // InterceptStdout wraps stdout to capture output
 func (l *loggerImpl) InterceptStdout(original io.Writer) io.Writer {
 	return &captureWriter{
-		original: original,
-		logger:   l,
+		original:  original,
+		logger:    l,
 		eventType: "output",
 	}
 }
@@ -128,8 +128,8 @@ func (l *loggerImpl) InterceptStdout(original io.Writer) io.Writer {
 // InterceptStderr wraps stderr to capture errors
 func (l *loggerImpl) InterceptStderr(original io.Writer) io.Writer {
 	return &captureWriter{
-		original: original,
-		logger:   l,
+		original:  original,
+		logger:    l,
 		eventType: "error",
 	}
 }

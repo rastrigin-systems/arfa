@@ -178,7 +178,7 @@ func (pc *PlatformClient) GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, er
 // EffectiveClaudeTokenResponse represents the effective token response
 type EffectiveClaudeTokenResponse struct {
 	Token      string `json:"token"`
-	Source     string `json:"source"`      // "personal" or "company"
+	Source     string `json:"source"` // "personal" or "company"
 	OrgID      string `json:"org_id"`
 	OrgName    string `json:"org_name"`
 	EmployeeID string `json:"employee_id"`
@@ -433,11 +433,11 @@ type LogEntry struct {
 
 // CreateLogRequest represents a single log creation request
 type CreateLogRequest struct {
-	SessionID     *string                `json:"session_id,omitempty"`
-	AgentID       *string                `json:"agent_id,omitempty"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Content       *string                `json:"content,omitempty"`
+	SessionID     *string                 `json:"session_id,omitempty"`
+	AgentID       *string                 `json:"agent_id,omitempty"`
+	EventType     string                  `json:"event_type"`
+	EventCategory string                  `json:"event_category"`
+	Content       *string                 `json:"content,omitempty"`
 	Payload       *map[string]interface{} `json:"payload,omitempty"`
 }
 
