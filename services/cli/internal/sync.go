@@ -173,14 +173,14 @@ type agentMetadata struct {
 	IsEnabled bool   `json:"is_enabled"`
 }
 
-// saveAgentConfigs saves agent configs to ~/.ubik/agents/
+// saveAgentConfigs saves agent configs to ~/.ubik/config/agents/
 func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	agentsDir := filepath.Join(homeDir, ".ubik", "agents")
+	agentsDir := filepath.Join(homeDir, ".ubik", "config", "agents")
 	if err := os.MkdirAll(agentsDir, 0700); err != nil {
 		return fmt.Errorf("failed to create agents directory: %w", err)
 	}
@@ -241,7 +241,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	agentsDir := filepath.Join(homeDir, ".ubik", "agents")
+	agentsDir := filepath.Join(homeDir, ".ubik", "config", "agents")
 
 	// Check if agents directory exists
 	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {
