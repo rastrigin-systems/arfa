@@ -10,49 +10,49 @@ import (
 
 func TestMockEmailService_SendInvitation(t *testing.T) {
 	tests := []struct {
-		name       string
-		recipient  string
+		name        string
+		recipient   string
 		inviterName string
-		orgName    string
-		token      string
-		expiresAt  time.Time
-		wantErr    bool
+		orgName     string
+		token       string
+		expiresAt   time.Time
+		wantErr     bool
 	}{
 		{
-			name:       "sends invitation email successfully",
-			recipient:  "newuser@example.com",
+			name:        "sends invitation email successfully",
+			recipient:   "newuser@example.com",
 			inviterName: "John Doe",
-			orgName:    "Acme Corp",
-			token:      "abc123def456",
-			expiresAt:  time.Now().Add(7 * 24 * time.Hour),
-			wantErr:    false,
+			orgName:     "Acme Corp",
+			token:       "abc123def456",
+			expiresAt:   time.Now().Add(7 * 24 * time.Hour),
+			wantErr:     false,
 		},
 		{
-			name:       "handles empty recipient",
-			recipient:  "",
+			name:        "handles empty recipient",
+			recipient:   "",
 			inviterName: "John Doe",
-			orgName:    "Acme Corp",
-			token:      "abc123def456",
-			expiresAt:  time.Now().Add(7 * 24 * time.Hour),
-			wantErr:    true,
+			orgName:     "Acme Corp",
+			token:       "abc123def456",
+			expiresAt:   time.Now().Add(7 * 24 * time.Hour),
+			wantErr:     true,
 		},
 		{
-			name:       "handles empty token",
-			recipient:  "newuser@example.com",
+			name:        "handles empty token",
+			recipient:   "newuser@example.com",
 			inviterName: "John Doe",
-			orgName:    "Acme Corp",
-			token:      "",
-			expiresAt:  time.Now().Add(7 * 24 * time.Hour),
-			wantErr:    true,
+			orgName:     "Acme Corp",
+			token:       "",
+			expiresAt:   time.Now().Add(7 * 24 * time.Hour),
+			wantErr:     true,
 		},
 		{
-			name:       "handles expired invitation",
-			recipient:  "newuser@example.com",
+			name:        "handles expired invitation",
+			recipient:   "newuser@example.com",
 			inviterName: "John Doe",
-			orgName:    "Acme Corp",
-			token:      "abc123def456",
-			expiresAt:  time.Now().Add(-24 * time.Hour), // Already expired
-			wantErr:    true,
+			orgName:     "Acme Corp",
+			token:       "abc123def456",
+			expiresAt:   time.Now().Add(-24 * time.Hour), // Already expired
+			wantErr:     true,
 		},
 	}
 

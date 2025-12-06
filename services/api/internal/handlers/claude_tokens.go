@@ -48,7 +48,7 @@ func (h *ClaudeTokensHandler) SetOrganizationClaudeToken(w http.ResponseWriter, 
 
 	// Update database
 	err = h.db.SetOrganizationClaudeToken(ctx, db.SetOrganizationClaudeTokenParams{
-		ID:              orgID,
+		ID:             orgID,
 		ClaudeApiToken: &req.Token,
 	})
 	if err != nil {
@@ -122,7 +122,7 @@ func (h *ClaudeTokensHandler) SetEmployeeClaudeToken(w http.ResponseWriter, r *h
 
 	// Update database
 	err = h.db.SetEmployeePersonalToken(ctx, db.SetEmployeePersonalTokenParams{
-		ID:                   employeeID,
+		ID:                  employeeID,
 		PersonalClaudeToken: &req.Token,
 	})
 	if err != nil {

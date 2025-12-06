@@ -33,51 +33,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Don't block PR on lint failures
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/*/go.sum
-
-      - name: Setup Go code generation tools (with cache)
-        uses: ./.github/actions/setup-go-tools
-
-      - name: Generate code
-        run: |
-          make generate-api
-          make generate-db
-          make generate-mocks
-
-      - name: Sync workspace
-        run: go work sync
-
-      - name: Run basic Go checks
-        working-directory: services/api
-        run: |
-          echo "🔍 Running go vet..."
-          go vet ./...
-          echo "✅ Go vet passed"
-
-          echo "🔍 Running go fmt check..."
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "❌ Code needs formatting:"
-            gofmt -l .
-            exit 1
-          fi
-          echo "✅ Code is properly formatted"
-
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -133,6 +88,21 @@ jobs:
       - name: Sync workspace
         run: go work sync
 
+      - name: Run Go vet and formatting checks
+        working-directory: services/api
+        run: |
+          echo "🔍 Running go vet..."
+          go vet ./...
+          echo "✅ go vet passed"
+
+          echo "🔍 Ensuring gofmt cleanliness..."
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "❌ Code needs formatting:"
+            gofmt -l .
+            exit 1
+          fi
+          echo "✅ gofmt check passed"
+
       - name: Build API server binary
         run: |
           mkdir -p bin
@@ -183,7 +153,7 @@ jobs:
   docker-build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [lint, build-and-test]
+    needs: [build-and-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     services:

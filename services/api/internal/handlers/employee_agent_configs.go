@@ -539,7 +539,6 @@ func dbEmployeeAgentConfigRowToAPI(config db.EmployeeAgentConfig, agent db.Agent
 	return result
 }
 
-
 // dbCreateEmployeeAgentConfigRowToAPI converts CreateEmployeeAgentConfigRow (from Create) to api format
 func dbCreateEmployeeAgentConfigRowToAPI(row db.CreateEmployeeAgentConfigRow, agent db.Agent) api.EmployeeAgentConfig {
 	// Convert Row type to EmployeeAgentConfig for API response

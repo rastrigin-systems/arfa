@@ -35,7 +35,7 @@ func TestSetOrganizationClaudeToken_Success(t *testing.T) {
 
 	mockDB.EXPECT().
 		SetOrganizationClaudeToken(gomock.Any(), db.SetOrganizationClaudeTokenParams{
-			ID:              orgID,
+			ID:             orgID,
 			ClaudeApiToken: &token,
 		}).
 		Return(nil)
@@ -243,7 +243,7 @@ func TestSetEmployeeClaudeToken_Success(t *testing.T) {
 
 	mockDB.EXPECT().
 		SetEmployeePersonalToken(gomock.Any(), db.SetEmployeePersonalTokenParams{
-			ID:                   employeeID,
+			ID:                  employeeID,
 			PersonalClaudeToken: &token,
 		}).
 		Return(nil)
@@ -357,11 +357,11 @@ func TestGetClaudeTokenStatus_BothTokens(t *testing.T) {
 	mockDB.EXPECT().
 		GetEmployeeTokenStatus(gomock.Any(), employeeID).
 		Return(db.GetEmployeeTokenStatusRow{
-			EmployeeID:          employeeID,
-			FullName:            "Alice Smith",
-			HasPersonalToken:    true,
-			HasCompanyToken:     true,
-			ActiveTokenSource:   "personal",
+			EmployeeID:        employeeID,
+			FullName:          "Alice Smith",
+			HasPersonalToken:  true,
+			HasCompanyToken:   true,
+			ActiveTokenSource: "personal",
 		}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/employees/me/claude-token/status", nil)
@@ -394,11 +394,11 @@ func TestGetClaudeTokenStatus_CompanyTokenOnly(t *testing.T) {
 	mockDB.EXPECT().
 		GetEmployeeTokenStatus(gomock.Any(), employeeID).
 		Return(db.GetEmployeeTokenStatusRow{
-			EmployeeID:          employeeID,
-			FullName:            "Bob Jones",
-			HasPersonalToken:    false,
-			HasCompanyToken:     true,
-			ActiveTokenSource:   "company",
+			EmployeeID:        employeeID,
+			FullName:          "Bob Jones",
+			HasPersonalToken:  false,
+			HasCompanyToken:   true,
+			ActiveTokenSource: "company",
 		}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/employees/me/claude-token/status", nil)
@@ -430,11 +430,11 @@ func TestGetClaudeTokenStatus_NoTokens(t *testing.T) {
 	mockDB.EXPECT().
 		GetEmployeeTokenStatus(gomock.Any(), employeeID).
 		Return(db.GetEmployeeTokenStatusRow{
-			EmployeeID:          employeeID,
-			FullName:            "Charlie Brown",
-			HasPersonalToken:    false,
-			HasCompanyToken:     false,
-			ActiveTokenSource:   "none",
+			EmployeeID:        employeeID,
+			FullName:          "Charlie Brown",
+			HasPersonalToken:  false,
+			HasCompanyToken:   false,
+			ActiveTokenSource: "none",
 		}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/employees/me/claude-token/status", nil)

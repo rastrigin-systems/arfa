@@ -27,15 +27,15 @@ func NewConfigResolver(database db.Querier) *ConfigResolver {
 
 // ResolvedAgentConfig represents a fully resolved agent configuration
 type ResolvedAgentConfig struct {
-	AgentID       uuid.UUID              `json:"agent_id"`
-	AgentName     string                 `json:"agent_name"`
-	AgentType     string                 `json:"agent_type"`
-	Provider      string                 `json:"provider"`
-	Config        map[string]interface{} `json:"config"`          // Merged config
-	SystemPrompt  string                 `json:"system_prompt"`   // Concatenated prompts
-	IsEnabled     bool                   `json:"is_enabled"`      // All levels must be enabled
-	SyncToken     *string                `json:"sync_token"`      // For CLI sync
-	LastSyncedAt  *string                `json:"last_synced_at"`  // ISO8601 timestamp
+	AgentID      uuid.UUID              `json:"agent_id"`
+	AgentName    string                 `json:"agent_name"`
+	AgentType    string                 `json:"agent_type"`
+	Provider     string                 `json:"provider"`
+	Config       map[string]interface{} `json:"config"`         // Merged config
+	SystemPrompt string                 `json:"system_prompt"`  // Concatenated prompts
+	IsEnabled    bool                   `json:"is_enabled"`     // All levels must be enabled
+	SyncToken    *string                `json:"sync_token"`     // For CLI sync
+	LastSyncedAt *string                `json:"last_synced_at"` // ISO8601 timestamp
 }
 
 // ResolveEmployeeAgents resolves all agent configs for an employee

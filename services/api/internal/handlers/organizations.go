@@ -25,10 +25,10 @@ func NewOrganizationsHandler(database db.Querier) *OrganizationsHandler {
 
 // Request/Response types (since not in OpenAPI spec yet)
 type UpdateOrganizationRequest struct {
-	Name                 *string                `json:"name,omitempty"`
+	Name                 *string                 `json:"name,omitempty"`
 	Settings             *map[string]interface{} `json:"settings,omitempty"`
-	MaxEmployees         *int32                 `json:"max_employees,omitempty"`
-	MaxAgentsPerEmployee *int32                 `json:"max_agents_per_employee,omitempty"`
+	MaxEmployees         *int32                  `json:"max_employees,omitempty"`
+	MaxAgentsPerEmployee *int32                  `json:"max_agents_per_employee,omitempty"`
 }
 
 // GetCurrentOrganization handles GET /organizations/current

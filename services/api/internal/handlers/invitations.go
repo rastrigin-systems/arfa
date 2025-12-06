@@ -481,16 +481,16 @@ func mapInvitationToAPI(inv db.Invitation) api.Invitation {
 	email := openapi_types.Email(inv.Email)
 
 	invitation := api.Invitation{
-		Id:         &invitationID,
-		OrgId:      orgID,
-		InviterId:  inviterID,
-		Email:      email,
-		RoleId:     roleID,
-		Token:      inv.Token,
-		Status:     api.InvitationStatus(inv.Status),
-		ExpiresAt:  inv.ExpiresAt.Time,
-		CreatedAt:  &inv.CreatedAt.Time,
-		UpdatedAt:  &inv.UpdatedAt.Time,
+		Id:        &invitationID,
+		OrgId:     orgID,
+		InviterId: inviterID,
+		Email:     email,
+		RoleId:    roleID,
+		Token:     inv.Token,
+		Status:    api.InvitationStatus(inv.Status),
+		ExpiresAt: inv.ExpiresAt.Time,
+		CreatedAt: &inv.CreatedAt.Time,
+		UpdatedAt: &inv.UpdatedAt.Time,
 	}
 
 	// Handle nullable team_id

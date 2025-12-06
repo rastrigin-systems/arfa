@@ -171,6 +171,24 @@
               "name": "Email"
             },
             {
+              "id": "3d3674d3",
+              "name": "Paid"
+            },
+            {
+              "id": "8fad0e62",
+              "name": "Partnerships"
+            }
+          ]
+        },
+        {
+          "id": "PVTSSF_lADODnY0uc4BHgoezg4Po0Y",
+          "name": "Target Audience",
+          "options": [
+            {
+              "id": "4f3ff21a",
+              "name": "IT Admins"
+            },
+            {
               "id": "6eeca7c3",
               "name": "Developers"
             },
@@ -189,7 +207,7 @@
           ]
         },
         {
-          "id": "PVTSSF_lAHOAGhClM4BG_BEzg33zaw",
+          "id": "PVTSSF_lADODnY0uc4BHgoezg4Po0c",
           "name": "Expected Impact",
           "options": [
             {
@@ -203,11 +221,11 @@
           ]
         },
         {
-          "id": "PVTF_lAHOAGhClM4BG_BEzg33ziY",
+          "id": "PVTF_lADODnY0uc4BHgoezg4Po0g",
           "name": "Launch Date"
         },
         {
-          "id": "PVTF_lAHOAGhClM4BG_BEzg33zkU",
+          "id": "PVTF_lADODnY0uc4BHgoezg4Po0k",
           "name": "Metrics"
         }
       ]

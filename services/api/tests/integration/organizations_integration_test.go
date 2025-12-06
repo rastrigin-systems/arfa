@@ -140,9 +140,9 @@ func TestUpdateCurrentOrganization_Integration_FullUpdate(t *testing.T) {
 
 	// Prepare update request
 	updateData := map[string]interface{}{
-		"name":                     "Updated Corporation",
-		"max_employees":            1000,
-		"max_agents_per_employee":  20,
+		"name":                    "Updated Corporation",
+		"max_employees":           1000,
+		"max_agents_per_employee": 20,
 		"settings": map[string]interface{}{
 			"features": []string{"sso", "audit_logs", "saml"},
 			"theme":    "dark",
