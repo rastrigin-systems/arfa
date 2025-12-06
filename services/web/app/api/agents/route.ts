@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import type { components } from '@/lib/api/schema';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
   const token = await getServerToken();
 
@@ -9,18 +11,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const searchParams = request.nextUrl.searchParams;
-  const query: Record<string, any> = {};
-  
-  // Forward common query params
-  ['page', 'limit', 'search', 'category'].forEach(key => {
-    const value = searchParams.get(key);
-    if (value) query[key] = value;
-  });
-
   try {
     // Assuming /agents endpoint exists and follows similar pattern
-    const { data, error } = await apiClient.GET('/agents', {
+    const { data, error }: { data?: components["schemas"]["ListAgentsResponse"]; error?: components["schemas"]["Error"] } = await apiClient.GET('/agents', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -28,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: (error as any).message || 'Failed to fetch agents' },
+        { error: error.message || 'Failed to fetch agents' },
         { status: 500 }
       );
     }

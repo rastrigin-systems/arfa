@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import type { components, paths } from '@/lib/api/schema';
+
+type EmployeeStatus = components["parameters"]["Status"];
+
+function isValidEmployeeStatus(status: string): status is EmployeeStatus {
+  return ['active', 'suspended', 'inactive'].includes(status);
+}
 
 export async function GET(request: NextRequest) {
   const token = await getServerToken();
@@ -10,16 +17,31 @@ export async function GET(request: NextRequest) {
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const query: Record<string, any> = {};
+  const query: paths["/employees"]["get"]["parameters"]["query"] = {};
   
-  // Forward common query params
-  ['page', 'limit', 'search', 'team_id', 'role_id', 'status'].forEach(key => {
-    const value = searchParams.get(key);
-    if (value) query[key] = value;
-  });
+  const page = searchParams.get('page');
+  if (page !== null) {
+    const numPage = parseInt(page, 10);
+    if (!isNaN(numPage)) {
+      query.page = numPage;
+    }
+  }
+
+  const limit = searchParams.get('limit'); // Frontend sends 'limit', backend expects 'per_page'
+  if (limit !== null) {
+    const numLimit = parseInt(limit, 10);
+    if (!isNaN(numLimit)) {
+      query.per_page = numLimit;
+    }
+  }
+
+  const status = searchParams.get('status');
+  if (status !== null && isValidEmployeeStatus(status)) {
+    query.status = status;
+  }
 
   try {
-    const { data, error } = await apiClient.GET('/employees', {
+    const { data, error }: { data?: components["schemas"]["ListEmployeesResponse"]; error?: components["schemas"]["Error"] } = await apiClient.GET('/employees', {
       params: { query },
       headers: {
         Authorization: `Bearer ${token}`,
@@ -28,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: (error as any).message || 'Failed to fetch employees' },
+        { error: error.message || 'Failed to fetch employees' },
         { status: 500 }
       );
     }
