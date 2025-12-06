@@ -3,11 +3,9 @@
 import { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { LogList } from '@/components/logs/LogList';
+import { LogFilters } from '@/components/logs/LogFilters';
 import { ExportMenu } from '@/components/logs/ExportMenu';
 import { useActivityLogs } from '@/lib/hooks/useActivityLogs';
 import { useLogWebSocket } from '@/lib/hooks/useLogWebSocket';
@@ -26,7 +24,6 @@ export interface LogFiltersState {
 
 export function LogsClient() {
   const [filters, setFilters] = useState<LogFiltersState>({});
-  const [search, setSearch] = useState('');
 
   // Fetch logs with filters
   const { logs, isLoading, error, refetch } = useActivityLogs(filters);
@@ -43,12 +40,6 @@ export function LogsClient() {
 
   const handleClearFilters = useCallback(() => {
     setFilters({});
-    setSearch('');
-  }, []);
-
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    setFilters((prev) => ({ ...prev, search: value }));
   }, []);
 
   if (error) {
@@ -100,103 +91,7 @@ export function LogsClient() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Search Logs</Label>
-              <Input
-                id="search"
-                type="text"
-                placeholder="Search logs..."
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-              />
-            </div>
-
-            {/* Date Range */}
-            <div className="space-y-2">
-              <Label htmlFor="date-range">Date Range</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={filters.start_date || ''}
-                  onChange={(e) =>
-                    handleFilterChange({ start_date: e.target.value })
-                  }
-                />
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={filters.end_date || ''}
-                  onChange={(e) =>
-                    handleFilterChange({ end_date: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Employee */}
-            <div className="space-y-2">
-              <Label htmlFor="employee">Employee</Label>
-              <Select
-                value={filters.employee_id || ''}
-                onValueChange={(value) =>
-                  handleFilterChange({ employee_id: value || undefined })
-                }
-              >
-                <SelectTrigger id="employee">
-                  <SelectValue placeholder="All employees" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All employees</SelectItem>
-                  {/* TODO: Load from API */}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Agent */}
-            <div className="space-y-2">
-              <Label htmlFor="agent">Agent</Label>
-              <Select
-                value={filters.agent_id || ''}
-                onValueChange={(value) =>
-                  handleFilterChange({ agent_id: value || undefined })
-                }
-              >
-                <SelectTrigger id="agent">
-                  <SelectValue placeholder="All agents" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All agents</SelectItem>
-                  {/* TODO: Load from API */}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Event Type */}
-            <div className="space-y-2">
-              <Label htmlFor="event-type">Event Type</Label>
-              <Select
-                value={filters.event_type || ''}
-                onValueChange={(value) =>
-                  handleFilterChange({ event_type: value || undefined })
-                }
-              >
-                <SelectTrigger id="event-type">
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="input">Input</SelectItem>
-                  <SelectItem value="output">Output</SelectItem>
-                  <SelectItem value="error">Error</SelectItem>
-                  <SelectItem value="session_start">Session Start</SelectItem>
-                  <SelectItem value="session_end">Session End</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <LogFilters filters={filters} onChange={handleFilterChange} />
         </div>
       </Card>
 

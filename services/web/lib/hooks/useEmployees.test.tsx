@@ -5,8 +5,10 @@ import { useEmployees, useUpdateEmployee } from './useEmployees';
 import * as employeesApi from '../api/employees';
 import type { Employee } from '../api/types';
 
-// Mock API
-vi.mock('../api/employees');
+// Mock API for updateEmployee which still uses the api client
+vi.mock('../api/employees', () => ({
+  updateEmployee: vi.fn(),
+}));
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
@@ -26,6 +28,7 @@ const createWrapper = () => {
 describe('useEmployees', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn();
   });
 
   it('should fetch employees', async () => {
@@ -41,12 +44,17 @@ describe('useEmployees', () => {
       },
     ];
 
-    vi.mocked(employeesApi.getEmployees).mockResolvedValue({
+    const mockResponse = {
       employees: mockEmployees,
       total: 1,
       page: 1,
       limit: 10,
-    });
+    };
+
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response);
 
     const { result } = renderHook(
       () => useEmployees({ page: 1, limit: 10 }),
@@ -60,9 +68,10 @@ describe('useEmployees', () => {
   });
 
   it('should handle errors', async () => {
-    vi.mocked(employeesApi.getEmployees).mockRejectedValue(
-      new Error('Failed to fetch employees')
-    );
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      statusText: 'Server Error',
+    } as Response);
 
     const { result } = renderHook(
       () => useEmployees({ page: 1, limit: 10 }),

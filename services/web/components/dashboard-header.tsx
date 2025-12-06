@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User, Bot } from 'lucide-react';
+import { LogOut, User, Bot, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { logoutAction } from '@/app/(dashboard)/actions';
@@ -32,6 +32,13 @@ export function DashboardHeader({ employee }: { employee: Employee }) {
             >
               <Bot className="h-4 w-4" />
               Agents
+            </Link>
+            <Link
+              href="/logs"
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <History className="h-4 w-4" />
+              Activity Logs
             </Link>
           </nav>
         </div>
