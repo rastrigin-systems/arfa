@@ -396,8 +396,16 @@ format:
 
 # Docker targets (delegate to service)
 docker-build:
-	@echo "🐳 Building Docker image..."
+	@echo "🐳 Building API Docker image..."
 	cd services/api && $(MAKE) docker-build
+
+docker-build-agents:
+	@echo "🐳 Building all agent Docker images..."
+	cd platform/docker-images && $(MAKE) build-all
+
+docker-build-gemini:
+	@echo "🐳 Building Gemini agent Docker image..."
+	cd platform/docker-images && $(MAKE) build-gemini
 
 docker-test:
 	@echo "🧪 Testing Docker image..."
