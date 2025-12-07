@@ -382,10 +382,11 @@ func (cw *captureWriter) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-// captureReader wraps an io.Reader to capture input
+// captureReader wraps an io.Writer to capture input
 type captureReader struct {
 	original io.Reader
 	logger   *loggerImpl
+	buffer   []byte
 }
 
 func (cr *captureReader) Read(p []byte) (n int, err error) {
@@ -393,8 +394,37 @@ func (cr *captureReader) Read(p []byte) (n int, err error) {
 
 	// Capture for logging (only if successful)
 	if err == nil && n > 0 {
-		content := string(p[:n])
-		cr.logger.LogInput(content, nil)
+		// Append read bytes to buffer
+		cr.buffer = append(cr.buffer, p[:n]...)
+
+		// Process buffer for newlines
+		for {
+			// Check for \r (Enter in raw mode) or \n
+			idx := indexByte(cr.buffer, '\r')
+			if idx == -1 {
+				idx = indexByte(cr.buffer, '\n')
+			}
+
+			if idx == -1 {
+				break
+			}
+
+			// Extract line including the delimiter
+			// In raw mode, we might want to trim the \r for the log
+			line := string(cr.buffer[:idx])
+			cr.buffer = cr.buffer[idx+1:] // Advance past delimiter
+
+			// Log the input line if it's not empty (e.g. just Enter)
+			if len(line) > 0 {
+				cr.logger.LogInput(line, nil)
+			}
+		}
+		
+		// Safety: if buffer gets too big without newline, flush it
+		if len(cr.buffer) > 1024 {
+			cr.logger.LogInput(string(cr.buffer), nil)
+			cr.buffer = cr.buffer[:0]
+		}
 	}
 
 	return n, err
