@@ -166,13 +166,19 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		fmt.Sprintf("AGENT_CONFIG=%s", toJSON(spec.Configuration)),
 	}
 
-	// Add Claude token (hybrid auth - prioritize ClaudeToken over APIKey)
-	// Both use ANTHROPIC_API_KEY since that's what Claude Code expects
-	if spec.ClaudeToken != "" {
-		env = append(env, fmt.Sprintf("ANTHROPIC_API_KEY=%s", spec.ClaudeToken))
-	} else if spec.APIKey != "" {
-		// Fallback to legacy APIKey for backward compatibility
-		env = append(env, fmt.Sprintf("ANTHROPIC_API_KEY=%s", spec.APIKey))
+	// Add API token based on agent type
+	// Both ClaudeToken (centralized) and APIKey (legacy flag) map to the agent's expected env var
+	token := spec.ClaudeToken
+	if token == "" {
+		token = spec.APIKey
+	}
+
+	if token != "" {
+		envVar := "ANTHROPIC_API_KEY" // Default for claude-code
+		if spec.AgentType == "gemini-cli" {
+			envVar = "GEMINI_API_KEY"
+		}
+		env = append(env, fmt.Sprintf("%s=%s", envVar, token))
 	}
 
 	// Add MCP config if there are MCP servers
