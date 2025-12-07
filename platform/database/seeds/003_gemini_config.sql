@@ -5,7 +5,7 @@
 INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'Gemini CLI',
-    'gemini-cli',
+    'gemini',
     'Google Gemini CLI Agent',
     'google',
     'google',

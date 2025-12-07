@@ -175,7 +175,7 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 
 	if token != "" {
 		envVar := "ANTHROPIC_API_KEY" // Default for claude-code
-		if spec.AgentType == "gemini-cli" {
+		if spec.AgentType == "gemini" {
 			envVar = "GEMINI_API_KEY"
 		}
 		env = append(env, fmt.Sprintf("%s=%s", envVar, token))
