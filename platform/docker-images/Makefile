@@ -33,7 +33,7 @@ build-agent:
 
 build-gemini:
 	@echo "🔨 Building Gemini CLI agent image..."
-	cd agents/gemini-cli && docker build -t ubik/gemini-cli:latest .
+	cd agents/gemini && docker build -t ubik/gemini:latest .
 	@echo "✅ Gemini CLI agent image built"
 
 build-mcp-fs:
@@ -57,7 +57,7 @@ test-agent:
 
 test-gemini:
 	@echo "🧪 Testing Gemini CLI agent..."
-	@docker run --rm ubik/gemini-cli:latest --version || echo "⚠️  Version check not supported"
+	@docker run --rm ubik/gemini:latest --version || echo "⚠️  Version check not supported"
 	@echo "✅ Gemini CLI agent test passed"
 
 test-mcp-fs:
