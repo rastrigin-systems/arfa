@@ -1,12 +1,9 @@
-FROM python:3.11-slim
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install Google GenAI SDK
-RUN pip install google-genai
+# Install Google Gemini CLI
+RUN npm install -g @google/gemini-cli
 
-# Copy entrypoint script
-COPY entrypoint.py /app/entrypoint.py
-
-# Set entrypoint
-ENTRYPOINT ["python", "/app/entrypoint.py"]
+# Set entrypoint to run the gemini-cli
+ENTRYPOINT ["gemini"]

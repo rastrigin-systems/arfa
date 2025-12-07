@@ -9,7 +9,7 @@ VALUES (
     'Google Gemini CLI Agent',
     'google',
     'google',
-    'gemini-2.0-flash',
+    'gemini-1.0-pro',
     '{"temperature": 0.7}'::JSONB,
     '["code_generation", "debugging", "refactoring", "research"]'::JSONB
 )
