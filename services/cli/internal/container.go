@@ -217,9 +217,10 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		},
 	}
 
-	// Auto-detect and mount host development tools
-	// This allows the container to use the host's installed runtimes
-	mounts = append(mounts, detectHostTools()...)
+	// Note: We used to auto-detect and mount host tools here (detectHostTools),
+	// but this caused issues with Docker Desktop file sharing and binary compatibility
+	// (e.g. mounting macOS binaries into Linux containers).
+	// For now, we assume agents use tools installed in their image.
 
 	hostConfig := &container.HostConfig{
 		Mounts: mounts,
