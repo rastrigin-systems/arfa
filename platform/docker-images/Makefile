@@ -23,13 +23,18 @@ help:
 	@echo "  make sizes            Show image sizes"
 
 # Build targets
-build-all: build-agent build-mcp-fs build-mcp-git
+build-all: build-agent build-gemini build-mcp-fs build-mcp-git
 	@echo "✅ All images built successfully!"
 
 build-agent:
 	@echo "🔨 Building Claude Code agent image..."
 	cd agents/claude-code && docker build -t ubik/claude-code:latest .
 	@echo "✅ Claude Code agent image built"
+
+build-gemini:
+	@echo "🔨 Building Gemini CLI agent image..."
+	cd agents/gemini-cli && docker build -t ubik/gemini-cli:latest .
+	@echo "✅ Gemini CLI agent image built"
 
 build-mcp-fs:
 	@echo "🔨 Building MCP filesystem image..."
@@ -42,13 +47,18 @@ build-mcp-git:
 	@echo "✅ MCP git image built"
 
 # Test targets
-test-all: test-agent test-mcp-fs test-mcp-git
+test-all: test-agent test-gemini test-mcp-fs test-mcp-git
 	@echo "✅ All tests passed!"
 
 test-agent:
 	@echo "🧪 Testing Claude Code agent..."
 	@docker run --rm ubik/claude-code:latest --version || echo "⚠️  Version check not supported"
 	@echo "✅ Claude Code agent test passed"
+
+test-gemini:
+	@echo "🧪 Testing Gemini CLI agent..."
+	@docker run --rm ubik/gemini-cli:latest --version || echo "⚠️  Version check not supported"
+	@echo "✅ Gemini CLI agent test passed"
 
 test-mcp-fs:
 	@echo "🧪 Testing MCP filesystem..."
