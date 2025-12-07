@@ -820,21 +820,36 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		return nil
 	}
 
-	// Select agent (use flag if provided, otherwise use default)
+	// Select agent (use flag if provided, otherwise use default from config or first available)
 	var selectedAgent *cli.AgentConfig
+	
+	// 1. Priority: Command line flag
 	if agentFlag != "" {
 		selectedAgent, err = syncService.GetAgentConfig(agentFlag)
 		if err != nil {
 			return fmt.Errorf("agent '%s' not found: %w", agentFlag, err)
 		}
 	} else {
-		// Use default agent (first enabled agent)
-		for _, ac := range agentConfigs {
-			if ac.IsEnabled {
-				selectedAgent = &ac
-				break
+		// 2. Priority: Default agent from config
+		config, err := configManager.Load()
+		if err == nil && config.DefaultAgent != "" {
+			// Try to find the default agent
+			// We don't error if not found, just fall back to first enabled
+			if agent, err := syncService.GetAgentConfig(config.DefaultAgent); err == nil && agent.IsEnabled {
+				selectedAgent = agent
 			}
 		}
+
+		// 3. Priority: First enabled agent
+		if selectedAgent == nil {
+			for _, ac := range agentConfigs {
+				if ac.IsEnabled {
+					selectedAgent = &ac
+					break
+				}
+			}
+		}
+		
 		if selectedAgent == nil {
 			return fmt.Errorf("no enabled agents found. Run 'ubik sync' to fetch configs.")
 		}
