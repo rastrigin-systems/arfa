@@ -11,7 +11,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"regexp"
 )
+
+var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func stripANSI(str string) string {
+	return ansiRegex.ReplaceAllString(str, "")
+}
 
 // loggerImpl implements the Logger interface
 type loggerImpl struct {
@@ -425,13 +432,13 @@ func (cr *captureReader) Read(p []byte) (n int, err error) {
 
 			// Log the input line if it's not empty (e.g. just Enter)
 			if len(line) > 0 {
-				cr.logger.LogInput(line, nil)
+				cr.logger.LogInput(stripANSI(line), nil)
 			}
 		}
 		
 		// Safety: if buffer gets too big without newline, flush it
 		if len(cr.buffer) > 1024 {
-			cr.logger.LogInput(string(cr.buffer), nil)
+			cr.logger.LogInput(stripANSI(string(cr.buffer)), nil)
 			cr.buffer = cr.buffer[:0]
 		}
 	}
