@@ -55,9 +55,10 @@ func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("invalid platform URL: %w", err)
 	}
-	wsURL.Scheme = "ws" // Change http(s) to ws(s)
-	if wsURL.Scheme == "https" { // Handles HTTPS -> WSS
+	if wsURL.Scheme == "https" {
 		wsURL.Scheme = "wss"
+	} else {
+		wsURL.Scheme = "ws"
 	}
 	wsURL.Path = "/api/v1/logs/stream"
 
