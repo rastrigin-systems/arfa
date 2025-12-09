@@ -349,6 +349,7 @@ type captureWriter struct {
 	logger    *loggerImpl
 	eventType string
 	buffer    []byte
+	lastLine  string
 }
 
 func (cw *captureWriter) Write(p []byte) (n int, err error) {
@@ -371,10 +372,18 @@ func (cw *captureWriter) Write(p []byte) (n int, err error) {
 			cw.buffer = cw.buffer[idx+1:]
 
 			// Log the line
+			cleanLine := stripANSI(line)
+			
+			// Simple deduplication: skip if identical to last logged line
+			if cleanLine == cw.lastLine {
+				continue
+			}
+			cw.lastLine = cleanLine
+
 			if cw.eventType == "output" {
-				cw.logger.LogOutput(line, nil)
+				cw.logger.LogOutput(cleanLine, nil)
 			} else if cw.eventType == "error" {
-				cw.logger.LogError(line, nil)
+				cw.logger.LogError(cleanLine, nil)
 			}
 		}
 	}
