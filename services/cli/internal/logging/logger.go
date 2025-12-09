@@ -356,7 +356,7 @@ type captureWriter struct {
 	logger    *loggerImpl
 	eventType string
 	buffer    []byte
-	lastLine  string
+	recentLines []string // Buffer for deduplication
 }
 
 func (cw *captureWriter) Write(p []byte) (n int, err error) {
@@ -381,11 +381,24 @@ func (cw *captureWriter) Write(p []byte) (n int, err error) {
 			// Log the line
 			cleanLine := stripANSI(line)
 			
-			// Simple deduplication: skip if identical to last logged line
-			if cleanLine == cw.lastLine {
+			// Window-based deduplication: check if line exists in recent history
+			isDuplicate := false
+			for _, recent := range cw.recentLines {
+				if cleanLine == recent {
+					isDuplicate = true
+					break
+				}
+			}
+
+			if isDuplicate {
 				continue
 			}
-			cw.lastLine = cleanLine
+
+			// Add to history and maintain window size (10 lines)
+			cw.recentLines = append(cw.recentLines, cleanLine)
+			if len(cw.recentLines) > 10 {
+				cw.recentLines = cw.recentLines[1:]
+			}
 
 			if cw.eventType == "output" {
 				cw.logger.LogOutput(cleanLine, nil)
