@@ -5,6 +5,7 @@ go 1.24.5
 require (
 	github.com/docker/docker v28.5.1+incompatible
 	github.com/docker/go-connections v0.5.0
+	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5
 	github.com/fatih/color v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
