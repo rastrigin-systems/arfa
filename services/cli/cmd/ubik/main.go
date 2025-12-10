@@ -163,34 +163,34 @@ Optionally starts Docker containers for agents and MCP servers.`,
 				}
 
 				// Convert to absolute path
-			absWorkspace, err := filepath.Abs(workspace)
-			if err != nil {
-				return fmt.Errorf("failed to resolve workspace path: %w", err)
-			}
-			workspace = absWorkspace
+				absWorkspace, err := filepath.Abs(workspace)
+				if err != nil {
+					return fmt.Errorf("failed to resolve workspace path: %w", err)
+				}
+				workspace = absWorkspace
 
 				// Setup Docker client
-			dockerClient, err := cli.NewDockerClient()
-			if err != nil {
-				return fmt.Errorf("failed to create Docker client: %w", err)
-			}
-			defer dockerClient.Close()
+				dockerClient, err := cli.NewDockerClient()
+				if err != nil {
+					return fmt.Errorf("failed to create Docker client: %w", err)
+				}
+				defer dockerClient.Close()
 
-			syncService.SetDockerClient(dockerClient)
+				syncService.SetDockerClient(dockerClient)
 
-			// Start containers
-			if err := syncService.StartContainers(workspace, apiKey); err != nil {
-				return fmt.Errorf("failed to start containers: %w", err)
-			}
+				// Start containers
+				if err := syncService.StartContainers(workspace, apiKey); err != nil {
+					return fmt.Errorf("failed to start containers: %w", err)
+				}
 
-			fmt.Println("\n✓ Containers started successfully")
-			fmt.Println("\nNext steps:")
-			fmt.Println("  1. Run 'ubik status' to see container status")
-			fmt.Println("  2. Run 'ubik stop' to stop containers")
+				fmt.Println("\n✓ Containers started successfully")
+				fmt.Println("\nNext steps:")
+				fmt.Println("  1. Run 'ubik status' to see container status")
+				fmt.Println("  2. Run 'ubik stop' to stop containers")
 			} else {
-			fmt.Println("\nNext steps:")
-			fmt.Println("  1. Run 'ubik start' to start containers")
-			fmt.Println("  2. Run 'ubik status' to see container status")
+				fmt.Println("\nNext steps:")
+				fmt.Println("  1. Run 'ubik start' to start containers")
+				fmt.Println("  2. Run 'ubik status' to see container status")
 			}
 
 			return nil
@@ -491,24 +491,24 @@ func newAgentsListCommand() *cobra.Command {
 				fmt.Printf("\nConfigured Agents (%d):\n\n", len(agents))
 
 				// Create table writer
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tTYPE\tSTATUS\tID")
-			fmt.Fprintln(w, "────\t────\t──────\t──")
+				w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+				fmt.Fprintln(w, "NAME\tTYPE\tSTATUS\tID")
+				fmt.Fprintln(w, "────\t────\t──────\t──")
 
-			for _, agent := range agents {
-				enabledStatus := "✓ enabled"
-				if !agent.IsEnabled {
-					enabledStatus = "✗ disabled"
+				for _, agent := range agents {
+					enabledStatus := "✓ enabled"
+					if !agent.IsEnabled {
+						enabledStatus = "✗ disabled"
+					}
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.AgentName, agent.AgentType, enabledStatus, agent.AgentID)
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.AgentName, agent.AgentType, enabledStatus, agent.AgentID)
-			}
 
-			w.Flush()
-			fmt.Println()
-			fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see configuration for your agents")
-			fmt.Println()
+				w.Flush()
+				fmt.Println()
+				fmt.Println("💡 Tip: Use 'ubik agents show <name>' to see configuration for your agents")
+				fmt.Println()
 
-			return nil
+				return nil
 
 			}
 
@@ -732,23 +732,23 @@ func newCleanupCommand() *cobra.Command {
 				syncService := cli.NewSyncService(configManager, platformClient, authService)
 
 				// Setup Docker client
-			dockerClient, err := cli.NewDockerClient()
-			if err != nil {
-				return fmt.Errorf("failed to create Docker client: %w", err)
-			}
-			defer dockerClient.Close()
+				dockerClient, err := cli.NewDockerClient()
+				if err != nil {
+					return fmt.Errorf("failed to create Docker client: %w", err)
+				}
+				defer dockerClient.Close()
 
-			syncService.SetDockerClient(dockerClient)
+				syncService.SetDockerClient(dockerClient)
 
-			fmt.Println("Stopping and removing containers...")
-			if err := syncService.StopContainers(); err != nil {
-				fmt.Printf("Warning: failed to stop some containers: %v\n", err)
-			}
+				fmt.Println("Stopping and removing containers...")
+				if err := syncService.StopContainers(); err != nil {
+					fmt.Printf("Warning: failed to stop some containers: %v\n", err)
+				}
 
-			// TODO: Also remove containers, not just stop them
-			// For now, stopping is sufficient
+				// TODO: Also remove containers, not just stop them
+				// For now, stopping is sufficient
 
-			fmt.Println("✓ Containers stopped")
+				fmt.Println("✓ Containers stopped")
 			}
 
 			if removeConfig {
@@ -839,7 +839,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 
 	// Select agent (use flag if provided, otherwise use default from config or first available)
 	var selectedAgent *cli.AgentConfig
-	
+
 	// 1. Priority: Command line flag
 	if agentFlag != "" {
 		selectedAgent, err = syncService.GetAgentConfig(agentFlag)
@@ -866,7 +866,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 				}
 			}
 		}
-		
+
 		if selectedAgent == nil {
 			return fmt.Errorf("no enabled agents found. Run 'ubik sync' to fetch configs.")
 		}
@@ -1057,9 +1057,9 @@ func newLogsStreamCommand() *cobra.Command {
 			}
 
 			platformClient := cli.NewPlatformClient("")
-			
+
 			logStreamer := cli.NewLogStreamer(platformClient, configManager)
-			
+
 			return logStreamer.StreamLogs(context.Background())
 		},
 	}

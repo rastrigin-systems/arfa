@@ -352,10 +352,10 @@ func (l *loggerImpl) processQueueFile(filename string) {
 
 // captureWriter wraps an io.Writer to capture output
 type captureWriter struct {
-	original  io.Writer
-	logger    *loggerImpl
-	eventType string
-	buffer    []byte
+	original    io.Writer
+	logger      *loggerImpl
+	eventType   string
+	buffer      []byte
 	recentLines []string // Buffer for deduplication
 }
 
@@ -380,7 +380,7 @@ func (cw *captureWriter) Write(p []byte) (n int, err error) {
 
 			// Log the line
 			cleanLine := stripANSI(line)
-			
+
 			// Window-based deduplication: check if line exists in recent history
 			isDuplicate := false
 			for _, recent := range cw.recentLines {
@@ -448,7 +448,7 @@ func (cr *captureReader) Read(p []byte) (n int, err error) {
 				cr.logger.LogInput(stripANSI(line), nil)
 			}
 		}
-		
+
 		// Safety: if buffer gets too big without newline, flush it
 		if len(cr.buffer) > 1024 {
 			cr.logger.LogInput(stripANSI(string(cr.buffer)), nil)

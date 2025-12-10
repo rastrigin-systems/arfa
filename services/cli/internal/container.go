@@ -207,8 +207,8 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 			fmt.Sprintf("HTTP_PROXY=%s", proxyURL),
 			fmt.Sprintf("HTTPS_PROXY=%s", proxyURL),
 			"NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/ubik-ca.pem", // Node.js
-			"REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/ubik-ca.pem", // Python
-			"SSL_CERT_FILE=/usr/local/share/ca-certificates/ubik-ca.pem",      // Generic
+			"REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/ubik-ca.pem",  // Python
+			"SSL_CERT_FILE=/usr/local/share/ca-certificates/ubik-ca.pem",       // Generic
 		)
 	}
 
