@@ -57,6 +57,13 @@ type MCPServerSpec struct {
 	Config     map[string]interface{}
 }
 
+// ProxyConfig defines configuration for the MITM proxy
+type ProxyConfig struct {
+	Host     string
+	Port     int
+	CertPath string
+}
+
 // AgentSpec defines configuration for an agent container
 type AgentSpec struct {
 	AgentID       string
@@ -67,6 +74,7 @@ type AgentSpec struct {
 	MCPServers    []MCPServerSpec
 	APIKey        string // Deprecated: Use ClaudeToken instead
 	ClaudeToken   string // Claude API token (from hybrid auth)
+	ProxyConfig   *ProxyConfig
 }
 
 // StartMCPServer starts an MCP server container
@@ -192,6 +200,18 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		env = append(env, fmt.Sprintf("MCP_CONFIG=%s", toJSON(mcpConfig)))
 	}
 
+	// Add Proxy config
+	if spec.ProxyConfig != nil {
+		proxyURL := fmt.Sprintf("http://%s:%d", spec.ProxyConfig.Host, spec.ProxyConfig.Port)
+		env = append(env,
+			fmt.Sprintf("HTTP_PROXY=%s", proxyURL),
+			fmt.Sprintf("HTTPS_PROXY=%s", proxyURL),
+			"NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/ubik-ca.pem", // Node.js
+			"REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/ubik-ca.pem", // Python
+			"SSL_CERT_FILE=/usr/local/share/ca-certificates/ubik-ca.pem",      // Generic
+		)
+	}
+
 	// Prepare container config
 	config := &container.Config{
 		Image:        spec.Image,
@@ -215,6 +235,16 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 			Source: workspacePath,
 			Target: "/workspace",
 		},
+	}
+
+	// Mount CA certificate if proxy is enabled
+	if spec.ProxyConfig != nil && spec.ProxyConfig.CertPath != "" {
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   spec.ProxyConfig.CertPath,
+			Target:   "/usr/local/share/ca-certificates/ubik-ca.pem",
+			ReadOnly: true,
+		})
 	}
 
 	// Note: We used to auto-detect and mount host tools here (detectHostTools),
