@@ -81,6 +81,16 @@ func newLoginCommand() *cobra.Command {
 				return fmt.Errorf("failed to create config manager: %w", err)
 			}
 
+			// If no URL provided via flag, check config for saved platform URL
+			if platformURL == "" || platformURL == "https://api.ubik.io" {
+				config, err := configManager.Load()
+				if err == nil && config.PlatformURL != "" {
+					platformURL = config.PlatformURL
+				} else if platformURL == "" {
+					platformURL = "https://api.ubik.io" // Final fallback
+				}
+			}
+
 			platformClient := cli.NewPlatformClient(platformURL)
 			authService := cli.NewAuthService(configManager, platformClient)
 
@@ -99,7 +109,7 @@ func newLoginCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&platformURL, "url", "https://api.ubik.io", "Platform URL")
+	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or https://api.ubik.io)")
 	cmd.Flags().StringVar(&email, "email", "", "Email address")
 	cmd.Flags().StringVar(&password, "password", "", "Password")
 
@@ -998,7 +1008,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		ContainerID: agentContainerID,
 		AgentName:   selectedAgent.AgentName,
 		WorkingDir:  workspace,
-		Logger:      logger,
+		Logger:      nil, // Disabled: Only log API requests via MITM proxy, not CLI I/O
 	}
 
 	// Start interactive session
@@ -1042,7 +1052,9 @@ func newLogsCommand() *cobra.Command {
 
 func newLogsStreamCommand() *cobra.Command {
 	var (
-		follow bool
+		follow  bool
+		jsonOut bool
+		verbose bool
 		// TODO: Add flags for session_id, agent_id, employee_id for filtering
 	)
 
@@ -1059,12 +1071,16 @@ func newLogsStreamCommand() *cobra.Command {
 			platformClient := cli.NewPlatformClient("")
 
 			logStreamer := cli.NewLogStreamer(platformClient, configManager)
+			logStreamer.SetJSONOutput(jsonOut)
+			logStreamer.SetVerbose(verbose)
 
 			return logStreamer.StreamLogs(context.Background())
 		},
 	}
 
 	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow logs in real-time") // For consistency, though it's always following
+	cmd.Flags().BoolVarP(&jsonOut, "json", "j", false, "Output full JSON for each log entry")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show full request/response payloads")
 
 	return cmd
 }
