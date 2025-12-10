@@ -18,6 +18,8 @@ import (
 type LogStreamer struct {
 	platformClient *PlatformClient
 	configManager  *ConfigManager
+	jsonOutput     bool // Whether to output full JSON
+	verbose        bool // Whether to show full payloads
 }
 
 // NewLogStreamer creates a new LogStreamer
@@ -25,7 +27,19 @@ func NewLogStreamer(pc *PlatformClient, cm *ConfigManager) *LogStreamer {
 	return &LogStreamer{
 		platformClient: pc,
 		configManager:  cm,
+		jsonOutput:     false,
+		verbose:        false,
 	}
+}
+
+// SetJSONOutput enables JSON output mode
+func (ls *LogStreamer) SetJSONOutput(enabled bool) {
+	ls.jsonOutput = enabled
+}
+
+// SetVerbose enables verbose output with full payloads
+func (ls *LogStreamer) SetVerbose(enabled bool) {
+	ls.verbose = enabled
 }
 
 // StreamLogEntry represents a log entry received from the WebSocket
@@ -97,12 +111,34 @@ func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 			}
 
 			// Format and print log entry
-			fmt.Printf("[%s] [%s:%s] %s\n",
-				logEntry.Timestamp.Format("15:04:05"),
-				logEntry.EventType,
-				logEntry.EventCategory,
-				logEntry.Content,
-			)
+			if ls.jsonOutput {
+				// Full JSON output
+				jsonBytes, err := json.MarshalIndent(logEntry, "", "  ")
+				if err == nil {
+					fmt.Println(string(jsonBytes))
+				}
+			} else if ls.verbose && logEntry.Payload != nil && len(logEntry.Payload) > 0 {
+				// Verbose mode with payload
+				fmt.Printf("[%s] [%s:%s] %s\n",
+					logEntry.Timestamp.Format("15:04:05"),
+					logEntry.EventType,
+					logEntry.EventCategory,
+					logEntry.Content,
+				)
+				// Pretty print payload
+				payloadJSON, err := json.MarshalIndent(logEntry.Payload, "  ", "  ")
+				if err == nil {
+					fmt.Printf("  Payload:\n  %s\n", string(payloadJSON))
+				}
+			} else {
+				// Compact mode (original)
+				fmt.Printf("[%s] [%s:%s] %s\n",
+					logEntry.Timestamp.Format("15:04:05"),
+					logEntry.EventType,
+					logEntry.EventCategory,
+					logEntry.Content,
+				)
+			}
 		}
 	}()
 

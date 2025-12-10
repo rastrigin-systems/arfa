@@ -29,12 +29,19 @@ func NewAuthService(configManager *ConfigManager, platformClient *PlatformClient
 func (as *AuthService) LoginInteractive() error {
 	reader := bufio.NewReader(os.Stdin)
 
+	// Load existing config to get saved platform URL
+	savedConfig, _ := as.configManager.Load()
+	defaultURL := "http://localhost:8080"
+	if savedConfig != nil && savedConfig.PlatformURL != "" {
+		defaultURL = savedConfig.PlatformURL
+	}
+
 	// Get platform URL
-	fmt.Print("Platform URL [http://localhost:8080]: ")
+	fmt.Printf("Platform URL [%s]: ", defaultURL)
 	platformURL, _ := reader.ReadString('\n')
 	platformURL = strings.TrimSpace(platformURL)
 	if platformURL == "" {
-		platformURL = "http://localhost:8080"
+		platformURL = defaultURL
 	}
 
 	// Get email
