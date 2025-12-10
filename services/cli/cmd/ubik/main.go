@@ -10,6 +10,7 @@ import (
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -808,6 +809,21 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 	// Ensure logger is closed on exit
 	if logger != nil {
 		defer logger.Close()
+	}
+
+	// Start MITM Proxy
+	proxy := httpproxy.NewProxyServer(logger)
+	if err := proxy.Start(8082); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to start proxy: %v\n", err)
+	} else {
+		// Ensure proxy is stopped on exit
+		defer func() {
+			if err := proxy.Stop(context.Background()); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to stop proxy: %v\n", err)
+			}
+		}()
+		// Register proxy with sync service
+		syncService.SetProxy(proxy)
 	}
 
 	// Get local agent configs
