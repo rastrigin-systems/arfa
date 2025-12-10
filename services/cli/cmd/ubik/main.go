@@ -799,7 +799,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		MaxRetries:    5,
 		RetryBackoff:  1 * time.Second,
 	}
-	apiClient := logging.NewPlatformAPIClient(platformClient)
+	apiClient := cli.NewPlatformAPIClient(platformClient)
 	logger, err := logging.NewLogger(loggerConfig, apiClient)
 	if err != nil {
 		// Log error but continue - logging is optional
