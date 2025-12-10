@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 )
 
 // Config holds logging configuration
@@ -93,6 +94,12 @@ type Logger interface {
 
 	// LogEvent logs a custom event
 	LogEvent(eventType, category, content string, metadata map[string]interface{})
+
+	// LogClassified logs a classified log entry (parsed from API requests/responses)
+	LogClassified(entry types.ClassifiedLogEntry)
+
+	// GetClassifiedLogs returns classified logs for the current session
+	GetClassifiedLogs() []types.ClassifiedLogEntry
 
 	// Flush forces immediate sending of buffered logs
 	Flush()

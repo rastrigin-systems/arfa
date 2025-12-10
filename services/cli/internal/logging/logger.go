@@ -7,11 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"regexp"
+	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 )
 
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
@@ -34,6 +35,10 @@ type loggerImpl struct {
 	queueDir  string
 	ctx       context.Context
 	cancel    context.CancelFunc
+
+	// Classified logs (parsed API requests/responses)
+	classifiedLogs   []types.ClassifiedLogEntry
+	classifiedLogsMu sync.RWMutex
 }
 
 // NewLogger creates a new logger instance
@@ -185,6 +190,61 @@ func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[
 	if shouldFlush {
 		go l.flushBuffer()
 	}
+}
+
+// LogClassified logs a classified log entry (parsed from API requests/responses)
+func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
+	// Ensure entry has session ID and timestamp
+	if entry.SessionID == "" {
+		entry.SessionID = l.sessionID.String()
+	}
+	if entry.Timestamp.IsZero() {
+		entry.Timestamp = time.Now()
+	}
+	if entry.ID == "" {
+		entry.ID = uuid.New().String()
+	}
+
+	// Store in memory for current session display
+	l.classifiedLogsMu.Lock()
+	l.classifiedLogs = append(l.classifiedLogs, entry)
+	l.classifiedLogsMu.Unlock()
+
+	// Also log as a regular event for persistence
+	payload := map[string]interface{}{
+		"entry_type":    string(entry.EntryType),
+		"provider":      string(entry.Provider),
+		"model":         entry.Model,
+		"tokens_input":  entry.TokensInput,
+		"tokens_output": entry.TokensOutput,
+	}
+
+	if entry.ToolName != "" {
+		payload["tool_name"] = entry.ToolName
+		payload["tool_id"] = entry.ToolID
+		payload["tool_input"] = entry.ToolInput
+	}
+
+	content := entry.Content
+	if content == "" && entry.ToolOutput != "" {
+		content = entry.ToolOutput
+	}
+	if content == "" && entry.ErrorMessage != "" {
+		content = entry.ErrorMessage
+	}
+
+	l.LogEvent(string(entry.EntryType), "classified", content, payload)
+}
+
+// GetClassifiedLogs returns classified logs for the current session
+func (l *loggerImpl) GetClassifiedLogs() []types.ClassifiedLogEntry {
+	l.classifiedLogsMu.RLock()
+	defer l.classifiedLogsMu.RUnlock()
+
+	// Return a copy to prevent concurrent modification
+	logs := make([]types.ClassifiedLogEntry, len(l.classifiedLogs))
+	copy(logs, l.classifiedLogs)
+	return logs
 }
 
 // Flush forces immediate sending of buffered logs
