@@ -1,0 +1,279 @@
+package httpproxy
+
+import (
+	"bytes"
+	"compress/gzip"
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/json"
+	"encoding/pem"
+	"fmt"
+	"io"
+	"math/big"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"time"
+
+	"github.com/elazarl/goproxy"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+)
+
+// ProxyServer manages the embedded MITM proxy
+type ProxyServer struct {
+	proxy    *goproxy.ProxyHttpServer
+	logger   logging.Logger
+	certPath string
+	keyPath  string
+	server   *http.Server
+}
+
+// NewProxyServer creates a new proxy server instance
+func NewProxyServer(logger logging.Logger) *ProxyServer {
+	return &ProxyServer{
+		proxy:  goproxy.NewProxyHttpServer(),
+		logger: logger,
+	}
+}
+
+// Start starts the proxy server on the specified port
+func (s *ProxyServer) Start(port int) error {
+	// 1. Setup CA certificates
+	if err := s.setupCA(); err != nil {
+		return fmt.Errorf("failed to setup CA: %w", err)
+	}
+
+	// 2. Configure proxy rules
+	s.configureRules()
+
+	// 3. Start server
+	addr := fmt.Sprintf(":%d", port)
+	s.server = &http.Server{
+		Addr:    addr,
+		Handler: s.proxy,
+	}
+
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Proxy server error: %v\n", err)
+		}
+	}()
+
+	fmt.Printf("✓ Proxy server started on %s\n", addr)
+	return nil
+}
+
+// Stop stops the proxy server
+func (s *ProxyServer) Stop(ctx context.Context) error {
+	if s.server != nil {
+		return s.server.Shutdown(ctx)
+	}
+	return nil
+}
+
+// GetCAPath returns the path to the CA certificate
+func (s *ProxyServer) GetCAPath() string {
+	return s.certPath
+}
+
+// setupCA ensures the CA certificate exists or generates it
+func (s *ProxyServer) setupCA() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	certDir := filepath.Join(home, ".ubik", "certs")
+	if err := os.MkdirAll(certDir, 0700); err != nil {
+		return err
+	}
+
+	s.certPath = filepath.Join(certDir, "ubik-ca.pem")
+	s.keyPath = filepath.Join(certDir, "ubik-ca-key.pem")
+
+	// Check if certs exist
+	if _, err := os.Stat(s.certPath); err == nil {
+		if _, err := os.Stat(s.keyPath); err == nil {
+			// Load existing CA
+			lsCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
+			if err != nil {
+				return fmt.Errorf("failed to load existing CA: %w", err)
+			}
+			
+			// Configure goproxy to use this CA
+			s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+			goproxy.GoproxyCa = tlsCert
+			goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+			goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+			goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+			goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+			
+			return nil
+		}
+	}
+
+	fmt.Println("Generating new CA certificate for MITM proxy...")
+	
+	// Generate new CA
+	ca := &x509.Certificate{
+		SerialNumber: big.NewInt(2025),
+		Subject: pkix.Name{
+			Organization: []string{"Ubik Enterprise Proxy CA"},
+			CommonName:   "ubik-proxy-ca",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0), // 10 years
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+
+	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		return err
+	}
+
+	// Save Cert
+	certOut, err := os.Create(s.certPath)
+	if err != nil {
+		return err
+	}
+	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: caBytes})
+	certOut.Close()
+
+	// Save Key
+	keyOut, err := os.Create(s.keyPath)
+	if err != nil {
+		return err
+	}
+	pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey)})
+	keyOut.Close()
+
+	// Load the new CA into goproxy
+	lsCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
+	if err != nil {
+		return err
+	}
+	
+s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+	goproxy.GoproxyCa = tlsCert
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+
+	return nil
+}
+
+// configureRules sets up interception rules for LLM providers
+func (s *ProxyServer) configureRules() {
+	// Targets: Anthropic, Google, OpenAI
+	hostRegex := regexp.MustCompile(`(api.anthropic.com|generativelanguage.googleapis.com|api.openai.com)`)
+
+	s.proxy.OnRequest(goproxy.ReqHostMatches(hostRegex)).DoFunc(
+		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			s.logRequest(r)
+			return r, nil
+		})
+
+	s.proxy.OnResponse(goproxy.ReqHostMatches(hostRegex)).DoFunc(
+		func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+			s.logResponse(resp)
+			return resp
+		})
+	
+	// Default: Allow everything else without logging
+	s.proxy.OnRequest().DoFunc(
+		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			return r, nil
+		})
+}
+
+// logRequest captures and logs the request
+func (s *ProxyServer) logRequest(r *http.Request) {
+	if s.logger == nil {
+		return
+	}
+
+	// Capture body
+	bodyBytes, _ := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
+
+	// Basic redaction (simple header check)
+	// Body redaction should be more sophisticated in production
+	
+	payload := map[string]interface{}{
+		"method": r.Method,
+		"url":    r.URL.String(),
+		"headers": redactHeaders(r.Header),
+		"body":   string(bodyBytes), // Careful with size/binary
+	}
+
+	s.logger.LogEvent("api_request", "proxy", fmt.Sprintf("%s %s", r.Method, r.URL.Host), payload)
+}
+
+// logResponse captures and logs the response
+func (s *ProxyServer) logResponse(resp *http.Response) {
+	if s.logger == nil {
+		return
+	}
+
+	// Capture body (handle GZIP)
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
+
+	var decodedBody string
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		reader, err := gzip.NewReader(bytes.NewBuffer(bodyBytes))
+		if err == nil {
+			decoded, _ := io.ReadAll(reader)
+			decodedBody = string(decoded)
+			reader.Close()
+		} else {
+			decodedBody = "[GZIP Decode Failed]"
+		}
+	} else {
+		decodedBody = string(bodyBytes)
+	}
+
+	payload := map[string]interface{}{
+		"status":  resp.StatusCode,
+		"headers": redactHeaders(resp.Header),
+		"body":    decodedBody,
+	}
+
+	s.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, resp.Request.URL.Host), payload)
+}
+
+func redactHeaders(headers http.Header) map[string]string {
+	redacted := make(map[string]string)
+	for k, v := range headers {
+		key := k // simplified
+		// Redact sensitive headers
+		if isSensitive(key) {
+			redacted[key] = "[REDACTED]"
+		} else {
+			if len(v) > 0 {
+				redacted[key] = v[0]
+			}
+		}
+	}
+	return redacted
+}
+
+func isSensitive(header string) bool {
+	// Simple check - enhance list as needed
+	h := regexp.MustCompile(`(?i)(auth|api-key|token|cookie)`)
+	return h.MatchString(header)
+}
