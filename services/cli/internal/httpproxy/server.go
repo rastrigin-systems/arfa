@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -104,21 +103,21 @@ func (s *ProxyServer) setupCA() error {
 			if err != nil {
 				return fmt.Errorf("failed to load existing CA: %w", err)
 			}
-			
+
 			// Configure goproxy to use this CA
 			s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-			goproxy.GoproxyCa = tlsCert
-			goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-			goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-			goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-			goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-			
+			goproxy.GoproxyCa = lsCert
+			goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+			goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+			goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+			goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+
 			return nil
 		}
 	}
 
 	fmt.Println("Generating new CA certificate for MITM proxy...")
-	
+
 	// Generate new CA
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(2025),
@@ -165,13 +164,13 @@ func (s *ProxyServer) setupCA() error {
 	if err != nil {
 		return err
 	}
-	
-s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-	goproxy.GoproxyCa = tlsCert
-	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
-	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&tlsCert)}
+
+	s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+	goproxy.GoproxyCa = lsCert
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
 
 	return nil
 }
@@ -192,7 +191,7 @@ func (s *ProxyServer) configureRules() {
 			s.logResponse(resp)
 			return resp
 		})
-	
+
 	// Default: Allow everything else without logging
 	s.proxy.OnRequest().DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -212,12 +211,12 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 
 	// Basic redaction (simple header check)
 	// Body redaction should be more sophisticated in production
-	
+
 	payload := map[string]interface{}{
-		"method": r.Method,
-		"url":    r.URL.String(),
+		"method":  r.Method,
+		"url":     r.URL.String(),
 		"headers": redactHeaders(r.Header),
-		"body":   string(bodyBytes), // Careful with size/binary
+		"body":    string(bodyBytes), // Careful with size/binary
 	}
 
 	s.logger.LogEvent("api_request", "proxy", fmt.Sprintf("%s %s", r.Method, r.URL.Host), payload)
