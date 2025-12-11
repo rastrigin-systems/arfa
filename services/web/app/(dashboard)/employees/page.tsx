@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Plus, Users } from 'lucide-react';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
 import { Button } from '@/components/ui/button';
 import { getServerToken } from '@/lib/auth';
 import type { components } from '@/lib/api/schema';
 
 type ListEmployeesResponse = components['schemas']['ListEmployeesResponse'];
+type ListTeamsResponse = components['schemas']['ListTeamsResponse'];
 
 async function getEmployees(token: string): Promise<ListEmployeesResponse> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
@@ -14,7 +16,7 @@ async function getEmployees(token: string): Promise<ListEmployeesResponse> {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    cache: 'no-store', // Always fetch fresh data
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -27,8 +29,24 @@ async function getEmployees(token: string): Promise<ListEmployeesResponse> {
   return response.json();
 }
 
+async function getTeams(token: string): Promise<ListTeamsResponse> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+
+  const response = await fetch(`${apiUrl}/teams`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    return { teams: [], total: 0 };
+  }
+
+  return response.json();
+}
+
 export default async function EmployeesPage() {
-  // Get auth token from cookies
   const token = await getServerToken();
 
   if (!token) {
@@ -36,23 +54,27 @@ export default async function EmployeesPage() {
   }
 
   let employees: ListEmployeesResponse;
+  let teams: ListTeamsResponse;
   let error: string | null = null;
 
   try {
-    employees = await getEmployees(token);
+    [employees, teams] = await Promise.all([getEmployees(token), getTeams(token)]);
   } catch (err) {
     error = err instanceof Error ? err.message : 'Failed to load employees';
-    // For now, show empty state on error
     employees = {
       employees: [],
       total: 0,
       limit: 20,
       offset: 0,
     };
+    teams = { teams: [], total: 0 };
   }
 
+  const employeeList = employees.employees ?? [];
+  const teamList = teams.teams ?? [];
+
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -62,7 +84,10 @@ export default async function EmployeesPage() {
           </p>
         </div>
         <Link href="/employees/new">
-          <Button>Create Employee</Button>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Employee
+          </Button>
         </Link>
       </div>
 
@@ -74,11 +99,30 @@ export default async function EmployeesPage() {
         </div>
       )}
 
-      {/* Employee Table */}
-      <EmployeeTable
-        employees={employees.employees}
-        total={employees.total}
-      />
+      {/* Empty State */}
+      {employeeList.length === 0 && !error ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="mt-4 text-lg font-semibold">No employees yet</h3>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+            Add your first employee to start managing your organization.
+          </p>
+          <Link href="/employees/new" className="mt-6">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add your first employee
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <EmployeeTable
+          employees={employeeList}
+          teams={teamList}
+          total={employees.total}
+        />
+      )}
     </div>
   );
 }
