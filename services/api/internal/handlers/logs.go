@@ -128,7 +128,7 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		OrgId:         openapi_types.UUID(orgID),
 		EventType:     string(req.EventType),
 		EventCategory: string(req.EventCategory),
-		Payload:       map[string]interface{}{},
+		Payload:       map[string]any{},
 		CreatedAt:     time.Now(),
 	}
 
@@ -300,7 +300,7 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 		OrgId:         openapi_types.UUID(log.OrgID),
 		EventType:     log.EventType,
 		EventCategory: log.EventCategory,
-		Payload:       map[string]interface{}{},
+		Payload:       map[string]any{},
 		CreatedAt:     log.CreatedAt.Time,
 	}
 
@@ -328,44 +328,11 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 
 	// Parse payload JSON
 	if len(log.Payload) > 0 {
-		var payload map[string]interface{}
+		var payload map[string]any
 		if err := json.Unmarshal(log.Payload, &payload); err == nil {
 			apiLog.Payload = payload
 		}
 	}
 
 	return apiLog
-}
-
-// apiLogToDB converts an API log request to service layer format
-func apiLogToDB(req api.CreateLogRequest, orgID, employeeID uuid.UUID) db.CreateActivityLogParams {
-	params := db.CreateActivityLogParams{
-		OrgID:         orgID,
-		EventType:     string(req.EventType),
-		EventCategory: string(req.EventCategory),
-		Payload:       []byte("{}"),
-	}
-
-	if employeeID != uuid.Nil {
-		params.EmployeeID = pgtype.UUID{Bytes: employeeID, Valid: true}
-	}
-
-	if req.SessionId != nil {
-		params.SessionID = pgtype.UUID{Bytes: *req.SessionId, Valid: true}
-	}
-
-	if req.AgentId != nil {
-		params.AgentID = pgtype.UUID{Bytes: *req.AgentId, Valid: true}
-	}
-
-	if req.Content != nil {
-		params.Content = req.Content
-	}
-
-	if req.Payload != nil {
-		payloadJSON, _ := json.Marshal(req.Payload)
-		params.Payload = payloadJSON
-	}
-
-	return params
 }
