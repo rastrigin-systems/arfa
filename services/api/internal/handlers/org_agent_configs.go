@@ -336,6 +336,55 @@ func (h *OrgAgentConfigsHandler) GetEmployeeResolvedAgentConfigs(w http.Response
 	json.NewEncoder(w).Encode(response)
 }
 
+// GetMyResolvedAgentConfigs handles GET /employees/me/agent-configs/resolved
+// Returns fully resolved agent configs for the current employee (from JWT)
+// This endpoint uses JWT-derived employee_id instead of URL parameter
+func (h *OrgAgentConfigsHandler) GetMyResolvedAgentConfigs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get employee ID from JWT context (set by auth middleware)
+	employeeID, err := GetEmployeeID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Verify employee exists
+	_, err = h.db.GetEmployee(ctx, employeeID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			writeError(w, http.StatusNotFound, "Employee not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Failed to fetch employee")
+		return
+	}
+
+	// Resolve all agent configs for this employee
+	resolvedConfigs, err := h.resolver.ResolveEmployeeAgents(ctx, employeeID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to resolve agent configs")
+		return
+	}
+
+	// Convert to API response
+	apiConfigs := make([]api.ResolvedAgentConfig, len(resolvedConfigs))
+	for i, cfg := range resolvedConfigs {
+		apiConfigs[i] = resolvedAgentConfigToAPI(cfg)
+	}
+
+	// Build response
+	response := api.ListResolvedAgentConfigsResponse{
+		Configs: apiConfigs,
+		Total:   len(apiConfigs),
+	}
+
+	// Write JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 // Helper functions
 
 func dbOrgAgentConfigToAPI(config db.ListOrgAgentConfigsRow) api.OrgAgentConfig {

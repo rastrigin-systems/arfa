@@ -128,7 +128,7 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		OrgId:         openapi_types.UUID(orgID),
 		EventType:     string(req.EventType),
 		EventCategory: string(req.EventCategory),
-		Payload:       map[string]interface{}{},
+		Payload:       map[string]any{},
 		CreatedAt:     time.Now(),
 	}
 
@@ -206,21 +206,48 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 		offset = (int32(*params.Page) - 1) * limit
 	}
 
-	logs, err := h.db.ListActivityLogs(ctx, db.ListActivityLogsParams{
-		OrgID:  orgID,
-		Limit:  limit,
-		Offset: offset,
-	})
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
-		return
-	}
+	// When employee_id is not provided in params, default to current user from JWT
+	// This allows regular employees to see their own logs without passing employee_id
+	var logs []db.ActivityLog
+	var total int64
 
-	// Get total count
-	total, err := h.db.CountActivityLogs(ctx, orgID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Failed to count logs")
-		return
+	// Check if we should filter by employee
+	employeeID, errEmp := GetEmployeeID(ctx)
+	useEmployeeFilter := (errEmp == nil && employeeID != uuid.Nil)
+
+	if useEmployeeFilter {
+		// Filter by current employee
+		logs, err = h.db.GetLogsByEmployee(ctx, db.GetLogsByEmployeeParams{
+			OrgID:       orgID,
+			EmployeeID:  pgtype.UUID{Bytes: employeeID, Valid: true},
+			QueryLimit:  limit,
+			QueryOffset: offset,
+		})
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
+			return
+		}
+
+		// For now, use count of returned logs (TODO: add CountLogsByEmployee query)
+		total = int64(len(logs))
+	} else {
+		// No employee filter - list all org logs (admin view)
+		logs, err = h.db.ListActivityLogs(ctx, db.ListActivityLogsParams{
+			OrgID:  orgID,
+			Limit:  limit,
+			Offset: offset,
+		})
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
+			return
+		}
+
+		// Get total count
+		total, err = h.db.CountActivityLogs(ctx, orgID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to count logs")
+			return
+		}
 	}
 
 	// Convert to API response
@@ -273,7 +300,7 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 		OrgId:         openapi_types.UUID(log.OrgID),
 		EventType:     log.EventType,
 		EventCategory: log.EventCategory,
-		Payload:       map[string]interface{}{},
+		Payload:       map[string]any{},
 		CreatedAt:     log.CreatedAt.Time,
 	}
 
@@ -301,44 +328,11 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 
 	// Parse payload JSON
 	if len(log.Payload) > 0 {
-		var payload map[string]interface{}
+		var payload map[string]any
 		if err := json.Unmarshal(log.Payload, &payload); err == nil {
 			apiLog.Payload = payload
 		}
 	}
 
 	return apiLog
-}
-
-// apiLogToDB converts an API log request to service layer format
-func apiLogToDB(req api.CreateLogRequest, orgID, employeeID uuid.UUID) db.CreateActivityLogParams {
-	params := db.CreateActivityLogParams{
-		OrgID:         orgID,
-		EventType:     string(req.EventType),
-		EventCategory: string(req.EventCategory),
-		Payload:       []byte("{}"),
-	}
-
-	if employeeID != uuid.Nil {
-		params.EmployeeID = pgtype.UUID{Bytes: employeeID, Valid: true}
-	}
-
-	if req.SessionId != nil {
-		params.SessionID = pgtype.UUID{Bytes: *req.SessionId, Valid: true}
-	}
-
-	if req.AgentId != nil {
-		params.AgentID = pgtype.UUID{Bytes: *req.AgentId, Valid: true}
-	}
-
-	if req.Content != nil {
-		params.Content = req.Content
-	}
-
-	if req.Payload != nil {
-		payloadJSON, _ := json.Marshal(req.Payload)
-		params.Payload = payloadJSON
-	}
-
-	return params
 }
