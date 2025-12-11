@@ -51,8 +51,8 @@ func GetClassifiedLogs(configManager *ConfigManager, sessionID string) ([]types.
 
 	query := apiURL.Query()
 	query.Set("event_category", "classified")
-	query.Set("employee_id", config.EmployeeID) // Only fetch my logs
-	query.Set("per_page", "1000")               // Get a large batch
+	// Note: employee_id is automatically derived from JWT token on the backend
+	query.Set("per_page", "1000") // Get a large batch
 	if sessionID != "" {
 		query.Set("session_id", sessionID)
 	}

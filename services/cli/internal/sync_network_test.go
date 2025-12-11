@@ -17,7 +17,8 @@ func TestSyncService_Sync_Success(t *testing.T) {
 
 	// Setup mock platform server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v1/employees/emp-123/agent-configs/resolved" {
+		// Updated to use JWT-based /employees/me endpoint
+		if r.URL.Path == "/api/v1/employees/me/agent-configs/resolved" {
 			resp := ResolvedConfigsResponse{
 				Configs: []AgentConfigAPIResponse{
 					{
@@ -97,7 +98,8 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 
 	// Setup mock platform server that returns empty configs
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v1/employees/emp-123/agent-configs/resolved" {
+		// Updated to use JWT-based /employees/me endpoint
+		if r.URL.Path == "/api/v1/employees/me/agent-configs/resolved" {
 			resp := ResolvedConfigsResponse{
 				Configs: []AgentConfigAPIResponse{},
 				Total:   0,

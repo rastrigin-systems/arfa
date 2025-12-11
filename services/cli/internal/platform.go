@@ -157,6 +157,32 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentCon
 	return configs, nil
 }
 
+// GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee (JWT-based)
+// Uses /employees/me/agent-configs/resolved endpoint which derives employee from JWT token
+func (pc *PlatformClient) GetMyResolvedAgentConfigs() ([]AgentConfig, error) {
+	var resp ResolvedConfigsResponse
+	endpoint := "/employees/me/agent-configs/resolved"
+	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
+	}
+
+	// Convert API response to internal format (same as GetResolvedAgentConfigs)
+	configs := make([]AgentConfig, len(resp.Configs))
+	for i, apiConfig := range resp.Configs {
+		configs[i] = AgentConfig{
+			AgentID:       apiConfig.AgentID,
+			AgentName:     apiConfig.AgentName,
+			AgentType:     apiConfig.AgentType,
+			Provider:      apiConfig.Provider,
+			IsEnabled:     apiConfig.IsEnabled,
+			Configuration: apiConfig.Config,
+			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
+		}
+	}
+
+	return configs, nil
+}
+
 // ClaudeTokenStatusResponse represents the Claude token status response
 type ClaudeTokenStatusResponse struct {
 	EmployeeID        string `json:"employee_id"`
