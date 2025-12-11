@@ -1,31 +1,26 @@
 import { redirect } from 'next/navigation';
 import { EmployeeForm } from '@/components/employees/EmployeeForm';
 import { getServerToken } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import type { components } from '@/lib/api/schema';
 
 type Employee = components['schemas']['Employee'];
 
-async function getEmployee(id: string, token: string): Promise<Employee> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/employees/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store', // Always fetch fresh data
+async function getEmployee(id: string, token: string): Promise<Employee | null> {
+  const { data, error, response } = await apiClient.GET('/employees/{employee_id}', {
+    params: { path: { employee_id: id } },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      redirect('/login');
-    }
-    if (response.status === 404) {
-      redirect('/employees');
-    }
-    throw new Error(`Failed to fetch employee: ${response.statusText}`);
+  if (response.status === 401) {
+    redirect('/login');
   }
 
-  return response.json();
+  if (response.status === 404 || error) {
+    return null;
+  }
+
+  return data ?? null;
 }
 
 export default async function EditEmployeePage({
@@ -40,14 +35,9 @@ export default async function EditEmployeePage({
     redirect('/login');
   }
 
-  let employee: Employee;
-  let error: string | null = null;
+  const employee = await getEmployee(params.id, token);
 
-  try {
-    employee = await getEmployee(params.id, token);
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load employee';
-    // Redirect to employees list on error
+  if (!employee) {
     redirect('/employees');
   }
 
@@ -61,16 +51,8 @@ export default async function EditEmployeePage({
         </p>
       </div>
 
-      {/* Error Message (if any) */}
-      {error && (
-        <div className="rounded-md bg-destructive/15 p-4 text-destructive">
-          <p className="font-medium">Error loading employee</p>
-          <p className="text-sm mt-1">{error}</p>
-        </div>
-      )}
-
       {/* Employee Form */}
-      {!error && <EmployeeForm mode="edit" employee={employee} />}
+      <EmployeeForm mode="edit" employee={employee} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { getServerToken } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { TeamForm } from '@/components/teams/TeamForm';
 import type { components } from '@/lib/api/schema';
@@ -9,27 +10,23 @@ import type { components } from '@/lib/api/schema';
 type Team = components['schemas']['Team'];
 
 async function getTeam(token: string, teamId: string): Promise<Team | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/teams/${teamId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
+  const { data, error, response } = await apiClient.GET('/teams/{team_id}', {
+    params: { path: { team_id: teamId } },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (response.status === 404) {
     return null;
   }
 
-  if (!response.ok) {
+  if (error) {
     if (response.status === 401) {
       redirect('/login');
     }
-    throw new Error(`Failed to fetch team: ${response.statusText}`);
+    throw new Error('Failed to fetch team');
   }
 
-  return response.json();
+  return data ?? null;
 }
 
 interface EditTeamPageProps {

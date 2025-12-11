@@ -2,31 +2,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, UsersRound } from 'lucide-react';
 import { getServerToken } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { TeamCard } from '@/components/teams/TeamCard';
-import type { components } from '@/lib/api/schema';
-
-type ListTeamsResponse = components['schemas']['ListTeamsResponse'];
-
-async function getTeams(token: string): Promise<ListTeamsResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/teams`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      redirect('/login');
-    }
-    throw new Error(`Failed to fetch teams: ${response.statusText}`);
-  }
-
-  return response.json();
-}
 
 export default async function TeamsPage() {
   const token = await getServerToken();
@@ -35,17 +13,14 @@ export default async function TeamsPage() {
     redirect('/login');
   }
 
-  let teams: ListTeamsResponse;
-  let error: string | null = null;
+  const { data: teams, error: apiError } = await apiClient.GET('/teams', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-  try {
-    teams = await getTeams(token);
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load teams';
-    teams = { teams: [], total: 0 };
-  }
-
-  const teamList = teams.teams ?? [];
+  const error = apiError ? 'Failed to load teams' : null;
+  const teamList = teams?.teams ?? [];
 
   return (
     <div className="space-y-6">
@@ -74,7 +49,7 @@ export default async function TeamsPage() {
       )}
 
       {/* Teams Grid */}
-      {teamList.length === 0 ? (
+      {teamList.length === 0 && !error ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <UsersRound className="h-6 w-6 text-muted-foreground" />

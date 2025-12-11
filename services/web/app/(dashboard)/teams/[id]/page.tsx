@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Settings, UserPlus, Users, Bot } from 'lucide-react';
 import { getServerToken } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,49 +18,35 @@ import type { components } from '@/lib/api/schema';
 
 type Team = components['schemas']['Team'];
 type Employee = components['schemas']['Employee'];
-type ListEmployeesResponse = components['schemas']['ListEmployeesResponse'];
 
 async function getTeam(token: string, teamId: string): Promise<Team | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/teams/${teamId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
+  const { data, error, response } = await apiClient.GET('/teams/{team_id}', {
+    params: { path: { team_id: teamId } },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (response.status === 404) {
     return null;
   }
 
-  if (!response.ok) {
+  if (error) {
     if (response.status === 401) {
       redirect('/login');
     }
-    throw new Error(`Failed to fetch team: ${response.statusText}`);
+    throw new Error('Failed to fetch team');
   }
 
-  return response.json();
+  return data ?? null;
 }
 
 async function getTeamMembers(token: string, teamId: string): Promise<Employee[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/employees?per_page=100`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
+  const { data } = await apiClient.GET('/employees', {
+    params: { query: { per_page: 100 } },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!response.ok) {
-    return [];
-  }
-
-  const data: ListEmployeesResponse = await response.json();
   // Filter employees by team_id
-  return (data.employees ?? []).filter((emp) => emp.team_id === teamId);
+  return (data?.employees ?? []).filter((emp) => emp.team_id === teamId);
 }
 
 function getStatusVariant(status: string) {
