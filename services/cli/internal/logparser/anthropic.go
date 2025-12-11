@@ -36,13 +36,13 @@ type anthropicMessage struct {
 
 // anthropicResponse represents the structure of an Anthropic /v1/messages response
 type anthropicResponse struct {
-	ID      string                    `json:"id"`
-	Type    string                    `json:"type"`
-	Role    string                    `json:"role"`
-	Model   string                    `json:"model"`
-	Content []anthropicResponseBlock  `json:"content"`
-	Usage   anthropicUsage            `json:"usage"`
-	Error   *anthropicError           `json:"error,omitempty"`
+	ID      string                   `json:"id"`
+	Type    string                   `json:"type"`
+	Role    string                   `json:"role"`
+	Model   string                   `json:"model"`
+	Content []anthropicResponseBlock `json:"content"`
+	Usage   anthropicUsage           `json:"usage"`
+	Error   *anthropicError          `json:"error,omitempty"`
 }
 
 // anthropicResponseBlock represents a content block in the response

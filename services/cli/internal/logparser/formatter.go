@@ -285,7 +285,7 @@ func estimateCost(model string, inputTokens, outputTokens int) float64 {
 		inputPrice = 3.0   // $3 per 1M input
 		outputPrice = 15.0 // $15 per 1M output
 	case strings.Contains(model, "haiku"):
-		inputPrice = 0.25 // $0.25 per 1M input
+		inputPrice = 0.25  // $0.25 per 1M input
 		outputPrice = 1.25 // $1.25 per 1M output
 	default:
 		// Default to sonnet pricing
