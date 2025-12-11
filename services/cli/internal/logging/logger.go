@@ -208,7 +208,13 @@ func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
 	// Store in memory for current session display
 	l.classifiedLogsMu.Lock()
 	l.classifiedLogs = append(l.classifiedLogs, entry)
+	logCount := len(l.classifiedLogs)
 	l.classifiedLogsMu.Unlock()
+
+	// Save to disk periodically (every 10 entries) for resilience
+	if logCount%10 == 0 {
+		go l.saveClassifiedLogsToDisk()
+	}
 
 	// Also log as a regular event for persistence
 	payload := map[string]interface{}{
@@ -257,6 +263,9 @@ func (l *loggerImpl) Close() error {
 	// Flush any remaining logs
 	l.flushBuffer()
 
+	// Save classified logs to disk
+	l.saveClassifiedLogsToDisk()
+
 	// Signal shutdown
 	close(l.done)
 	l.cancel()
@@ -265,6 +274,37 @@ func (l *loggerImpl) Close() error {
 	l.wg.Wait()
 
 	return nil
+}
+
+// saveClassifiedLogsToDisk persists classified logs to ~/.ubik/classified_logs/
+func (l *loggerImpl) saveClassifiedLogsToDisk() {
+	l.classifiedLogsMu.RLock()
+	logs := make([]types.ClassifiedLogEntry, len(l.classifiedLogs))
+	copy(logs, l.classifiedLogs)
+	l.classifiedLogsMu.RUnlock()
+
+	if len(logs) == 0 {
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+
+	logsDir := filepath.Join(home, ".ubik", "classified_logs")
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		return
+	}
+
+	filename := filepath.Join(logsDir, l.sessionID.String()+".json")
+
+	data, err := json.MarshalIndent(logs, "", "  ")
+	if err != nil {
+		return
+	}
+
+	os.WriteFile(filename, data, 0644)
 }
 
 // batchSender periodically sends batched logs
