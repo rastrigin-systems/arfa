@@ -378,3 +378,103 @@ func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	assert.Nil(t, config)
 	assert.Contains(t, err.Error(), "failed to get Claude Code config")
 }
+
+func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
+	// Setup mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/api/v1/employees/me/agent-configs/resolved", r.URL.Path)
+		assert.Equal(t, "GET", r.Method)
+		assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+
+		// Return resolved configs
+		resp := ResolvedConfigsResponse{
+			Configs: []AgentConfigAPIResponse{
+				{
+					AgentID:      "agent-1",
+					AgentName:    "Claude Code",
+					AgentType:    "claude-code",
+					IsEnabled:    true,
+					Config:       map[string]interface{}{"model": "claude-3-5-sonnet"},
+					Provider:     "anthropic",
+					SyncToken:    "sync-token-1",
+					SystemPrompt: "You are a helpful coding assistant",
+					LastSyncedAt: nil,
+				},
+				{
+					AgentID:      "agent-2",
+					AgentName:    "Cursor",
+					AgentType:    "cursor",
+					IsEnabled:    false,
+					Config:       map[string]interface{}{"theme": "dark"},
+					Provider:     "cursor",
+					SyncToken:    "sync-token-2",
+					SystemPrompt: "",
+					LastSyncedAt: nil,
+				},
+			},
+			Total: 2,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("test-token")
+
+	configs, err := client.GetMyResolvedAgentConfigs()
+
+	require.NoError(t, err)
+	assert.Len(t, configs, 2)
+
+	// Check first config
+	assert.Equal(t, "agent-1", configs[0].AgentID)
+	assert.Equal(t, "Claude Code", configs[0].AgentName)
+	assert.Equal(t, "claude-code", configs[0].AgentType)
+	assert.True(t, configs[0].IsEnabled)
+	assert.Equal(t, "claude-3-5-sonnet", configs[0].Configuration["model"])
+
+	// Check second config
+	assert.Equal(t, "agent-2", configs[1].AgentID)
+	assert.Equal(t, "Cursor", configs[1].AgentName)
+	assert.False(t, configs[1].IsEnabled)
+}
+
+func TestPlatformClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
+	// Setup mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := ResolvedConfigsResponse{
+			Configs: []AgentConfigAPIResponse{},
+			Total:   0,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("test-token")
+
+	configs, err := client.GetMyResolvedAgentConfigs()
+
+	require.NoError(t, err)
+	assert.Len(t, configs, 0)
+}
+
+func TestPlatformClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
+	// Setup mock server that returns 401
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error":"Unauthorized"}`))
+	}))
+	defer server.Close()
+
+	client := NewPlatformClient(server.URL)
+	client.SetToken("invalid-token")
+
+	configs, err := client.GetMyResolvedAgentConfigs()
+
+	require.Error(t, err)
+	assert.Nil(t, configs)
+	assert.Contains(t, err.Error(), "failed to get resolved configs")
+}

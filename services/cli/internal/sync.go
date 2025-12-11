@@ -58,8 +58,8 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 
 	fmt.Println("✓ Fetching configs from platform...")
 
-	// Fetch resolved agent configs
-	agentConfigs, err := ss.platformClient.GetResolvedAgentConfigs(config.EmployeeID)
+	// Fetch resolved agent configs (using JWT-based /employees/me endpoint)
+	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch agent configs: %w", err)
 	}
