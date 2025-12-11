@@ -211,10 +211,10 @@ jobs:
           IMAGE_TAG: us-central1-docker.pkg.dev/ubik-enterprise-prod/ubik-images/api:${{ github.sha }}
         run: |
           echo "🧪 Testing Docker image..."
-          # Start container
+          # Start container (use localhost since --network host shares host network namespace)
           docker run -d --name api-test \
             -p 8080:8080 \
-            -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
+            -e DATABASE_URL="postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" \
             -e PORT=8080 \
             --network host \
             $IMAGE_TAG
