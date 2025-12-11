@@ -3620,6 +3620,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /employees/me/agent-configs/resolved:
+    get:
+      tags:
+        - agents
+      summary: Get resolved agent configs for current employee
+      description: |
+        Get all agent configurations for the current employee (from JWT) with full
+        hierarchy resolution (org → team → employee). Same as the {employee_id}
+        version but uses JWT-derived employee_id automatically.
+      operationId: getMyResolvedAgentConfigs
+      responses:
+        '200':
+          description: Resolved agent configs for current employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResolvedAgentConfigsResponse'
+        '401':
+          description: Unauthorized - missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # ============================================================================
   # MCP Server Catalog
   # ============================================================================

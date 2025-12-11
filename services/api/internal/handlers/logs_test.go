@@ -236,3 +236,58 @@ func TestListLogs_WithSessionFilter(t *testing.T) {
 	// Verify response
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
+
+func TestListLogs_DefaultToCurrentEmployeeWhenFilterOmitted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+
+	orgID := uuid.New()
+	employeeID := uuid.New()
+
+	// Test logs
+	logs := []db.ActivityLog{
+		{
+			ID:            uuid.New(),
+			OrgID:         orgID,
+			EmployeeID:    pgtype.UUID{Bytes: employeeID, Valid: true},
+			EventType:     "input",
+			EventCategory: "io",
+			Payload:       []byte("{}"),
+			CreatedAt:     pgtype.Timestamp{Valid: true},
+		},
+	}
+
+	// Expect database query with current employee ID
+	mockDB.EXPECT().
+		GetLogsByEmployee(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.GetLogsByEmployeeParams) ([]db.ActivityLog, error) {
+			// Verify that employee_id from context is used
+			assert.Equal(t, orgID, params.OrgID)
+			assert.Equal(t, pgtype.UUID{Bytes: employeeID, Valid: true}, params.EmployeeID)
+			return logs, nil
+		})
+
+	handler := handlers.NewLogsHandler(mockDB, nil)
+
+	// Create request WITHOUT employee_id parameter
+	req := httptest.NewRequest(http.MethodGet, "/logs?page=1&per_page=20", nil)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	req = req.WithContext(handlers.SetEmployeeIDInContext(req.Context(), employeeID))
+
+	rec := httptest.NewRecorder()
+
+	// Call handler
+	handler.ListLogs(rec, req, api.ListLogsParams{})
+
+	// Verify response
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.ListLogsResponse
+	err := json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+
+	assert.Len(t, response.Logs, 1)
+	assert.NotNil(t, response.Pagination)
+}

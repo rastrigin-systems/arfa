@@ -586,3 +586,158 @@ func TestGetEmployeeResolvedAgentConfigs_EmployeeNotFound(t *testing.T) {
 	// Verify response
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
+
+// TestGetMyResolvedAgentConfigs_Success tests successful config resolution using JWT employee_id
+func TestGetMyResolvedAgentConfigs_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewOrgAgentConfigsHandler(mockDB)
+
+	employeeID := uuid.New()
+	orgID := uuid.New()
+	agent1ID := uuid.New()
+	agent2ID := uuid.New()
+
+	employee := db.Employee{
+		ID:     employeeID,
+		OrgID:  orgID,
+		TeamID: pgtype.UUID{Valid: false},
+	}
+
+	// Mock for verification
+	mockDB.EXPECT().
+		GetEmployee(gomock.Any(), employeeID).
+		Return(employee, nil).
+		Times(4) // Once for verify, once for ResolveEmployeeAgents, twice for ResolveAgentConfig
+
+	// Mock org configs
+	orgConfigs := []db.ListOrgAgentConfigsRow{
+		{
+			ID:                 uuid.New(),
+			OrgID:              orgID,
+			AgentID:            agent1ID,
+			Config:             []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+			IsEnabled:          true,
+			AgentName:          "Claude Code",
+			AgentType:          "claude-code",
+			AgentProvider:      "anthropic",
+			AgentDefaultConfig: []byte(`{}`),
+		},
+		{
+			ID:                 uuid.New(),
+			OrgID:              orgID,
+			AgentID:            agent2ID,
+			Config:             []byte(`{"model":"gpt-4o"}`),
+			IsEnabled:          true,
+			AgentName:          "Cursor",
+			AgentType:          "cursor",
+			AgentProvider:      "openai",
+			AgentDefaultConfig: []byte(`{}`),
+		},
+	}
+
+	mockDB.EXPECT().
+		ListOrgAgentConfigs(gomock.Any(), orgID).
+		Return(orgConfigs, nil)
+
+	// Mock agent 1 resolution
+	agent1 := db.Agent{
+		ID:       agent1ID,
+		Name:     "Claude Code",
+		Type:     "claude-code",
+		Provider: "anthropic",
+	}
+	orgConfig1 := db.OrgAgentConfig{
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agent1ID,
+		Config:    []byte(`{"model":"claude-3-5-sonnet-20241022"}`),
+		IsEnabled: true,
+	}
+
+	mockDB.EXPECT().GetAgentByID(gomock.Any(), agent1ID).Return(agent1, nil)
+	mockDB.EXPECT().GetOrgAgentConfig(gomock.Any(), db.GetOrgAgentConfigParams{
+		OrgID:   orgID,
+		AgentID: agent1ID,
+	}).Return(orgConfig1, nil)
+	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
+		EmployeeID: employeeID,
+		AgentID:    agent1ID,
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
+	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
+
+	// Mock agent 2 resolution
+	agent2 := db.Agent{
+		ID:       agent2ID,
+		Name:     "Cursor",
+		Type:     "cursor",
+		Provider: "openai",
+	}
+	orgConfig2 := db.OrgAgentConfig{
+		ID:        uuid.New(),
+		OrgID:     orgID,
+		AgentID:   agent2ID,
+		Config:    []byte(`{"model":"gpt-4o"}`),
+		IsEnabled: true,
+	}
+
+	mockDB.EXPECT().GetAgentByID(gomock.Any(), agent2ID).Return(agent2, nil)
+	mockDB.EXPECT().GetOrgAgentConfig(gomock.Any(), db.GetOrgAgentConfigParams{
+		OrgID:   orgID,
+		AgentID: agent2ID,
+	}).Return(orgConfig2, nil)
+	mockDB.EXPECT().GetEmployeeAgentConfigByAgent(gomock.Any(), db.GetEmployeeAgentConfigByAgentParams{
+		EmployeeID: employeeID,
+		AgentID:    agent2ID,
+	}).Return(db.GetEmployeeAgentConfigByAgentRow{}, pgx.ErrNoRows)
+	mockDB.EXPECT().GetSystemPrompts(gomock.Any(), gomock.Any()).Return([]db.SystemPrompt{}, nil)
+
+	// Use chi router to properly set context
+	r := chi.NewRouter()
+	r.Get("/employees/me/agent-configs/resolved", handler.GetMyResolvedAgentConfigs)
+
+	req := httptest.NewRequest(http.MethodGet, "/employees/me/agent-configs/resolved", nil)
+	// Set both org_id and employee_id in context (as JWT middleware would)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	req = req.WithContext(handlers.SetEmployeeIDInContext(req.Context(), employeeID))
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	// Verify response
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response api.ListResolvedAgentConfigsResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, len(response.Configs))
+	assert.Equal(t, 2, response.Total)
+}
+
+// TestGetMyResolvedAgentConfigs_Unauthorized tests when employee_id is not in context
+func TestGetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mocks.NewMockQuerier(ctrl)
+	handler := handlers.NewOrgAgentConfigsHandler(mockDB)
+
+	orgID := uuid.New()
+
+	// Use chi router
+	r := chi.NewRouter()
+	r.Get("/employees/me/agent-configs/resolved", handler.GetMyResolvedAgentConfigs)
+
+	req := httptest.NewRequest(http.MethodGet, "/employees/me/agent-configs/resolved", nil)
+	// Only set org_id, not employee_id (simulating missing JWT claim)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	// Verify response
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
