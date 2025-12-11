@@ -1,7 +1,6 @@
 package logparser
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
