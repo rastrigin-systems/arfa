@@ -10,7 +10,7 @@ export default function TeamNotFound() {
       </div>
       <h2 className="mt-6 text-2xl font-bold">Team not found</h2>
       <p className="mt-2 text-muted-foreground max-w-md">
-        The team you're looking for doesn't exist or has been deleted.
+        The team you are looking for does not exist or has been deleted.
       </p>
       <Link href="/teams" className="mt-6">
         <Button>Back to Teams</Button>
