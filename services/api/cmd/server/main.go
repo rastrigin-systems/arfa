@@ -138,18 +138,24 @@ func main() {
 			r.Route("/employees", func(r chi.Router) {
 				r.Get("/", employeesHandler.ListEmployees)
 				r.Post("/", employeesHandler.CreateEmployee)
+
+				// IMPORTANT: /me routes must be registered BEFORE /{employee_id}
+				// Chi matches routes in order, so /{employee_id} would match "me" as a param
+				r.Route("/me", func(r chi.Router) {
+					// Claude token management
+					r.Put("/claude-token", claudeTokensHandler.SetEmployeeClaudeToken)
+					r.Delete("/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
+					r.Get("/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
+					r.Get("/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
+
+					// Resolved agent configs (JWT-based)
+					r.Get("/agent-configs/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
+				})
+
+				// Parameterized employee routes (must come after /me)
 				r.Get("/{employee_id}", employeesHandler.GetEmployee)
 				r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
 				r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
-
-				// Employee personal Claude token (hybrid auth)
-				r.Put("/me/claude-token", claudeTokensHandler.SetEmployeeClaudeToken)
-				r.Delete("/me/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
-				r.Get("/me/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
-				r.Get("/me/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
-
-				// Employee resolved agent configs (JWT-based, no employee_id param needed)
-				r.Get("/me/agent-configs/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
 			})
 
 			// Roles routes
