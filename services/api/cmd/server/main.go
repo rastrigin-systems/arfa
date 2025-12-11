@@ -149,13 +149,25 @@ func main() {
 					r.Get("/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
 
 					// Resolved agent configs (JWT-based)
-					r.Get("/agent-configs/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
+					r.Route("/agent-configs", func(r chi.Router) {
+						r.Get("/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
+					})
 				})
 
 				// Parameterized employee routes (must come after /me)
 				r.Get("/{employee_id}", employeesHandler.GetEmployee)
 				r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
 				r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
+
+				// Employee agent configs (parameterized - must come after /me routes)
+				r.Route("/{employee_id}/agent-configs", func(r chi.Router) {
+					r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
+					r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
+					r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
+					r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
+					r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
+					r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
+				})
 			})
 
 			// Roles routes
@@ -212,16 +224,6 @@ func main() {
 					r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
 					r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
 				})
-			})
-
-			// Employee agent configs routes
-			r.Route("/employees/{employee_id}/agent-configs", func(r chi.Router) {
-				r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
-				r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
-				r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
-				r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
-				r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
-				r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
 			})
 
 			// Agents catalog routes (read-only)
