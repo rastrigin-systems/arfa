@@ -4,47 +4,7 @@ import { Plus, Users } from 'lucide-react';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
 import { Button } from '@/components/ui/button';
 import { getServerToken } from '@/lib/auth';
-import type { components } from '@/lib/api/schema';
-
-type ListEmployeesResponse = components['schemas']['ListEmployeesResponse'];
-type ListTeamsResponse = components['schemas']['ListTeamsResponse'];
-
-async function getEmployees(token: string): Promise<ListEmployeesResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/employees`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      redirect('/login');
-    }
-    throw new Error(`Failed to fetch employees: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-async function getTeams(token: string): Promise<ListTeamsResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
-  const response = await fetch(`${apiUrl}/teams`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return { teams: [], total: 0 };
-  }
-
-  return response.json();
-}
+import { apiClient } from '@/lib/api/client';
 
 export default async function EmployeesPage() {
   const token = await getServerToken();
@@ -53,25 +13,19 @@ export default async function EmployeesPage() {
     redirect('/login');
   }
 
-  let employees: ListEmployeesResponse;
-  let teams: ListTeamsResponse;
-  let error: string | null = null;
+  const [employeesRes, teamsRes] = await Promise.all([
+    apiClient.GET('/employees', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    apiClient.GET('/teams', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  ]);
 
-  try {
-    [employees, teams] = await Promise.all([getEmployees(token), getTeams(token)]);
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load employees';
-    employees = {
-      employees: [],
-      total: 0,
-      limit: 20,
-      offset: 0,
-    };
-    teams = { teams: [], total: 0 };
-  }
-
-  const employeeList = employees.employees ?? [];
-  const teamList = teams.teams ?? [];
+  const error = employeesRes.error ? 'Failed to load employees' : null;
+  const employeeList = employeesRes.data?.employees ?? [];
+  const teamList = teamsRes.data?.teams ?? [];
+  const total = employeesRes.data?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -120,7 +74,7 @@ export default async function EmployeesPage() {
         <EmployeeTable
           employees={employeeList}
           teams={teamList}
-          total={employees.total}
+          total={total}
         />
       )}
     </div>
