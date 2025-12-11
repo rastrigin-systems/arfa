@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -110,7 +112,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := h.db.UpdateEmployeeLastLogin(ctx, employee.ID); err != nil {
 		// Log error but don't fail the request
 		// (login succeeded even if we couldn't update last_login)
-		fmt.Printf("Warning: Failed to update last login: %v\n", err)
+		log.Printf("Warning: Failed to update last login: %v", err)
 	}
 
 	// Step 8: Return response (TestLogin_Success validates this)
@@ -166,7 +168,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Step 4: Delete session (TestLogout_Success expects this)
 	if err := h.db.DeleteSession(ctx, tokenHash); err != nil {
 		// Log error but don't expose details to client
-		fmt.Printf("Warning: Failed to delete session: %v\n", err)
+		log.Printf("Warning: Failed to delete session: %v", err)
 		writeError(w, http.StatusInternalServerError, "Failed to logout")
 		return
 	}
@@ -533,7 +535,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	token, err := authpkg.GenerateSecureToken()
 	if err != nil {
 		// Log error but return generic success (don't reveal internal errors)
-		fmt.Printf("Error generating token: %v\n", err)
+		log.Printf("Error generating token: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
@@ -551,7 +553,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		// Log error but return generic success
-		fmt.Printf("Error creating password reset token: %v\n", err)
+		log.Printf("Error creating password reset token: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
@@ -561,10 +563,16 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Step 5: Send email (in production, this would be async)
-	// For now, use mock email service
+	// For now, log the reset URL - in production, replace with email service
 	// TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
-	fmt.Printf("📧 Password reset token for %s: %s\n", employee.Email, token)
-	fmt.Printf("   Reset URL: https://app.ubik.cloud/reset-password/%s\n", token)
+	webAppURL := os.Getenv("WEB_APP_URL")
+	if webAppURL == "" {
+		webAppURL = "http://localhost:3000" // default for local development
+	}
+	resetURL := fmt.Sprintf("%s/reset-password/%s", webAppURL, token)
+	log.Printf("📧 Password reset requested for %s", employee.Email)
+	log.Printf("   Reset URL: %s", resetURL)
+	log.Printf("   Token: %s", token)
 
 	// Return generic success
 	w.Header().Set("Content-Type", "application/json")
@@ -665,7 +673,7 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	err = h.db.MarkPasswordResetTokenUsed(ctx, req.Token)
 	if err != nil {
 		// Log error but password was updated successfully
-		fmt.Printf("Warning: Failed to mark token as used: %v\n", err)
+		log.Printf("Warning: Failed to mark token as used: %v", err)
 	}
 
 	// Step 7: Return success
