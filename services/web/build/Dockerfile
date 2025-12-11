@@ -27,6 +27,8 @@ RUN npm run generate:api
 # Build Next.js app with standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# NEXT_PUBLIC_* vars must be set at build time to be included in client bundle
+ENV NEXT_PUBLIC_API_URL=https://ubik-api-754414213269.us-central1.run.app/api/v1
 RUN npm run build
 
 # Production stage - Ultra-minimal with standalone output
