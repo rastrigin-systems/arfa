@@ -290,6 +290,29 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 				ReadOnly: true,
 			})
 		}
+
+		// Mount Go module cache (read-only) for faster builds
+		// This allows containers to reuse downloaded Go modules from the host
+		goModCache := filepath.Join(homeDir, "go", "pkg", "mod")
+		if _, err := os.Stat(goModCache); err == nil {
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   goModCache,
+				Target:   "/root/go/pkg/mod",
+				ReadOnly: true,
+			})
+		}
+
+		// Mount Go build cache (read-only) for faster compilation
+		goBuildCache := filepath.Join(homeDir, "Library", "Caches", "go-build")
+		if _, err := os.Stat(goBuildCache); err == nil {
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   goBuildCache,
+				Target:   "/root/.cache/go-build",
+				ReadOnly: true,
+			})
+		}
 	}
 
 	// Note: We used to mount host binaries (detectHostTools),
