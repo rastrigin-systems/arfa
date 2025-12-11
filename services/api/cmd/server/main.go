@@ -147,6 +147,9 @@ func main() {
 				r.Delete("/me/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
 				r.Get("/me/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
 				r.Get("/me/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
+
+				// Employee resolved agent configs (JWT-based, no employee_id param needed)
+				r.Get("/me/agent-configs/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
 			})
 
 			// Roles routes
