@@ -17,26 +17,30 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/elazarl/goproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
 )
 
 // ProxyServer manages the embedded MITM proxy
 type ProxyServer struct {
-	proxy    *goproxy.ProxyHttpServer
-	logger   logging.Logger
-	certPath string
-	keyPath  string
-	server   *http.Server
+	proxy           *goproxy.ProxyHttpServer
+	logger          logging.Logger
+	certPath        string
+	keyPath         string
+	server          *http.Server
+	anthropicParser *logparser.AnthropicParser
 }
 
 // NewProxyServer creates a new proxy server instance
 func NewProxyServer(logger logging.Logger) *ProxyServer {
 	return &ProxyServer{
-		proxy:  goproxy.NewProxyHttpServer(),
-		logger: logger,
+		proxy:           goproxy.NewProxyHttpServer(),
+		logger:          logger,
+		anthropicParser: logparser.NewAnthropicParser(),
 	}
 }
 
@@ -99,18 +103,18 @@ func (s *ProxyServer) setupCA() error {
 	if _, err := os.Stat(s.certPath); err == nil {
 		if _, err := os.Stat(s.keyPath); err == nil {
 			// Load existing CA
-			lsCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
+			caCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
 			if err != nil {
 				return fmt.Errorf("failed to load existing CA: %w", err)
 			}
 
 			// Configure goproxy to use this CA
 			s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-			goproxy.GoproxyCa = lsCert
-			goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-			goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-			goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-			goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+			goproxy.GoproxyCa = caCert
+			goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+			goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+			goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+			goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
 
 			return nil
 		}
@@ -160,17 +164,17 @@ func (s *ProxyServer) setupCA() error {
 	keyOut.Close()
 
 	// Load the new CA into goproxy
-	lsCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
+	caCert, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
 	if err != nil {
 		return err
 	}
 
 	s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-	goproxy.GoproxyCa = lsCert
-	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
-	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&lsCert)}
+	goproxy.GoproxyCa = caCert
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: goproxy.TLSConfigFromCA(&caCert)}
 
 	return nil
 }
@@ -209,14 +213,22 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 
-	// Basic redaction (simple header check)
-	// Body redaction should be more sophisticated in production
+	// Parse and classify based on provider
+	if strings.Contains(r.URL.Host, "anthropic.com") && len(bodyBytes) > 0 {
+		entries, err := s.anthropicParser.ParseRequest(bodyBytes)
+		if err == nil {
+			for _, entry := range entries {
+				s.logger.LogClassified(entry)
+			}
+		}
+	}
 
+	// Also log raw request for debugging
 	payload := map[string]interface{}{
 		"method":  r.Method,
 		"url":     r.URL.String(),
 		"headers": redactHeaders(r.Header),
-		"body":    string(bodyBytes), // Careful with size/binary
+		"body":    string(bodyBytes),
 	}
 
 	s.logger.LogEvent("api_request", "proxy", fmt.Sprintf("%s %s", r.Method, r.URL.Host), payload)
@@ -232,24 +244,32 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 
-	var decodedBody string
+	var decodedBody []byte
 	if resp.Header.Get("Content-Encoding") == "gzip" {
 		reader, err := gzip.NewReader(bytes.NewBuffer(bodyBytes))
 		if err == nil {
-			decoded, _ := io.ReadAll(reader)
-			decodedBody = string(decoded)
+			decodedBody, _ = io.ReadAll(reader)
 			reader.Close()
-		} else {
-			decodedBody = "[GZIP Decode Failed]"
 		}
 	} else {
-		decodedBody = string(bodyBytes)
+		decodedBody = bodyBytes
 	}
 
+	// Parse and classify based on provider
+	if resp.Request != nil && strings.Contains(resp.Request.URL.Host, "anthropic.com") && len(decodedBody) > 0 {
+		entries, err := s.anthropicParser.ParseResponse(decodedBody)
+		if err == nil {
+			for _, entry := range entries {
+				s.logger.LogClassified(entry)
+			}
+		}
+	}
+
+	// Log raw response
 	payload := map[string]interface{}{
 		"status":  resp.StatusCode,
 		"headers": redactHeaders(resp.Header),
-		"body":    decodedBody,
+		"body":    string(decodedBody),
 	}
 
 	s.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, resp.Request.URL.Host), payload)

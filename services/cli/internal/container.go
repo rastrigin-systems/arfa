@@ -247,10 +247,57 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		})
 	}
 
-	// Note: We used to auto-detect and mount host tools here (detectHostTools),
-	// but this caused issues with Docker Desktop file sharing and binary compatibility
-	// (e.g. mounting macOS binaries into Linux containers).
-	// For now, we assume agents use tools installed in their image.
+	// Mount Docker socket for Docker-in-Docker (DinD) support
+	// This allows agents to run Docker commands on the host
+	// Security note: This gives containers significant privileges
+	mounts = append(mounts, mount.Mount{
+		Type:   mount.TypeBind,
+		Source: "/var/run/docker.sock",
+		Target: "/var/run/docker.sock",
+	})
+
+	// Mount host git config (read-only) for git identity
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		gitConfigPath := filepath.Join(homeDir, ".gitconfig")
+		if _, err := os.Stat(gitConfigPath); err == nil {
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   gitConfigPath,
+				Target:   "/root/.gitconfig",
+				ReadOnly: true,
+			})
+		}
+
+		// Mount SSH keys (read-only) for git/gh authentication
+		sshDir := filepath.Join(homeDir, ".ssh")
+		if _, err := os.Stat(sshDir); err == nil {
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   sshDir,
+				Target:   "/root/.ssh",
+				ReadOnly: true,
+			})
+		}
+
+		// Mount gh CLI config (read-only) for GitHub operations
+		ghConfigDir := filepath.Join(homeDir, ".config", "gh")
+		if _, err := os.Stat(ghConfigDir); err == nil {
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   ghConfigDir,
+				Target:   "/root/.config/gh",
+				ReadOnly: true,
+			})
+		}
+	}
+
+	// Note: We used to mount host binaries (detectHostTools),
+	// but this caused issues with binary compatibility (macOS binaries → Linux containers).
+	// Instead, we now:
+	// 1. Mount Docker socket for docker/kubectl commands
+	// 2. Mount git/gh configs for authentication
+	// 3. Expect agent images to have their own tools installed (go, node, python, etc.)
 
 	hostConfig := &container.HostConfig{
 		Mounts: mounts,
