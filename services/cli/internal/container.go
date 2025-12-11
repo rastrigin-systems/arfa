@@ -3,7 +3,9 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -212,6 +214,25 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 		)
 	}
 
+	// Add GitHub token from host's gh CLI (if available)
+	// This allows gh CLI in containers to authenticate without mounting keyring
+	if ghToken := os.Getenv("GH_TOKEN"); ghToken != "" {
+		env = append(env, fmt.Sprintf("GH_TOKEN=%s", ghToken))
+	} else {
+		// Try to get token from gh CLI on host
+		if token, err := exec.Command("gh", "auth", "token").Output(); err == nil {
+			env = append(env, fmt.Sprintf("GH_TOKEN=%s", strings.TrimSpace(string(token))))
+		}
+	}
+
+	// Go environment configuration
+	// GOTOOLCHAIN=local prevents Go from auto-downloading newer toolchains
+	// (which would fail because the module cache is mounted read-only)
+	env = append(env,
+		"GOTOOLCHAIN=local",
+		"GOFLAGS=-mod=readonly",
+	)
+
 	// Prepare container config
 	config := &container.Config{
 		Image:        spec.Image,
@@ -291,26 +312,26 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 			})
 		}
 
-		// Mount Go module cache (read-only) for faster builds
-		// This allows containers to reuse downloaded Go modules from the host
+		// Mount Go module cache (read-write) for module downloads
+		// This allows containers to reuse and download Go modules
 		goModCache := filepath.Join(homeDir, "go", "pkg", "mod")
 		if _, err := os.Stat(goModCache); err == nil {
 			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   goModCache,
-				Target:   "/root/go/pkg/mod",
-				ReadOnly: true,
+				Type:   mount.TypeBind,
+				Source: goModCache,
+				Target: "/root/go/pkg/mod",
+				// Read-write to allow downloading new modules and toolchains
 			})
 		}
 
-		// Mount Go build cache (read-only) for faster compilation
+		// Mount Go build cache (read-write) for faster compilation
 		goBuildCache := filepath.Join(homeDir, "Library", "Caches", "go-build")
 		if _, err := os.Stat(goBuildCache); err == nil {
 			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   goBuildCache,
-				Target:   "/root/.cache/go-build",
-				ReadOnly: true,
+				Type:   mount.TypeBind,
+				Source: goBuildCache,
+				Target: "/root/.cache/go-build",
+				// Read-write to allow caching build artifacts
 			})
 		}
 	}
