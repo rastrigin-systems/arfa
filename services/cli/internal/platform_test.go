@@ -134,7 +134,7 @@ func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
 					AgentName:    "Claude Code",
 					AgentType:    "claude-code",
 					IsEnabled:    true,
-					Config:       map[string]interface{}{"model": "claude-3-5-sonnet"},
+					Config:       map[string]any{"model": "claude-3-5-sonnet"},
 					Provider:     "anthropic",
 					SyncToken:    "sync-token-1",
 					SystemPrompt: "You are a helpful coding assistant",
@@ -145,7 +145,7 @@ func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
 					AgentName:    "Cursor",
 					AgentType:    "cursor",
 					IsEnabled:    false,
-					Config:       map[string]interface{}{"theme": "dark"},
+					Config:       map[string]any{"theme": "dark"},
 					Provider:     "cursor",
 					SyncToken:    "sync-token-2",
 					SystemPrompt: "",
@@ -217,7 +217,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 					Type:     "claude-code",
 					Filename: "go-backend-developer.md",
 					Content:  "# Go Backend Developer\n\nYou are an expert Go developer...",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"model": "claude-3-5-sonnet",
 					},
 					Provider:  "anthropic",
@@ -230,7 +230,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 					Type:     "claude-code",
 					Filename: "frontend-developer.md",
 					Content:  "# Frontend Developer\n\nYou are an expert frontend developer...",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"model": "claude-3-5-sonnet",
 					},
 					Provider:  "anthropic",
@@ -255,7 +255,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 							"content": "# Example\n\nExample usage...",
 						},
 					},
-					Dependencies: map[string]interface{}{
+					Dependencies: map[string]any{
 						"gh": ">=2.0.0",
 					},
 					IsEnabled: true,
@@ -269,7 +269,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 					Version:     "1.0.0",
 					Description: "Browser automation",
 					DockerImage: "ubik/mcp-playwright:latest",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"port": 8001,
 					},
 					RequiredEnvVars: []string{"PLAYWRIGHT_TOKEN"},
@@ -282,7 +282,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 					Version:     "1.0.0",
 					Description: "GitHub integration",
 					DockerImage: "ubik/mcp-github:latest",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"port": 8002,
 					},
 					RequiredEnvVars: []string{"GITHUB_TOKEN"},
@@ -394,7 +394,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
 					AgentName:    "Claude Code",
 					AgentType:    "claude-code",
 					IsEnabled:    true,
-					Config:       map[string]interface{}{"model": "claude-3-5-sonnet"},
+					Config:       map[string]any{"model": "claude-3-5-sonnet"},
 					Provider:     "anthropic",
 					SyncToken:    "sync-token-1",
 					SystemPrompt: "You are a helpful coding assistant",
@@ -405,7 +405,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
 					AgentName:    "Cursor",
 					AgentType:    "cursor",
 					IsEnabled:    false,
-					Config:       map[string]interface{}{"theme": "dark"},
+					Config:       map[string]any{"theme": "dark"},
 					Provider:     "cursor",
 					SyncToken:    "sync-token-2",
 					SystemPrompt: "",
