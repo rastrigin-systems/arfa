@@ -48,17 +48,19 @@ INSERT INTO teams (
 RETURNING *;
 
 -- name: UpdateTeam :one
+-- SECURITY: Includes org_id to ensure multi-tenant isolation
 UPDATE teams
 SET
     name = COALESCE($2, name),
     description = COALESCE($3, description),
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND org_id = $4
 RETURNING *;
 
 -- name: DeleteTeam :exec
+-- SECURITY: Includes org_id to ensure multi-tenant isolation
 DELETE FROM teams
-WHERE id = $1;
+WHERE id = $1 AND org_id = $2;
 
 -- name: ListRoles :many
 SELECT * FROM roles

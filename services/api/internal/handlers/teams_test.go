@@ -392,11 +392,13 @@ func TestUpdateTeam_Success(t *testing.T) {
 		UpdatedAt:   pgtype.Timestamp{Valid: true},
 	}
 
+	// SECURITY: Updated test to include org_id parameter
 	mockDB.EXPECT().
 		UpdateTeam(gomock.Any(), db.UpdateTeamParams{
 			ID:          teamID,
 			Name:        newName,
 			Description: &newDescription,
+			OrgID:       orgID,
 		}).
 		Return(updatedTeam, nil)
 
@@ -411,6 +413,8 @@ func TestUpdateTeam_Success(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPatch, "/teams/"+teamID.String(), strings.NewReader(string(bodyBytes)))
 	req.Header.Set("Content-Type", "application/json")
+	// SECURITY: Add org context (simulates auth middleware)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
 	rec := httptest.NewRecorder()
 
 	r.ServeHTTP(rec, req)
@@ -434,6 +438,7 @@ func TestUpdateTeam_NotFound(t *testing.T) {
 	handler := handlers.NewTeamsHandler(mockDB)
 
 	teamID := uuid.New()
+	orgID := uuid.New()
 	newName := "Engineering Updated"
 
 	mockDB.EXPECT().
@@ -450,6 +455,8 @@ func TestUpdateTeam_NotFound(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPatch, "/teams/"+teamID.String(), strings.NewReader(string(bodyBytes)))
 	req.Header.Set("Content-Type", "application/json")
+	// SECURITY: Add org context (simulates auth middleware)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
 	rec := httptest.NewRecorder()
 
 	r.ServeHTTP(rec, req)
@@ -469,15 +476,22 @@ func TestDeleteTeam_Success(t *testing.T) {
 	handler := handlers.NewTeamsHandler(mockDB)
 
 	teamID := uuid.New()
+	orgID := uuid.New()
 
+	// SECURITY: Updated test to include org_id parameter
 	mockDB.EXPECT().
-		DeleteTeam(gomock.Any(), teamID).
+		DeleteTeam(gomock.Any(), db.DeleteTeamParams{
+			ID:    teamID,
+			OrgID: orgID,
+		}).
 		Return(nil)
 
 	r := chi.NewRouter()
 	r.Delete("/teams/{team_id}", handler.DeleteTeam)
 
 	req := httptest.NewRequest(http.MethodDelete, "/teams/"+teamID.String(), nil)
+	// SECURITY: Add org context (simulates auth middleware)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
 	rec := httptest.NewRecorder()
 
 	r.ServeHTTP(rec, req)
@@ -492,10 +506,14 @@ func TestDeleteTeam_InvalidUUID(t *testing.T) {
 	mockDB := mocks.NewMockQuerier(ctrl)
 	handler := handlers.NewTeamsHandler(mockDB)
 
+	orgID := uuid.New()
+
 	r := chi.NewRouter()
 	r.Delete("/teams/{team_id}", handler.DeleteTeam)
 
 	req := httptest.NewRequest(http.MethodDelete, "/teams/invalid-uuid", nil)
+	// SECURITY: Add org context (simulates auth middleware)
+	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
 	rec := httptest.NewRecorder()
 
 	r.ServeHTTP(rec, req)
