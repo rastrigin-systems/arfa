@@ -279,7 +279,7 @@ jobs:
             --region=us-central1 \
             --allow-unauthenticated \
             --add-cloudsql-instances=ubik-enterprise-prod:us-central1:ubik-postgres \
-            --set-env-vars="GIN_MODE=release,LOG_LEVEL=info" \
+            --set-env-vars="GIN_MODE=release,LOG_LEVEL=info,WEB_APP_URL=https://ubik-web-754414213269.us-central1.run.app" \
             --set-secrets="JWT_SECRET=jwt-secret:latest,DATABASE_URL=database-url:latest" \
             --memory=512Mi \
             --cpu=1 \
