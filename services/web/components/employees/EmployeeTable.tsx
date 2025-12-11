@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -24,16 +25,25 @@ import {
 import type { components } from '@/lib/api/schema';
 
 type Employee = components['schemas']['Employee'];
+type Team = components['schemas']['Team'];
 
 interface EmployeeTableProps {
   employees: Employee[];
+  teams?: Team[];
   total: number;
+  initialTeamFilter?: string;
 }
 
-export function EmployeeTable({ employees, total }: EmployeeTableProps) {
+export function EmployeeTable({
+  employees,
+  teams = [],
+  total,
+  initialTeamFilter,
+}: EmployeeTableProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [teamFilter, setTeamFilter] = useState<string>(initialTeamFilter || 'all');
 
   // Client-side filtering
   const filteredEmployees = useMemo(() => {
@@ -45,12 +55,17 @@ export function EmployeeTable({ employees, total }: EmployeeTableProps) {
       const matchesStatus =
         statusFilter === 'all' || employee.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesTeam =
+        teamFilter === 'all' ||
+        (teamFilter === 'none' && !employee.team_id) ||
+        employee.team_id === teamFilter;
+
+      return matchesSearch && matchesStatus && matchesTeam;
     });
-  }, [employees, searchTerm, statusFilter]);
+  }, [employees, searchTerm, statusFilter, teamFilter]);
 
   const handleViewEmployee = (employeeId: string) => {
-    router.push(`/dashboard/employees/${employeeId}`);
+    router.push(`/employees/${employeeId}`);
   };
 
   const getStatusVariant = (status: Employee['status']) => {
@@ -69,7 +84,7 @@ export function EmployeeTable({ employees, total }: EmployeeTableProps) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Input
           type="text"
           placeholder="Search employees by name or email..."
@@ -77,6 +92,20 @@ export function EmployeeTable({ employees, total }: EmployeeTableProps) {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
+        <Select value={teamFilter} onValueChange={setTeamFilter}>
+          <SelectTrigger className="w-[180px]" aria-label="Team filter">
+            <SelectValue placeholder="Filter by team" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All teams</SelectItem>
+            <SelectItem value="none">No team</SelectItem>
+            {teams.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                {team.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]" aria-label="Status filter">
             <SelectValue placeholder="Filter by status" />
@@ -104,14 +133,13 @@ export function EmployeeTable({ employees, total }: EmployeeTableProps) {
               <TableHead>Email</TableHead>
               <TableHead>Team</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Role</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredEmployees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
                   No employees found
                 </TableCell>
               </TableRow>
@@ -120,13 +148,23 @@ export function EmployeeTable({ employees, total }: EmployeeTableProps) {
                 <TableRow key={employee.id}>
                   <TableCell className="font-medium">{employee.full_name}</TableCell>
                   <TableCell>{employee.email}</TableCell>
-                  <TableCell>{employee.team_name || '-'}</TableCell>
+                  <TableCell>
+                    {employee.team_id && employee.team_name ? (
+                      <Link
+                        href={`/teams/${employee.team_id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {employee.team_name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(employee.status)}>
                       {employee.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{employee.role_id}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
