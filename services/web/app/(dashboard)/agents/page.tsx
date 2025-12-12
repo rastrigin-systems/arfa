@@ -31,9 +31,9 @@ export default async function AgentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Organization Agent Configuration</h1>
+        <h1 className="text-3xl font-bold">AI Agent Configuration</h1>
         <p className="text-muted-foreground">
-          Manage AI agents available to your organization
+          Configure agents at organization, team, or employee level
         </p>
       </div>
 
