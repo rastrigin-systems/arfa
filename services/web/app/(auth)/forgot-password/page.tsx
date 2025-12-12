@@ -56,37 +56,41 @@ export default function ForgotPasswordPage() {
               </div>
             )}
 
-            {/* Email field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-                disabled={state.success}
-                aria-required="true"
-                aria-label="Email address"
-                aria-invalid={!!state.errors?.email}
-                aria-describedby={state.errors?.email ? 'email-error' : undefined}
-              />
-              {state.errors?.email && (
-                <p id="email-error" role="alert" className="text-sm text-destructive">
-                  {state.errors.email.join(', ')}
-                </p>
-              )}
-            </div>
+            {/* Only show form fields if not yet successful */}
+            {!state.success && (
+              <>
+                {/* Email field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    aria-required="true"
+                    aria-label="Email address"
+                    aria-invalid={!!state.errors?.email}
+                    aria-describedby={state.errors?.email ? 'email-error' : undefined}
+                  />
+                  {state.errors?.email && (
+                    <p id="email-error" role="alert" className="text-sm text-destructive">
+                      {state.errors.email.join(', ')}
+                    </p>
+                  )}
+                </div>
 
-            {/* Form-level errors */}
-            {state.errors?._form && (
-              <div role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {state.errors._form.join(', ')}
-              </div>
+                {/* Form-level errors */}
+                {state.errors?._form && (
+                  <div role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                    {state.errors._form.join(', ')}
+                  </div>
+                )}
+
+                {/* Submit button */}
+                <SubmitButton />
+              </>
             )}
-
-            {/* Submit button */}
-            <SubmitButton />
 
             {/* Back to login link */}
             <div className="text-center text-sm">
