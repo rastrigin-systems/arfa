@@ -42,7 +42,7 @@ func TestListEmployeeAgentConfigs_Success(t *testing.T) {
 	syncToken := "sync-token-123"
 	lastSyncedAt := time.Now()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -127,7 +127,7 @@ func TestListEmployeeAgentConfigs_EmployeeNotFound(t *testing.T) {
 
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), employeeID).
-		Return(db.Employee{}, pgx.ErrNoRows)
+		Return(db.GetEmployeeRow{}, pgx.ErrNoRows)
 
 	r := chi.NewRouter()
 	r.Get("/employees/{employee_id}/agent-configs", handler.ListEmployeeAgentConfigs)
@@ -152,7 +152,7 @@ func TestListEmployeeAgentConfigs_WrongOrg(t *testing.T) {
 	otherOrgID := uuid.New()
 	employeeID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  otherOrgID, // Different org!
 		Email:  "user@example.com",
@@ -212,7 +212,7 @@ func TestCreateEmployeeAgentConfig_Success(t *testing.T) {
 	agentID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -307,7 +307,7 @@ func TestCreateEmployeeAgentConfig_AlreadyExists(t *testing.T) {
 	employeeID := uuid.New()
 	agentID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -368,7 +368,7 @@ func TestCreateEmployeeAgentConfig_MissingConfigOverride(t *testing.T) {
 	employeeID := uuid.New()
 	agentID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -415,7 +415,7 @@ func TestGetEmployeeAgentConfig_Success(t *testing.T) {
 	syncToken := "sync-token-123"
 	lastSyncedAt := time.Now()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -478,7 +478,7 @@ func TestGetEmployeeAgentConfig_NotFound(t *testing.T) {
 	employeeID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -518,7 +518,7 @@ func TestGetEmployeeAgentConfig_WrongEmployee(t *testing.T) {
 	agentID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -574,7 +574,7 @@ func TestUpdateEmployeeAgentConfig_Success(t *testing.T) {
 	agentID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -655,7 +655,7 @@ func TestUpdateEmployeeAgentConfig_NotFound(t *testing.T) {
 	employeeID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",
@@ -704,7 +704,7 @@ func TestDeleteEmployeeAgentConfig_Success(t *testing.T) {
 	employeeID := uuid.New()
 	configID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		Email:  "user@example.com",

@@ -30,7 +30,7 @@ func TestResolveAgentConfig_OrgOnly(t *testing.T) {
 	orgID := uuid.New()
 
 	// Mock employee
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false}, // No team
@@ -94,7 +94,7 @@ func TestResolveAgentConfig_TeamOverride(t *testing.T) {
 	teamID := uuid.New()
 
 	// Mock employee with team
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
@@ -167,7 +167,7 @@ func TestResolveAgentConfig_EmployeeOverride(t *testing.T) {
 	orgID := uuid.New()
 	teamID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
@@ -253,7 +253,7 @@ func TestResolveAgentConfig_DisabledAtTeam(t *testing.T) {
 	orgID := uuid.New()
 	teamID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
@@ -323,7 +323,7 @@ func TestResolveAgentConfig_SystemPrompts(t *testing.T) {
 	orgID := uuid.New()
 	teamID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Bytes: teamID, Valid: true},
@@ -411,7 +411,7 @@ func TestResolveAgentConfig_NoOrgConfig(t *testing.T) {
 	agentID := uuid.New()
 	orgID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},
@@ -455,7 +455,7 @@ func TestResolveEmployeeAgents(t *testing.T) {
 	agent1ID := uuid.New()
 	agent2ID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},

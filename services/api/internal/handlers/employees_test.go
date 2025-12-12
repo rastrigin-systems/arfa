@@ -283,7 +283,7 @@ func TestGetEmployee_Success(t *testing.T) {
 	roleID := uuid.New()
 
 	// Employee to return
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:           empID,
 		OrgID:        orgID,
 		Email:        "alice@example.com",
@@ -345,7 +345,7 @@ func TestGetEmployee_NotFound(t *testing.T) {
 	// Expect database query to return error (not found)
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{}, pgx.ErrNoRows)
+		Return(db.GetEmployeeRow{}, pgx.ErrNoRows)
 
 	handler := handlers.NewEmployeesHandler(mockDB)
 
@@ -382,7 +382,7 @@ func TestGetEmployee_WrongOrg(t *testing.T) {
 	roleID := uuid.New()
 
 	// Employee belongs to different org
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:           empID,
 		OrgID:        otherOrgID, // Wrong org!
 		Email:        "bob@other-org.com",
@@ -744,7 +744,7 @@ func TestUpdateEmployee_Success(t *testing.T) {
 	// First, expect GetEmployee to verify org isolation
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    orgID,
 			Email:    "user@example.com",
@@ -817,7 +817,7 @@ func TestUpdateEmployee_MultipleFields(t *testing.T) {
 
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    orgID,
 			Email:    "user@example.com",
@@ -881,7 +881,7 @@ func TestUpdateEmployee_NotFound(t *testing.T) {
 
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{}, pgx.ErrNoRows)
+		Return(db.GetEmployeeRow{}, pgx.ErrNoRows)
 
 	handler := handlers.NewEmployeesHandler(mockDB)
 
@@ -917,7 +917,7 @@ func TestUpdateEmployee_WrongOrg(t *testing.T) {
 	// Employee belongs to different org
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    otherOrgID, // Different org!
 			Email:    "user@other.com",
@@ -990,7 +990,7 @@ func TestDeleteEmployee_Success(t *testing.T) {
 	// First, verify org isolation
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    orgID,
 			Email:    "user@example.com",
@@ -1033,7 +1033,7 @@ func TestDeleteEmployee_NotFound(t *testing.T) {
 
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{}, pgx.ErrNoRows)
+		Return(db.GetEmployeeRow{}, pgx.ErrNoRows)
 
 	handler := handlers.NewEmployeesHandler(mockDB)
 
@@ -1066,7 +1066,7 @@ func TestDeleteEmployee_WrongOrg(t *testing.T) {
 	// Employee belongs to different org
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    otherOrgID, // Different org!
 			Email:    "user@other.com",

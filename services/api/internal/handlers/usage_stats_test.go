@@ -35,7 +35,7 @@ func TestGetEmployeeUsageStats_Success(t *testing.T) {
 	// Mock employee lookup (verify org ownership)
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    orgID,
 			FullName: "Alice Smith",
@@ -152,7 +152,7 @@ func TestGetEmployeeUsageStats_EmployeeNotFound(t *testing.T) {
 	// Employee not found
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{}, assert.AnError)
+		Return(db.GetEmployeeRow{}, assert.AnError)
 
 	handler := handlers.NewUsageStatsHandler(mockDB)
 
@@ -190,7 +190,7 @@ func TestGetEmployeeUsageStats_WrongOrg(t *testing.T) {
 	// Employee belongs to different org
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    otherOrgID, // Different org!
 			FullName: "Bob Jones",
@@ -230,7 +230,7 @@ func TestGetEmployeeUsageStats_DatabaseError(t *testing.T) {
 
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			OrgID:    orgID,
 			FullName: "Alice Smith",

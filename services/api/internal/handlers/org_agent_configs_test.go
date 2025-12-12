@@ -440,7 +440,7 @@ func TestGetEmployeeResolvedAgentConfigs_Success(t *testing.T) {
 	agent1ID := uuid.New()
 	agent2ID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},
@@ -571,7 +571,7 @@ func TestGetEmployeeResolvedAgentConfigs_EmployeeNotFound(t *testing.T) {
 	// Mock employee verification - returns not found
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), employeeID).
-		Return(db.Employee{}, pgx.ErrNoRows)
+		Return(db.GetEmployeeRow{}, pgx.ErrNoRows)
 
 	// Use chi router to properly set URL params
 	r := chi.NewRouter()
@@ -600,7 +600,7 @@ func TestGetMyResolvedAgentConfigs_Success(t *testing.T) {
 	agent1ID := uuid.New()
 	agent2ID := uuid.New()
 
-	employee := db.Employee{
+	employee := db.GetEmployeeRow{
 		ID:     employeeID,
 		OrgID:  orgID,
 		TeamID: pgtype.UUID{Valid: false},
