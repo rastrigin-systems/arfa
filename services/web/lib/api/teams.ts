@@ -12,6 +12,7 @@ export async function getTeams(): Promise<Team[]> {
     throw new Error((error as any).message || 'Failed to fetch teams');
   }
 
+  // API returns { teams: [...], total: number }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data as any)?.data || []) as Team[];
+  return ((data as any)?.teams || []) as Team[];
 }

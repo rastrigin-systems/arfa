@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,12 +24,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { useRoles } from '@/lib/hooks/useRoles';
+import { useTeams } from '@/lib/hooks/useTeams';
 import type { components } from '@/lib/api/schema';
 
 type Employee = components['schemas']['Employee'];
 type UpdateEmployeeRequest = components['schemas']['UpdateEmployeeRequest'];
-type Role = components['schemas']['Role'];
-type Team = components['schemas']['Team'];
 
 // Validation schema for employee creation
 const createEmployeeSchema = z.object({
@@ -42,7 +42,7 @@ const createEmployeeSchema = z.object({
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name must be less than 255 characters'),
-  team_id: z.string().uuid('Invalid team ID').optional().nullable(),
+  team_id: z.string().uuid('Invalid team ID').optional().nullable().or(z.literal(null)),
   role_id: z.string().uuid('Role is required').min(1, 'Role is required'),
 });
 
@@ -52,7 +52,7 @@ const updateEmployeeSchema = z.object({
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name must be less than 255 characters'),
-  team_id: z.string().uuid('Invalid team ID').optional().nullable(),
+  team_id: z.string().uuid('Invalid team ID').optional().nullable().or(z.literal(null)),
   role_id: z.string().uuid('Role is required').min(1, 'Role is required'),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
 });
@@ -70,10 +70,12 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
+
+  // Use React Query hooks for data fetching (includes auth automatically)
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+  const { data: teams = [], isLoading: teamsLoading } = useTeams();
+  const isLoadingOptions = rolesLoading || teamsLoading;
 
   const isEditMode = mode === 'edit';
 
@@ -83,60 +85,17 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
     defaultValues: isEditMode && employee
       ? {
           full_name: employee.full_name,
-          team_id: employee.team_id || '',
+          team_id: employee.team_id || null,
           role_id: employee.role_id,
           status: employee.status,
         }
       : {
           email: '',
           full_name: '',
-          team_id: '',
+          team_id: null,
           role_id: '',
         },
   });
-
-  // Fetch roles and teams on mount
-  useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoadingOptions(true);
-      try {
-        // Fetch roles
-        const rolesResponse = await fetch('/api/v1/roles', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (rolesResponse.ok) {
-          const rolesData = await rolesResponse.json();
-          setRoles(rolesData.roles || []);
-        }
-
-        // Fetch teams
-        const teamsResponse = await fetch('/api/v1/teams', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (teamsResponse.ok) {
-          const teamsData = await teamsResponse.json();
-          setTeams(teamsData.teams || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch options:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to load form options. Please refresh the page.',
-        });
-      } finally {
-        setIsLoadingOptions(false);
-      }
-    };
-
-    fetchOptions();
-  }, [toast]);
 
   const onSubmit = async (data: CreateEmployeeFormData | UpdateEmployeeFormData) => {
     setIsSubmitting(true);

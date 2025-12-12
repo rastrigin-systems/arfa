@@ -25,7 +25,7 @@ describe('getTeams', () => {
 
     vi.mocked(apiClient.GET).mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: { data: mockTeams } as any,
+      data: { teams: mockTeams, total: mockTeams.length } as any,
       error: undefined,
       response: { ok: true } as Response,
     });
