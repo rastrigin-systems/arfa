@@ -199,7 +199,7 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
           {/* Level Filter */}
-          <Select value={levelFilter} onValueChange={(value: any) => setLevelFilter(value)}>
+          <Select value={levelFilter} onValueChange={(value) => setLevelFilter(value as 'all' | 'organization' | 'team' | 'employee')}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Level" />
             </SelectTrigger>
@@ -227,7 +227,7 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
           </Select>
 
           {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'enabled' | 'disabled')}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>

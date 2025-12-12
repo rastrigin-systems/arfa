@@ -50,7 +50,7 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
     let config: Record<string, unknown>;
     try {
       config = JSON.parse(configJson);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Invalid JSON',
         description: 'Please enter valid JSON configuration',
@@ -160,7 +160,7 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
           {/* Assignment Level */}
           <div className="space-y-2">
             <Label>Assign To *</Label>
-            <RadioGroup value={assignTo} onValueChange={(value: any) => setAssignTo(value)}>
+            <RadioGroup value={assignTo} onValueChange={(value) => setAssignTo(value as 'organization' | 'team' | 'employee')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="organization" id="org" />
                 <Label htmlFor="org" className="font-normal">
