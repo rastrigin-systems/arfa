@@ -18,7 +18,7 @@ async function getStats(token: string): Promise<{ teamCount: number; employeeCou
 
     return {
       teamCount: teamsRes.data?.teams?.length ?? 0,
-      employeeCount: teamsRes.data?.total ?? employeesRes.data?.total ?? 0,
+      employeeCount: employeesRes.data?.total ?? 0,
     };
   } catch {
     return { teamCount: 0, employeeCount: 0 };
