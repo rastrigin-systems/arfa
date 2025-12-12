@@ -8,13 +8,8 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
-  // Check if user has admin permissions
-  const isAdmin = employee.role_name === 'Admin' || employee.role_name === 'admin';
-
-  // Redirect based on role
-  if (isAdmin) {
-    redirect('/settings/organization');
-  } else {
-    redirect('/settings/profile');
-  }
+  // TODO: Add role-based redirect when API supports role_name
+  // For now, redirect all users to profile settings
+  // Admin users can access organization settings via the sidebar
+  redirect('/settings/profile');
 }

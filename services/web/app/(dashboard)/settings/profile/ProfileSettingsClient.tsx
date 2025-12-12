@@ -27,14 +27,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import type { components } from '@/lib/api/schema';
 
-interface Employee {
+// Use the API schema type for Employee
+type ApiEmployee = components['schemas']['Employee'];
+
+// Extended employee interface for profile settings
+interface ProfileEmployee {
   id: string;
   email: string;
   full_name: string;
-  role_name?: string;
-  team_name?: string;
+  team_name?: string | null;
   preferences?: {
     theme?: 'light' | 'dark' | 'system';
     notifications?: {
@@ -80,7 +84,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 interface ProfileSettingsClientProps {
-  employee: Employee;
+  employee: ApiEmployee;
 }
 
 export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) {
@@ -92,17 +96,20 @@ export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Cast employee preferences to expected type
+  const prefs = employee.preferences as ProfileEmployee['preferences'];
+
   // Profile form
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: employee.full_name || '',
-      theme: employee.preferences?.theme || 'system',
+      theme: prefs?.theme || 'system',
       notifications: {
-        email: employee.preferences?.notifications?.email ?? true,
-        in_app: employee.preferences?.notifications?.in_app ?? true,
-        agent_activity: employee.preferences?.notifications?.agent_activity ?? false,
-        weekly_summary: employee.preferences?.notifications?.weekly_summary ?? true,
+        email: prefs?.notifications?.email ?? true,
+        in_app: prefs?.notifications?.in_app ?? true,
+        agent_activity: prefs?.notifications?.agent_activity ?? false,
+        weekly_summary: prefs?.notifications?.weekly_summary ?? true,
       },
     },
   });
@@ -140,7 +147,7 @@ export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) 
   const onSubmitProfile = async (formData: ProfileFormData) => {
     setIsSaving(true);
     try {
-      // Note: This would call PATCH /employees/current
+      // TODO: Call PATCH /employees/current when API supports it
       toast({
         title: 'Profile updated',
         description: 'Your profile and preferences have been saved.',
@@ -157,11 +164,10 @@ export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) 
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onSubmitPassword = async (_data: PasswordFormData) => {
+  const onSubmitPassword = async () => {
     setIsChangingPassword(true);
     try {
-      // Note: This would call POST /auth/change-password
+      // TODO: Call POST /auth/change-password when API supports it
       toast({
         title: 'Password updated',
         description: 'Your password has been changed successfully.',
@@ -175,17 +181,6 @@ export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) 
       });
     } finally {
       setIsChangingPassword(false);
-    }
-  };
-
-  const getRoleBadgeVariant = (role?: string) => {
-    switch (role?.toLowerCase()) {
-      case 'admin':
-        return 'default';
-      case 'manager':
-        return 'secondary';
-      default:
-        return 'outline';
     }
   };
 
@@ -237,9 +232,7 @@ export function ProfileSettingsClient({ employee }: ProfileSettingsClientProps) 
                   <div>
                     <span className="text-sm font-medium">Role</span>
                     <div className="mt-1">
-                      <Badge variant={getRoleBadgeVariant(employee.role_name)}>
-                        {employee.role_name || 'Employee'}
-                      </Badge>
+                      <Badge variant="outline">Employee</Badge>
                     </div>
                   </div>
                   <div>

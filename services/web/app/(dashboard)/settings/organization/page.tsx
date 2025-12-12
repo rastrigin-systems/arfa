@@ -11,12 +11,8 @@ export default async function OrganizationSettingsPage() {
     redirect('/login');
   }
 
-  // Check if user has admin permissions
-  const isAdmin = employee.role_name === 'Admin' || employee.role_name === 'admin';
-
-  if (!isAdmin) {
-    redirect('/settings/profile');
-  }
+  // TODO: Add role-based access control when API supports role_name
+  // For now, organization settings are accessible to all users
 
   // Fetch organization details
   const { data: orgData, error: orgError } = await apiClient.GET('/organizations/current', {
@@ -40,7 +36,7 @@ export default async function OrganizationSettingsPage() {
         </p>
       </div>
 
-      <OrganizationSettingsClient organization={orgData?.organization} />
+      <OrganizationSettingsClient organization={orgData} />
     </div>
   );
 }

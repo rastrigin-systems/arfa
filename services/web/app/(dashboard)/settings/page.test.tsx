@@ -28,36 +28,15 @@ describe('SettingsPage redirect logic', () => {
     expect(redirect).toHaveBeenCalledWith('/login');
   });
 
-  it('should redirect admin to /settings/organization', async () => {
+  it('should redirect to /settings/profile for authenticated users', async () => {
     vi.mocked(getCurrentEmployee).mockResolvedValue({
       id: '1',
-      email: 'admin@test.com',
-      full_name: 'Admin User',
-      role_name: 'Admin',
+      email: 'user@test.com',
+      full_name: 'Test User',
       org_id: 'org-1',
       role_id: 'role-1',
-      status: 'active',
-    } as any);
-
-    // Need to re-import for each test since redirect is called
-    vi.resetModules();
-
-    const { default: SettingsPage } = await import('./page');
-    await SettingsPage();
-
-    expect(redirect).toHaveBeenCalledWith('/settings/organization');
-  });
-
-  it('should redirect non-admin to /settings/profile', async () => {
-    vi.mocked(getCurrentEmployee).mockResolvedValue({
-      id: '2',
-      email: 'user@test.com',
-      full_name: 'Regular User',
-      role_name: 'Employee',
-      org_id: 'org-1',
-      role_id: 'role-2',
-      status: 'active',
-    } as any);
+      status: 'active' as const,
+    });
 
     vi.resetModules();
 

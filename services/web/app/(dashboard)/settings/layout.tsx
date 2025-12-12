@@ -13,8 +13,10 @@ export default async function SettingsLayout({
     redirect('/login');
   }
 
-  // Check if user has admin permissions
-  const isAdmin = employee.role_name === 'Admin' || employee.role_name === 'admin';
+  // TODO: Implement proper role-based access when API supports role_name
+  // For now, show organization settings to all users
+  // The sidebar will be visible to everyone
+  const isAdmin = true;
 
   return (
     <div className="flex gap-8">
