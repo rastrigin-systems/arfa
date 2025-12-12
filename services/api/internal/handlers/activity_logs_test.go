@@ -191,7 +191,7 @@ func TestListActivityLogs_Success_WithEmployeeName(t *testing.T) {
 	// Expect employee name fetch
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{
+		Return(db.GetEmployeeRow{
 			ID:       empID,
 			FullName: "Alice Smith",
 		}, nil)
@@ -254,7 +254,7 @@ func TestListActivityLogs_Success_EmployeeNotFound(t *testing.T) {
 	// Employee fetch fails (deleted employee, etc.)
 	mockDB.EXPECT().
 		GetEmployee(gomock.Any(), empID).
-		Return(db.Employee{}, assert.AnError)
+		Return(db.GetEmployeeRow{}, assert.AnError)
 
 	// Expect count query
 	mockDB.EXPECT().

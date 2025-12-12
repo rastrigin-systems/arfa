@@ -1,8 +1,12 @@
 -- Employee queries for sqlc code generation
 
 -- name: GetEmployee :one
-SELECT * FROM employees
-WHERE id = $1;
+SELECT
+  e.*,
+  t.name as team_name
+FROM employees e
+LEFT JOIN teams t ON e.team_id = t.id
+WHERE e.id = $1;
 
 -- name: GetEmployeeByEmail :one
 SELECT * FROM employees

@@ -175,7 +175,7 @@ func (h *EmployeesHandler) GetEmployee(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to API type and return
-	apiEmployee := dbEmployeeToAPI(employee)
+	apiEmployee := dbGetEmployeeRowToAPI(employee)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(apiEmployee)
@@ -517,6 +517,51 @@ func dbEmployeeToAPI(emp db.Employee) api.Employee {
 	if emp.TeamID.Valid {
 		teamUUID := emp.TeamID.Bytes
 		apiEmp.TeamId = (*openapi_types.UUID)(&teamUUID)
+	}
+
+	if emp.CreatedAt.Valid {
+		apiEmp.CreatedAt = &emp.CreatedAt.Time
+	}
+
+	if emp.UpdatedAt.Valid {
+		apiEmp.UpdatedAt = &emp.UpdatedAt.Time
+	}
+
+	if emp.LastLoginAt.Valid {
+		apiEmp.LastLoginAt = &emp.LastLoginAt.Time
+	}
+
+	// Handle preferences JSON
+	if len(emp.Preferences) > 0 && string(emp.Preferences) != "null" {
+		var prefs map[string]interface{}
+		if err := json.Unmarshal(emp.Preferences, &prefs); err == nil {
+			apiEmp.Preferences = &prefs
+		}
+	}
+
+	return apiEmp
+}
+
+// dbGetEmployeeRowToAPI converts db.GetEmployeeRow to api.Employee (includes team_name)
+func dbGetEmployeeRowToAPI(emp db.GetEmployeeRow) api.Employee {
+	apiEmp := api.Employee{
+		Id:       &emp.ID,
+		OrgId:    emp.OrgID,
+		Email:    openapi_types.Email(emp.Email),
+		FullName: emp.FullName,
+		RoleId:   emp.RoleID,
+		Status:   api.EmployeeStatus(emp.Status),
+	}
+
+	// Handle nullable fields
+	if emp.TeamID.Valid {
+		teamUUID := emp.TeamID.Bytes
+		apiEmp.TeamId = (*openapi_types.UUID)(&teamUUID)
+	}
+
+	// Handle team_name
+	if emp.TeamName != nil {
+		apiEmp.TeamName = emp.TeamName
 	}
 
 	if emp.CreatedAt.Valid {
