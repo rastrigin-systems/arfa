@@ -364,8 +364,8 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
             <FormItem>
               <FormLabel>Team (Optional)</FormLabel>
               <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value || ''}
+                onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
+                defaultValue={field.value || '__none__'}
                 disabled={isSubmitting || isLoadingOptions}
               >
                 <FormControl>
@@ -374,7 +374,7 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">No Team</SelectItem>
+                  <SelectItem value="__none__">No Team</SelectItem>
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}

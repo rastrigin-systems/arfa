@@ -147,14 +147,14 @@ export function InviteEmployeeModal({ open, onOpenChange }: InviteEmployeeModalP
           <div className="space-y-2">
             <Label htmlFor="team">Team (Optional)</Label>
             <Select
-              onValueChange={(value) => setValue('team_id', value)}
+              onValueChange={(value) => setValue('team_id', value === '__none__' ? undefined : value)}
               disabled={teamsLoading}
             >
               <SelectTrigger id="team">
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No team</SelectItem>
+                <SelectItem value="__none__">No team</SelectItem>
                 {teams?.map((team) => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name}
