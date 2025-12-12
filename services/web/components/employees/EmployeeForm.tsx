@@ -26,7 +26,6 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { useRoles } from '@/lib/hooks/useRoles';
 import { useTeams } from '@/lib/hooks/useTeams';
-import { apiClient } from '@/lib/api/client';
 import type { components } from '@/lib/api/schema';
 
 type Employee = components['schemas']['Employee'];
@@ -104,7 +103,7 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
 
     try {
       if (isEditMode && employee) {
-        // Update employee using apiClient
+        // Update employee using Next.js API route (handles auth forwarding)
         const updateData: UpdateEmployeeRequest = {
           full_name: data.full_name,
           team_id: data.team_id || null,
@@ -112,15 +111,19 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
           status: (data as UpdateEmployeeFormData).status,
         };
 
-        const { data: result, error } = await apiClient.PATCH('/employees/{employee_id}', {
-          params: { path: { employee_id: employee.id } },
-          body: updateData,
+        const response = await fetch(`/api/employees/${employee.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(updateData),
         });
 
-        if (error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          throw new Error((error as any).message || 'Failed to update employee');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update employee');
         }
+
+        const result = await response.json();
 
         toast({
           title: 'Success',
@@ -133,28 +136,30 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
           router.push(`/employees/${employee.id}`);
         }
       } else {
-        // Create employee using apiClient
+        // Create employee using Next.js API route (handles auth forwarding)
         const createData = data as CreateEmployeeFormData;
 
-        const { data: result, error } = await apiClient.POST('/employees', {
-          body: {
+        const response = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
             email: createData.email,
             full_name: createData.full_name,
             team_id: createData.team_id || undefined,
             role_id: createData.role_id,
             preferences: {},
-          },
+          }),
         });
 
-        if (error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          throw new Error((error as any).message || 'Failed to create employee');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create employee');
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const newEmployee = (result as any).employee;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tempPassword = (result as any).temporary_password;
+        const result = await response.json();
+        const newEmployee = result.employee;
+        const tempPassword = result.temporary_password;
 
         // Store temporary password to display
         setTemporaryPassword(tempPassword);
