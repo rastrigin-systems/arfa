@@ -2,6 +2,8 @@
 // NOTE: Team management endpoints (list, create, resend, cancel) are placeholders
 // until backend implementation is complete
 
+import { apiClient } from './client';
+
 export interface InvitationOrganization {
   id: string;
   name: string;
@@ -115,20 +117,17 @@ export interface CreateInvitationResponse {
  * GET /api/v1/invitations/{token}
  */
 export async function validateInvitation(token: string): Promise<ValidateInvitationResponse> {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  const response = await fetch(`${API_URL}/invitations/${token}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  const { data, error, response } = await apiClient.GET('/invitations/{token}', {
+    params: { path: { token } },
   });
 
-  if (!response.ok) {
-    const error: ApiError = await response.json();
-    throw { status: response.status, ...error };
+  if (error) {
+    throw { status: response?.status, ...(error as ApiError) };
   }
 
-  return response.json();
+  // Transform API response to expected format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { invitation: data } as any as ValidateInvitationResponse;
 }
 
 /**
@@ -137,23 +136,20 @@ export async function validateInvitation(token: string): Promise<ValidateInvitat
  */
 export async function acceptInvitation(
   token: string,
-  data: AcceptInvitationRequest
+  requestData: AcceptInvitationRequest
 ): Promise<AcceptInvitationResponse> {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  const response = await fetch(`${API_URL}/invitations/${token}/accept`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
+  const { data, error, response } = await apiClient.POST('/invitations/{token}/accept', {
+    params: { path: { token } },
+    body: requestData,
   });
 
-  if (!response.ok) {
-    const error: ApiError = await response.json();
-    throw { status: response.status, ...error };
+  if (error) {
+    throw { status: response?.status, ...(error as ApiError) };
   }
 
-  return response.json();
+  // Transform API response to expected format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data as any as AcceptInvitationResponse;
 }
 
 // ============================================================================

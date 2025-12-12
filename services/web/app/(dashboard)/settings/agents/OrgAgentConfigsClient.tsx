@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { AgentCatalog } from '@/components/agents/AgentCatalog';
+import { apiClient } from '@/lib/api/client';
 
 type Agent = {
   id: string;
@@ -85,11 +86,11 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
     }
 
     try {
-      const response = await fetch(`/api/v1/organizations/current/agent-configs/${config.id}`, {
-        method: 'DELETE',
+      const { error } = await apiClient.DELETE('/organizations/current/agent-configs/{config_id}', {
+        params: { path: { config_id: config.id } },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Failed to delete configuration');
       }
 

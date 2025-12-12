@@ -7,6 +7,7 @@ import { OrgAgentConfigTable } from '@/components/agents/OrgAgentConfigTable';
 import { ConfigEditorModal } from '@/components/agents/ConfigEditorModal';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
+import { apiClient } from '@/lib/api/client';
 
 type Agent = {
   id: string;
@@ -76,18 +77,14 @@ export function OrgAgentConfigsClient({ initialAgents, initialOrgConfigs }: OrgA
     const action = config.is_enabled ? 'disable' : 'enable';
 
     try {
-      // TODO: Get token from auth context or cookie
-      const response = await fetch(`/api/v1/organizations/current/agent-configs/${config.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { error } = await apiClient.PATCH('/organizations/current/agent-configs/{config_id}', {
+        params: { path: { config_id: config.id } },
+        body: {
           is_enabled: !config.is_enabled,
-        }),
+        },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error(`Failed to ${action} configuration`);
       }
 
@@ -119,12 +116,11 @@ export function OrgAgentConfigsClient({ initialAgents, initialOrgConfigs }: OrgA
     }
 
     try {
-      // TODO: Get token from auth context or cookie
-      const response = await fetch(`/api/v1/organizations/current/agent-configs/${config.id}`, {
-        method: 'DELETE',
+      const { error } = await apiClient.DELETE('/organizations/current/agent-configs/{config_id}', {
+        params: { path: { config_id: config.id } },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Failed to delete configuration');
       }
 
