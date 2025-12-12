@@ -54,6 +54,7 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<ConfigWithLevel | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -152,6 +153,11 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
         variant: 'destructive',
       });
     }
+  };
+
+  const handleEdit = (config: ConfigWithLevel) => {
+    setEditingConfig(config);
+    setIsCreateModalOpen(true);
   };
 
   const handleDelete = async (config: ConfigWithLevel) => {
@@ -260,19 +266,27 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
       {/* Table */}
       <ConfigsTable
         configs={filteredConfigs}
+        onEdit={handleEdit}
         onToggleEnabled={handleToggleEnabled}
         onDelete={handleDelete}
       />
 
-      {/* Create Modal */}
+      {/* Create/Edit Modal */}
       <CreateConfigModal
         agents={agents}
         open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
+        onOpenChange={(open) => {
+          setIsCreateModalOpen(open);
+          if (!open) {
+            setEditingConfig(null);
+          }
+        }}
         onSuccess={() => {
           setIsCreateModalOpen(false);
+          setEditingConfig(null);
           router.refresh();
         }}
+        editingConfig={editingConfig}
       />
     </div>
   );
