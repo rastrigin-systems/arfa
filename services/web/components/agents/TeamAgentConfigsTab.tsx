@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api/client';
 import {
   Table,
   TableBody,
@@ -87,11 +88,11 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const response = await fetch('/api/v1/teams');
-        if (!response.ok) throw new Error('Failed to fetch teams');
+        const { data, error } = await apiClient.GET('/teams');
+        if (error) throw new Error('Failed to fetch teams');
 
-        const data = await response.json();
-        setTeams(data.teams || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTeams((data as any)?.teams || []);
       } catch (error) {
         console.error('Error fetching teams:', error);
         toast({
@@ -116,11 +117,13 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/v1/teams/${selectedTeamId}/agent-configs`);
-        if (!response.ok) throw new Error('Failed to fetch team agent configs');
+        const { data, error } = await apiClient.GET('/teams/{team_id}/agent-configs', {
+          params: { path: { team_id: selectedTeamId } },
+        });
+        if (error) throw new Error('Failed to fetch team agent configs');
 
-        const data = await response.json();
-        setTeamConfigs(data.configs || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTeamConfigs((data as any)?.configs || []);
       } catch (error) {
         console.error('Error fetching team configs:', error);
         toast({
@@ -153,21 +156,18 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
     setIsAssigning(true);
     try {
-      const response = await fetch(`/api/v1/teams/${selectedTeamId}/agent-configs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { error } = await apiClient.POST('/teams/{team_id}/agent-configs', {
+        params: { path: { team_id: selectedTeamId } },
+        body: {
           agent_id: orgConfig.agent_id,
           config_override: {}, // Start with empty override
           is_enabled: true,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to assign agent to team');
+      if (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw new Error((error as any).message || 'Failed to assign agent to team');
       }
 
       toast({
@@ -176,11 +176,11 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
       });
 
       // Refresh team configs
-      const configsResponse = await fetch(`/api/v1/teams/${selectedTeamId}/agent-configs`);
-      if (configsResponse.ok) {
-        const data = await configsResponse.json();
-        setTeamConfigs(data.configs || []);
-      }
+      const { data: configsData } = await apiClient.GET('/teams/{team_id}/agent-configs', {
+        params: { path: { team_id: selectedTeamId } },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setTeamConfigs((configsData as any)?.configs || []);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
@@ -208,11 +208,11 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     }
 
     try {
-      const response = await fetch(`/api/v1/teams/${config.team_id}/agent-configs/${config.id}`, {
-        method: 'DELETE',
+      const { error } = await apiClient.DELETE('/teams/{team_id}/agent-configs/{config_id}', {
+        params: { path: { team_id: config.team_id, config_id: config.id } },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Failed to delete team agent configuration');
       }
 
@@ -236,11 +236,11 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
   const handleModalSuccess = async () => {
     // Refresh team configs after editing
     if (selectedTeamId !== 'all') {
-      const response = await fetch(`/api/v1/teams/${selectedTeamId}/agent-configs`);
-      if (response.ok) {
-        const data = await response.json();
-        setTeamConfigs(data.configs || []);
-      }
+      const { data } = await apiClient.GET('/teams/{team_id}/agent-configs', {
+        params: { path: { team_id: selectedTeamId } },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setTeamConfigs((data as any)?.configs || []);
     }
     router.refresh();
   };

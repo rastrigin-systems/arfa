@@ -26,6 +26,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { useRoles } from '@/lib/hooks/useRoles';
 import { useTeams } from '@/lib/hooks/useTeams';
+import { apiClient } from '@/lib/api/client';
 import type { components } from '@/lib/api/schema';
 
 type Employee = components['schemas']['Employee'];
@@ -102,10 +103,8 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
     setTemporaryPassword(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-
       if (isEditMode && employee) {
-        // Update employee
+        // Update employee using apiClient
         const updateData: UpdateEmployeeRequest = {
           full_name: data.full_name,
           team_id: data.team_id || null,
@@ -113,20 +112,15 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
           status: (data as UpdateEmployeeFormData).status,
         };
 
-        const response = await fetch(`${apiUrl}/employees/${employee.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updateData),
+        const { data: result, error } = await apiClient.PATCH('/employees/{employee_id}', {
+          params: { path: { employee_id: employee.id } },
+          body: updateData,
         });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to update employee');
+        if (error) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          throw new Error((error as any).message || 'Failed to update employee');
         }
-
-        const result = await response.json();
 
         toast({
           title: 'Success',
@@ -134,35 +128,33 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
         });
 
         if (onSuccess) {
-          onSuccess(result);
+          onSuccess(result as Employee);
         } else {
           router.push(`/employees/${employee.id}`);
         }
       } else {
-        // Create employee
+        // Create employee using apiClient
         const createData = data as CreateEmployeeFormData;
 
-        const response = await fetch(`${apiUrl}/employees`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { data: result, error } = await apiClient.POST('/employees', {
+          body: {
             email: createData.email,
             full_name: createData.full_name,
-            team_id: createData.team_id || null,
+            team_id: createData.team_id || undefined,
             role_id: createData.role_id,
-          }),
+            preferences: {},
+          },
         });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to create employee');
+        if (error) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          throw new Error((error as any).message || 'Failed to create employee');
         }
 
-        const result = await response.json();
-        const newEmployee = result.employee;
-        const tempPassword = result.temporary_password;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newEmployee = (result as any).employee;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const tempPassword = (result as any).temporary_password;
 
         // Store temporary password to display
         setTemporaryPassword(tempPassword);

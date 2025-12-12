@@ -1,3 +1,20 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "CallExpression[callee.name='fetch'][arguments.0.type='TemplateLiteral']",
+        "message": "Avoid using fetch() with template literals for API calls. Use apiClient from @/lib/api/client instead for proper auth and production URL handling."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["app/api/**/*.ts", "lib/hooks/useLogWebSocket.ts", "components/logs/ExportMenu.tsx", "lib/hooks/useEmployees.ts", "lib/hooks/useAgents.ts", "lib/hooks/useActivityLogs.ts"],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
 }
