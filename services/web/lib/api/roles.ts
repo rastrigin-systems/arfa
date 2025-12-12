@@ -1,18 +1,18 @@
-import { apiClient } from './client';
 import type { Role } from './types';
 
 /**
  * Get list of all roles in the organization
+ * Uses Next.js API route which handles auth token forwarding
  */
 export async function getRoles(): Promise<Role[]> {
-  const { data, error } = await apiClient.GET('/roles');
+  const response = await fetch('/api/roles', {
+    credentials: 'include',
+  });
 
-  if (error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    throw new Error((error as any).message || 'Failed to fetch roles');
+  if (!response.ok) {
+    throw new Error('Failed to fetch roles');
   }
 
-  // API returns { roles: [...] }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data as any)?.roles || []) as Role[];
+  const data = await response.json();
+  return data.roles || [];
 }

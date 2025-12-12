@@ -2,12 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRoles } from './roles';
 import type { Role } from './types';
 
-// Mock API client
-vi.mock('./client', () => ({
-  apiClient: {
-    GET: vi.fn(),
-  },
-}));
+// Mock fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 describe('getRoles', () => {
   beforeEach(() => {
@@ -15,34 +12,27 @@ describe('getRoles', () => {
   });
 
   it('should fetch roles list', async () => {
-    const { apiClient } = await import('./client');
-
     const mockRoles: Role[] = [
       { id: 'role-1', name: 'Member', description: 'Standard member' },
       { id: 'role-2', name: 'Approver', description: 'Can approve requests' },
       { id: 'role-3', name: 'Administrator', description: 'Full access' },
     ];
 
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: { roles: mockRoles } as any,
-      error: undefined,
-      response: { ok: true } as Response,
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ roles: mockRoles }),
     });
 
     const result = await getRoles();
 
     expect(result).toEqual(mockRoles);
-    expect(apiClient.GET).toHaveBeenCalledWith('/roles');
+    expect(mockFetch).toHaveBeenCalledWith('/api/roles', { credentials: 'include' });
   });
 
   it('should throw error on API failure', async () => {
-    const { apiClient } = await import('./client');
-
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: undefined,
-      error: { message: 'Failed to fetch roles' },
-      response: { ok: false, status: 500 } as Response,
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
     });
 
     await expect(getRoles())
