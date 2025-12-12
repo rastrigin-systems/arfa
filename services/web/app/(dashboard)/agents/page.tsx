@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { getServerToken } from '@/lib/auth';
-import { OrgAgentConfigsClient } from './OrgAgentConfigsClient';
+import { AgentsClient } from './AgentsClient';
 
 export default async function AgentsPage() {
   // Fetch data from API
@@ -31,13 +31,13 @@ export default async function AgentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Organization Agent Configuration</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-bold text-gray-900">Agents</h1>
+        <p className="text-base text-gray-600">
           Manage AI agents available to your organization
         </p>
       </div>
 
-      <OrgAgentConfigsClient
+      <AgentsClient
         initialAgents={agentsData?.agents || []}
         initialOrgConfigs={orgConfigsData?.configs || []}
       />
