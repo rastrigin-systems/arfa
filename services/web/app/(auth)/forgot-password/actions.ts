@@ -42,9 +42,20 @@ export async function forgotPasswordAction(
     });
 
     if (error || !response.ok) {
+      // Handle rate limiting (429)
+      if (response.status === 429) {
+        return {
+          errors: {
+            _form: ['You have requested the maximum number of reset links per hour. Please try again later.'],
+          },
+        };
+      }
+
+      // Extract error message from API response
+      const errorMessage = error?.error || error?.message || 'An error occurred. Please try again.';
       return {
         errors: {
-          _form: [error?.message || 'An error occurred. Please try again.'],
+          _form: [errorMessage],
         },
       };
     }
