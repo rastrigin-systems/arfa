@@ -324,7 +324,7 @@ export function EmployeeForm({ employee, mode, onSuccess }: EmployeeFormProps) {
               <FormLabel>Team (Optional)</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
-                defaultValue={field.value || '__none__'}
+                value={field.value ?? '__none__'}
                 disabled={isSubmitting || isLoadingOptions}
               >
                 <FormControl>
