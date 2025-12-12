@@ -162,8 +162,16 @@ func (h *TeamsHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTeam handles PATCH /teams/{team_id}
 // Updates an existing team (admin only)
+// SECURITY: Verifies team belongs to authenticated user's organization
 func (h *TeamsHandler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	// Get org_id from context (set by JWT middleware) - SECURITY FIX
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	// Parse team ID from URL
 	teamIDStr := chi.URLParam(r, "team_id")
@@ -186,14 +194,16 @@ func (h *TeamsHandler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 		name = *req.Name
 	}
 
-	// Update team
+	// Update team - SECURITY: Query includes org_id for isolation
 	team, err := h.db.UpdateTeam(ctx, db.UpdateTeamParams{
 		ID:          teamID,
 		Name:        name,
 		Description: req.Description,
+		OrgID:       orgID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
+			// Return 404 for security - don't reveal if team exists in another org
 			writeError(w, http.StatusNotFound, "Team not found")
 			return
 		}
@@ -212,8 +222,16 @@ func (h *TeamsHandler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 
 // DeleteTeam handles DELETE /teams/{team_id}
 // Deletes a team (admin only)
+// SECURITY: Verifies team belongs to authenticated user's organization
 func (h *TeamsHandler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	// Get org_id from context (set by JWT middleware) - SECURITY FIX
+	orgID, err := GetOrgID(ctx)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	// Parse team ID from URL
 	teamIDStr := chi.URLParam(r, "team_id")
@@ -223,8 +241,11 @@ func (h *TeamsHandler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete team
-	err = h.db.DeleteTeam(ctx, teamID)
+	// Delete team - SECURITY: Query includes org_id for isolation
+	err = h.db.DeleteTeam(ctx, db.DeleteTeamParams{
+		ID:    teamID,
+		OrgID: orgID,
+	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to delete team")
 		return
