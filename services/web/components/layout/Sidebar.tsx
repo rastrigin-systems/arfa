@@ -11,6 +11,7 @@ import {
   Settings,
   ChevronRight,
   Building2,
+  FileStack,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -80,6 +81,11 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       href: '/agents',
       icon: <Bot className="h-4 w-4" />,
       label: 'Agents',
+    },
+    {
+      href: '/configs',
+      icon: <FileStack className="h-4 w-4" />,
+      label: 'Configurations',
     },
     {
       href: '/logs',
