@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { AgentCatalog } from '@/components/agents/AgentCatalog';
-import { apiClient } from '@/lib/api/client';
 
 type Agent = {
   id: string;
@@ -86,11 +85,13 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
     }
 
     try {
-      const { error } = await apiClient.DELETE('/organizations/current/agent-configs/{config_id}', {
-        params: { path: { config_id: config.id } },
+      // Use Next.js API route for auth forwarding
+      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
       });
 
-      if (error) {
+      if (!response.ok) {
         throw new Error('Failed to delete configuration');
       }
 

@@ -7,7 +7,6 @@ import { OrgAgentConfigTable } from '@/components/agents/OrgAgentConfigTable';
 import { ConfigEditorModal } from '@/components/agents/ConfigEditorModal';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient } from '@/lib/api/client';
 
 type Agent = {
   id: string;
@@ -77,14 +76,17 @@ export function OrgAgentConfigsClient({ initialAgents, initialOrgConfigs }: OrgA
     const action = config.is_enabled ? 'disable' : 'enable';
 
     try {
-      const { error } = await apiClient.PATCH('/organizations/current/agent-configs/{config_id}', {
-        params: { path: { config_id: config.id } },
-        body: {
+      // Use Next.js API route for auth forwarding
+      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
           is_enabled: !config.is_enabled,
-        },
+        }),
       });
 
-      if (error) {
+      if (!response.ok) {
         throw new Error(`Failed to ${action} configuration`);
       }
 
@@ -116,11 +118,13 @@ export function OrgAgentConfigsClient({ initialAgents, initialOrgConfigs }: OrgA
     }
 
     try {
-      const { error } = await apiClient.DELETE('/organizations/current/agent-configs/{config_id}', {
-        params: { path: { config_id: config.id } },
+      // Use Next.js API route for auth forwarding
+      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
       });
 
-      if (error) {
+      if (!response.ok) {
         throw new Error('Failed to delete configuration');
       }
 

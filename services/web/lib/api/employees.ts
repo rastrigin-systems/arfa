@@ -36,24 +36,23 @@ export async function getEmployees(params: EmployeesParams): Promise<EmployeesRe
 
 /**
  * Update employee details (team, role, status)
+ * Uses Next.js API route which handles auth token forwarding
  */
 export async function updateEmployee(
   employeeId: string,
   params: UpdateEmployeeParams
 ): Promise<Employee> {
-  const { data, error } = await apiClient.PATCH('/employees/{employee_id}', {
-    params: {
-      path: { employee_id: employeeId },
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    body: params as any,
+  const response = await fetch(`/api/employees/${employeeId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
   });
 
-  if (error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    throw new Error((error as any).message || 'Failed to update employee');
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to update employee');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data as any) as Employee;
+  return response.json();
 }

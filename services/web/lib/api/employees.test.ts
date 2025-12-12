@@ -116,13 +116,14 @@ describe('getEmployees', () => {
 });
 
 describe('updateEmployee', () => {
+  const mockFetch = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = mockFetch;
   });
 
   it('should update employee team', async () => {
-    const { apiClient } = await import('./client');
-
     const updatedEmployee: Employee = {
       id: 'emp-1',
       email: 'john@example.com',
@@ -133,31 +134,26 @@ describe('updateEmployee', () => {
       created_at: '2024-01-01T00:00:00Z',
     };
 
-    vi.mocked(apiClient.PATCH).mockResolvedValue({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: updatedEmployee as any,
-      error: undefined,
-      response: { ok: true } as Response,
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(updatedEmployee),
     });
 
     const result = await updateEmployee('emp-1', { team_id: 'team-2' });
 
     expect(result).toEqual(updatedEmployee);
-    expect(apiClient.PATCH).toHaveBeenCalledWith('/employees/{employee_id}', {
-      params: {
-        path: { employee_id: 'emp-1' },
-      },
-      body: { team_id: 'team-2' },
+    expect(mockFetch).toHaveBeenCalledWith('/api/employees/emp-1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ team_id: 'team-2' }),
     });
   });
 
   it('should throw error on update failure', async () => {
-    const { apiClient } = await import('./client');
-
-    vi.mocked(apiClient.PATCH).mockResolvedValue({
-      data: undefined,
-      error: { error: 'internal_error', message: 'Failed to update employee' },
-      response: { ok: false, status: 500 } as Response,
+    mockFetch.mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Failed to update employee' }),
     });
 
     await expect(updateEmployee('emp-1', { team_id: 'team-2' }))

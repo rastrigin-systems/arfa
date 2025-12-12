@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { apiClient } from '@/lib/api/client';
 import {
   Table,
   TableBody,
@@ -84,15 +83,14 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
   const [editingConfig, setEditingConfig] = useState<TeamAgentConfig | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch teams on mount
+  // Fetch teams on mount using Next.js API route
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const { data, error } = await apiClient.GET('/teams');
-        if (error) throw new Error('Failed to fetch teams');
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setTeams((data as any)?.teams || []);
+        const response = await fetch('/api/teams', { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to fetch teams');
+        const data = await response.json();
+        setTeams(data?.teams || []);
       } catch (error) {
         console.error('Error fetching teams:', error);
         toast({
@@ -106,7 +104,7 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     fetchTeams();
   }, [toast]);
 
-  // Fetch team agent configs when team selection changes
+  // Fetch team agent configs when team selection changes using Next.js API route
   useEffect(() => {
     const fetchTeamConfigs = async () => {
       if (selectedTeamId === 'all') {
@@ -117,13 +115,12 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
       setIsLoading(true);
       try {
-        const { data, error } = await apiClient.GET('/teams/{team_id}/agent-configs', {
-          params: { path: { team_id: selectedTeamId } },
+        const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
+          credentials: 'include',
         });
-        if (error) throw new Error('Failed to fetch team agent configs');
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setTeamConfigs((data as any)?.configs || []);
+        if (!response.ok) throw new Error('Failed to fetch team agent configs');
+        const data = await response.json();
+        setTeamConfigs(data?.configs || []);
       } catch (error) {
         console.error('Error fetching team configs:', error);
         toast({
@@ -156,18 +153,21 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
     setIsAssigning(true);
     try {
-      const { error } = await apiClient.POST('/teams/{team_id}/agent-configs', {
-        params: { path: { team_id: selectedTeamId } },
-        body: {
+      // Use Next.js API route for auth forwarding
+      const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
           agent_id: orgConfig.agent_id,
           config_override: {}, // Start with empty override
           is_enabled: true,
-        },
+        }),
       });
 
-      if (error) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error((error as any).message || 'Failed to assign agent to team');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to assign agent to team');
       }
 
       toast({
@@ -175,12 +175,12 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
         description: `${agent.name} assigned to team successfully`,
       });
 
-      // Refresh team configs
-      const { data: configsData } = await apiClient.GET('/teams/{team_id}/agent-configs', {
-        params: { path: { team_id: selectedTeamId } },
+      // Refresh team configs using Next.js API route
+      const configsResponse = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
+        credentials: 'include',
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setTeamConfigs((configsData as any)?.configs || []);
+      const configsData = await configsResponse.json();
+      setTeamConfigs(configsData?.configs || []);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
@@ -208,11 +208,13 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     }
 
     try {
-      const { error } = await apiClient.DELETE('/teams/{team_id}/agent-configs/{config_id}', {
-        params: { path: { team_id: config.team_id, config_id: config.id } },
+      // Use Next.js API route for auth forwarding
+      const response = await fetch(`/api/teams/${config.team_id}/agent-configs/${config.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
       });
 
-      if (error) {
+      if (!response.ok) {
         throw new Error('Failed to delete team agent configuration');
       }
 
@@ -234,13 +236,13 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
   };
 
   const handleModalSuccess = async () => {
-    // Refresh team configs after editing
+    // Refresh team configs after editing using Next.js API route
     if (selectedTeamId !== 'all') {
-      const { data } = await apiClient.GET('/teams/{team_id}/agent-configs', {
-        params: { path: { team_id: selectedTeamId } },
+      const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
+        credentials: 'include',
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setTeamConfigs((data as any)?.configs || []);
+      const data = await response.json();
+      setTeamConfigs(data?.configs || []);
     }
     router.refresh();
   };
