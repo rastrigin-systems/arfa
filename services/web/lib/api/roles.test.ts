@@ -25,7 +25,7 @@ describe('getRoles', () => {
 
     vi.mocked(apiClient.GET).mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: { data: mockRoles } as any,
+      data: { roles: mockRoles } as any,
       error: undefined,
       response: { ok: true } as Response,
     });
