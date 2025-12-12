@@ -14,6 +14,7 @@ import {
 
 type ConfigWithLevel = {
   id: string;
+  org_id: string;
   agent_id: string;
   agent_name?: string;
   agent_type?: string;
