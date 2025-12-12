@@ -12,6 +12,7 @@ export async function getRoles(): Promise<Role[]> {
     throw new Error((error as any).message || 'Failed to fetch roles');
   }
 
+  // API returns { roles: [...] }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data as any)?.data || []) as Role[];
+  return ((data as any)?.roles || []) as Role[];
 }
