@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Power, PowerOff, Trash2, Building2, Users, User } from 'lucide-react';
+import { Power, PowerOff, Trash2, Building2, Users, User, Edit } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -26,6 +26,7 @@ type ConfigWithLevel = {
 
 type ConfigsTableProps = {
   configs: ConfigWithLevel[];
+  onEdit: (config: ConfigWithLevel) => void;
   onToggleEnabled: (config: ConfigWithLevel) => void;
   onDelete: (config: ConfigWithLevel) => void;
 };
@@ -79,7 +80,7 @@ function EmptyState() {
   );
 }
 
-export function ConfigsTable({ configs, onToggleEnabled, onDelete }: ConfigsTableProps) {
+export function ConfigsTable({ configs, onEdit, onToggleEnabled, onDelete }: ConfigsTableProps) {
   if (configs.length === 0) {
     return <EmptyState />;
   }
@@ -125,6 +126,15 @@ export function ConfigsTable({ configs, onToggleEnabled, onDelete }: ConfigsTabl
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => onEdit(config)}
+                    aria-label="Edit configuration"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="ml-2">Edit</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onToggleEnabled(config)}
                     aria-label={config.is_enabled ? 'Disable configuration' : 'Enable configuration'}
                   >
@@ -142,8 +152,7 @@ export function ConfigsTable({ configs, onToggleEnabled, onDelete }: ConfigsTabl
                     <span className="ml-2">Delete</span>
                   </Button>
                 </div>
-              </TableCell>
-            </TableRow>
+              </TableCell>            </TableRow>
           ))}
         </TableBody>
       </Table>

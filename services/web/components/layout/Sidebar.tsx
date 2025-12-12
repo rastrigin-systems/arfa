@@ -85,7 +85,7 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
     {
       href: '/configs',
       icon: <FileStack className="h-4 w-4" />,
-      label: 'Configurations',
+      label: 'Configs',
     },
     {
       href: '/logs',

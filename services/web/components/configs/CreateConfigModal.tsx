@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,28 +19,81 @@ type Agent = {
   default_config?: Record<string, unknown>;
 };
 
+type ConfigWithLevel = {
+  id: string;
+  org_id: string;
+  agent_id: string;
+  agent_name?: string;
+  agent_type?: string;
+  config: Record<string, unknown>;
+  is_enabled: boolean;
+  level: 'organization' | 'team' | 'employee';
+  assigned_to: string;
+};
+
 type CreateConfigModalProps = {
   agents: Agent[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editingConfig?: ConfigWithLevel | null;
 };
 
-export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: CreateConfigModalProps) {
+export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editingConfig }: CreateConfigModalProps) {
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [assignTo, setAssignTo] = useState<'organization' | 'team' | 'employee'>('organization');
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [configJson, setConfigJson] = useState('{}');
   const [isEnabled, setIsEnabled] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const selectedAgent = agents.find((a) => a.id === selectedAgentId);
+  const isEditMode = !!editingConfig;
+
+  // Initialize form when editing
+  useEffect(() => {
+    if (editingConfig && open) {
+      setSelectedAgentId(editingConfig.agent_id);
+      setAssignTo(editingConfig.level);
+      setConfigJson(JSON.stringify(editingConfig.config, null, 2));
+      setIsEnabled(editingConfig.is_enabled);
+    } else if (!open) {
+      // Reset form when closing
+      setSelectedAgentId('');
+      setAssignTo('organization');
+      setSelectedTeamId('');
+      setSelectedEmployeeId('');
+      setConfigJson('{}');
+      setIsEnabled(true);
+    }
+  }, [editingConfig, open]);
 
   const handleSubmit = async () => {
     if (!selectedAgentId) {
       toast({
         title: 'Validation Error',
         description: 'Please select an agent',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate team/employee selection
+    if (assignTo === 'team' && !selectedTeamId) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a team',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (assignTo === 'employee' && !selectedEmployeeId) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select an employee',
         variant: 'destructive',
       });
       return;
@@ -62,50 +115,51 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
     setIsSubmitting(true);
 
     try {
-      // Only organization level is supported for now
-      if (assignTo !== 'organization') {
-        toast({
-          title: 'Not Supported',
-          description: 'Team and employee configurations are coming soon',
-          variant: 'destructive',
-        });
-        setIsSubmitting(false);
-        return;
+      let url = '/api/organizations/current/agent-configs';
+      let method = 'POST';
+
+      if (isEditMode && editingConfig) {
+        url = `/api/organizations/current/agent-configs/${editingConfig.id}`;
+        method = 'PATCH';
       }
 
-      const response = await fetch('/api/organizations/current/agent-configs', {
-        method: 'POST',
+      // Prepare request body based on assignment level
+      const body: Record<string, unknown> = {
+        agent_id: selectedAgentId,
+        config,
+        is_enabled: isEnabled,
+      };
+
+      // TODO: Add team_id and employee_id when API supports it
+      if (assignTo === 'team') {
+        body.team_id = selectedTeamId;
+      } else if (assignTo === 'employee') {
+        body.employee_id = selectedEmployeeId;
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          agent_id: selectedAgentId,
-          config,
-          is_enabled: isEnabled,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to create configuration');
+        throw new Error(errorData.message || `Failed to ${isEditMode ? 'update' : 'create'} configuration`);
       }
 
       toast({
         title: 'Success',
-        description: 'Configuration created successfully',
+        description: `Configuration ${isEditMode ? 'updated' : 'created'} successfully`,
         variant: 'success',
       });
-
-      // Reset form
-      setSelectedAgentId('');
-      setAssignTo('organization');
-      setConfigJson('{}');
-      setIsEnabled(true);
 
       onSuccess();
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create configuration',
+        description: error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'create'} configuration`,
         variant: 'destructive',
       });
     } finally {
@@ -115,19 +169,22 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
 
   const handleAgentChange = (agentId: string) => {
     setSelectedAgentId(agentId);
-    const agent = agents.find((a) => a.id === agentId);
-    if (agent?.default_config) {
-      setConfigJson(JSON.stringify(agent.default_config, null, 2));
-    } else {
-      setConfigJson('{}');
+    // Only set default config if not editing
+    if (!isEditMode) {
+      const agent = agents.find((a) => a.id === agentId);
+      if (agent?.default_config) {
+        setConfigJson(JSON.stringify(agent.default_config, null, 2));
+      } else {
+        setConfigJson('{}');
+      }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Configuration</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Configuration' : 'Create New Configuration'}</DialogTitle>
           <DialogDescription>
             Configure an AI agent for your organization, team, or individual employee
           </DialogDescription>
@@ -137,7 +194,7 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
           {/* Agent Selection */}
           <div className="space-y-2">
             <Label htmlFor="agent">Select Agent *</Label>
-            <Select value={selectedAgentId} onValueChange={handleAgentChange}>
+            <Select value={selectedAgentId} onValueChange={handleAgentChange} disabled={isEditMode}>
               <SelectTrigger id="agent">
                 <SelectValue placeholder="Choose an agent" />
               </SelectTrigger>
@@ -155,12 +212,15 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
             {selectedAgent && (
               <p className="text-sm text-muted-foreground">{selectedAgent.description}</p>
             )}
+            {isEditMode && (
+              <p className="text-xs text-muted-foreground">Agent cannot be changed when editing</p>
+            )}
           </div>
 
           {/* Assignment Level */}
           <div className="space-y-2">
             <Label>Assign To *</Label>
-            <RadioGroup value={assignTo} onValueChange={(value) => setAssignTo(value as 'organization' | 'team' | 'employee')}>
+            <RadioGroup value={assignTo} onValueChange={(value) => setAssignTo(value as 'organization' | 'team' | 'employee')} disabled={isEditMode}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="organization" id="org" />
                 <Label htmlFor="org" className="font-normal">
@@ -168,19 +228,60 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="team" id="team" disabled />
-                <Label htmlFor="team" className="font-normal text-muted-foreground">
-                  Specific Team (coming soon)
+                <RadioGroupItem value="team" id="team" />
+                <Label htmlFor="team" className="font-normal">
+                  Specific Team
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="employee" id="employee" disabled />
-                <Label htmlFor="employee" className="font-normal text-muted-foreground">
-                  Individual Employee (coming soon)
+                <RadioGroupItem value="employee" id="employee" />
+                <Label htmlFor="employee" className="font-normal">
+                  Individual Employee
                 </Label>
               </div>
             </RadioGroup>
+            {isEditMode && (
+              <p className="text-xs text-muted-foreground">Assignment level cannot be changed when editing</p>
+            )}
           </div>
+
+          {/* Team Selection (when assignTo === 'team') */}
+          {assignTo === 'team' && !isEditMode && (
+            <div className="space-y-2">
+              <Label htmlFor="team-select">Select Team *</Label>
+              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                <SelectTrigger id="team-select">
+                  <SelectValue placeholder="Choose a team" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="placeholder">Team selection coming soon</SelectItem>
+                  {/* TODO: Fetch and display actual teams */}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground italic">
+                Note: Team-level configuration API is not yet implemented
+              </p>
+            </div>
+          )}
+
+          {/* Employee Selection (when assignTo === 'employee') */}
+          {assignTo === 'employee' && !isEditMode && (
+            <div className="space-y-2">
+              <Label htmlFor="employee-select">Select Employee *</Label>
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                <SelectTrigger id="employee-select">
+                  <SelectValue placeholder="Choose an employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="placeholder">Employee selection coming soon</SelectItem>
+                  {/* TODO: Fetch and display actual employees */}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground italic">
+                Note: Employee-level configuration API is not yet implemented
+              </p>
+            </div>
+          )}
 
           {/* Configuration JSON */}
           <div className="space-y-2">
@@ -217,7 +318,7 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess }: Cre
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Configuration
+            {isEditMode ? 'Update Configuration' : 'Create Configuration'}
           </Button>
         </div>
       </DialogContent>
