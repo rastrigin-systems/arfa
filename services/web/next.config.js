@@ -16,12 +16,17 @@ const nextConfig = {
     // These typically end with /api/v1, so strip that suffix to get the base
     const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
     const apiBaseUrl = process.env.API_BASE_URL || apiUrl.replace(/\/api\/v1$/, '');
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiBaseUrl}/api/:path*`,
-      },
-    ];
+    return {
+      // afterFiles rewrites are checked AFTER Next.js API routes
+      // This lets /api/employees, /api/teams, etc. be handled by our route handlers
+      // Only /api/v1/* gets forwarded to the backend
+      afterFiles: [
+        {
+          source: '/api/v1/:path*',
+          destination: `${apiBaseUrl}/api/v1/:path*`,
+        },
+      ],
+    };
   },
 };
 
