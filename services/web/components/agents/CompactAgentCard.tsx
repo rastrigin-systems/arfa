@@ -36,31 +36,33 @@ export function CompactAgentCard({ agent, isEnabled, onToggle, onConfigure, isLo
 
   return (
     <article
-      className="flex flex-col bg-white border border-gray-200 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow"
-      style={{ width: '280px', height: '220px' }}
+      className="flex flex-col bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 h-full min-h-[200px] max-h-[220px]"
       aria-label={`${agent.name} agent card`}
       data-testid="compact-agent-card"
     >
       {/* Title */}
-      <h3 className="text-xl font-semibold text-gray-900 mb-2" data-testid="agent-name">
+      <h3 className="text-lg font-semibold text-gray-900 mb-1.5 truncate" data-testid="agent-name">
         {agent.name}
       </h3>
 
       {/* Separator */}
-      <div className="h-px bg-gray-200 mb-3"></div>
+      <div className="h-px bg-gray-200 mb-2"></div>
 
       {/* Type Badge */}
-      <Badge variant="secondary" className="w-fit text-xs font-medium uppercase mb-2">
-        {agent.type}
+      <Badge variant="secondary" className="w-fit text-[10px] font-medium uppercase mb-2 px-2 py-0.5">
+        {agent.type.replace(/_/g, ' ')}
       </Badge>
 
       {/* Description (2 lines max) */}
-      <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1" data-testid="agent-description">
+      <p className="text-xs text-gray-600 line-clamp-2 mb-3 flex-1 leading-relaxed" data-testid="agent-description">
         {agent.description}
       </p>
 
       {/* Toggle */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-gray-700">
+          {isEnabled ? 'Enabled' : 'Disabled'}
+        </span>
         <Switch
           checked={isEnabled}
           onCheckedChange={handleToggle}
@@ -68,16 +70,14 @@ export function CompactAgentCard({ agent, isEnabled, onToggle, onConfigure, isLo
           className={isEnabled ? 'data-[state=checked]:bg-green-600' : ''}
           aria-label={`Toggle ${agent.name} (currently ${isEnabled ? 'enabled' : 'disabled'})`}
         />
-        <span className="ml-2 text-sm font-medium text-gray-900">
-          {isEnabled ? 'Enabled' : 'Disabled'}
-        </span>
       </div>
 
       {/* Action Button */}
       <Button
         onClick={handleConfigure}
         variant={isEnabled ? 'outline' : 'default'}
-        className="w-full"
+        size="sm"
+        className="w-full text-xs"
         disabled={isLoading}
         aria-label={isEnabled ? `Configure ${agent.name} settings` : `Enable ${agent.name} for organization`}
       >
