@@ -174,11 +174,12 @@ func (ss *SyncService) SyncClaudeCode(targetDir string) error {
 
 // agentMetadata stores metadata about an agent (separate from config)
 type agentMetadata struct {
-	AgentID   string `json:"agent_id"`
-	AgentName string `json:"agent_name"`
-	AgentType string `json:"agent_type"`
-	Provider  string `json:"provider"`
-	IsEnabled bool   `json:"is_enabled"`
+	AgentID     string `json:"agent_id"`
+	AgentName   string `json:"agent_name"`
+	AgentType   string `json:"agent_type"`
+	Provider    string `json:"provider"`
+	DockerImage string `json:"docker_image"`
+	IsEnabled   bool   `json:"is_enabled"`
 }
 
 // saveAgentConfigs saves agent configs to ~/.ubik/config/agents/
@@ -202,11 +203,12 @@ func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 		// Save agent metadata (ID, name, type, etc.)
 		metadataPath := filepath.Join(agentDir, "metadata.json")
 		metadata := agentMetadata{
-			AgentID:   config.AgentID,
-			AgentName: config.AgentName,
-			AgentType: config.AgentType,
-			Provider:  config.Provider,
-			IsEnabled: config.IsEnabled,
+			AgentID:     config.AgentID,
+			AgentName:   config.AgentName,
+			AgentType:   config.AgentType,
+			Provider:    config.Provider,
+			DockerImage: config.DockerImage,
+			IsEnabled:   config.IsEnabled,
 		}
 		metadataData, err := json.MarshalIndent(metadata, "", "  ")
 		if err != nil {
@@ -310,6 +312,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 			AgentName:     metadata.AgentName,
 			AgentType:     metadata.AgentType,
 			Provider:      metadata.Provider,
+			DockerImage:   metadata.DockerImage,
 			IsEnabled:     metadata.IsEnabled,
 			Configuration: configuration,
 			MCPServers:    mcpServers,
@@ -427,12 +430,16 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			fmt.Printf("  ⚠ Warning: No API token configured. Configure via Settings → Security tab\n")
 		}
 
-		// Start agent
+		// Start agent - use DockerImage from config (or fallback to constructed image)
+		dockerImage := config.DockerImage
+		if dockerImage == "" {
+			dockerImage = fmt.Sprintf("ubik/%s:latest", config.AgentType)
+		}
 		agentSpec := AgentSpec{
 			AgentID:       config.AgentID,
 			AgentName:     config.AgentName,
 			AgentType:     config.AgentType,
-			Image:         fmt.Sprintf("ubik/%s:latest", config.AgentType),
+			Image:         dockerImage,
 			Configuration: config.Configuration,
 			MCPServers:    convertMCPServers(config.MCPServers),
 			ClaudeToken:   agentAPIKey, // Use centralized token

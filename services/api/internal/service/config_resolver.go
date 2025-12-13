@@ -31,6 +31,7 @@ type ResolvedAgentConfig struct {
 	AgentName    string                 `json:"agent_name"`
 	AgentType    string                 `json:"agent_type"`
 	Provider     string                 `json:"provider"`
+	DockerImage  *string                `json:"docker_image"`   // Docker image reference
 	Config       map[string]interface{} `json:"config"`         // Merged config
 	SystemPrompt string                 `json:"system_prompt"`  // Concatenated prompts
 	IsEnabled    bool                   `json:"is_enabled"`     // All levels must be enabled
@@ -161,11 +162,15 @@ func (r *ConfigResolver) ResolveAgentConfig(ctx context.Context, employeeID, age
 		return nil, fmt.Errorf("failed to resolve system prompts: %w", err)
 	}
 
+	// Get docker image from agent (may be nil)
+	dockerImage := agent.DockerImage
+
 	return &ResolvedAgentConfig{
 		AgentID:      agentID,
 		AgentName:    agent.Name,
 		AgentType:    agent.Type,
 		Provider:     agent.Provider,
+		DockerImage:  dockerImage,
 		Config:       mergedConfig,
 		SystemPrompt: systemPrompt,
 		IsEnabled:    isEnabled,

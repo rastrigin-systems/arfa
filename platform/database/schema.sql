@@ -103,6 +103,7 @@ CREATE TABLE agents (
     type VARCHAR(100) NOT NULL, -- claude-code, cursor, windsurf, continue, etc.
     description TEXT NOT NULL,
     provider VARCHAR(100) NOT NULL, -- anthropic, openai, custom
+    docker_image VARCHAR(255), -- Docker image reference (e.g., ghcr.io/anthropics/claude-code:v1.2.3)
     default_config JSONB NOT NULL DEFAULT '{}',
     capabilities JSONB NOT NULL DEFAULT '[]',
     llm_provider VARCHAR(50) NOT NULL DEFAULT 'anthropic',
@@ -589,12 +590,12 @@ INSERT INTO policies (name, type, rules, severity) VALUES
     ('approval_required_prod', 'approval_required', '{"patterns":[".*prod.*",".*production.*"]}', 'block');
 
 -- Agents (Popular AI coding assistants)
-INSERT INTO agents (name, type, description, provider, default_config, capabilities, llm_provider, llm_model) VALUES
-    ('Claude Code', 'claude-code', 'Anthropic Claude Code CLI', 'anthropic', '{"temperature":0.2}', '["code_generation","debugging","refactoring","research"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
-    ('Cursor', 'cursor', 'Cursor AI IDE', 'cursor', '{"temperature":0.3}', '["code_generation","autocomplete","chat"]', 'openai', 'gpt-4o'),
-    ('Windsurf', 'windsurf', 'Windsurf AI IDE', 'codeium', '{"temperature":0.2}', '["code_generation","chat","cascade"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
-    ('Continue', 'continue', 'Continue VS Code Extension', 'continue', '{"temperature":0.2}', '["autocomplete","chat","edit"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
-    ('GitHub Copilot', 'copilot', 'GitHub Copilot', 'github', '{"temperature":0.3}', '["autocomplete","chat"]', 'openai', 'gpt-4o');
+INSERT INTO agents (name, type, description, provider, docker_image, default_config, capabilities, llm_provider, llm_model) VALUES
+    ('Claude Code', 'claude-code', 'Anthropic Claude Code CLI', 'anthropic', 'ubik/claude-code:latest', '{"temperature":0.2}', '["code_generation","debugging","refactoring","research"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
+    ('Cursor', 'cursor', 'Cursor AI IDE', 'cursor', 'ubik/cursor:latest', '{"temperature":0.3}', '["code_generation","autocomplete","chat"]', 'openai', 'gpt-4o'),
+    ('Windsurf', 'windsurf', 'Windsurf AI IDE', 'codeium', 'ubik/windsurf:latest', '{"temperature":0.2}', '["code_generation","chat","cascade"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
+    ('Continue', 'continue', 'Continue VS Code Extension', 'continue', 'ubik/continue:latest', '{"temperature":0.2}', '["autocomplete","chat","edit"]', 'anthropic', 'claude-3-5-sonnet-20241022'),
+    ('GitHub Copilot', 'copilot', 'GitHub Copilot', 'github', 'ubik/copilot:latest', '{"temperature":0.3}', '["autocomplete","chat"]', 'openai', 'gpt-4o');
 
 -- Link agents with tools
 INSERT INTO agent_tools (agent_id, tool_id)
