@@ -781,6 +781,12 @@ components:
           type: string
           maxLength: 100
           example: "anthropic"
+        docker_image:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: "Docker image reference for the agent container (e.g., ghcr.io/anthropics/claude-code:v1.2.3)"
+          example: "ubik/claude-code:latest"
         default_config:
           type: object
           additionalProperties: true
@@ -937,6 +943,11 @@ components:
         provider:
           type: string
           example: "anthropic"
+        docker_image:
+          type: string
+          nullable: true
+          description: "Docker image reference for the agent container"
+          example: "ubik/claude-code:latest"
         config:
           type: object
           additionalProperties: true

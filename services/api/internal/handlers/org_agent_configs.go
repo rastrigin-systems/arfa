@@ -457,6 +457,7 @@ func resolvedAgentConfigToAPI(config service.ResolvedAgentConfig) api.ResolvedAg
 		AgentName:    config.AgentName,
 		AgentType:    config.AgentType,
 		Provider:     config.Provider,
+		DockerImage:  config.DockerImage,
 		Config:       config.Config,
 		SystemPrompt: config.SystemPrompt,
 		IsEnabled:    config.IsEnabled,

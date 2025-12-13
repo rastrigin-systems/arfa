@@ -9,6 +9,7 @@ SELECT
     type,
     description,
     provider,
+    docker_image,
     default_config,
     capabilities,
     llm_provider,
@@ -28,6 +29,7 @@ SELECT
     type,
     description,
     provider,
+    docker_image,
     default_config,
     capabilities,
     llm_provider,
@@ -46,6 +48,7 @@ SELECT
     type,
     description,
     provider,
+    docker_image,
     default_config,
     capabilities,
     llm_provider,
@@ -63,12 +66,13 @@ INSERT INTO agents (
     type,
     description,
     provider,
+    docker_image,
     default_config,
     capabilities,
     llm_provider,
     llm_model,
     is_public
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- Employee Agent Configuration Queries

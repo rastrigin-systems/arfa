@@ -101,6 +101,7 @@ type AgentConfigAPIResponse struct {
 	IsEnabled    bool                   `json:"is_enabled"`
 	Config       map[string]interface{} `json:"config"`
 	Provider     string                 `json:"provider"`
+	DockerImage  *string                `json:"docker_image"` // Docker image reference (nullable)
 	SyncToken    string                 `json:"sync_token"`
 	SystemPrompt string                 `json:"system_prompt"`
 	LastSyncedAt *string                `json:"last_synced_at"` // nullable timestamp
@@ -112,6 +113,7 @@ type AgentConfig struct {
 	AgentName     string                 `json:"agent_name"`
 	AgentType     string                 `json:"agent_type"`
 	Provider      string                 `json:"provider"`
+	DockerImage   string                 `json:"docker_image"` // Docker image reference
 	IsEnabled     bool                   `json:"is_enabled"`
 	Configuration map[string]interface{} `json:"configuration"`
 	MCPServers    []MCPServerConfig      `json:"mcp_servers"`
@@ -143,11 +145,19 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentCon
 	// Convert API response to internal format
 	configs := make([]AgentConfig, len(resp.Configs))
 	for i, apiConfig := range resp.Configs {
+		// Use DockerImage from API or fall back to constructed image name
+		dockerImage := ""
+		if apiConfig.DockerImage != nil && *apiConfig.DockerImage != "" {
+			dockerImage = *apiConfig.DockerImage
+		} else {
+			dockerImage = fmt.Sprintf("ubik/%s:latest", apiConfig.AgentType)
+		}
 		configs[i] = AgentConfig{
 			AgentID:       apiConfig.AgentID,
 			AgentName:     apiConfig.AgentName,
 			AgentType:     apiConfig.AgentType,
 			Provider:      apiConfig.Provider,
+			DockerImage:   dockerImage,
 			IsEnabled:     apiConfig.IsEnabled,
 			Configuration: apiConfig.Config,
 			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
@@ -169,11 +179,19 @@ func (pc *PlatformClient) GetMyResolvedAgentConfigs() ([]AgentConfig, error) {
 	// Convert API response to internal format (same as GetResolvedAgentConfigs)
 	configs := make([]AgentConfig, len(resp.Configs))
 	for i, apiConfig := range resp.Configs {
+		// Use DockerImage from API or fall back to constructed image name
+		dockerImage := ""
+		if apiConfig.DockerImage != nil && *apiConfig.DockerImage != "" {
+			dockerImage = *apiConfig.DockerImage
+		} else {
+			dockerImage = fmt.Sprintf("ubik/%s:latest", apiConfig.AgentType)
+		}
 		configs[i] = AgentConfig{
 			AgentID:       apiConfig.AgentID,
 			AgentName:     apiConfig.AgentName,
 			AgentType:     apiConfig.AgentType,
 			Provider:      apiConfig.Provider,
+			DockerImage:   dockerImage,
 			IsEnabled:     apiConfig.IsEnabled,
 			Configuration: apiConfig.Config,
 			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed

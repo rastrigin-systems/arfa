@@ -11,12 +11,13 @@
 -- ============================================================================
 
 -- Agent: coordinator
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'coordinator',
     'claude-code',
     'YOUR MISSION',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -29,12 +30,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: docs-writer
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'docs-writer',
     'claude-code',
     'Use comments to explain non-obvious steps',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -47,12 +49,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: frontend-developer
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'frontend-developer',
     'claude-code',
     'YOUR EXPERTISE',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -65,12 +68,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: github-project-manager
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'github-project-manager',
     'claude-code',
     'GitHub Project Manager Agent',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -83,12 +87,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: go-backend-developer
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'go-backend-developer',
     'claude-code',
     'YOUR EXPERTISE',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -101,12 +106,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: pr-reviewer
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'pr-reviewer',
     'claude-code',
     'PR Reviewer Agent',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -119,12 +125,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: product-designer
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'product-designer',
     'claude-code',
     'YOUR EXPERTISE',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -137,12 +144,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: product-strategist
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'product-strategist',
     'claude-code',
     'Step 1: Check what''s in the backlog',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
@@ -155,12 +163,13 @@ ON CONFLICT (name) DO UPDATE SET
 
 
 -- Agent: tech-lead
-INSERT INTO agents (name, type, description, provider, llm_provider, llm_model, default_config, capabilities)
+INSERT INTO agents (name, type, description, provider, docker_image, llm_provider, llm_model, default_config, capabilities)
 VALUES (
     'tech-lead',
     'claude-code',
     'AI development agent',
     'anthropic',
+    'ubik/claude-code:latest',
     'anthropic',
     'claude-sonnet-4-5-20250929',
     '{}'::JSONB,
