@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const { data, error } = await apiClient.GET('/employees/{employee_id}/agent-configs', {
+    const { data, error, response } = await apiClient.GET('/employees/{employee_id}/agent-configs', {
       params: { path: { employee_id: id } },
       headers: {
         Authorization: `Bearer ${token}`,
@@ -22,11 +22,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to fetch employee agent configs' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to fetch employee agent configs';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json(data);
@@ -50,7 +48,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const body = await request.json();
 
-    const { data, error } = await apiClient.POST('/employees/{employee_id}/agent-configs', {
+    const { data, error, response } = await apiClient.POST('/employees/{employee_id}/agent-configs', {
       params: { path: { employee_id: id } },
       body,
       headers: {
@@ -59,11 +57,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to create employee agent config' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to create employee agent config';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json(data);

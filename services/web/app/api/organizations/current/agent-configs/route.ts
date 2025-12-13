@@ -10,18 +10,16 @@ export async function GET() {
   }
 
   try {
-    const { data, error } = await apiClient.GET('/organizations/current/agent-configs', {
+    const { data, error, response } = await apiClient.GET('/organizations/current/agent-configs', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to fetch org agent configs' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to fetch org agent configs';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json(data);
@@ -43,7 +41,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { data, error } = await apiClient.POST('/organizations/current/agent-configs', {
+    const { data, error, response } = await apiClient.POST('/organizations/current/agent-configs', {
       body,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -51,11 +49,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to create org agent config' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to create org agent config';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json(data);
