@@ -1287,13 +1287,7 @@ func newProxyRunCommand() *cobra.Command {
 
 			_ = configManager // Silence unused warning for now
 
-			// Create and start proxy
-			proxy := httpproxy.NewProxyServer(logger)
-			if err := proxy.Start(port); err != nil {
-				return fmt.Errorf("failed to start proxy: %w", err)
-			}
-
-			// Save daemon state
+			// Create daemon manager
 			daemon, err := httpproxy.NewProxyDaemon()
 			if err != nil {
 				return fmt.Errorf("failed to create daemon manager: %w", err)
@@ -1313,12 +1307,12 @@ func newProxyRunCommand() *cobra.Command {
 				cancel()
 			}()
 
-			// Run the daemon (blocks until context cancelled)
-			_ = daemon // State is managed in Start
-			<-ctx.Done()
+			// Run the daemon (this saves state and blocks)
+			if err := daemon.RunDaemon(ctx, port, logger); err != nil {
+				return fmt.Errorf("daemon error: %w", err)
+			}
 
 			// Cleanup
-			proxy.Stop(context.Background())
 			if logger != nil {
 				logger.Close()
 			}

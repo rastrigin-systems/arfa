@@ -295,14 +295,8 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 
 	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", port, os.Getpid())
 
-	// Wait for context cancellation or signal
-	sigChan := make(chan os.Signal, 1)
-	// Note: signal.Notify is called by caller
-
-	select {
-	case <-ctx.Done():
-	case <-sigChan:
-	}
+	// Wait for context cancellation (caller handles signals)
+	<-ctx.Done()
 
 	// Cleanup
 	server.Stop(ctx)
