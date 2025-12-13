@@ -1,6 +1,15 @@
-import { apiClient } from '@/lib/api/client';
 import { getServerToken } from '@/lib/auth';
 import { RolesClient } from './RolesClient';
+
+type Role = {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  employee_count?: number;
+  created_at: string;
+  updated_at: string;
+};
 
 export const metadata = {
   title: 'Roles | Ubik Enterprise',
@@ -16,7 +25,7 @@ export default async function RolesPage() {
 
   // TODO: Fetch roles from API when endpoint is available
   // For now, return empty array as placeholder
-  const roles: any[] = [];
+  const roles: Role[] = [];
 
   return (
     <div className="space-y-6">
