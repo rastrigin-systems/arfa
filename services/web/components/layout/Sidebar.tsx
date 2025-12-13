@@ -14,6 +14,7 @@ import {
   FileStack,
   Server,
   ClipboardList,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -78,6 +79,11 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       icon: <Users className="h-4 w-4" />,
       label: 'Employees',
       badge: employeeCount,
+    },
+    {
+      href: '/roles',
+      icon: <Shield className="h-4 w-4" />,
+      label: 'Roles',
     },
     {
       href: '/agents',
