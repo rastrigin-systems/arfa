@@ -77,6 +77,20 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 		return nil, fmt.Errorf("failed to save agent configs: %w", err)
 	}
 
+	// Clear default agent if it's no longer in the resolved configs
+	if config.DefaultAgent != "" {
+		defaultStillValid := false
+		for _, ac := range agentConfigs {
+			if ac.AgentID == config.DefaultAgent || ac.AgentName == config.DefaultAgent {
+				defaultStillValid = true
+				break
+			}
+		}
+		if !defaultStillValid {
+			config.DefaultAgent = ""
+		}
+	}
+
 	// Update last sync time
 	config.LastSync = time.Now()
 	if err := ss.configManager.Save(config); err != nil {
@@ -183,6 +197,7 @@ type agentMetadata struct {
 }
 
 // saveAgentConfigs saves agent configs to ~/.ubik/config/agents/
+// It also removes any agent directories that are not in the new config
 func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -192,6 +207,27 @@ func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 	agentsDir := filepath.Join(homeDir, ".ubik", "config", "agents")
 	if err := os.MkdirAll(agentsDir, 0700); err != nil {
 		return fmt.Errorf("failed to create agents directory: %w", err)
+	}
+
+	// Build a set of agent IDs that should be kept
+	activeAgentIDs := make(map[string]bool)
+	for _, config := range configs {
+		activeAgentIDs[config.AgentID] = true
+	}
+
+	// Clean up agents that are no longer in the resolved configs
+	entries, err := os.ReadDir(agentsDir)
+	if err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() && !activeAgentIDs[entry.Name()] {
+				// This agent is no longer in resolved configs, remove it
+				oldAgentDir := filepath.Join(agentsDir, entry.Name())
+				if err := os.RemoveAll(oldAgentDir); err != nil {
+					// Log but don't fail - best effort cleanup
+					fmt.Printf("  ⚠ Warning: failed to remove old agent config %s: %v\n", entry.Name(), err)
+				}
+			}
+		}
 	}
 
 	for _, config := range configs {

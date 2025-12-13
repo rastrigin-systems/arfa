@@ -154,14 +154,14 @@ func (as *AgentService) GetLocalAgents() ([]AgentConfig, error) {
 	return as.getLocalAgentConfigsInternal()
 }
 
-// getLocalAgentConfigsInternal reads agent configs from ~/.ubik/agents/ directory
+// getLocalAgentConfigsInternal reads agent configs from ~/.ubik/config/agents/ directory
 func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	agentsDir := filepath.Join(homeDir, ".ubik", "agents")
+	agentsDir := filepath.Join(homeDir, ".ubik", "config", "agents")
 
 	// Check if agents directory exists
 	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {
@@ -179,19 +179,61 @@ func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 			continue
 		}
 
-		configPath := filepath.Join(agentsDir, entry.Name(), "config.json")
+		agentDir := filepath.Join(agentsDir, entry.Name())
+
+		// Load metadata
+		metadataPath := filepath.Join(agentDir, "metadata.json")
+		metadataData, err := os.ReadFile(metadataPath)
+		if err != nil {
+			// Skip if metadata file doesn't exist
+			continue
+		}
+
+		// Parse metadata to get agent info
+		var metadata struct {
+			AgentID     string `json:"agent_id"`
+			AgentName   string `json:"agent_name"`
+			AgentType   string `json:"agent_type"`
+			Provider    string `json:"provider"`
+			DockerImage string `json:"docker_image"`
+			IsEnabled   bool   `json:"is_enabled"`
+		}
+		if err := json.Unmarshal(metadataData, &metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+		}
+
+		// Load configuration
+		configPath := filepath.Join(agentDir, "config.json")
 		configData, err := os.ReadFile(configPath)
 		if err != nil {
 			// Skip if config file doesn't exist
 			continue
 		}
 
-		var config AgentConfig
-		if err := json.Unmarshal(configData, &config); err != nil {
+		var configuration map[string]interface{}
+		if err := json.Unmarshal(configData, &configuration); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 		}
 
-		configs = append(configs, config)
+		// Load MCP servers if they exist
+		var mcpServers []MCPServerConfig
+		mcpPath := filepath.Join(agentDir, "mcp-servers.json")
+		if mcpData, err := os.ReadFile(mcpPath); err == nil {
+			if err := json.Unmarshal(mcpData, &mcpServers); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal MCP servers: %w", err)
+			}
+		}
+
+		configs = append(configs, AgentConfig{
+			AgentID:       metadata.AgentID,
+			AgentName:     metadata.AgentName,
+			AgentType:     metadata.AgentType,
+			Provider:      metadata.Provider,
+			DockerImage:   metadata.DockerImage,
+			IsEnabled:     metadata.IsEnabled,
+			Configuration: configuration,
+			MCPServers:    mcpServers,
+		})
 	}
 
 	return configs, nil
