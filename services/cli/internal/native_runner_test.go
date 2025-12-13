@@ -153,8 +153,8 @@ func TestProcessManager(t *testing.T) {
 
 func TestGetInstallInstructions(t *testing.T) {
 	tests := []struct {
-		agentType       string
-		shouldContain   string
+		agentType        string
+		shouldContain    string
 		shouldNotBeEmpty bool
 	}{
 		{"claude-code", "npm", true},
