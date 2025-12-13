@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"text/tabwriter"
 	"time"
 
@@ -75,7 +77,8 @@ Examples:
 	rootCmd.AddCommand(newSkillsCommand())
 	rootCmd.AddCommand(newUpdateCommand())
 	rootCmd.AddCommand(newCleanupCommand())
-	rootCmd.AddCommand(newLogsCommand()) // Add the new logs command
+	rootCmd.AddCommand(newLogsCommand())  // Add the new logs command
+	rootCmd.AddCommand(newProxyCommand()) // Add proxy daemon management
 
 	return rootCmd
 }
@@ -268,7 +271,7 @@ func newStatusCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show current status",
-		Long:  "Display current authentication status, agent configs, and running containers.",
+		Long:  "Display current authentication status, agent configs, and proxy daemon status.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configManager, err := cli.NewConfigManager()
 			if err != nil {
@@ -315,42 +318,40 @@ func newStatusCommand() *cobra.Command {
 					if ac.IsEnabled {
 						status = "enabled"
 					}
-					fmt.Printf("  • %s (%s) - %s\n", ac.AgentName, ac.AgentType, status)
+
+					// Check if agent binary is installed
+					binaryStatus := ""
+					if _, err := cli.FindAgentBinary(ac.AgentType); err != nil {
+						binaryStatus = " (not installed)"
+					}
+
+					fmt.Printf("  • %s (%s) - %s%s\n", ac.AgentName, ac.AgentType, status, binaryStatus)
 					if len(ac.MCPServers) > 0 {
 						fmt.Printf("    MCP Servers: %d\n", len(ac.MCPServers))
 					}
 				}
 			}
 
-			// Show container status
+			// Show proxy daemon status
 			fmt.Println()
-			dockerClient, err := cli.NewDockerClient()
+			daemon, err := httpproxy.NewProxyDaemon()
 			if err != nil {
-				fmt.Println("Docker Containers: (Docker not available)")
-				return nil
-			}
-			defer dockerClient.Close()
-
-			syncService.SetDockerClient(dockerClient)
-			containers, err := syncService.GetContainerStatus()
-			if err != nil {
-				fmt.Printf("Docker Containers: (failed to get status: %v)\n", err)
+				fmt.Printf("Proxy Daemon: (failed to check: %v)\n", err)
 				return nil
 			}
 
-			if len(containers) == 0 {
-				fmt.Println("Docker Containers: None running")
-				fmt.Println("\nRun 'ubik start' to start containers")
+			if !daemon.IsRunning() {
+				fmt.Println("Proxy Daemon: Not running")
+				fmt.Println("\nRun 'ubik' to start an interactive session (proxy auto-starts)")
 			} else {
-				fmt.Printf("Docker Containers: %d\n", len(containers))
-				for _, c := range containers {
-					status := "●"
-					if c.State == "running" {
-						status = "🟢"
-					} else {
-						status = "⚪"
-					}
-					fmt.Printf("  %s %s (%s) - %s\n", status, c.Name, c.Image, c.Status)
+				state, err := daemon.GetState()
+				if err != nil {
+					fmt.Printf("Proxy Daemon: Running (failed to get details: %v)\n", err)
+				} else {
+					fmt.Println("Proxy Daemon: Running")
+					fmt.Printf("  Port:   %d\n", state.Port)
+					fmt.Printf("  PID:    %d\n", state.PID)
+					fmt.Printf("  Uptime: %s\n", time.Since(state.StartTime).Round(time.Second))
 				}
 			}
 
@@ -360,66 +361,38 @@ func newStatusCommand() *cobra.Command {
 }
 
 func newStartCommand() *cobra.Command {
-	var (
-		workspace string
-		apiKey    string
-	)
+	var port int
 
 	cmd := &cobra.Command{
 		Use:   "start",
-		Short: "Start Docker containers",
-		Long:  "Start Docker containers for synced agent configs and MCP servers.",
+		Short: "Start the proxy daemon",
+		Long: `Start the MITM proxy daemon in the background.
+
+The proxy daemon intercepts and logs all LLM API calls (Anthropic, OpenAI, Google).
+It runs as a shared singleton - all CLI sessions use the same proxy.
+
+To start an interactive agent session, simply run 'ubik' without arguments.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			// Start proxy daemon
+			daemon, err := httpproxy.NewProxyDaemon()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to create proxy daemon: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
-			syncService := cli.NewSyncService(configManager, platformClient, authService)
-
-			// Ensure authenticated
-			_, err = authService.RequireAuth()
-			if err != nil {
-				return err
+			if err := daemon.Start(port); err != nil {
+				return fmt.Errorf("failed to start proxy daemon: %w", err)
 			}
 
-			// Setup Docker client
-			dockerClient, err := cli.NewDockerClient()
-			if err != nil {
-				return fmt.Errorf("failed to create Docker client: %w", err)
-			}
-			defer dockerClient.Close()
-
-			syncService.SetDockerClient(dockerClient)
-
-			// Set default workspace if not provided
-			if workspace == "" {
-				workspace = "."
-			}
-
-			// Convert to absolute path
-			absWorkspace, err := filepath.Abs(workspace)
-			if err != nil {
-				return fmt.Errorf("failed to resolve workspace path: %w", err)
-			}
-			workspace = absWorkspace
-
-			// Start containers
-			if err := syncService.StartContainers(workspace, apiKey); err != nil {
-				return fmt.Errorf("failed to start containers: %w", err)
-			}
-
-			fmt.Println("\n✓ Containers started successfully")
-			fmt.Println("\nRun 'ubik status' to see container status")
+			fmt.Println("\nNext steps:")
+			fmt.Println("  1. Run 'ubik' to start an interactive agent session")
+			fmt.Println("  2. Run 'ubik proxy status' to check proxy status")
+			fmt.Println("  3. Run 'ubik proxy stop' to stop the proxy daemon")
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&workspace, "workspace", ".", "Workspace directory to mount in containers")
-	cmd.Flags().StringVar(&apiKey, "api-key", "", "Anthropic API key for agents")
+	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
 
 	return cmd
 }
@@ -427,33 +400,22 @@ func newStartCommand() *cobra.Command {
 func newStopCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
-		Short: "Stop Docker containers",
-		Long:  "Stop all running ubik-managed Docker containers.",
+		Short: "Stop the proxy daemon",
+		Long:  "Stop the MITM proxy daemon if it's running.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			daemon, err := httpproxy.NewProxyDaemon()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to create proxy daemon: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
-			syncService := cli.NewSyncService(configManager, platformClient, authService)
-
-			// Setup Docker client
-			dockerClient, err := cli.NewDockerClient()
-			if err != nil {
-				return fmt.Errorf("failed to create Docker client: %w", err)
-			}
-			defer dockerClient.Close()
-
-			syncService.SetDockerClient(dockerClient)
-
-			// Stop containers
-			if err := syncService.StopContainers(); err != nil {
-				return fmt.Errorf("failed to stop containers: %w", err)
+			if !daemon.IsRunning() {
+				fmt.Println("Proxy daemon is not running")
+				return nil
 			}
 
-			fmt.Println("\n✓ All containers stopped")
+			if err := daemon.Stop(); err != nil {
+				return fmt.Errorf("failed to stop proxy daemon: %w", err)
+			}
 
 			return nil
 		},
@@ -941,26 +903,27 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		defer logger.Close()
 	}
 
-	// Start MITM Proxy
-	proxy := httpproxy.NewProxyServer(logger)
-	if err := proxy.Start(8082); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: failed to start proxy: %v\n", err)
+	// Ensure proxy daemon is running (auto-start if needed)
+	proxyDaemon, err := httpproxy.NewProxyDaemon()
+	if err != nil {
+		return fmt.Errorf("failed to create proxy daemon: %w", err)
+	}
+
+	proxyState, err := proxyDaemon.EnsureRunning(8082)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to start proxy daemon: %v\n", err)
+		// Continue without proxy - logging will still work for CLI I/O
 	} else {
-		// Ensure proxy is stopped on exit
-		defer func() {
-			if err := proxy.Stop(context.Background()); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to stop proxy: %v\n", err)
-			}
-		}()
-		// Register proxy with sync service
-		syncService.SetProxy(proxy)
+		fmt.Printf("✓ Proxy: localhost:%d\n", proxyState.Port)
 	}
 
 	// Start logging session
+	var sessionID string
 	if logger != nil {
 		logger.SetAgentID(selectedAgent.AgentID)
-		sessionID := logger.StartSession()
-		fmt.Printf("✓ Session ID: %s\n", sessionID.String())
+		sid := logger.StartSession()
+		sessionID = sid.String()
+		fmt.Printf("✓ Session: %s\n", sessionID)
 	}
 
 	// Workspace selection
@@ -1001,94 +964,65 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 
 	fmt.Println()
 
-	// Setup Docker client
-	dockerClient, err := cli.NewDockerClient()
+	// Check if agent binary is installed
+	binaryPath, err := cli.FindAgentBinary(selectedAgent.AgentType)
 	if err != nil {
-		return fmt.Errorf("failed to create Docker client: %w", err)
+		return err
 	}
-	defer dockerClient.Close()
+	fmt.Printf("✓ Agent binary: %s\n", binaryPath)
 
-	// Check if Docker is running
-	if err := dockerClient.Ping(); err != nil {
-		return fmt.Errorf("Docker is not running. Please start Docker and try again.")
-	}
-
-	syncService.SetDockerClient(dockerClient)
-
-	// Check if containers are running
-	containerStatus, err := syncService.GetContainerStatus()
+	// Fetch API key from platform
+	claudeToken, err := platformClient.GetEffectiveClaudeToken()
 	if err != nil {
-		return fmt.Errorf("failed to get container status: %w", err)
+		fmt.Fprintf(os.Stderr, "Warning: Could not fetch Claude token: %v\n", err)
+		// Try environment variable as fallback
+		claudeToken = os.Getenv("ANTHROPIC_API_KEY")
 	}
 
-	// Find agent container by name pattern
-	var agentContainerID string
-	expectedContainerName := fmt.Sprintf("ubik-agent-%s", selectedAgent.AgentID)
-	for _, c := range containerStatus {
-		// Check if container name matches (removing leading "/" if present)
-		containerName := c.Name
-		if len(containerName) > 0 && containerName[0] == '/' {
-			containerName = containerName[1:]
-		}
-		if containerName == expectedContainerName && c.State == "running" {
-			agentContainerID = c.ID
-			break
-		}
+	if claudeToken == "" {
+		return fmt.Errorf("no API key configured. Set via Settings → Security tab or ANTHROPIC_API_KEY env var")
 	}
 
-	// If container not running, start it
-	if agentContainerID == "" {
-		fmt.Println("🚀 Starting containers...")
-
-		// Start containers (will start MCP servers and agent)
-		apiKey := os.Getenv("ANTHROPIC_API_KEY")
-		if err := syncService.StartContainers(workspace, apiKey); err != nil {
-			return fmt.Errorf("failed to start containers: %w", err)
-		}
-
-		// Get container ID after startin
-		containerStatus, err = syncService.GetContainerStatus()
-		if err != nil {
-			return fmt.Errorf("failed to get container status after start: %w", err)
-		}
-
-		for _, c := range containerStatus {
-			containerName := c.Name
-			if len(containerName) > 0 && containerName[0] == '/' {
-				containerName = containerName[1:]
-			}
-			if containerName == expectedContainerName && c.State == "running" {
-				agentContainerID = c.ID
-				break
-			}
-		}
-
-		if agentContainerID == "" {
-			return fmt.Errorf("failed to start agent container")
-		}
+	// Start MCP servers if configured (Docker containers for MCP only)
+	if len(selectedAgent.MCPServers) > 0 {
+		fmt.Printf("Starting %d MCP server(s)...\n", len(selectedAgent.MCPServers))
+		// TODO: Start MCP containers via Docker (keep Docker for MCP servers)
+		// For now, skip MCP servers in native mode
+		fmt.Println("  ⚠ MCP servers not yet supported in native mode")
 	}
 
-	// Setup proxy service
-	proxyService := cli.NewProxyService()
-	proxyService.SetDockerClient(dockerClient)
+	// Configure native runner
+	var proxyPort int
+	var certPath string
+	if proxyState != nil {
+		proxyPort = proxyState.Port
+		certPath = proxyState.CertPath
+	}
 
-	// Create proxy options
-	proxyOptions := cli.ProxyOptions{
-		ContainerID: agentContainerID,
-		AgentName:   selectedAgent.AgentName,
-		WorkingDir:  workspace,
-		Logger:      nil, // Disabled: Only log API requests via MITM proxy, not CLI I/O
+	runnerConfig := cli.NativeRunnerConfig{
+		AgentType: selectedAgent.AgentType,
+		AgentID:   selectedAgent.AgentID,
+		AgentName: selectedAgent.AgentName,
+		Workspace: workspace,
+		APIKey:    claudeToken,
+		ProxyPort: proxyPort,
+		CertPath:  certPath,
+		SessionID: sessionID,
 	}
 
 	// Start interactive session
+	fmt.Println()
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	fmt.Printf("✨ Interactive session started\n")
+	fmt.Printf("✨ Starting %s (native)\n", selectedAgent.AgentName)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Println()
 
-	// Attach to container and proxy I/O
+	// Run agent natively
 	ctx := context.Background()
-	session, err := proxyService.ExecuteInteractive(ctx, proxyOptions)
+	runner := cli.NewNativeRunner()
+	startTime := time.Now()
+
+	err = runner.Run(ctx, runnerConfig, os.Stdin, os.Stdout, os.Stderr)
 
 	// End logging session
 	if logger != nil {
@@ -1097,12 +1031,14 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	}
 
 	// Display session summary
-	if session != nil {
-		fmt.Println()
-		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-		fmt.Println(session.String())
-		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	}
+	duration := time.Since(startTime).Round(time.Second)
+	fmt.Println()
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Printf("Session:\n")
+	fmt.Printf("  Agent:     %s\n", selectedAgent.AgentName)
+	fmt.Printf("  Directory: %s\n", workspace)
+	fmt.Printf("  Duration:  %s\n", duration)
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 	return err
 }
@@ -1236,6 +1172,175 @@ func newLogsStreamCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow logs in real-time") // For consistency, though it's always following
 	cmd.Flags().BoolVarP(&jsonOut, "json", "j", false, "Output full JSON for each log entry")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show full request/response payloads")
+
+	return cmd
+}
+
+func newProxyCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proxy",
+		Short: "Manage the MITM proxy daemon",
+		Long:  "Control the shared MITM proxy daemon that intercepts and logs LLM API calls.",
+	}
+
+	cmd.AddCommand(newProxyStartCommand())
+	cmd.AddCommand(newProxyStopCommand())
+	cmd.AddCommand(newProxyStatusCommand())
+	cmd.AddCommand(newProxyRunCommand())
+
+	return cmd
+}
+
+func newProxyStartCommand() *cobra.Command {
+	var port int
+
+	cmd := &cobra.Command{
+		Use:   "start",
+		Short: "Start the proxy daemon",
+		Long:  "Start the MITM proxy daemon in the background. The daemon is shared across all CLI sessions.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			daemon, err := httpproxy.NewProxyDaemon()
+			if err != nil {
+				return fmt.Errorf("failed to create proxy daemon: %w", err)
+			}
+
+			return daemon.Start(port)
+		},
+	}
+
+	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
+
+	return cmd
+}
+
+func newProxyStopCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "stop",
+		Short: "Stop the proxy daemon",
+		Long:  "Stop the MITM proxy daemon if it's running.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			daemon, err := httpproxy.NewProxyDaemon()
+			if err != nil {
+				return fmt.Errorf("failed to create proxy daemon: %w", err)
+			}
+
+			if !daemon.IsRunning() {
+				fmt.Println("Proxy daemon is not running")
+				return nil
+			}
+
+			return daemon.Stop()
+		},
+	}
+}
+
+func newProxyStatusCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Show proxy daemon status",
+		Long:  "Display the current status of the MITM proxy daemon.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			daemon, err := httpproxy.NewProxyDaemon()
+			if err != nil {
+				return fmt.Errorf("failed to create proxy daemon: %w", err)
+			}
+
+			if !daemon.IsRunning() {
+				fmt.Println("Status: Not running")
+				fmt.Println("\nRun 'ubik proxy start' to start the daemon")
+				return nil
+			}
+
+			state, err := daemon.GetState()
+			if err != nil {
+				return fmt.Errorf("failed to get daemon state: %w", err)
+			}
+
+			fmt.Println("Status: Running")
+			fmt.Printf("PID:    %d\n", state.PID)
+			fmt.Printf("Port:   %d\n", state.Port)
+			fmt.Printf("Uptime: %s\n", time.Since(state.StartTime).Round(time.Second))
+			fmt.Printf("Cert:   %s\n", state.CertPath)
+
+			return nil
+		},
+	}
+}
+
+func newProxyRunCommand() *cobra.Command {
+	var port int
+
+	cmd := &cobra.Command{
+		Use:    "run",
+		Short:  "Run the proxy daemon (internal)",
+		Long:   "Run the MITM proxy in the foreground. This is called internally by 'proxy start'.",
+		Hidden: true, // Hide from help since it's internal
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Initialize logger (optional - daemon mode)
+			loggerConfig := &logging.Config{
+				Enabled:       true,
+				BatchSize:     100,
+				BatchInterval: 5 * time.Second,
+				MaxRetries:    5,
+				RetryBackoff:  1 * time.Second,
+			}
+
+			configManager, err := cli.NewConfigManager()
+			if err != nil {
+				return fmt.Errorf("failed to create config manager: %w", err)
+			}
+
+			platformClient := cli.NewPlatformClient("")
+			apiClient := cli.NewPlatformAPIClient(platformClient)
+			logger, err := logging.NewLogger(loggerConfig, apiClient)
+			if err != nil {
+				// Continue without logging - log warning to stderr
+				fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
+			}
+
+			_ = configManager // Silence unused warning for now
+
+			// Create and start proxy
+			proxy := httpproxy.NewProxyServer(logger)
+			if err := proxy.Start(port); err != nil {
+				return fmt.Errorf("failed to start proxy: %w", err)
+			}
+
+			// Save daemon state
+			daemon, err := httpproxy.NewProxyDaemon()
+			if err != nil {
+				return fmt.Errorf("failed to create daemon manager: %w", err)
+			}
+
+			// Run until interrupted
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// Handle signals
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+			go func() {
+				<-sigChan
+				fmt.Println("\nShutting down proxy daemon...")
+				cancel()
+			}()
+
+			// Run the daemon (blocks until context cancelled)
+			_ = daemon // State is managed in Start
+			<-ctx.Done()
+
+			// Cleanup
+			proxy.Stop(context.Background())
+			if logger != nil {
+				logger.Close()
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
 
 	return cmd
 }
