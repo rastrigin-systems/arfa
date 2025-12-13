@@ -31,7 +31,8 @@ func NewAgentPicker(configManager *ConfigManager) *AgentPicker {
 
 // SelectAgent shows an interactive picker and returns the selected agent
 // If saveAsDefault is true, the selection will be saved as the default agent
-func (p *AgentPicker) SelectAgent(agents []AgentConfig, saveAsDefault bool) (*AgentConfig, error) {
+// If forceInteractive is true, always show the picker even with a single agent
+func (p *AgentPicker) SelectAgent(agents []AgentConfig, saveAsDefault bool, forceInteractive bool) (*AgentConfig, error) {
 	if len(agents) == 0 {
 		return nil, fmt.Errorf("no agents available")
 	}
@@ -64,8 +65,8 @@ func (p *AgentPicker) SelectAgent(agents []AgentConfig, saveAsDefault bool) (*Ag
 		return nil, fmt.Errorf("no enabled agents available")
 	}
 
-	// If only one agent, use it directly
-	if len(items) == 1 {
+	// If only one agent and not forcing interactive, use it directly
+	if len(items) == 1 && !forceInteractive {
 		for i := range agents {
 			if agents[i].AgentID == items[0].ID {
 				if saveAsDefault {

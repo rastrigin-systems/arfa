@@ -558,25 +558,41 @@ func newAgentsListCommand() *cobra.Command {
 				return nil
 			}
 
+			// Get user's enabled agents to show status
+			syncService := cli.NewSyncService(configManager, platformClient, authService)
+			enabledAgents, _ := syncService.GetLocalAgentConfigs()
+
+			// Build map of enabled agent IDs
+			enabledMap := make(map[string]bool)
+			for _, ea := range enabledAgents {
+				if ea.IsEnabled {
+					enabledMap[ea.AgentID] = true
+				}
+			}
+
 			fmt.Printf("\nAvailable Agents (%d):\n\n", len(agents))
 
 			// Create table writer
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tPROVIDER\tID\tDESCRIPTION")
-			fmt.Fprintln(w, "────\t────────\t──\t───────────")
+			fmt.Fprintln(w, "NAME\tPROVIDER\tSTATUS\tDESCRIPTION")
+			fmt.Fprintln(w, "────\t────────\t──────\t───────────")
 
 			for _, agent := range agents {
 				description := agent.Description
-				if len(description) > 60 {
-					description = description[:57] + "..."
+				if len(description) > 50 {
+					description = description[:47] + "..."
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.Name, agent.Provider, agent.ID, description)
+				status := "- not assigned"
+				if enabledMap[agent.ID] {
+					status = "✓ enabled"
+				}
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", agent.Name, agent.Provider, status, description)
 			}
 
 			w.Flush()
 			fmt.Println()
 			fmt.Println("💡 Tip: Use 'ubik agents info <id>' to see agent details")
-			fmt.Println("        Use 'ubik agents show <name>' to see configuration for assigned agents")
+			fmt.Println("        Use 'ubik' or 'ubik --pick' to start an agent")
 			fmt.Println()
 
 			return nil
@@ -841,8 +857,8 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 			return fmt.Errorf("agent '%s' not found: %w", agentFlag, err)
 		}
 	} else if pickFlag || setDefaultFlag {
-		// Case 2: --pick or --set-default flag - always show picker
-		selectedAgent, err = picker.SelectAgent(agentConfigs, true) // save as default
+		// Case 2: --pick or --set-default flag - always show picker (even with single agent)
+		selectedAgent, err = picker.SelectAgent(agentConfigs, true, true) // save as default, force interactive
 		if err != nil {
 			return err
 		}
@@ -892,7 +908,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 				}
 			} else {
 				// Multiple agents, show picker
-				selectedAgent, err = picker.SelectAgent(agentConfigs, true)
+				selectedAgent, err = picker.SelectAgent(agentConfigs, true, false) // save as default, don't force interactive
 				if err != nil {
 					return err
 				}

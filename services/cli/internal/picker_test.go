@@ -119,7 +119,7 @@ func TestAgentPicker_SelectAgent_NoAgents(t *testing.T) {
 
 	picker := NewAgentPicker(configManager)
 
-	_, err = picker.SelectAgent([]AgentConfig{}, false)
+	_, err = picker.SelectAgent([]AgentConfig{}, false, false)
 	if err == nil {
 		t.Error("expected error for empty agents list")
 	}
@@ -149,7 +149,7 @@ func TestAgentPicker_SelectAgent_NoEnabledAgents(t *testing.T) {
 		},
 	}
 
-	_, err = picker.SelectAgent(agents, false)
+	_, err = picker.SelectAgent(agents, false, false)
 	if err == nil {
 		t.Error("expected error for no enabled agents")
 	}
@@ -187,8 +187,8 @@ func TestAgentPicker_SelectAgent_SingleAgent(t *testing.T) {
 		},
 	}
 
-	// Single enabled agent should be returned directly (no picker shown)
-	selected, err := picker.SelectAgent(agents, true)
+	// Single enabled agent should be returned directly (no picker shown) when not forcing interactive
+	selected, err := picker.SelectAgent(agents, true, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
