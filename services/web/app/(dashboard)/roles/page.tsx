@@ -1,4 +1,5 @@
 import { getServerToken } from '@/lib/auth';
+import { apiClient } from '@/lib/api/client';
 import { RolesClient } from './RolesClient';
 
 type Role = {
@@ -23,9 +24,16 @@ export default async function RolesPage() {
     throw new Error('Unauthorized');
   }
 
-  // TODO: Fetch roles from API when endpoint is available
-  // For now, return empty array as placeholder
-  const roles: Role[] = [];
+  // Fetch roles from API
+  const { data } = await apiClient.GET('/roles', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  // Note: API returns { roles: Role[], total: number } but OpenAPI spec says { data: Role[] }
+  // Using type assertion to match actual API response
+  const roles: Role[] = (data as { roles?: Role[] })?.roles ?? [];
 
   return (
     <div className="space-y-6">
