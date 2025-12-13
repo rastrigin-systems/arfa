@@ -42,7 +42,24 @@ type NativeRunnerConfig struct {
 	Environment map[string]string // Additional env vars from agent config
 }
 
-// AgentBinary maps agent types to their binary names
+// AgentTypeMapping maps API agent types to CLI agent types
+// This translates the database agent_type values to the binary names
+var AgentTypeMapping = map[string]string{
+	// API types -> CLI types
+	"ide_assistant":   "claude-code",
+	"code_completion": "cursor",
+	"ai_editor":       "windsurf",
+	"gemini_agent":    "gemini",
+	"pair_programmer": "aider",
+	// Also allow direct CLI types for backwards compatibility
+	"claude-code": "claude-code",
+	"cursor":      "cursor",
+	"windsurf":    "windsurf",
+	"gemini":      "gemini",
+	"aider":       "aider",
+}
+
+// AgentBinary maps CLI agent types to their binary names
 var AgentBinaries = map[string][]string{
 	"claude-code": {"claude"},
 	"cursor":      {"cursor"},
@@ -65,11 +82,22 @@ func NewNativeRunner() *NativeRunner {
 	return &NativeRunner{}
 }
 
+// NormalizeAgentType converts API agent types to CLI agent types
+func NormalizeAgentType(agentType string) string {
+	if cliType, ok := AgentTypeMapping[agentType]; ok {
+		return cliType
+	}
+	return agentType // Return as-is if no mapping found
+}
+
 // FindAgentBinary locates the agent binary in the system PATH
 func FindAgentBinary(agentType string) (string, error) {
-	binaries, ok := AgentBinaries[agentType]
+	// Normalize the agent type (convert API types to CLI types)
+	normalizedType := NormalizeAgentType(agentType)
+
+	binaries, ok := AgentBinaries[normalizedType]
 	if !ok {
-		return "", fmt.Errorf("unknown agent type: %s", agentType)
+		return "", fmt.Errorf("unknown agent type: %s (normalized from %s)", normalizedType, agentType)
 	}
 
 	for _, name := range binaries {
@@ -80,7 +108,7 @@ func FindAgentBinary(agentType string) (string, error) {
 	}
 
 	return "", fmt.Errorf("agent binary not found for %s. Please install it first.\n\nInstallation instructions:\n%s",
-		agentType, getInstallInstructions(agentType))
+		normalizedType, getInstallInstructions(normalizedType))
 }
 
 // getInstallInstructions returns installation instructions for an agent
@@ -123,9 +151,10 @@ func (r *NativeRunner) Start(ctx context.Context, config NativeRunnerConfig) err
 	// Build environment
 	env := os.Environ()
 
-	// Add API key
+	// Add API key (use normalized agent type for env var lookup)
 	if config.APIKey != "" {
-		envVar := AgentEnvVars[config.AgentType]
+		normalizedType := NormalizeAgentType(config.AgentType)
+		envVar := AgentEnvVars[normalizedType]
 		if envVar == "" {
 			envVar = "ANTHROPIC_API_KEY" // Default
 		}

@@ -21,6 +21,11 @@ func TestFindAgentBinary(t *testing.T) {
 			agentType: "claude-code",
 			wantErr:   false, // Will depend on whether claude is installed
 		},
+		{
+			name:      "ide_assistant normalizes to claude-code",
+			agentType: "ide_assistant",
+			wantErr:   false, // Will depend on whether claude is installed
+		},
 	}
 
 	for _, tt := range tests {
@@ -47,6 +52,56 @@ func TestFindAgentBinary(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNormalizeAgentType(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// API types -> CLI types
+		{"ide_assistant", "claude-code"},
+		{"code_completion", "cursor"},
+		{"ai_editor", "windsurf"},
+		{"gemini_agent", "gemini"},
+		{"pair_programmer", "aider"},
+		// CLI types pass through
+		{"claude-code", "claude-code"},
+		{"cursor", "cursor"},
+		{"windsurf", "windsurf"},
+		{"gemini", "gemini"},
+		{"aider", "aider"},
+		// Unknown types pass through as-is
+		{"unknown-type", "unknown-type"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := NormalizeAgentType(tt.input)
+			if result != tt.expected {
+				t.Errorf("NormalizeAgentType(%s) = %s, want %s", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAgentTypeMapping(t *testing.T) {
+	// Verify all API agent types are mapped
+	expectedMappings := map[string]string{
+		"ide_assistant":   "claude-code",
+		"code_completion": "cursor",
+		"ai_editor":       "windsurf",
+		"gemini_agent":    "gemini",
+		"pair_programmer": "aider",
+	}
+
+	for apiType, cliType := range expectedMappings {
+		if mapped, ok := AgentTypeMapping[apiType]; !ok {
+			t.Errorf("expected API type %s to be in AgentTypeMapping", apiType)
+		} else if mapped != cliType {
+			t.Errorf("AgentTypeMapping[%s] = %s, want %s", apiType, mapped, cliType)
+		}
 	}
 }
 
