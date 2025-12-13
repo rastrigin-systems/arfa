@@ -971,18 +971,6 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	}
 	fmt.Printf("✓ Agent binary: %s\n", binaryPath)
 
-	// Fetch API key from platform
-	claudeToken, err := platformClient.GetEffectiveClaudeToken()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Could not fetch Claude token: %v\n", err)
-		// Try environment variable as fallback
-		claudeToken = os.Getenv("ANTHROPIC_API_KEY")
-	}
-
-	if claudeToken == "" {
-		return fmt.Errorf("no API key configured. Set via Settings → Security tab or ANTHROPIC_API_KEY env var")
-	}
-
 	// Start MCP servers if configured (Docker containers for MCP only)
 	if len(selectedAgent.MCPServers) > 0 {
 		fmt.Printf("Starting %d MCP server(s)...\n", len(selectedAgent.MCPServers))
@@ -1004,7 +992,6 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		AgentID:   selectedAgent.AgentID,
 		AgentName: selectedAgent.AgentName,
 		Workspace: workspace,
-		APIKey:    claudeToken,
 		ProxyPort: proxyPort,
 		CertPath:  certPath,
 		SessionID: sessionID,
