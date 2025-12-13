@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useTeams } from '@/lib/hooks/useTeams';
+import { useEmployees } from '@/lib/hooks/useEmployees';
 
 type Agent = {
   id: string;
@@ -48,6 +50,14 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
   const [isEnabled, setIsEnabled] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Fetch teams and employees
+  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const { data: employeesData, isLoading: employeesLoading } = useEmployees({
+    page: 1,
+    limit: 100, // Get all employees for selection
+    status: 'active',
+  });
 
   const selectedAgent = agents.find((a) => a.id === selectedAgentId);
   const isEditMode = !!editingConfig;
@@ -130,7 +140,6 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
         is_enabled: isEnabled,
       };
 
-      // TODO: Add team_id and employee_id when API supports it
       if (assignTo === 'team') {
         body.team_id = selectedTeamId;
       } else if (assignTo === 'employee') {
@@ -249,18 +258,31 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
           {assignTo === 'team' && !isEditMode && (
             <div className="space-y-2">
               <Label htmlFor="team-select">Select Team *</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={teamsLoading}>
                 <SelectTrigger id="team-select">
-                  <SelectValue placeholder="Choose a team" />
+                  <SelectValue placeholder={teamsLoading ? 'Loading teams...' : 'Choose a team'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="placeholder">Team selection coming soon</SelectItem>
-                  {/* TODO: Fetch and display actual teams */}
+                  {teamsLoading ? (
+                    <SelectItem value="loading" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading teams...
+                      </div>
+                    </SelectItem>
+                  ) : teams && teams.length > 0 ? (
+                    teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-teams" disabled>
+                      No teams available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground italic">
-                Note: Team-level configuration API is not yet implemented
-              </p>
             </div>
           )}
 
@@ -268,18 +290,34 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
           {assignTo === 'employee' && !isEditMode && (
             <div className="space-y-2">
               <Label htmlFor="employee-select">Select Employee *</Label>
-              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId} disabled={employeesLoading}>
                 <SelectTrigger id="employee-select">
-                  <SelectValue placeholder="Choose an employee" />
+                  <SelectValue placeholder={employeesLoading ? 'Loading employees...' : 'Choose an employee'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="placeholder">Employee selection coming soon</SelectItem>
-                  {/* TODO: Fetch and display actual employees */}
+                  {employeesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading employees...
+                      </div>
+                    </SelectItem>
+                  ) : employeesData?.employees && employeesData.employees.length > 0 ? (
+                    employeesData.employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        <div>
+                          <div>{employee.full_name}</div>
+                          <div className="text-xs text-muted-foreground">{employee.email}</div>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-employees" disabled>
+                      No employees available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground italic">
-                Note: Employee-level configuration API is not yet implemented
-              </p>
             </div>
           )}
 
