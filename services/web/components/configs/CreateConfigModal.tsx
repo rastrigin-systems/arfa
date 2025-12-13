@@ -125,25 +125,42 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
     setIsSubmitting(true);
 
     try {
-      let url = '/api/organizations/current/agent-configs';
+      // Determine the correct API endpoint based on assignment level
+      let url: string;
       let method = 'POST';
 
       if (isEditMode && editingConfig) {
-        url = `/api/organizations/current/agent-configs/${editingConfig.id}`;
+        // Edit mode - use the appropriate endpoint based on level
+        if (editingConfig.level === 'team') {
+          url = `/api/teams/${editingConfig.assigned_to}/agent-configs/${editingConfig.id}`;
+        } else if (editingConfig.level === 'employee') {
+          url = `/api/employees/${editingConfig.assigned_to}/agent-configs/${editingConfig.id}`;
+        } else {
+          url = `/api/organizations/current/agent-configs/${editingConfig.id}`;
+        }
         method = 'PATCH';
+      } else {
+        // Create mode - use the appropriate endpoint based on assignTo
+        if (assignTo === 'team') {
+          url = `/api/teams/${selectedTeamId}/agent-configs`;
+        } else if (assignTo === 'employee') {
+          url = `/api/employees/${selectedEmployeeId}/agent-configs`;
+        } else {
+          url = '/api/organizations/current/agent-configs';
+        }
       }
 
-      // Prepare request body based on assignment level
+      // Prepare request body - config_override for team/employee, config for org
       const body: Record<string, unknown> = {
         agent_id: selectedAgentId,
-        config,
         is_enabled: isEnabled,
       };
 
-      if (assignTo === 'team') {
-        body.team_id = selectedTeamId;
-      } else if (assignTo === 'employee') {
-        body.employee_id = selectedEmployeeId;
+      // Use config_override for team/employee level, config for org level
+      if (assignTo === 'organization') {
+        body.config = config;
+      } else {
+        body.config_override = config;
       }
 
       const response = await fetch(url, {

@@ -16,8 +16,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const body = await request.json();
 
-    const { data, error } = await apiClient.PATCH('/teams/{team_id}/agent-configs/{config_id}', {
-      params: { path: { team_id: id, config_id: configId } },
+    const { data, error } = await apiClient.PATCH('/employees/{employee_id}/agent-configs/{config_id}', {
+      params: { path: { employee_id: id, config_id: configId } },
       body,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (error) {
       return NextResponse.json(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to update team agent config' },
+        { error: (error as any).message || 'Failed to update employee agent config' },
         { status: 500 }
       );
     }
@@ -51,8 +51,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id, configId } = await params;
 
   try {
-    const { error } = await apiClient.DELETE('/teams/{team_id}/agent-configs/{config_id}', {
-      params: { path: { team_id: id, config_id: configId } },
+    const { error } = await apiClient.DELETE('/employees/{employee_id}/agent-configs/{config_id}', {
+      params: { path: { employee_id: id, config_id: configId } },
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -61,7 +61,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (error) {
       return NextResponse.json(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to delete team agent config' },
+        { error: (error as any).message || 'Failed to delete employee agent config' },
         { status: 500 }
       );
     }
