@@ -29,8 +29,10 @@ func main() {
 
 func newRootCommand() *cobra.Command {
 	var (
-		workspace string
-		agentName string
+		workspace  string
+		agentName  string
+		pick       bool
+		setDefault bool
 	)
 
 	rootCmd := &cobra.Command{
@@ -38,17 +40,28 @@ func newRootCommand() *cobra.Command {
 		Short: "ubik - Container-orchestrated AI agent management",
 		Long: `ubik CLI enables employees to use AI coding agents with centrally-managed
 configurations from the platform. It manages Docker containers that run
-Claude Code and MCP servers with injected configs.`,
+Claude Code and MCP servers with injected configs.
+
+When run without subcommands, ubik starts an interactive session with your
+default agent. If no default is set, you'll be prompted to select one.
+
+Examples:
+  ubik                    Run default agent (or pick if none set)
+  ubik --pick             Always show agent picker
+  ubik --agent "Claude"   Run specific agent (one-time, no save)
+  ubik --set-default      Set default agent without starting`,
 		Version: version,
 		// Run function executes when no subcommand is provided (interactive mode)
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runInteractiveMode(workspace, agentName)
+			return runInteractiveMode(workspace, agentName, pick, setDefault)
 		},
 	}
 
 	// Add flags for interactive mode
 	rootCmd.Flags().StringVar(&workspace, "workspace", "", "Workspace directory (interactive prompt if not provided)")
-	rootCmd.Flags().StringVar(&agentName, "agent", "", "Agent to use (uses default if not specified)")
+	rootCmd.Flags().StringVar(&agentName, "agent", "", "Agent to use (one-time override, doesn't change default)")
+	rootCmd.Flags().BoolVar(&pick, "pick", false, "Always show agent picker (saves selection as default)")
+	rootCmd.Flags().BoolVar(&setDefault, "set-default", false, "Set default agent without starting a session")
 
 	// Add subcommands
 	rootCmd.AddCommand(newLoginCommand())
@@ -787,7 +800,7 @@ func newCleanupCommand() *cobra.Command {
 }
 
 // runInteractiveMode starts an interactive session with an agent
-func runInteractiveMode(workspaceFlag, agentFlag string) error {
+func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFlag bool) error {
 	// Initialize services
 	configManager, err := cli.NewConfigManager()
 	if err != nil {
@@ -802,6 +815,94 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 	_, err = authService.RequireAuth()
 	if err != nil {
 		return err
+	}
+
+	// Get local agent configs
+	agentConfigs, err := syncService.GetLocalAgentConfigs()
+	if err != nil {
+		return fmt.Errorf("failed to get agent configs: %w", err)
+	}
+
+	if len(agentConfigs) == 0 {
+		fmt.Println("No agent configs found. Run 'ubik sync' to fetch configs from the platform.")
+		return nil
+	}
+
+	// Initialize agent picker
+	picker := cli.NewAgentPicker(configManager)
+
+	// Select agent based on flags and defaults
+	var selectedAgent *cli.AgentConfig
+
+	// Case 1: Explicit --agent flag (one-time override, no save)
+	if agentFlag != "" {
+		selectedAgent, err = syncService.GetAgentConfig(agentFlag)
+		if err != nil {
+			return fmt.Errorf("agent '%s' not found: %w", agentFlag, err)
+		}
+	} else if pickFlag || setDefaultFlag {
+		// Case 2: --pick or --set-default flag - always show picker
+		selectedAgent, err = picker.SelectAgent(agentConfigs, true) // save as default
+		if err != nil {
+			return err
+		}
+
+		// If --set-default, just save and exit (don't start session)
+		if setDefaultFlag {
+			fmt.Printf("\n✓ Default agent set to: %s\n", selectedAgent.AgentName)
+			return nil
+		}
+	} else {
+		// Case 3: No flags - use default or show picker
+		config, _ := configManager.Load()
+
+		if config != nil && config.DefaultAgent != "" {
+			// Try to find the default agent
+			if agent, err := syncService.GetAgentConfig(config.DefaultAgent); err == nil && agent.IsEnabled {
+				selectedAgent = agent
+			}
+		}
+
+		// If no valid default, show picker (and save selection)
+		if selectedAgent == nil {
+			// Count enabled agents
+			enabledCount := 0
+			for _, ac := range agentConfigs {
+				if ac.IsEnabled {
+					enabledCount++
+				}
+			}
+
+			if enabledCount == 0 {
+				return fmt.Errorf("no enabled agents found. Run 'ubik sync' to fetch configs.")
+			}
+
+			// If only one enabled agent, use it directly and save as default
+			if enabledCount == 1 {
+				for i := range agentConfigs {
+					if agentConfigs[i].IsEnabled {
+						selectedAgent = &agentConfigs[i]
+						// Save as default silently
+						if cfg, _ := configManager.Load(); cfg != nil {
+							cfg.DefaultAgent = selectedAgent.AgentID
+							configManager.Save(cfg)
+						}
+						break
+					}
+				}
+			} else {
+				// Multiple agents, show picker
+				selectedAgent, err = picker.SelectAgent(agentConfigs, true)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	fmt.Printf("✓ Agent: %s (%s)\n", selectedAgent.AgentName, selectedAgent.AgentType)
+	if len(selectedAgent.MCPServers) > 0 {
+		fmt.Printf("✓ MCP Servers: %d\n", len(selectedAgent.MCPServers))
 	}
 
 	// Initialize logger (silently fails if disabled or opt-out)
@@ -837,57 +938,6 @@ func runInteractiveMode(workspaceFlag, agentFlag string) error {
 		}()
 		// Register proxy with sync service
 		syncService.SetProxy(proxy)
-	}
-
-	// Get local agent configs
-	agentConfigs, err := syncService.GetLocalAgentConfigs()
-	if err != nil {
-		return fmt.Errorf("failed to get agent configs: %w", err)
-	}
-
-	if len(agentConfigs) == 0 {
-		fmt.Println("No agent configs found. Run 'ubik sync' to fetch configs from the platform.")
-		return nil
-	}
-
-	// Select agent (use flag if provided, otherwise use default from config or first available)
-	var selectedAgent *cli.AgentConfig
-
-	// 1. Priority: Command line flag
-	if agentFlag != "" {
-		selectedAgent, err = syncService.GetAgentConfig(agentFlag)
-		if err != nil {
-			return fmt.Errorf("agent '%s' not found: %w", agentFlag, err)
-		}
-	} else {
-		// 2. Priority: Default agent from config
-		config, err := configManager.Load()
-		if err == nil && config.DefaultAgent != "" {
-			// Try to find the default agent
-			// We don't error if not found, just fall back to first enabled
-			if agent, err := syncService.GetAgentConfig(config.DefaultAgent); err == nil && agent.IsEnabled {
-				selectedAgent = agent
-			}
-		}
-
-		// 3. Priority: First enabled agent
-		if selectedAgent == nil {
-			for _, ac := range agentConfigs {
-				if ac.IsEnabled {
-					selectedAgent = &ac
-					break
-				}
-			}
-		}
-
-		if selectedAgent == nil {
-			return fmt.Errorf("no enabled agents found. Run 'ubik sync' to fetch configs.")
-		}
-	}
-
-	fmt.Printf("✓ Agent: %s (%s)\n", selectedAgent.AgentName, selectedAgent.AgentType)
-	if len(selectedAgent.MCPServers) > 0 {
-		fmt.Printf("✓ MCP Servers: %d\n", len(selectedAgent.MCPServers))
 	}
 
 	// Start logging session
