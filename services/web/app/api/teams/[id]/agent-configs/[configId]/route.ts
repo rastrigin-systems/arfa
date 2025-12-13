@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const body = await request.json();
 
-    const { data, error } = await apiClient.PATCH('/teams/{team_id}/agent-configs/{config_id}', {
+    const { data, error, response } = await apiClient.PATCH('/teams/{team_id}/agent-configs/{config_id}', {
       params: { path: { team_id: id, config_id: configId } },
       body,
       headers: {
@@ -25,11 +25,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to update team agent config' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to update team agent config';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json(data);
@@ -51,7 +49,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id, configId } = await params;
 
   try {
-    const { error } = await apiClient.DELETE('/teams/{team_id}/agent-configs/{config_id}', {
+    const { error, response } = await apiClient.DELETE('/teams/{team_id}/agent-configs/{config_id}', {
       params: { path: { team_id: id, config_id: configId } },
       headers: {
         Authorization: `Bearer ${token}`,
@@ -59,11 +57,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to delete team agent config' },
-        { status: 500 }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMessage = (error as any).error || 'Failed to delete team agent config';
+      return NextResponse.json({ error: errorMessage }, { status: response.status });
     }
 
     return NextResponse.json({ success: true });
