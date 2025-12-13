@@ -33,6 +33,7 @@ type ProxyServer struct {
 	keyPath         string
 	server          *http.Server
 	anthropicParser *logparser.AnthropicParser
+	port            int
 }
 
 // NewProxyServer creates a new proxy server instance
@@ -61,6 +62,8 @@ func (s *ProxyServer) Start(port int) error {
 		Handler: s.proxy,
 	}
 
+	s.port = port
+
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Proxy server error: %v\n", err)
@@ -69,6 +72,11 @@ func (s *ProxyServer) Start(port int) error {
 
 	fmt.Printf("✓ Proxy server started on %s\n", addr)
 	return nil
+}
+
+// GetPort returns the port the proxy is running on
+func (s *ProxyServer) GetPort() int {
+	return s.port
 }
 
 // Stop stops the proxy server
@@ -213,6 +221,10 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 
+	// Extract session info from custom headers (set by native runner via env vars)
+	sessionID := r.Header.Get("X-Ubik-Session")
+	agentID := r.Header.Get("X-Ubik-Agent")
+
 	// Parse and classify based on provider
 	if strings.Contains(r.URL.Host, "anthropic.com") && len(bodyBytes) > 0 {
 		entries, err := s.anthropicParser.ParseRequest(bodyBytes)
@@ -229,6 +241,14 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 		"url":     r.URL.String(),
 		"headers": redactHeaders(r.Header),
 		"body":    string(bodyBytes),
+	}
+
+	// Add session tracking if available
+	if sessionID != "" {
+		payload["session_id"] = sessionID
+	}
+	if agentID != "" {
+		payload["agent_id"] = agentID
 	}
 
 	s.logger.LogEvent("api_request", "proxy", fmt.Sprintf("%s %s", r.Method, r.URL.Host), payload)
@@ -255,6 +275,13 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		decodedBody = bodyBytes
 	}
 
+	// Extract session info from request headers
+	var sessionID, agentID string
+	if resp.Request != nil {
+		sessionID = resp.Request.Header.Get("X-Ubik-Session")
+		agentID = resp.Request.Header.Get("X-Ubik-Agent")
+	}
+
 	// Parse and classify based on provider
 	if resp.Request != nil && strings.Contains(resp.Request.URL.Host, "anthropic.com") && len(decodedBody) > 0 {
 		entries, err := s.anthropicParser.ParseResponse(decodedBody)
@@ -270,6 +297,14 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		"status":  resp.StatusCode,
 		"headers": redactHeaders(resp.Header),
 		"body":    string(decodedBody),
+	}
+
+	// Add session tracking if available
+	if sessionID != "" {
+		payload["session_id"] = sessionID
+	}
+	if agentID != "" {
+		payload["agent_id"] = agentID
 	}
 
 	s.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, resp.Request.URL.Host), payload)
