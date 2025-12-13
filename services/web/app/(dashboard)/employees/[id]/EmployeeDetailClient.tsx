@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ConfigurationHierarchy } from '@/components/employees/ConfigurationHierarchy';
 
 type Employee = {
   readonly id: string;
@@ -31,6 +32,7 @@ type AgentConfig = {
   readonly agent_type?: string;
   readonly agent_provider?: string;
   config_override: Record<string, unknown>;
+  override_reason?: string | null;
   is_enabled: boolean;
   sync_token?: string | null;
   readonly last_synced_at?: string | null;
@@ -38,9 +40,50 @@ type AgentConfig = {
   readonly updated_at?: string;
 };
 
+type OrgAgentConfig = {
+  readonly id: string;
+  org_id: string;
+  agent_id: string;
+  readonly agent_name?: string;
+  readonly agent_type?: string;
+  readonly agent_provider?: string;
+  config: Record<string, unknown>;
+  is_enabled: boolean;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+};
+
+type TeamAgentConfig = {
+  readonly id: string;
+  team_id: string;
+  agent_id: string;
+  readonly agent_name?: string;
+  readonly agent_type?: string;
+  readonly agent_provider?: string;
+  config_override: Record<string, unknown>;
+  is_enabled: boolean;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+};
+
+type ResolvedAgentConfig = {
+  agent_id: string;
+  agent_name: string;
+  agent_type: string;
+  provider: string;
+  config: Record<string, unknown>;
+  system_prompt?: string;
+  is_enabled: boolean;
+  sync_token?: string | null;
+  last_synced_at?: string | null;
+};
+
 type EmployeeDetailClientProps = {
   employee: Employee;
   agentConfigs: AgentConfig[];
+  orgConfigs: OrgAgentConfig[];
+  teamConfigs: TeamAgentConfig[];
+  resolvedConfigs: ResolvedAgentConfig[];
 };
 
 function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' {
@@ -56,7 +99,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
   }
 }
 
-export function EmployeeDetailClient({ employee, agentConfigs }: EmployeeDetailClientProps) {
+export function EmployeeDetailClient({ employee, agentConfigs, orgConfigs, teamConfigs, resolvedConfigs }: EmployeeDetailClientProps) {
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -177,37 +220,15 @@ export function EmployeeDetailClient({ employee, agentConfigs }: EmployeeDetailC
         </CardContent>
       </Card>
 
-      {/* Agent Configurations Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Agents</CardTitle>
-          <CardDescription>AI agents configured for this employee</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div data-testid="employee-agents" className="space-y-2">
-            {agentConfigs.length > 0 ? (
-              agentConfigs.map((config) => (
-                <div
-                  key={config.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{config.agent_name || 'Unknown Agent'}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Status: {config.is_enabled ? 'Enabled' : 'Disabled'}
-                    </p>
-                  </div>
-                  <Badge variant={config.is_enabled ? 'default' : 'secondary'}>
-                    {config.is_enabled ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No agents configured</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Configuration Hierarchy */}
+      <ConfigurationHierarchy
+        orgConfigs={orgConfigs}
+        teamConfigs={teamConfigs}
+        employeeConfigs={agentConfigs}
+        resolvedConfigs={resolvedConfigs}
+        teamName={employee.team_name}
+        employeeName={employee.full_name.split(' ')[0]}
+      />
 
       {/* MCP Servers Card */}
       <Card>
