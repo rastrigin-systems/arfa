@@ -67,24 +67,22 @@ export function CompactAgentCard({ agent, isEnabled, onToggle, onConfigure, isLo
           checked={isEnabled}
           onCheckedChange={handleToggle}
           disabled={isLoading}
-          className={isEnabled ? 'data-[state=checked]:bg-green-600' : ''}
+          className={isEnabled ? 'data-[state=checked]:bg-green-600' : 'dark:bg-gray-600'}
           aria-label={`Toggle ${agent.name} (currently ${isEnabled ? 'enabled' : 'disabled'})`}
         />
       </div>
 
-      {/* Configure Button - Only shown for enabled agents */}
-      {isEnabled && (
-        <Button
-          onClick={handleConfigure}
-          variant="outline"
-          size="sm"
-          className="w-full text-xs"
-          disabled={isLoading}
-          aria-label={`Configure ${agent.name} settings`}
-        >
-          Configure →
-        </Button>
-      )}
+      {/* Configure Button - Available for all agents */}
+      <Button
+        onClick={handleConfigure}
+        variant="outline"
+        size="sm"
+        className="w-full text-xs"
+        disabled={isLoading}
+        aria-label={`Configure ${agent.name} settings`}
+      >
+        Configure →
+      </Button>
     </article>
   );
 }
