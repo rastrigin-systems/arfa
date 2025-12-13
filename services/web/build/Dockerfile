@@ -2,18 +2,23 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
 # Install dependencies only when needed
-COPY services/web/package*.json ./
-RUN npm ci --only=production && \
-    npm cache clean --force
+COPY services/web/package.json services/web/pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 
 # Builder stage
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
 # Copy dependencies
-COPY services/web/package*.json ./
-RUN npm ci
+COPY services/web/package.json services/web/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY services/web/ .
 
@@ -22,14 +27,14 @@ RUN mkdir -p ../../platform/api-spec
 COPY platform/api-spec/spec.yaml ../../platform/api-spec/spec.yaml
 
 # Generate API types
-RUN npm run generate:api
+RUN pnpm run generate:api
 
 # Build Next.js app with standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 # NEXT_PUBLIC_* vars must be set at build time to be included in client bundle
 ENV NEXT_PUBLIC_API_URL=https://ubik-api-754414213269.us-central1.run.app/api/v1
-RUN npm run build
+RUN pnpm run build
 
 # Production stage - Ultra-minimal with standalone output
 FROM node:20-alpine AS production
