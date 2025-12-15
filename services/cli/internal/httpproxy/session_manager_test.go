@@ -1,6 +1,7 @@
 package httpproxy
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -306,4 +307,114 @@ func TestSession_String(t *testing.T) {
 	assert.Contains(t, str, "session-123")
 	assert.Contains(t, str, "8100")
 	assert.Contains(t, str, "Claude Code")
+}
+
+// === New tests for listener management ===
+
+func TestSessionManager_Constants(t *testing.T) {
+	// Verify constants are set correctly
+	assert.Equal(t, 10, MaxSessions)
+	assert.Equal(t, 5*time.Minute, StaleSessionTimeout)
+	assert.Equal(t, 1*time.Minute, CleanupInterval)
+}
+
+func TestSession_OrgID(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+
+	req := RegisterSessionRequest{
+		SessionID:  "session-1",
+		EmployeeID: "emp-123",
+		OrgID:      "org-456",
+		AgentName:  "Claude Code",
+	}
+
+	session, err := sm.Register(req)
+	require.NoError(t, err)
+	assert.Equal(t, "org-456", session.OrgID)
+}
+
+func TestRegisterSessionRequest_Token(t *testing.T) {
+	// Verify Token field exists in RegisterSessionRequest
+	req := RegisterSessionRequest{
+		SessionID: "session-1",
+		Token:     "test-jwt-token",
+		AgentName: "Claude Code",
+	}
+
+	assert.Equal(t, "test-jwt-token", req.Token)
+}
+
+func TestSessionManager_MaxSessionsEnforced(t *testing.T) {
+	// Create manager with exactly MaxSessions ports
+	sm := NewSessionManager(8100, 8100+MaxSessions-1)
+
+	// Register MaxSessions sessions
+	for i := 0; i < MaxSessions; i++ {
+		req := RegisterSessionRequest{
+			SessionID: fmt.Sprintf("session-%d", i),
+		}
+		_, err := sm.Register(req)
+		require.NoError(t, err)
+	}
+
+	// Next should fail
+	req := RegisterSessionRequest{
+		SessionID: "one-too-many",
+	}
+	_, err := sm.Register(req)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "no available ports")
+}
+
+func TestSessionManager_CleanupStaleWithTimeout(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+
+	// Register a session
+	req := RegisterSessionRequest{
+		SessionID: "stale-session",
+	}
+	session, err := sm.Register(req)
+	require.NoError(t, err)
+
+	// Manually set LastActive to past (beyond StaleSessionTimeout)
+	sm.mu.Lock()
+	session.LastActive = time.Now().Add(-StaleSessionTimeout - time.Minute)
+	sm.mu.Unlock()
+
+	// Cleanup with StaleSessionTimeout should remove it
+	removed := sm.CleanupStale(StaleSessionTimeout)
+	assert.Equal(t, 1, removed)
+	assert.Nil(t, sm.GetByID("stale-session"))
+}
+
+func TestSessionManager_CleanupStaleKeepsActive(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+
+	// Register sessions
+	for i := 0; i < 3; i++ {
+		req := RegisterSessionRequest{
+			SessionID: fmt.Sprintf("session-%d", i),
+		}
+		_, err := sm.Register(req)
+		require.NoError(t, err)
+	}
+
+	// Update one session to be active
+	sm.UpdateLastActive("session-1")
+
+	// Set other sessions to be stale
+	sm.mu.Lock()
+	for _, session := range sm.sessions {
+		if session.ID != "session-1" {
+			session.LastActive = time.Now().Add(-StaleSessionTimeout - time.Minute)
+		}
+	}
+	sm.mu.Unlock()
+
+	// Cleanup should remove only stale sessions
+	removed := sm.CleanupStale(StaleSessionTimeout)
+	assert.Equal(t, 2, removed)
+	assert.NotNil(t, sm.GetByID("session-1"))
+	assert.Nil(t, sm.GetByID("session-0"))
+	assert.Nil(t, sm.GetByID("session-2"))
 }

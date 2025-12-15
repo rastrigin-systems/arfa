@@ -234,6 +234,8 @@ func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
 		"model":         entry.Model,
 		"tokens_input":  entry.TokensInput,
 		"tokens_output": entry.TokensOutput,
+		"session_id":    entry.SessionID, // Pass session_id to LogEvent for proper tracking
+		"agent_id":      entry.AgentID,   // Pass agent_id to LogEvent for proper tracking
 	}
 
 	if entry.ToolName != "" {

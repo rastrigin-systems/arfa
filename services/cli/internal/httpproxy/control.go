@@ -28,6 +28,10 @@ type ControlServer struct {
 
 	// Optional: cert path for response
 	certPath string
+
+	// JWT validation
+	requireToken bool
+	platformURL  string // Platform API URL for token validation
 }
 
 // NewControlServer creates a new control server
@@ -51,6 +55,16 @@ func (cs *ControlServer) SetPolicyEngine(pe interface{ IsPlatformHealthy() bool 
 // SetCertPath sets the CA certificate path for responses
 func (cs *ControlServer) SetCertPath(path string) {
 	cs.certPath = path
+}
+
+// SetRequireToken enables or disables JWT token validation
+func (cs *ControlServer) SetRequireToken(require bool) {
+	cs.requireToken = require
+}
+
+// SetPlatformURL sets the platform API URL for token validation
+func (cs *ControlServer) SetPlatformURL(url string) {
+	cs.platformURL = url
 }
 
 // Start starts the control server
@@ -162,8 +176,39 @@ func (cs *ControlServer) handleRegister(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// JWT validation when required
+	if cs.requireToken {
+		if req.Token == "" {
+			http.Error(w, "token is required", http.StatusUnauthorized)
+			return
+		}
+
+		// Validate token via platform API (preferred) or local decode (fallback)
+		var claims *TokenClaims
+		var err error
+		if cs.platformURL != "" {
+			claims, err = ValidateTokenWithPlatform(req.Token, cs.platformURL)
+		} else {
+			// Fallback to local JWT validation (for dev/testing)
+			claims, err = DecodeToken(req.Token)
+		}
+		if err != nil {
+			http.Error(w, fmt.Sprintf("invalid token: %v", err), http.StatusUnauthorized)
+			return
+		}
+
+		// Override EmployeeID and OrgID from token claims
+		req.EmployeeID = claims.EmployeeID
+		req.OrgID = claims.OrgID
+	}
+
 	session, err := cs.sessionManager.Register(req)
 	if err != nil {
+		// Check if it's a "no available ports" error
+		if strings.Contains(err.Error(), "no available ports") {
+			http.Error(w, err.Error(), http.StatusTooManyRequests)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}

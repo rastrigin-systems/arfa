@@ -319,6 +319,262 @@ type HealthResponse struct {
 	Uptime          string `json:"uptime"`
 }
 
+// === JWT Validation Tests ===
+
+func TestControlServer_Register_RequiresToken(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	cs.SetRequireToken(true) // Enable JWT validation
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Register without token should fail with 401
+	reqBody := RegisterSessionRequest{
+		SessionID: "test-session",
+		AgentName: "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestControlServer_Register_ValidatesToken(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	cs.SetRequireToken(true)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Register with invalid token should fail with 401
+	reqBody := RegisterSessionRequest{
+		SessionID: "test-session",
+		Token:     "invalid.jwt.token",
+		AgentName: "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestControlServer_Register_ExtractsClaimsFromToken(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	cs.SetRequireToken(true)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Generate valid token with employee_id and org_id
+	token := generateTestToken(t, "emp-from-token", "org-from-token", time.Hour)
+
+	// Register with valid token - EmployeeID/OrgID should come from token, not request
+	reqBody := RegisterSessionRequest{
+		SessionID:  "test-session",
+		Token:      token,
+		EmployeeID: "emp-from-request", // Should be overridden
+		OrgID:      "org-from-request", // Should be overridden
+		AgentName:  "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Verify session has EmployeeID/OrgID from token
+	session := sm.GetByID("test-session")
+	require.NotNil(t, session)
+	assert.Equal(t, "emp-from-token", session.EmployeeID)
+	assert.Equal(t, "org-from-token", session.OrgID)
+}
+
+func TestControlServer_Register_ExpiredTokenFails(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	cs.SetRequireToken(true)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Generate expired token
+	token := generateTestToken(t, "emp-123", "org-456", -time.Hour)
+
+	reqBody := RegisterSessionRequest{
+		SessionID: "test-session",
+		Token:     token,
+		AgentName: "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestControlServer_Register_MaxSessionsReturns429(t *testing.T) {
+	// Create manager with only 3 ports
+	sm := NewSessionManager(8100, 8102)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	cs.SetRequireToken(true)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Register 3 sessions (should succeed)
+	for i := 0; i < 3; i++ {
+		token := generateTestToken(t, "emp-"+string(rune('A'+i)), "org-456", time.Hour)
+		reqBody := RegisterSessionRequest{
+			SessionID: "session-" + string(rune('A'+i)),
+			Token:     token,
+			AgentName: "Claude Code",
+		}
+		body, _ := json.Marshal(reqBody)
+
+		resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+		require.NoError(t, err)
+		resp.Body.Close()
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	}
+
+	// 4th session should fail with 429 or 503
+	token := generateTestToken(t, "emp-D", "org-456", time.Hour)
+	reqBody := RegisterSessionRequest{
+		SessionID: "session-D",
+		Token:     token,
+		AgentName: "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Should return 429 Too Many Requests or 503 Service Unavailable
+	assert.True(t, resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable,
+		"expected 429 or 503, got %d", resp.StatusCode)
+}
+
+func TestControlServer_Register_WorksWithoutTokenWhenNotRequired(t *testing.T) {
+	sm := NewSessionManager(8100, 8109)
+	socketPath := createTestSocket(t)
+
+	cs := NewControlServer(socketPath, sm)
+	// NOT calling SetRequireToken(true) - token validation disabled
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := cs.Start(ctx)
+	require.NoError(t, err)
+	defer cs.Stop()
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	// Register without token should succeed when not required
+	reqBody := RegisterSessionRequest{
+		SessionID:  "test-session",
+		EmployeeID: "emp-123",
+		AgentName:  "Claude Code",
+	}
+	body, _ := json.Marshal(reqBody)
+
+	resp, err := client.Post("http://unix/sessions", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
 func TestControlServer_ConcurrentRequests(t *testing.T) {
 	sm := NewSessionManager(8100, 8199) // 100 ports
 	socketPath := createTestSocket(t)

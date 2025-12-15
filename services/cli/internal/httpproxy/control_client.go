@@ -144,6 +144,31 @@ func (c *ControlClient) ListSessions() ([]*Session, error) {
 	return sessions, nil
 }
 
+// GetSession retrieves a specific session by ID
+// Returns nil, nil if session not found (404)
+func (c *ControlClient) GetSession(sessionID string) (*Session, error) {
+	resp, err := c.httpClient.Get("http://unix/sessions/" + sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to control server: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil // Session not found
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("get session failed (status %d)", resp.StatusCode)
+	}
+
+	var session Session
+	if err := json.NewDecoder(resp.Body).Decode(&session); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &session, nil
+}
+
 // Health checks the daemon health status
 func (c *ControlClient) Health() (*ControlHealthResponse, error) {
 	resp, err := c.httpClient.Get("http://unix/health")
