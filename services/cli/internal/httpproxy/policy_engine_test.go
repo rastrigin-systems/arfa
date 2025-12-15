@@ -2,6 +2,7 @@ package httpproxy
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -243,11 +244,11 @@ func TestPolicyEngine_BackgroundSync(t *testing.T) {
 	pe := NewPolicyEngine()
 	pe.SetSyncInterval(50 * time.Millisecond)
 
-	callCount := 0
+	var callCount int32
 	mockClient := &mockPlatformClient{
 		policies: &PolicySet{Version: "v1"},
 		onFetch: func() {
-			callCount++
+			atomic.AddInt32(&callCount, 1)
 		},
 	}
 	pe.SetPlatformClient(mockClient)
@@ -264,7 +265,7 @@ func TestPolicyEngine_BackgroundSync(t *testing.T) {
 	cancel()
 
 	// Should have synced multiple times
-	assert.GreaterOrEqual(t, callCount, 2)
+	assert.GreaterOrEqual(t, atomic.LoadInt32(&callCount), int32(2))
 }
 
 func TestPolicyEngine_LastSyncTime(t *testing.T) {
