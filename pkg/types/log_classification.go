@@ -38,6 +38,7 @@ type ClassifiedLogEntry struct {
 	// Identity
 	ID        string    `json:"id"`
 	SessionID string    `json:"session_id"`
+	AgentID   string    `json:"agent_id,omitempty"`
 	Timestamp time.Time `json:"timestamp"`
 
 	// Classification

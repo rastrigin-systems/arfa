@@ -347,9 +347,12 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 		entries, err := s.anthropicParser.ParseRequest(bodyBytes)
 		if err == nil {
 			for _, entry := range entries {
-				// Set session ID on classified entries
+				// Set session and agent ID on classified entries
 				if sessionID != "" {
 					entry.SessionID = sessionID
+				}
+				if agentID != "" {
+					entry.AgentID = agentID
 				}
 				s.logger.LogClassified(entry)
 			}
@@ -407,9 +410,12 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		entries, err := s.anthropicParser.ParseResponse(decodedBody)
 		if err == nil {
 			for _, entry := range entries {
-				// Set session ID on classified entries
+				// Set session and agent ID on classified entries
 				if sessionID != "" {
 					entry.SessionID = sessionID
+				}
+				if agentID != "" {
+					entry.AgentID = agentID
 				}
 				s.logger.LogClassified(entry)
 			}
