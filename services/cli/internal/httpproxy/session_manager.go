@@ -1,9 +1,20 @@
 package httpproxy
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
+)
+
+// Session management constants
+const (
+	// MaxSessions is the maximum number of concurrent proxy sessions
+	MaxSessions = 10
+	// StaleSessionTimeout is the duration after which inactive sessions are cleaned up
+	StaleSessionTimeout = 5 * time.Minute
+	// CleanupInterval is how often the cleanup worker runs
+	CleanupInterval = 1 * time.Minute
 )
 
 // Session represents an active proxy session with its allocated port
@@ -11,6 +22,7 @@ type Session struct {
 	ID         string    `json:"id"`
 	Port       int       `json:"port"`
 	EmployeeID string    `json:"employee_id"`
+	OrgID      string    `json:"org_id"`
 	AgentID    string    `json:"agent_id"`
 	AgentName  string    `json:"agent_name"`
 	Workspace  string    `json:"workspace"`
@@ -33,9 +45,11 @@ func (s *Session) String() string {
 type RegisterSessionRequest struct {
 	SessionID  string `json:"session_id"`
 	EmployeeID string `json:"employee_id"`
+	OrgID      string `json:"org_id"`
 	AgentID    string `json:"agent_id"`
 	AgentName  string `json:"agent_name"`
 	Workspace  string `json:"workspace"`
+	Token      string `json:"token,omitempty"`
 }
 
 // SessionManager manages dynamic port allocation for proxy sessions
@@ -80,6 +94,7 @@ func (sm *SessionManager) Register(req RegisterSessionRequest) (*Session, error)
 		ID:         req.SessionID,
 		Port:       port,
 		EmployeeID: req.EmployeeID,
+		OrgID:      req.OrgID,
 		AgentID:    req.AgentID,
 		AgentName:  req.AgentName,
 		Workspace:  req.Workspace,
@@ -187,6 +202,27 @@ func (sm *SessionManager) CleanupStale(timeout time.Duration) int {
 // PortRange returns the configured port range
 func (sm *SessionManager) PortRange() (min, max int) {
 	return sm.minPort, sm.maxPort
+}
+
+// StartCleanupWorker starts a background goroutine that periodically cleans up stale sessions
+func (sm *SessionManager) StartCleanupWorker(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(CleanupInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				removed := sm.CleanupStale(StaleSessionTimeout)
+				if removed > 0 {
+					// Note: In production, this would use proper logging
+					fmt.Printf("Cleaned up %d stale sessions\n", removed)
+				}
+			}
+		}
+	}()
 }
 
 // ActiveCount returns the number of active sessions

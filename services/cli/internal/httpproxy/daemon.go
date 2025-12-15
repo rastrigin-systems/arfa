@@ -278,11 +278,15 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	d.controlServer = NewControlServer(d.sockFile, d.sessionManager)
 	d.controlServer.SetCertPath(server.GetCAPath())
 	d.controlServer.SetPolicyEngine(policyEngine)
+	d.controlServer.SetRequireToken(true) // Enable JWT validation
 
 	if err := d.controlServer.Start(ctx); err != nil {
 		server.Stop(ctx)
 		return fmt.Errorf("failed to start control server: %w", err)
 	}
+
+	// Start cleanup worker for stale sessions
+	d.sessionManager.StartCleanupWorker(ctx)
 
 	// Save state
 	state := &DaemonState{
@@ -304,7 +308,8 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", port, os.Getpid())
 	fmt.Printf("Control socket: %s\n", d.sockFile)
 	fmt.Printf("Session ports: %d-%d\n", DefaultMinPort, DefaultMaxPort)
-	fmt.Printf("Security: PII detection enabled, fail-closed disabled (no platform sync yet)\n")
+	fmt.Printf("Security: JWT validation enabled, PII detection enabled\n")
+	fmt.Printf("Stale session timeout: %v\n", StaleSessionTimeout)
 
 	// Wait for context cancellation (caller handles signals)
 	<-ctx.Done()

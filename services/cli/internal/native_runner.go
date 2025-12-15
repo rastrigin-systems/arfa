@@ -42,6 +42,8 @@ type NativeRunnerConfig struct {
 	ProxyPort   int
 	CertPath    string
 	SessionID   string
+	Token       string            // JWT token for proxy authentication
+	EmployeeID  string            // Employee ID (for backward compatibility, prefer Token)
 	Environment map[string]string // Additional env vars from agent config
 }
 
@@ -419,10 +421,12 @@ func (r *NativeRunner) RegisterWithSecurityGateway(config NativeRunnerConfig) (*
 	}
 	r.controlClient = client
 
-	// Register session
+	// Register session with JWT token for authentication
+	// The daemon will validate the token and extract employee_id/org_id from claims
 	resp, err := client.RegisterSession(httpproxy.RegisterSessionRequest{
 		SessionID:  config.SessionID,
-		EmployeeID: "", // Will be set by daemon from auth token
+		Token:      config.Token, // JWT token - daemon validates and extracts claims
+		EmployeeID: config.EmployeeID,
 		AgentID:    config.AgentID,
 		AgentName:  config.AgentName,
 		Workspace:  config.Workspace,
