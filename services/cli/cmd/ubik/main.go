@@ -392,7 +392,7 @@ To start an interactive agent session, simply run 'ubik' without arguments.`,
 		},
 	}
 
-	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
+	cmd.Flags().IntVar(&port, "port", httpproxy.DefaultProxyPort, "Port for the proxy to listen on")
 
 	return cmd
 }
@@ -909,7 +909,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		return fmt.Errorf("failed to create proxy daemon: %w", err)
 	}
 
-	proxyState, err := proxyDaemon.EnsureRunning(8082)
+	proxyState, err := proxyDaemon.EnsureRunning(httpproxy.DefaultProxyPort)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to start proxy daemon: %v\n", err)
 		// Continue without proxy - logging will still work for CLI I/O
@@ -1197,7 +1197,7 @@ func newProxyStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
+	cmd.Flags().IntVar(&port, "port", httpproxy.DefaultProxyPort, "Port for the proxy to listen on")
 
 	return cmd
 }
@@ -1342,7 +1342,7 @@ func newProxyRunCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
+	cmd.Flags().IntVar(&port, "port", httpproxy.DefaultProxyPort, "Port for the proxy to listen on")
 
 	return cmd
 }

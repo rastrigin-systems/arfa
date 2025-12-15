@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 )
 
 // SyncService handles config synchronization
@@ -17,7 +15,6 @@ type SyncService struct {
 	authService      *AuthService
 	dockerClient     *DockerClient
 	containerManager *ContainerManager
-	proxyServer      *httpproxy.ProxyServer
 }
 
 // NewSyncService creates a new SyncService
@@ -35,11 +32,6 @@ func (ss *SyncService) SetDockerClient(dockerClient *DockerClient) {
 	if dockerClient != nil {
 		ss.containerManager = NewContainerManager(dockerClient)
 	}
-}
-
-// SetProxy sets the proxy server instance
-func (ss *SyncService) SetProxy(proxy *httpproxy.ProxyServer) {
-	ss.proxyServer = proxy
 }
 
 // SyncResult represents the result of a sync operation
@@ -480,15 +472,6 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			MCPServers:    convertMCPServers(config.MCPServers),
 			ClaudeToken:   agentAPIKey, // Use centralized token
 			APIKey:        apiKey,      // Fallback for backward compatibility
-		}
-
-		// Inject proxy config if available
-		if ss.proxyServer != nil {
-			agentSpec.ProxyConfig = &ProxyConfig{
-				Host:     "host.docker.internal", // Access host from container
-				Port:     8082,                   // Default proxy port
-				CertPath: ss.proxyServer.GetCAPath(),
-			}
 		}
 
 		_, err := ss.containerManager.StartAgent(agentSpec, workspacePath)

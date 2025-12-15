@@ -25,6 +25,9 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
 )
 
+// sensitiveHeaderRegex matches headers that should be redacted in logs
+var sensitiveHeaderRegex = regexp.MustCompile(`(?i)(auth|api-key|token|cookie)`)
+
 // ProxyServer manages the embedded MITM proxy
 type ProxyServer struct {
 	proxy           *goproxy.ProxyHttpServer
@@ -448,7 +451,5 @@ func redactHeaders(headers http.Header) map[string]string {
 }
 
 func isSensitive(header string) bool {
-	// Simple check - enhance list as needed
-	h := regexp.MustCompile(`(?i)(auth|api-key|token|cookie)`)
-	return h.MatchString(header)
+	return sensitiveHeaderRegex.MatchString(header)
 }
