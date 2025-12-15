@@ -19,16 +19,16 @@ import (
 
 // NativeRunner manages native process execution for agents
 type NativeRunner struct {
-	cmd            *exec.Cmd
-	pty            *os.File
-	workspace      string
-	proxyPort      int
-	certPath       string
-	sessionID      string
-	agentID        string
-	stopped        bool
-	mu             sync.Mutex
-	controlClient  *httpproxy.ControlClient
+	cmd               *exec.Cmd
+	pty               *os.File
+	workspace         string
+	proxyPort         int
+	certPath          string
+	sessionID         string
+	agentID           string
+	stopped           bool
+	mu                sync.Mutex
+	controlClient     *httpproxy.ControlClient
 	sessionRegistered bool
 }
 

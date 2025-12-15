@@ -84,10 +84,10 @@ func NewPolicyEngine() *PolicyEngine {
 func (pe *PolicyEngine) loadDefaultPIIPatterns() {
 	defaultPatterns := []string{
 		// Credit card numbers (Visa, MasterCard, Amex, etc.)
-		`\b4[0-9]{12}(?:[0-9]{3})?\b`,           // Visa
-		`\b5[1-5][0-9]{14}\b`,                   // MasterCard
-		`\b3[47][0-9]{13}\b`,                    // American Express
-		`\b6(?:011|5[0-9]{2})[0-9]{12}\b`,       // Discover
+		`\b4[0-9]{12}(?:[0-9]{3})?\b`,     // Visa
+		`\b5[1-5][0-9]{14}\b`,             // MasterCard
+		`\b3[47][0-9]{13}\b`,              // American Express
+		`\b6(?:011|5[0-9]{2})[0-9]{12}\b`, // Discover
 
 		// SSN
 		`\b\d{3}-\d{2}-\d{4}\b`,
