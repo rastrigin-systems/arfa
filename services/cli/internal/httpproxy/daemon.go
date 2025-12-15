@@ -15,6 +15,9 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 )
 
+// DefaultProxyPort is the default port for the proxy daemon
+const DefaultProxyPort = 8082
+
 // DaemonState represents the state of the proxy daemon
 type DaemonState struct {
 	PID       int       `json:"pid"`
@@ -23,20 +26,11 @@ type DaemonState struct {
 	CertPath  string    `json:"cert_path"`
 }
 
-// SessionInfo represents an active session using the proxy
-type SessionInfo struct {
-	SessionID string    `json:"session_id"`
-	AgentID   string    `json:"agent_id"`
-	AgentName string    `json:"agent_name"`
-	StartTime time.Time `json:"start_time"`
-}
-
 // ProxyDaemon manages the singleton proxy daemon lifecycle
 type ProxyDaemon struct {
 	stateFile string
 	sockFile  string
 	mu        sync.Mutex
-	sessions  map[string]*SessionInfo
 }
 
 // NewProxyDaemon creates a new proxy daemon manager
@@ -54,7 +48,6 @@ func NewProxyDaemon() (*ProxyDaemon, error) {
 	return &ProxyDaemon{
 		stateFile: filepath.Join(ubikDir, "proxy.json"),
 		sockFile:  filepath.Join(ubikDir, "proxy.sock"),
-		sessions:  make(map[string]*SessionInfo),
 	}, nil
 }
 
@@ -236,40 +229,6 @@ func (d *ProxyDaemon) EnsureRunning(port int) (*DaemonState, error) {
 	return d.GetState()
 }
 
-// RegisterSession registers a new session with the proxy
-func (d *ProxyDaemon) RegisterSession(sessionID, agentID, agentName string) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.sessions[sessionID] = &SessionInfo{
-		SessionID: sessionID,
-		AgentID:   agentID,
-		AgentName: agentName,
-		StartTime: time.Now(),
-	}
-
-	return nil
-}
-
-// UnregisterSession removes a session from the proxy
-func (d *ProxyDaemon) UnregisterSession(sessionID string) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	delete(d.sessions, sessionID)
-}
-
-// GetSessions returns all active sessions
-func (d *ProxyDaemon) GetSessions() []*SessionInfo {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	sessions := make([]*SessionInfo, 0, len(d.sessions))
-	for _, s := range d.sessions {
-		sessions = append(sessions, s)
-	}
-	return sessions
-}
-
 // RunDaemon is called when starting the proxy in daemon mode
 // This should be called from `ubik proxy run`
 func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Logger) error {
@@ -278,6 +237,13 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 
 	if err := server.Start(port); err != nil {
 		return fmt.Errorf("failed to start proxy server: %w", err)
+	}
+
+	// Start control server for IPC (session registration from CLI)
+	controlServer := NewControlServer(d.sockFile, server)
+	if err := controlServer.Start(); err != nil {
+		server.Stop(ctx)
+		return fmt.Errorf("failed to start control server: %w", err)
 	}
 
 	// Save state
@@ -289,6 +255,7 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	}
 
 	if err := d.saveState(state); err != nil {
+		controlServer.Stop()
 		server.Stop(ctx)
 		return fmt.Errorf("failed to save daemon state: %w", err)
 	}
@@ -299,6 +266,7 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	<-ctx.Done()
 
 	// Cleanup
+	controlServer.Stop()
 	server.Stop(ctx)
 	d.cleanupStateFile()
 

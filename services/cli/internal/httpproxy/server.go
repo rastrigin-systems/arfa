@@ -18,12 +18,16 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elazarl/goproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
 )
+
+// sensitiveHeaderRegex matches headers that should be redacted in logs
+var sensitiveHeaderRegex = regexp.MustCompile(`(?i)(auth|api-key|token|cookie)`)
 
 // ProxyServer manages the embedded MITM proxy
 type ProxyServer struct {
@@ -34,6 +38,11 @@ type ProxyServer struct {
 	server          *http.Server
 	anthropicParser *logparser.AnthropicParser
 	port            int
+
+	// Active session tracking (set via control socket)
+	activeSessionID string
+	activeAgentID   string
+	sessionMu       sync.RWMutex
 }
 
 // NewProxyServer creates a new proxy server instance
@@ -90,6 +99,21 @@ func (s *ProxyServer) Stop(ctx context.Context) error {
 // GetCAPath returns the path to the CA certificate
 func (s *ProxyServer) GetCAPath() string {
 	return s.certPath
+}
+
+// SetSession sets the active session for logging API requests
+func (s *ProxyServer) SetSession(sessionID, agentID string) {
+	s.sessionMu.Lock()
+	defer s.sessionMu.Unlock()
+	s.activeSessionID = sessionID
+	s.activeAgentID = agentID
+}
+
+// getActiveSession returns the currently active session info
+func (s *ProxyServer) getActiveSession() (sessionID, agentID string) {
+	s.sessionMu.RLock()
+	defer s.sessionMu.RUnlock()
+	return s.activeSessionID, s.activeAgentID
 }
 
 // setupCA ensures the CA certificate exists or generates it
@@ -203,12 +227,7 @@ func (s *ProxyServer) configureRules() {
 			s.logResponse(resp)
 			return resp
 		})
-
-	// Default: Allow everything else without logging
-	s.proxy.OnRequest().DoFunc(
-		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-			return r, nil
-		})
+	// goproxy passes through all other requests by default
 }
 
 // logRequest captures and logs the request
@@ -221,9 +240,8 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 
-	// Extract session info from custom headers (set by native runner via env vars)
-	sessionID := r.Header.Get("X-Ubik-Session")
-	agentID := r.Header.Get("X-Ubik-Agent")
+	// Get session from control socket registration
+	sessionID, agentID := s.getActiveSession()
 
 	// Parse and classify based on provider
 	if strings.Contains(r.URL.Host, "anthropic.com") && len(bodyBytes) > 0 {
@@ -275,12 +293,8 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		decodedBody = bodyBytes
 	}
 
-	// Extract session info from request headers
-	var sessionID, agentID string
-	if resp.Request != nil {
-		sessionID = resp.Request.Header.Get("X-Ubik-Session")
-		agentID = resp.Request.Header.Get("X-Ubik-Agent")
-	}
+	// Get session from control socket registration
+	sessionID, agentID := s.getActiveSession()
 
 	// Parse and classify based on provider
 	if resp.Request != nil && strings.Contains(resp.Request.URL.Host, "anthropic.com") && len(decodedBody) > 0 {
@@ -327,7 +341,5 @@ func redactHeaders(headers http.Header) map[string]string {
 }
 
 func isSensitive(header string) bool {
-	// Simple check - enhance list as needed
-	h := regexp.MustCompile(`(?i)(auth|api-key|token|cookie)`)
-	return h.MatchString(header)
+	return sensitiveHeaderRegex.MatchString(header)
 }
