@@ -1174,6 +1174,8 @@ func newProxyCommand() *cobra.Command {
 	cmd.AddCommand(newProxyStopCommand())
 	cmd.AddCommand(newProxyStatusCommand())
 	cmd.AddCommand(newProxyRunCommand())
+	cmd.AddCommand(newProxySessionsCommand())
+	cmd.AddCommand(newProxyHealthCommand())
 
 	return cmd
 }
@@ -1277,7 +1279,28 @@ func newProxyRunCommand() *cobra.Command {
 				return fmt.Errorf("failed to create config manager: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
+			// Load config to get platform URL and auth token
+			config, err := configManager.Load()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to load config: %v\n", err)
+			}
+
+			// Use platform URL from config, fall back to default
+			platformURL := "https://api.ubik.io"
+			if config != nil && config.PlatformURL != "" {
+				platformURL = config.PlatformURL
+			}
+
+			platformClient := cli.NewPlatformClient(platformURL)
+
+			// Set auth token if available
+			if config != nil && config.Token != "" {
+				platformClient.SetToken(config.Token)
+				fmt.Printf("Proxy logging authenticated to: %s\n", platformURL)
+			} else {
+				fmt.Fprintf(os.Stderr, "Warning: no auth token - logs will not be sent to platform\n")
+			}
+
 			apiClient := cli.NewPlatformAPIClient(platformClient)
 			logger, err := logging.NewLogger(loggerConfig, apiClient)
 			if err != nil {
@@ -1285,15 +1308,7 @@ func newProxyRunCommand() *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
 			}
 
-			_ = configManager // Silence unused warning for now
-
-			// Create and start proxy
-			proxy := httpproxy.NewProxyServer(logger)
-			if err := proxy.Start(port); err != nil {
-				return fmt.Errorf("failed to start proxy: %w", err)
-			}
-
-			// Save daemon state
+			// Create daemon manager
 			daemon, err := httpproxy.NewProxyDaemon()
 			if err != nil {
 				return fmt.Errorf("failed to create daemon manager: %w", err)
@@ -1313,12 +1328,12 @@ func newProxyRunCommand() *cobra.Command {
 				cancel()
 			}()
 
-			// Run the daemon (blocks until context cancelled)
-			_ = daemon // State is managed in Start
-			<-ctx.Done()
+			// Run the daemon (this saves state and blocks)
+			if err := daemon.RunDaemon(ctx, port, logger); err != nil {
+				return fmt.Errorf("daemon error: %w", err)
+			}
 
 			// Cleanup
-			proxy.Stop(context.Background())
 			if logger != nil {
 				logger.Close()
 			}
@@ -1330,4 +1345,106 @@ func newProxyRunCommand() *cobra.Command {
 	cmd.Flags().IntVar(&port, "port", 8082, "Port for the proxy to listen on")
 
 	return cmd
+}
+
+func newProxySessionsCommand() *cobra.Command {
+	var jsonOutput bool
+
+	cmd := &cobra.Command{
+		Use:   "sessions",
+		Short: "List active proxy sessions",
+		Long:  "Display all active sessions connected through the security gateway.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := httpproxy.NewDefaultControlClient()
+			if err != nil {
+				return fmt.Errorf("failed to create control client: %w", err)
+			}
+
+			sessions, err := client.ListSessions()
+			if err != nil {
+				return fmt.Errorf("failed to list sessions (is proxy running?): %w", err)
+			}
+
+			if jsonOutput {
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "  ")
+				return enc.Encode(sessions)
+			}
+
+			if len(sessions) == 0 {
+				fmt.Println("No active sessions")
+				return nil
+			}
+
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "SESSION ID\tPORT\tAGENT\tWORKSPACE\tUPTIME")
+			for _, s := range sessions {
+				uptime := time.Since(s.StartTime).Round(time.Second)
+				fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\n",
+					truncateStr(s.ID, 12),
+					s.Port,
+					s.AgentName,
+					truncateStr(s.Workspace, 30),
+					uptime,
+				)
+			}
+			w.Flush()
+
+			return nil
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output in JSON format")
+
+	return cmd
+}
+
+func newProxyHealthCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "health",
+		Short: "Check security gateway health",
+		Long:  "Check the health status of the security gateway including platform connectivity.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := httpproxy.NewDefaultControlClient()
+			if err != nil {
+				return fmt.Errorf("failed to create control client: %w", err)
+			}
+
+			health, err := client.Health()
+			if err != nil {
+				fmt.Println("Status: UNHEALTHY")
+				fmt.Printf("Error:  %v\n", err)
+				fmt.Println("\nThe security gateway is not responding.")
+				fmt.Println("Run 'ubik proxy start' to start the gateway.")
+				return nil
+			}
+
+			if health.Status == "ok" {
+				fmt.Println("Status: HEALTHY")
+			} else {
+				fmt.Printf("Status: %s\n", health.Status)
+			}
+			fmt.Printf("Active Sessions: %d\n", health.ActiveSessions)
+			fmt.Printf("Platform Connected: %v\n", health.PlatformHealthy)
+			fmt.Printf("Uptime: %s\n", health.Uptime)
+
+			if !health.PlatformHealthy {
+				fmt.Println("\nWarning: Platform is not connected.")
+				fmt.Println("Security policies cannot be synced. Fail-closed behavior may block requests.")
+			}
+
+			return nil
+		},
+	}
+}
+
+// truncateStr truncates a string to maxLen characters with "..." suffix
+func truncateStr(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
 }
