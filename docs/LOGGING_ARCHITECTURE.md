@@ -6,269 +6,374 @@ The Ubik CLI implements a multi-layer logging system that captures agent activit
 
 **Current Issue:** Logs appear with `session_id: "00000000-0000-0000-0000-000000000000"` instead of the actual session UUID.
 
+**Status:** NOT FIXED - Multiple attempts have failed.
+
 ---
 
 ## Architecture Diagram
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│                   INTERACTIVE SESSION PROCESS                       │
-│                                                                      │
-│  main.go:runInteractiveMode()                                       │
-│  └─ Logger created: sessionID = uuid.New() ← REAL UUID             │
-│     └─ SetAgentID(selectedAgent.AgentID)                           │
-│     └─ StartSession() → logs "session_start"                       │
-│                                                                      │
-│  NativeRunner.Start()                                               │
-│  └─ Env: UBIK_SESSION_ID="550e8400-e29b-..." ← PASSED TO AGENT    │
-│  └─ Env: UBIK_AGENT_ID="agent-uuid"                                │
-│  └─ Exec: claude (agent binary)                                    │
-│                                                                      │
-│  Agent Process (claude-code)                                        │
-│  └─ Makes HTTP requests to api.anthropic.com                       │
-│  └─ Uses HTTP_PROXY=localhost:8082                                 │
-│  └─ ⚠️ Does NOT add X-Ubik-Session header                         │
-│                                                                      │
-└────────────────────────────────────────────────────────────────────┘
-                              │
-                              │ HTTP via proxy
-                              ▼
-┌────────────────────────────────────────────────────────────────────┐
-│              BACKGROUND PROXY DAEMON PROCESS                        │
-│              (Persistent, runs across sessions)                     │
-│                                                                      │
-│  daemon.go:RunDaemon()                                              │
-│  └─ Creates SessionManager                                         │
-│  └─ Creates ProxyServer with logger                                │
-│     └─ ⚠️ This logger has sessionID = ZERO UUID                   │
-│     └─ Because StartSession() was never called on daemon logger   │
-│                                                                      │
-│  ProxyServer.logRequest()                                          │
-│  └─ Tries: r.Header.Get("X-Ubik-Session") → "" (not set)          │
-│  └─ Tries: getSessionInfo() → looks up SessionManager              │
-│  └─ ⚠️ SessionManager may be empty (no session registered)        │
-│  └─ Falls back to: logger.sessionID → ZERO UUID                   │
-│                                                                      │
-│  Logger.LogEvent()                                                  │
-│  └─ SessionID: l.sessionID.String() → "00000000-0000-..."          │
-│                                                                      │
-└────────────────────────────────────────────────────────────────────┘
-                              │
-                              │ POST /api/v1/logs
-                              ▼
-┌────────────────────────────────────────────────────────────────────┐
-│                     PLATFORM API + DATABASE                         │
-│                                                                      │
-│  activity_logs table:                                               │
-│  └─ session_id: "00000000-0000-0000-0000-000000000000" ⚠️          │
-│                                                                      │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        INTERACTIVE SESSION PROCESS                           │
+│                        (ubik command - foreground)                           │
+│                                                                              │
+│  main.go:runInteractiveMode()                                                │
+│  ├─ configManager.Load() → gets platform URL, auth token                    │
+│  ├─ logging.NewLogger() → creates Logger A                                  │
+│  │   └─ logger.sessionID = uuid.Nil (zero UUID initially)                   │
+│  ├─ logger.SetAgentID(selectedAgent.AgentID)                                │
+│  ├─ logger.StartSession() → generates REAL UUID "550e8400-..."              │
+│  │   └─ logger.sessionID = uuid.New() ← NOW HAS REAL UUID                   │
+│  │   └─ logs "session_start" event with real UUID ✓                         │
+│  │                                                                           │
+│  ├─ proxyDaemon.EnsureRunning(8082) → starts daemon if not running          │
+│  │                                                                           │
+│  ├─ NativeRunnerConfig{SessionID: sessionID} ← REAL UUID passed here        │
+│  │                                                                           │
+│  └─ runner.Run(ctx, config, stdin, stdout, stderr)                          │
+│      │                                                                       │
+│      ├─ RegisterWithSecurityGateway(config)                                 │
+│      │   ├─ NewDefaultControlClient() → connects to ~/.ubik/proxy.sock      │
+│      │   └─ client.RegisterSession(req) → POST /sessions to daemon          │
+│      │       └─ req.SessionID = config.SessionID ← REAL UUID                │
+│      │                                                                       │
+│      └─ Start(ctx, config)                                                  │
+│          └─ exec.Command(binaryPath) with env vars:                         │
+│              ├─ UBIK_SESSION_ID="550e8400-..." ← REAL UUID                  │
+│              ├─ UBIK_AGENT_ID="agent-uuid"                                  │
+│              ├─ HTTP_PROXY=http://localhost:8082                            │
+│              └─ NODE_EXTRA_CA_CERTS=~/.ubik/certs/ubik-ca.pem               │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Agent process runs
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        AGENT PROCESS (claude-code)                           │
+│                        (child process of ubik)                               │
+│                                                                              │
+│  Has environment variables:                                                  │
+│  ├─ UBIK_SESSION_ID="550e8400-..." ← available but NOT USED by agent        │
+│  └─ HTTP_PROXY=http://localhost:8082                                        │
+│                                                                              │
+│  Makes HTTP requests to api.anthropic.com                                    │
+│  └─ Request goes through HTTP_PROXY                                          │
+│  └─ ⚠️ Agent does NOT add X-Ubik-Session header (agent is unmodified)       │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ HTTP via proxy (port 8082)
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PROXY DAEMON PROCESS                                  │
+│                        (separate background process)                         │
+│                                                                              │
+│  Started by: ubik proxy start OR auto-started by EnsureRunning()            │
+│  Binary: same ubik-cli binary with "proxy run" subcommand                    │
+│                                                                              │
+│  cmd/ubik/main.go:newProxyRunCommand()                                       │
+│  ├─ configManager.Load() → gets platform URL, auth token                    │
+│  ├─ logging.NewLogger() → creates Logger B                                  │
+│  │   └─ logger.sessionID = uuid.Nil (ZERO UUID - never changes!)            │
+│  │   └─ ⚠️ StartSession() is NEVER called on daemon logger                  │
+│  │                                                                           │
+│  └─ daemon.RunDaemon(ctx, port, logger)                                     │
+│      ├─ sessionManager = NewSessionManager(8100, 8109)                      │
+│      ├─ policyEngine = NewPolicyEngine()                                    │
+│      ├─ server = NewProxyServer(logger) ← Logger B with ZERO UUID           │
+│      ├─ server.SetSessionManager(sessionManager) ← SessionManager IS set    │
+│      ├─ server.Start(port)                                                  │
+│      └─ controlServer = NewControlServer(sockFile, sessionManager)          │
+│          └─ controlServer.Start(ctx)                                        │
+│                                                                              │
+│  ═══════════════════════════════════════════════════════════════════════════│
+│                                                                              │
+│  Control API (Unix socket: ~/.ubik/proxy.sock)                               │
+│  └─ POST /sessions → handleRegister()                                        │
+│      └─ sessionManager.Register(req)                                         │
+│          └─ sessions[req.SessionID] = Session{ID: req.SessionID, ...}       │
+│          └─ ✓ Session IS stored with REAL UUID                              │
+│                                                                              │
+│  ═══════════════════════════════════════════════════════════════════════════│
+│                                                                              │
+│  Proxy Intercept (goproxy MITM on port 8082)                                 │
+│  └─ OnRequest(hostRegex).DoFunc()                                            │
+│      └─ logRequest(r)                                                        │
+│          │                                                                   │
+│          ├─ getSessionInfo(r) ← CRITICAL FUNCTION                           │
+│          │   ├─ r.Header.Get("X-Ubik-Session") → "" (not set by agent)      │
+│          │   ├─ r.Header.Get("X-Ubik-Agent") → "" (not set by agent)        │
+│          │   │                                                               │
+│          │   └─ if sessionID == "" && s.sessionManager != nil:              │
+│          │       sessions := s.sessionManager.ListSessions()                 │
+│          │       ├─ ⚠️ QUESTION: Does this return the registered session?  │
+│          │       ├─ If len(sessions) == 1: use that session                 │
+│          │       └─ If len(sessions) > 1: use most recent                   │
+│          │                                                                   │
+│          │   return sessionID, agentID                                       │
+│          │                                                                   │
+│          ├─ payload["session_id"] = sessionID ← Added to payload            │
+│          ├─ payload["agent_id"] = agentID                                   │
+│          │                                                                   │
+│          └─ s.logger.LogEvent("api_request", "proxy", ..., payload)         │
+│                                                                              │
+│  ═══════════════════════════════════════════════════════════════════════════│
+│                                                                              │
+│  Logger B (daemon's logger)                                                  │
+│  └─ LogEvent(eventType, category, content, metadata)                         │
+│      │                                                                       │
+│      │  PR #323 Fix (APPLIED):                                              │
+│      │  ├─ Check metadata["session_id"] → use if provided                   │
+│      │  └─ Check metadata["agent_id"] → use if provided                     │
+│      │                                                                       │
+│      │  BUT: If getSessionInfo() returns "", metadata has no session_id     │
+│      │       and logger falls back to l.sessionID which is ZERO UUID        │
+│      │                                                                       │
+│      └─ entry := LogEntry{SessionID: sessionID, ...}                        │
+│          └─ ⚠️ SessionID = "00000000-0000-0000-0000-000000000000"           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ HTTP POST /api/v1/logs (batched)
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PLATFORM API + DATABASE                               │
+│                                                                              │
+│  activity_logs table:                                                        │
+│  └─ session_id: "00000000-0000-0000-0000-000000000000" ← WRONG              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## The Zero UUID Problem
+## The Problem Chain
 
-### Root Cause
-
-There are **TWO separate logger instances**:
-
-1. **Interactive Session Logger** (main.go)
-   - Created when user runs `ubik`
-   - Calls `StartSession()` → generates real UUID
-   - Logs session_start and session_end events ✓
-
-2. **Proxy Daemon Logger** (daemon.go → newProxyRunCommand)
-   - Created when proxy daemon starts (`ubik proxy start`)
-   - Never calls `StartSession()` → sessionID stays as zero UUID
-   - Logs ALL api_request and api_response events ✗
-
-### Why Sessions Are Not Linked
+### Two Separate Processes, Two Separate Loggers
 
 ```
-┌─────────────────────┐          ┌─────────────────────┐
-│ Interactive Process │          │ Proxy Daemon Process │
-│                     │          │                      │
-│ Logger A:           │   ≠      │ Logger B:            │
-│ sessionID = "550e8" │          │ sessionID = "00000"  │
-│                     │          │                      │
-│ NativeRunner passes │──────────│ SessionManager has   │
-│ sessionID via ENV   │    ?     │ session registered   │
-│                     │          │ but logger doesn't   │
-│                     │          │ use it!              │
-└─────────────────────┘          └─────────────────────┘
+┌─────────────────────────┐              ┌─────────────────────────┐
+│   INTERACTIVE PROCESS   │              │   DAEMON PROCESS        │
+│   (ubik command)        │              │   (ubik proxy run)      │
+│                         │              │                         │
+│   Logger A:             │              │   Logger B:             │
+│   sessionID = "550e8"   │   ═══════    │   sessionID = "00000"   │
+│   ✓ StartSession()      │   SEPARATE   │   ✗ No StartSession()   │
+│   ✓ Logs session_start  │   PROCESSES  │   ✗ Logs api_request    │
+│                         │              │     with ZERO UUID      │
+│                         │              │                         │
+│   NativeRunner:         │──────────────│   SessionManager:       │
+│   Registers session     │   IPC via    │   Stores session        │
+│   with daemon           │   Unix sock  │   with REAL UUID        │
+│                         │              │                         │
+│                         │              │   ProxyServer:          │
+│                         │              │   getSessionInfo()      │
+│                         │              │   ⚠️ Should find it!    │
+└─────────────────────────┘              └─────────────────────────┘
 ```
 
 ---
 
-## Data Flow: Where Session ID Gets Lost
+## Fix Attempts
 
-### Step 1: Session Created (WORKS)
-```go
-// main.go:runInteractiveMode()
-logger, _ := logging.NewLogger(loggerConfig, apiClient)
-logger.SetAgentID(selectedAgent.AgentID)
-sessionID := logger.StartSession()  // → "550e8400-e29b-..."
-```
+### Attempt 1: PR #322 - getSessionInfo() Helper
 
-### Step 2: Passed to Agent via ENV (WORKS)
-```go
-// native_runner.go:Start()
-env = append(env, fmt.Sprintf("UBIK_SESSION_ID=%s", config.SessionID))
-env = append(env, fmt.Sprintf("UBIK_AGENT_ID=%s", config.AgentID))
-```
+**Goal:** Look up session from SessionManager instead of relying on headers.
 
-### Step 3: Session Registered with Proxy (SHOULD WORK)
+**Change:** Added `getSessionInfo()` function in `server.go`:
 ```go
-// native_runner.go:registerWithProxy()
-client.RegisterSession(RegisterSessionRequest{
-    SessionID:  r.sessionID,
-    AgentID:    r.agentID,
-    AgentName:  config.AgentName,
-    Workspace:  config.Workspace,
-})
-```
-
-### Step 4: Proxy Receives Request (FAILS HERE)
-```go
-// server.go:getSessionInfo()
 func (s *ProxyServer) getSessionInfo(r *http.Request) (sessionID, agentID string) {
     // Try headers first
-    sessionID = r.Header.Get("X-Ubik-Session")  // → "" (agent doesn't set)
-    agentID = r.Header.Get("X-Ubik-Agent")      // → "" (agent doesn't set)
+    sessionID = r.Header.Get("X-Ubik-Session")
+    agentID = r.Header.Get("X-Ubik-Agent")
 
-    // Try SessionManager
+    // Fall back to SessionManager
     if sessionID == "" && s.sessionManager != nil {
         sessions := s.sessionManager.ListSessions()
-        // ⚠️ IS THIS RETURNING SESSIONS?
-        // ⚠️ OR IS SessionManager EMPTY?
+        if len(sessions) == 1 {
+            sessionID = sessions[0].ID
+            agentID = sessions[0].AgentID
+        }
     }
-
-    return sessionID, agentID  // → "", "" if nothing found
+    return sessionID, agentID
 }
 ```
 
-### Step 5: Logger Uses Zero UUID
+**Result:** FAILED - Still seeing zero UUIDs.
+
+---
+
+### Attempt 2: PR #323 - Use session_id from Metadata
+
+**Goal:** Make `LogEvent()` use session_id from payload metadata.
+
+**Change:** Modified `logging/logger.go`:
 ```go
-// logging/logger.go:LogEvent()
-entry := LogEntry{
-    SessionID: l.sessionID.String(),  // → "00000000-..." (daemon's logger)
+func (l *loggerImpl) LogEvent(..., metadata map[string]interface{}) {
+    sessionID := l.sessionID.String()
+    if metadata != nil {
+        if sid, ok := metadata["session_id"].(string); ok && sid != "" {
+            sessionID = sid  // Use session_id from payload
+        }
+    }
     // ...
 }
 ```
 
----
-
-## Components Involved
-
-| Component | File | Role |
-|-----------|------|------|
-| Interactive Mode | `cmd/ubik/main.go` | Creates session, starts agent |
-| Native Runner | `internal/native_runner.go` | Launches agent, registers session |
-| Control Client | `internal/httpproxy/control_client.go` | IPC to daemon |
-| Control Server | `internal/httpproxy/control.go` | Handles session registration |
-| Session Manager | `internal/httpproxy/session_manager.go` | Stores active sessions |
-| Proxy Server | `internal/httpproxy/server.go` | Intercepts & logs requests |
-| Daemon | `internal/httpproxy/daemon.go` | Manages proxy lifecycle |
-| Logger | `internal/logging/logger.go` | Buffers & sends logs to API |
+**Result:** FAILED - Still seeing zero UUIDs.
 
 ---
 
-## Session Registration Flow
+## Root Cause Analysis
 
-```
-ubik (interactive mode)
-    │
-    ├─1─► NativeRunner.Start()
-    │         │
-    │         ├─2─► registerWithProxy()
-    │         │         │
-    │         │         └─3─► ControlClient.RegisterSession()
-    │         │                   │
-    │         │                   └─4─► HTTP POST unix://~/.ubik/proxy.sock
-    │         │                              │
-    │         │                              ▼
-    │         │                   ControlServer.handleRegister()
-    │         │                              │
-    │         │                              └─5─► SessionManager.Register()
-    │         │                                        │
-    │         │                                        └─► sessions["uuid"] = Session{...}
-    │         │
-    │         └─6─► Start agent process
-    │
-    └─► Agent makes API requests through proxy
-              │
-              ▼
-        ProxyServer.logRequest()
-              │
-              └─► getSessionInfo()
-                      │
-                      └─► s.sessionManager.ListSessions()
-                              │
-                              └─► Should return the registered session!
-```
+The fix chain should work:
+1. Session registered → SessionManager stores it ✓
+2. `getSessionInfo()` looks up SessionManager → should find it ?
+3. `logRequest()` adds to payload → payload["session_id"] = sessionID ?
+4. `LogEvent()` checks metadata → uses session_id if present ✓
+
+**The break is likely in step 2 or 3:**
+- Either `getSessionInfo()` is not finding the session
+- Or the session is not being registered at all
 
 ---
 
-## Debug Checklist
+## Debug Evidence Needed
 
 ### 1. Is Session Being Registered?
+
+**Command:**
 ```bash
-# Check active sessions
 ./bin/ubik-cli proxy sessions
 ```
 
-### 2. Is SessionManager Passed to ProxyServer?
-```go
-// daemon.go:RunDaemon()
-server := NewProxyServer(logger)
-server.SetSessionManager(d.sessionManager)  // ← Is this called?
+**Expected:** Should show active session with real UUID.
+
+**If empty:** Session registration is failing.
+
+---
+
+### 2. Is RegisterWithSecurityGateway() Succeeding?
+
+**Look for in terminal output:**
+```
+Registered with security gateway on port 8100
 ```
 
-### 3. Is getSessionInfo() Finding Sessions?
-Add debug logging to `server.go:getSessionInfo()`:
+**If you see:**
+```
+Note: Security gateway not available (...)
+```
+Then registration FAILED and that's the problem.
+
+---
+
+### 3. Add Debug Logging to getSessionInfo()
+
+In `server.go`, add:
 ```go
-fmt.Printf("DEBUG: sessions = %d\n", len(sessions))
-for _, s := range sessions {
-    fmt.Printf("DEBUG: session %s agent %s\n", s.ID, s.AgentID)
+func (s *ProxyServer) getSessionInfo(r *http.Request) (sessionID, agentID string) {
+    sessionID = r.Header.Get("X-Ubik-Session")
+    agentID = r.Header.Get("X-Ubik-Agent")
+
+    fmt.Printf("DEBUG getSessionInfo: header sessionID=%q agentID=%q\n", sessionID, agentID)
+
+    if sessionID == "" && s.sessionManager != nil {
+        sessions := s.sessionManager.ListSessions()
+        fmt.Printf("DEBUG getSessionInfo: sessionManager has %d sessions\n", len(sessions))
+        for i, s := range sessions {
+            fmt.Printf("DEBUG getSessionInfo: session[%d] ID=%s AgentID=%s\n", i, s.ID, s.AgentID)
+        }
+        // ... rest of logic
+    }
+
+    fmt.Printf("DEBUG getSessionInfo: returning sessionID=%q agentID=%q\n", sessionID, agentID)
+    return sessionID, agentID
 }
 ```
 
-### 4. Is registerWithProxy() Being Called?
-Check `native_runner.go` - is registration happening?
-
 ---
 
-## Potential Fixes
+### 4. Check If Daemon is Using Correct Binary
 
-### Fix 1: Verify Session Registration Chain
-Ensure the full chain works:
-1. NativeRunner calls registerWithProxy()
-2. ControlClient sends request to daemon
-3. ControlServer receives and processes
-4. SessionManager stores session
-5. ProxyServer can access SessionManager
+The daemon is started by `exec.Command(execPath, "proxy", "run", ...)`.
 
-### Fix 2: Pass Logger's Session ID to Daemon
-When starting interactive mode, update daemon's session context:
-```go
-// After registering session
-controlClient.SetActiveSession(sessionID, agentID)
+If you rebuild the CLI but don't restart the daemon, it keeps running the OLD binary!
+
+**Fix:**
+```bash
+./bin/ubik-cli proxy stop
+make build-cli
+./bin/ubik-cli proxy start
 ```
 
-### Fix 3: Use Logger Per-Request Context
-Instead of one daemon logger, pass session context per-request.
+---
 
-### Fix 4: Inject Headers via Proxy
-Proxy could inject `X-Ubik-Session` header based on registered session.
+## Component Files Reference
+
+| Component | File | Key Functions |
+|-----------|------|---------------|
+| Interactive Mode | `cmd/ubik/main.go` | `runInteractiveMode()`, `newProxyRunCommand()` |
+| Native Runner | `internal/native_runner.go` | `Run()`, `RegisterWithSecurityGateway()` |
+| Control Client | `internal/httpproxy/control_client.go` | `RegisterSession()`, `NewDefaultControlClient()` |
+| Control Server | `internal/httpproxy/control.go` | `handleRegister()`, `handleSessions()` |
+| Session Manager | `internal/httpproxy/session_manager.go` | `Register()`, `ListSessions()`, `GetByID()` |
+| Proxy Server | `internal/httpproxy/server.go` | `logRequest()`, `logResponse()`, `getSessionInfo()` |
+| Daemon | `internal/httpproxy/daemon.go` | `RunDaemon()`, `EnsureRunning()` |
+| Logger | `internal/logging/logger.go` | `LogEvent()`, `StartSession()` |
 
 ---
 
-## Key Insight
+## Hypothesis: Session Not Registered
 
-The `getSessionInfo()` fix should work IF:
-1. Session is properly registered with daemon
-2. SessionManager is passed to ProxyServer
-3. ListSessions() returns the active session
+Most likely, the session registration is failing silently:
 
-**Most likely issue:** One of these links in the chain is broken.
+```go
+// native_runner.go:Run()
+sessionResp, err := r.RegisterWithSecurityGateway(config)
+if err != nil {
+    // Security gateway not running - this is optional for now
+    fmt.Fprintf(stderr, "Note: Security gateway not available (%v)\n", err)
+    // ← CONTINUES WITHOUT SESSION REGISTRATION!
+} else {
+    config.ProxyPort = sessionResp.Port
+    fmt.Fprintf(stderr, "Registered with security gateway on port %d\n", sessionResp.Port)
+}
+```
+
+If you don't see "Registered with security gateway", the session is NOT being registered, and `getSessionInfo()` will never find it.
+
+---
+
+## Potential Fixes (Not Yet Implemented)
+
+### Fix A: Make Registration Required (Fail-Closed)
+```go
+if err != nil {
+    return fmt.Errorf("failed to register with security gateway: %w", err)
+}
+```
+
+### Fix B: Set Session ID Directly on Daemon Logger
+```go
+// After registration, tell daemon to use this session ID
+controlClient.SetActiveSessionID(sessionID)
+```
+
+### Fix C: Use Shared State File
+Write session ID to `~/.ubik/current_session.json` and have daemon read it.
+
+### Fix D: Inject Session Header in Proxy
+Have the proxy inject `X-Ubik-Session` header based on registered session, so even if agent doesn't set it, proxy can use it.
+
+---
+
+## Summary
+
+**Problem:** API request logs have zero session_id.
+
+**Root Cause:** The session lookup chain is broken somewhere between:
+1. Session registration (NativeRunner → ControlClient → ControlServer → SessionManager)
+2. Session lookup (ProxyServer → getSessionInfo() → SessionManager)
+
+**Next Step:** Add debug logging to identify exactly where the chain breaks.
