@@ -1279,15 +1279,34 @@ func newProxyRunCommand() *cobra.Command {
 				return fmt.Errorf("failed to create config manager: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
+			// Load config to get platform URL and auth token
+			config, err := configManager.Load()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to load config: %v\n", err)
+			}
+
+			// Use platform URL from config, fall back to default
+			platformURL := "https://api.ubik.io"
+			if config != nil && config.PlatformURL != "" {
+				platformURL = config.PlatformURL
+			}
+
+			platformClient := cli.NewPlatformClient(platformURL)
+
+			// Set auth token if available
+			if config != nil && config.Token != "" {
+				platformClient.SetToken(config.Token)
+				fmt.Printf("Proxy logging authenticated to: %s\n", platformURL)
+			} else {
+				fmt.Fprintf(os.Stderr, "Warning: no auth token - logs will not be sent to platform\n")
+			}
+
 			apiClient := cli.NewPlatformAPIClient(platformClient)
 			logger, err := logging.NewLogger(loggerConfig, apiClient)
 			if err != nil {
 				// Continue without logging - log warning to stderr
 				fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
 			}
-
-			_ = configManager // Silence unused warning for now
 
 			// Create daemon manager
 			daemon, err := httpproxy.NewProxyDaemon()
