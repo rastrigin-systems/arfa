@@ -243,6 +243,9 @@ func (d *ProxyDaemon) GetControlSocketPath() string {
 	return d.sockFile
 }
 
+// DefaultProxyPort is the default port for the proxy daemon
+const DefaultProxyPort = 8082
+
 // DefaultMinPort is the starting port for session proxy listeners
 const DefaultMinPort = 8100
 
