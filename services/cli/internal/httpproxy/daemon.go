@@ -252,9 +252,20 @@ const DefaultMinPort = 8100
 // DefaultMaxPort is the ending port for session proxy listeners
 const DefaultMaxPort = 8109
 
+// RunDaemonConfig holds configuration for RunDaemon
+type RunDaemonConfig struct {
+	Port        int
+	PlatformURL string // Platform API URL for token validation
+}
+
 // RunDaemon is called when starting the proxy in daemon mode
 // This should be called from `ubik proxy run`
 func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Logger) error {
+	return d.RunDaemonWithConfig(ctx, RunDaemonConfig{Port: port}, logger)
+}
+
+// RunDaemonWithConfig is called when starting the proxy in daemon mode with full config
+func (d *ProxyDaemon) RunDaemonWithConfig(ctx context.Context, cfg RunDaemonConfig, logger logging.Logger) error {
 	// Create session manager for multi-session support
 	d.sessionManager = NewSessionManager(DefaultMinPort, DefaultMaxPort)
 
@@ -270,7 +281,7 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	server.SetPolicyEngine(policyEngine)
 	server.SetSessionManager(d.sessionManager)
 
-	if err := server.Start(port); err != nil {
+	if err := server.Start(cfg.Port); err != nil {
 		return fmt.Errorf("failed to start proxy server: %w", err)
 	}
 
@@ -279,6 +290,9 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	d.controlServer.SetCertPath(server.GetCAPath())
 	d.controlServer.SetPolicyEngine(policyEngine)
 	d.controlServer.SetRequireToken(true) // Enable JWT validation
+	if cfg.PlatformURL != "" {
+		d.controlServer.SetPlatformURL(cfg.PlatformURL)
+	}
 
 	if err := d.controlServer.Start(ctx); err != nil {
 		server.Stop(ctx)
@@ -291,7 +305,7 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	// Save state
 	state := &DaemonState{
 		PID:        os.Getpid(),
-		Port:       port,
+		Port:       cfg.Port,
 		StartTime:  time.Now(),
 		CertPath:   server.GetCAPath(),
 		SocketPath: d.sockFile,
@@ -305,7 +319,7 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 		return fmt.Errorf("failed to save daemon state: %w", err)
 	}
 
-	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", port, os.Getpid())
+	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", cfg.Port, os.Getpid())
 	fmt.Printf("Control socket: %s\n", d.sockFile)
 	fmt.Printf("Session ports: %d-%d\n", DefaultMinPort, DefaultMaxPort)
 	fmt.Printf("Security: JWT validation enabled, PII detection enabled\n")

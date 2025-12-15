@@ -1,9 +1,12 @@
 package httpproxy
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -58,4 +61,56 @@ func DecodeToken(tokenString string) (*TokenClaims, error) {
 	}
 
 	return claims, nil
+}
+
+// AuthMeResponse is the response from /api/v1/auth/me
+type AuthMeResponse struct {
+	ID    string `json:"id"`
+	OrgID string `json:"org_id"`
+	Email string `json:"email"`
+	Name  string `json:"full_name"`
+}
+
+// ValidateTokenWithPlatform validates a token by calling the platform API
+// This is the preferred method as it validates against the same secret
+// used by the platform API server.
+func ValidateTokenWithPlatform(token, platformURL string) (*TokenClaims, error) {
+	if token == "" {
+		return nil, ErrInvalidToken
+	}
+	if platformURL == "" {
+		return nil, errors.New("platform URL not configured")
+	}
+
+	// Call /api/v1/auth/me to validate token and get employee info
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", platformURL+"/api/v1/auth/me", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call platform API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, ErrInvalidToken
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("platform API returned status %d", resp.StatusCode)
+	}
+
+	var authResp AuthMeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Return claims extracted from API response
+	return &TokenClaims{
+		EmployeeID: authResp.ID,
+		OrgID:      authResp.OrgID,
+	}, nil
 }

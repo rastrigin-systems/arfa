@@ -1336,8 +1336,12 @@ func newProxyRunCommand() *cobra.Command {
 				cancel()
 			}()
 
-			// Run the daemon (this saves state and blocks)
-			if err := daemon.RunDaemon(ctx, port, logger); err != nil {
+			// Run the daemon with full config (this saves state and blocks)
+			daemonConfig := httpproxy.RunDaemonConfig{
+				Port:        port,
+				PlatformURL: platformURL,
+			}
+			if err := daemon.RunDaemonWithConfig(ctx, daemonConfig, logger); err != nil {
 				return fmt.Errorf("daemon error: %w", err)
 			}
 

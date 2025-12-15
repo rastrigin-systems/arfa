@@ -31,6 +31,7 @@ type ControlServer struct {
 
 	// JWT validation
 	requireToken bool
+	platformURL  string // Platform API URL for token validation
 }
 
 // NewControlServer creates a new control server
@@ -59,6 +60,11 @@ func (cs *ControlServer) SetCertPath(path string) {
 // SetRequireToken enables or disables JWT token validation
 func (cs *ControlServer) SetRequireToken(require bool) {
 	cs.requireToken = require
+}
+
+// SetPlatformURL sets the platform API URL for token validation
+func (cs *ControlServer) SetPlatformURL(url string) {
+	cs.platformURL = url
 }
 
 // Start starts the control server
@@ -177,7 +183,15 @@ func (cs *ControlServer) handleRegister(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		claims, err := DecodeToken(req.Token)
+		// Validate token via platform API (preferred) or local decode (fallback)
+		var claims *TokenClaims
+		var err error
+		if cs.platformURL != "" {
+			claims, err = ValidateTokenWithPlatform(req.Token, cs.platformURL)
+		} else {
+			// Fallback to local JWT validation (for dev/testing)
+			claims, err = DecodeToken(req.Token)
+		}
 		if err != nil {
 			http.Error(w, fmt.Sprintf("invalid token: %v", err), http.StatusUnauthorized)
 			return
