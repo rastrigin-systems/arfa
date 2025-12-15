@@ -171,9 +171,26 @@ func (l *loggerImpl) LogError(content string, metadata map[string]interface{}) {
 
 // LogEvent logs a custom event
 func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[string]interface{}) {
+	// Use session_id from metadata if provided (e.g., from proxy requests)
+	// This allows the daemon logger to log events with the correct session ID
+	sessionID := l.sessionID.String()
+	if metadata != nil {
+		if sid, ok := metadata["session_id"].(string); ok && sid != "" {
+			sessionID = sid
+		}
+	}
+
+	// Use agent_id from metadata if provided
+	agentID := l.agentID
+	if metadata != nil {
+		if aid, ok := metadata["agent_id"].(string); ok && aid != "" {
+			agentID = aid
+		}
+	}
+
 	entry := LogEntry{
-		SessionID:     l.sessionID.String(),
-		AgentID:       l.agentID,
+		SessionID:     sessionID,
+		AgentID:       agentID,
 		EventType:     eventType,
 		EventCategory: category,
 		Content:       content,
