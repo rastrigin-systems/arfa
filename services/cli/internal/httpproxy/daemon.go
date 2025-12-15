@@ -17,26 +17,24 @@ import (
 
 // DaemonState represents the state of the proxy daemon
 type DaemonState struct {
-	PID       int       `json:"pid"`
-	Port      int       `json:"port"`
-	StartTime time.Time `json:"start_time"`
-	CertPath  string    `json:"cert_path"`
-}
-
-// SessionInfo represents an active session using the proxy
-type SessionInfo struct {
-	SessionID string    `json:"session_id"`
-	AgentID   string    `json:"agent_id"`
-	AgentName string    `json:"agent_name"`
-	StartTime time.Time `json:"start_time"`
+	PID        int       `json:"pid"`
+	Port       int       `json:"port"`
+	StartTime  time.Time `json:"start_time"`
+	CertPath   string    `json:"cert_path"`
+	SocketPath string    `json:"socket_path"` // Control API socket
+	PortRange  struct {
+		Min int `json:"min"`
+		Max int `json:"max"`
+	} `json:"port_range"` // Session port range
 }
 
 // ProxyDaemon manages the singleton proxy daemon lifecycle
 type ProxyDaemon struct {
-	stateFile string
-	sockFile  string
-	mu        sync.Mutex
-	sessions  map[string]*SessionInfo
+	stateFile      string
+	sockFile       string
+	mu             sync.Mutex
+	sessionManager *SessionManager
+	controlServer  *ControlServer
 }
 
 // NewProxyDaemon creates a new proxy daemon manager
@@ -54,7 +52,6 @@ func NewProxyDaemon() (*ProxyDaemon, error) {
 	return &ProxyDaemon{
 		stateFile: filepath.Join(ubikDir, "proxy.json"),
 		sockFile:  filepath.Join(ubikDir, "proxy.sock"),
-		sessions:  make(map[string]*SessionInfo),
 	}, nil
 }
 
@@ -236,39 +233,21 @@ func (d *ProxyDaemon) EnsureRunning(port int) (*DaemonState, error) {
 	return d.GetState()
 }
 
-// RegisterSession registers a new session with the proxy
-func (d *ProxyDaemon) RegisterSession(sessionID, agentID, agentName string) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.sessions[sessionID] = &SessionInfo{
-		SessionID: sessionID,
-		AgentID:   agentID,
-		AgentName: agentName,
-		StartTime: time.Now(),
-	}
-
-	return nil
+// GetSessionManager returns the session manager (available after daemon starts)
+func (d *ProxyDaemon) GetSessionManager() *SessionManager {
+	return d.sessionManager
 }
 
-// UnregisterSession removes a session from the proxy
-func (d *ProxyDaemon) UnregisterSession(sessionID string) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	delete(d.sessions, sessionID)
+// GetControlSocketPath returns the control socket path
+func (d *ProxyDaemon) GetControlSocketPath() string {
+	return d.sockFile
 }
 
-// GetSessions returns all active sessions
-func (d *ProxyDaemon) GetSessions() []*SessionInfo {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+// DefaultMinPort is the starting port for session proxy listeners
+const DefaultMinPort = 8100
 
-	sessions := make([]*SessionInfo, 0, len(d.sessions))
-	for _, s := range d.sessions {
-		sessions = append(sessions, s)
-	}
-	return sessions
-}
+// DefaultMaxPort is the ending port for session proxy listeners
+const DefaultMaxPort = 8109
 
 // RunDaemon is called when starting the proxy in daemon mode
 // This should be called from `ubik proxy run`
@@ -280,25 +259,44 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 		return fmt.Errorf("failed to start proxy server: %w", err)
 	}
 
-	// Save state
-	state := &DaemonState{
-		PID:       os.Getpid(),
-		Port:      port,
-		StartTime: time.Now(),
-		CertPath:  server.GetCAPath(),
+	// Create session manager for multi-session support
+	d.sessionManager = NewSessionManager(DefaultMinPort, DefaultMaxPort)
+
+	// Create and start control server (Unix socket API)
+	d.controlServer = NewControlServer(d.sockFile, d.sessionManager)
+	d.controlServer.SetCertPath(server.GetCAPath())
+
+	if err := d.controlServer.Start(ctx); err != nil {
+		server.Stop(ctx)
+		return fmt.Errorf("failed to start control server: %w", err)
 	}
 
+	// Save state
+	state := &DaemonState{
+		PID:        os.Getpid(),
+		Port:       port,
+		StartTime:  time.Now(),
+		CertPath:   server.GetCAPath(),
+		SocketPath: d.sockFile,
+	}
+	state.PortRange.Min = DefaultMinPort
+	state.PortRange.Max = DefaultMaxPort
+
 	if err := d.saveState(state); err != nil {
+		d.controlServer.Stop()
 		server.Stop(ctx)
 		return fmt.Errorf("failed to save daemon state: %w", err)
 	}
 
 	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", port, os.Getpid())
+	fmt.Printf("Control socket: %s\n", d.sockFile)
+	fmt.Printf("Session ports: %d-%d\n", DefaultMinPort, DefaultMaxPort)
 
 	// Wait for context cancellation (caller handles signals)
 	<-ctx.Done()
 
 	// Cleanup
+	d.controlServer.Stop()
 	server.Stop(ctx)
 	d.cleanupStateFile()
 

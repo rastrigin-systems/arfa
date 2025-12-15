@@ -13,20 +13,23 @@ import (
 	"time"
 
 	"github.com/creack/pty"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"golang.org/x/term"
 )
 
 // NativeRunner manages native process execution for agents
 type NativeRunner struct {
-	cmd       *exec.Cmd
-	pty       *os.File
-	workspace string
-	proxyPort int
-	certPath  string
-	sessionID string
-	agentID   string
-	stopped   bool
-	mu        sync.Mutex
+	cmd            *exec.Cmd
+	pty            *os.File
+	workspace      string
+	proxyPort      int
+	certPath       string
+	sessionID      string
+	agentID        string
+	stopped        bool
+	mu             sync.Mutex
+	controlClient  *httpproxy.ControlClient
+	sessionRegistered bool
 }
 
 // NativeRunnerConfig contains configuration for starting an agent
@@ -208,6 +211,24 @@ func (r *NativeRunner) Start(ctx context.Context, config NativeRunnerConfig) err
 
 // Run executes the agent and handles I/O proxying
 func (r *NativeRunner) Run(ctx context.Context, config NativeRunnerConfig, stdin io.Reader, stdout, stderr io.Writer) error {
+	// Try to register with security gateway for session-specific proxy
+	sessionResp, err := r.RegisterWithSecurityGateway(config)
+	if err != nil {
+		// Security gateway not running - this is optional for now
+		// In the future, we may want to make this required (fail-closed)
+		fmt.Fprintf(stderr, "Note: Security gateway not available (%v)\n", err)
+	} else {
+		// Override proxy port with the session-allocated port
+		config.ProxyPort = sessionResp.Port
+		if sessionResp.CertPath != "" {
+			config.CertPath = sessionResp.CertPath
+		}
+		fmt.Fprintf(stderr, "Registered with security gateway on port %d\n", sessionResp.Port)
+	}
+
+	// Ensure we unregister when done
+	defer r.UnregisterFromSecurityGateway()
+
 	// Start the process
 	if err := r.Start(ctx, config); err != nil {
 		return err
@@ -386,6 +407,43 @@ func (r *NativeRunner) PID() int {
 		return 0
 	}
 	return r.cmd.Process.Pid
+}
+
+// RegisterWithSecurityGateway registers the session with the proxy daemon
+// and returns the allocated port for this session's proxy
+func (r *NativeRunner) RegisterWithSecurityGateway(config NativeRunnerConfig) (*httpproxy.ControlSessionResponse, error) {
+	// Get control client
+	client, err := httpproxy.NewDefaultControlClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create control client: %w", err)
+	}
+	r.controlClient = client
+
+	// Register session
+	resp, err := client.RegisterSession(httpproxy.RegisterSessionRequest{
+		SessionID:  config.SessionID,
+		EmployeeID: "", // Will be set by daemon from auth token
+		AgentID:    config.AgentID,
+		AgentName:  config.AgentName,
+		Workspace:  config.Workspace,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to register session: %w", err)
+	}
+
+	r.sessionRegistered = true
+	return resp, nil
+}
+
+// UnregisterFromSecurityGateway unregisters the session from the proxy daemon
+func (r *NativeRunner) UnregisterFromSecurityGateway() error {
+	if !r.sessionRegistered || r.controlClient == nil {
+		return nil
+	}
+
+	err := r.controlClient.UnregisterSession(r.sessionID)
+	r.sessionRegistered = false
+	return err
 }
 
 // ProcessInfo represents information about a running agent process
