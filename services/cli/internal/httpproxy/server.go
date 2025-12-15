@@ -294,6 +294,38 @@ func (s *ProxyServer) logBlockedRequest(r *http.Request, decision *PolicyDecisio
 	s.logger.LogEvent("security_block", "proxy", fmt.Sprintf("BLOCKED: %s", decision.Reason), payload)
 }
 
+// getSessionInfo extracts session info from headers or falls back to session manager
+func (s *ProxyServer) getSessionInfo(r *http.Request) (sessionID, agentID string) {
+	// First, try to get from custom headers (set by native runner via env vars)
+	sessionID = r.Header.Get("X-Ubik-Session")
+	agentID = r.Header.Get("X-Ubik-Agent")
+
+	// If headers not set and we have a session manager, look up the active session
+	if sessionID == "" && s.sessionManager != nil {
+		sessions := s.sessionManager.ListSessions()
+		// If there's exactly one active session, use it
+		// (common case: one agent running at a time)
+		if len(sessions) == 1 {
+			sessionID = sessions[0].ID
+			agentID = sessions[0].AgentID
+		} else if len(sessions) > 1 {
+			// Multiple sessions active - try to find the most recently active one
+			var mostRecent *Session
+			for _, sess := range sessions {
+				if mostRecent == nil || sess.LastActive.After(mostRecent.LastActive) {
+					mostRecent = sess
+				}
+			}
+			if mostRecent != nil {
+				sessionID = mostRecent.ID
+				agentID = mostRecent.AgentID
+			}
+		}
+	}
+
+	return sessionID, agentID
+}
+
 // logRequest captures and logs the request
 func (s *ProxyServer) logRequest(r *http.Request) {
 	if s.logger == nil {
@@ -304,15 +336,18 @@ func (s *ProxyServer) logRequest(r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 
-	// Extract session info from custom headers (set by native runner via env vars)
-	sessionID := r.Header.Get("X-Ubik-Session")
-	agentID := r.Header.Get("X-Ubik-Agent")
+	// Get session info - try headers first, then fall back to session manager
+	sessionID, agentID := s.getSessionInfo(r)
 
 	// Parse and classify based on provider
 	if strings.Contains(r.URL.Host, "anthropic.com") && len(bodyBytes) > 0 {
 		entries, err := s.anthropicParser.ParseRequest(bodyBytes)
 		if err == nil {
 			for _, entry := range entries {
+				// Set session ID on classified entries
+				if sessionID != "" {
+					entry.SessionID = sessionID
+				}
 				s.logger.LogClassified(entry)
 			}
 		}
@@ -358,11 +393,10 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		decodedBody = bodyBytes
 	}
 
-	// Extract session info from request headers
+	// Get session info - try headers first, then fall back to session manager
 	var sessionID, agentID string
 	if resp.Request != nil {
-		sessionID = resp.Request.Header.Get("X-Ubik-Session")
-		agentID = resp.Request.Header.Get("X-Ubik-Agent")
+		sessionID, agentID = s.getSessionInfo(resp.Request)
 	}
 
 	// Parse and classify based on provider
@@ -370,6 +404,10 @@ func (s *ProxyServer) logResponse(resp *http.Response) {
 		entries, err := s.anthropicParser.ParseResponse(decodedBody)
 		if err == nil {
 			for _, entry := range entries {
+				// Set session ID on classified entries
+				if sessionID != "" {
+					entry.SessionID = sessionID
+				}
 				s.logger.LogClassified(entry)
 			}
 		}
