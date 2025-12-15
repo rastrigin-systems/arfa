@@ -252,19 +252,29 @@ const DefaultMaxPort = 8109
 // RunDaemon is called when starting the proxy in daemon mode
 // This should be called from `ubik proxy run`
 func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Logger) error {
+	// Create session manager for multi-session support
+	d.sessionManager = NewSessionManager(DefaultMinPort, DefaultMaxPort)
+
+	// Create policy engine for security enforcement
+	policyEngine := NewPolicyEngine()
+	// Note: Policy sync will be enabled when platform client is configured
+	// For now, we set it as healthy to allow traffic (can be changed to fail-closed)
+	policyEngine.SetPlatformHealthy(true)
+	policyEngine.EnablePIIDetection(true)
+
 	// Create and start proxy server
 	server := NewProxyServer(logger)
+	server.SetPolicyEngine(policyEngine)
+	server.SetSessionManager(d.sessionManager)
 
 	if err := server.Start(port); err != nil {
 		return fmt.Errorf("failed to start proxy server: %w", err)
 	}
 
-	// Create session manager for multi-session support
-	d.sessionManager = NewSessionManager(DefaultMinPort, DefaultMaxPort)
-
 	// Create and start control server (Unix socket API)
 	d.controlServer = NewControlServer(d.sockFile, d.sessionManager)
 	d.controlServer.SetCertPath(server.GetCAPath())
+	d.controlServer.SetPolicyEngine(policyEngine)
 
 	if err := d.controlServer.Start(ctx); err != nil {
 		server.Stop(ctx)
@@ -291,11 +301,13 @@ func (d *ProxyDaemon) RunDaemon(ctx context.Context, port int, logger logging.Lo
 	fmt.Printf("Proxy daemon running on port %d (PID: %d)\n", port, os.Getpid())
 	fmt.Printf("Control socket: %s\n", d.sockFile)
 	fmt.Printf("Session ports: %d-%d\n", DefaultMinPort, DefaultMaxPort)
+	fmt.Printf("Security: PII detection enabled, fail-closed disabled (no platform sync yet)\n")
 
 	// Wait for context cancellation (caller handles signals)
 	<-ctx.Done()
 
 	// Cleanup
+	policyEngine.Stop()
 	d.controlServer.Stop()
 	server.Stop(ctx)
 	d.cleanupStateFile()

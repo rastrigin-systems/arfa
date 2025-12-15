@@ -34,6 +34,8 @@ type ProxyServer struct {
 	server          *http.Server
 	anthropicParser *logparser.AnthropicParser
 	port            int
+	policyEngine    *PolicyEngine
+	sessionManager  *SessionManager
 }
 
 // NewProxyServer creates a new proxy server instance
@@ -43,6 +45,16 @@ func NewProxyServer(logger logging.Logger) *ProxyServer {
 		logger:          logger,
 		anthropicParser: logparser.NewAnthropicParser(),
 	}
+}
+
+// SetPolicyEngine sets the policy engine for request evaluation
+func (s *ProxyServer) SetPolicyEngine(pe *PolicyEngine) {
+	s.policyEngine = pe
+}
+
+// SetSessionManager sets the session manager for session tracking
+func (s *ProxyServer) SetSessionManager(sm *SessionManager) {
+	s.sessionManager = sm
 }
 
 // Start starts the proxy server on the specified port
@@ -194,6 +206,39 @@ func (s *ProxyServer) configureRules() {
 
 	s.proxy.OnRequest(goproxy.ReqHostMatches(hostRegex)).DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			// Read body for policy evaluation
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				return r, nil // Can't read body, allow through
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
+
+			// Evaluate against policy engine if configured
+			if s.policyEngine != nil {
+				// Try to get session from headers (set by env vars in native runner)
+				sessionID := r.Header.Get("X-Ubik-Session")
+				var session *Session
+				if s.sessionManager != nil && sessionID != "" {
+					session = s.sessionManager.GetByID(sessionID)
+				}
+
+				// If no session found, create a temporary one for evaluation
+				if session == nil {
+					session = &Session{
+						ID:        sessionID,
+						AgentName: "unknown",
+					}
+				}
+
+				decision := s.policyEngine.EvaluateRequest(session, bodyBytes)
+				if decision.Action == ActionBlock {
+					// Log the blocked request
+					s.logBlockedRequest(r, decision, bodyBytes)
+					// Return a 403 response
+					return r, s.createBlockResponse(r, decision)
+				}
+			}
+
 			s.logRequest(r)
 			return r, nil
 		})
@@ -209,6 +254,44 @@ func (s *ProxyServer) configureRules() {
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 			return r, nil
 		})
+}
+
+// createBlockResponse creates a 403 response for blocked requests
+func (s *ProxyServer) createBlockResponse(r *http.Request, decision *PolicyDecision) *http.Response {
+	body := fmt.Sprintf(`{"type":"error","error":{"type":"security_policy_violation","message":"%s"}}`, decision.Reason)
+
+	return &http.Response{
+		StatusCode: http.StatusForbidden,
+		Status:     "403 Forbidden",
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Header: http.Header{
+			"Content-Type":   {"application/json"},
+			"X-Ubik-Blocked": {"true"},
+		},
+		Body:          io.NopCloser(strings.NewReader(body)),
+		ContentLength: int64(len(body)),
+		Request:       r,
+	}
+}
+
+// logBlockedRequest logs a blocked request for security auditing
+func (s *ProxyServer) logBlockedRequest(r *http.Request, decision *PolicyDecision, body []byte) {
+	if s.logger == nil {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"method":  r.Method,
+		"url":     r.URL.String(),
+		"headers": redactHeaders(r.Header),
+		"reason":  decision.Reason,
+		"action":  decision.Action,
+	}
+
+	// Don't log the body for security reasons (it may contain the PII that caused the block)
+	s.logger.LogEvent("security_block", "proxy", fmt.Sprintf("BLOCKED: %s", decision.Reason), payload)
 }
 
 // logRequest captures and logs the request
