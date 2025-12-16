@@ -449,4 +449,3 @@ func (r *NativeRunner) UnregisterFromSecurityGateway() error {
 	r.sessionRegistered = false
 	return err
 }
-

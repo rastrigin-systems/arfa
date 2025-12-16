@@ -422,4 +422,3 @@ func GetWorkspacePath(defaultPath string) (string, error) {
 	}
 	return absPath, nil
 }
-
