@@ -31,6 +31,12 @@ func (pc *PlatformClient) SetToken(token string) {
 	pc.token = token
 }
 
+// SetBaseURL sets the base URL for API requests.
+// This allows overriding the URL at runtime (e.g., during login).
+func (pc *PlatformClient) SetBaseURL(url string) {
+	pc.baseURL = url
+}
+
 // SetHTTPClient sets a custom HTTP client (for testing)
 func (pc *PlatformClient) SetHTTPClient(client *http.Client) {
 	pc.httpClient = client
