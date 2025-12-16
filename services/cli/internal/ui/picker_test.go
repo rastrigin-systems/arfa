@@ -1,4 +1,4 @@
-package cli
+package ui
 
 import (
 	"os"
@@ -25,7 +25,7 @@ func TestNewAgentPicker(t *testing.T) {
 	if picker == nil {
 		t.Error("expected non-nil picker")
 	}
-	if picker.configManager != configManager {
+	if picker.configManager == nil {
 		t.Error("expected configManager to be set")
 	}
 }

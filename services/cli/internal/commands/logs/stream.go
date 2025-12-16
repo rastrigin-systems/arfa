@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func NewStreamCommand(c *container.Container) *cobra.Command {
 				return fmt.Errorf("failed to get platform client: %w", err)
 			}
 
-			logStreamer := cli.NewLogStreamer(platformClient, configManager)
+			logStreamer := ui.NewLogStreamer(platformClient, configManager)
 			logStreamer.SetJSONOutput(jsonOut)
 			logStreamer.SetVerbose(verbose)
 

@@ -1,4 +1,4 @@
-package cli
+package ui
 
 import (
 	"fmt"
@@ -9,23 +9,20 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
-// AgentPickerItem represents an agent in the picker list
-type AgentPickerItem struct {
-	Name        string
-	Type        string
-	Provider    string
-	DockerImage string
-	ID          string
-	IsDefault   bool
-}
-
 // AgentPicker provides interactive agent selection
 type AgentPicker struct {
-	configManager *config.Manager
+	configManager ConfigManagerInterface
 }
 
 // NewAgentPicker creates a new agent picker
 func NewAgentPicker(configManager *config.Manager) *AgentPicker {
+	return &AgentPicker{
+		configManager: configManager,
+	}
+}
+
+// NewAgentPickerWithInterface creates a new agent picker with a config manager interface
+func NewAgentPickerWithInterface(configManager ConfigManagerInterface) *AgentPicker {
 	return &AgentPicker{
 		configManager: configManager,
 	}
@@ -40,10 +37,10 @@ func (p *AgentPicker) SelectAgent(agents []api.AgentConfig, saveAsDefault bool, 
 	}
 
 	// Get current default
-	config, _ := p.configManager.Load()
+	cfg, _ := p.configManager.Load()
 	currentDefault := ""
-	if config != nil {
-		currentDefault = config.DefaultAgent
+	if cfg != nil {
+		currentDefault = cfg.DefaultAgent
 	}
 
 	// Build picker items
@@ -146,13 +143,13 @@ func (p *AgentPicker) SelectAgent(agents []api.AgentConfig, saveAsDefault bool, 
 
 // saveDefault saves the agent ID as the default
 func (p *AgentPicker) saveDefault(agentID string) error {
-	config, err := p.configManager.Load()
+	cfg, err := p.configManager.Load()
 	if err != nil {
 		return err
 	}
 
-	config.DefaultAgent = agentID
-	return p.configManager.Save(config)
+	cfg.DefaultAgent = agentID
+	return p.configManager.Save(cfg)
 }
 
 // ConfirmSaveDefault asks the user if they want to save the selection as default
@@ -173,20 +170,20 @@ func (p *AgentPicker) ConfirmSaveDefault() bool {
 
 // GetDefaultAgent returns the currently configured default agent
 func (p *AgentPicker) GetDefaultAgent() string {
-	config, err := p.configManager.Load()
-	if err != nil || config == nil {
+	cfg, err := p.configManager.Load()
+	if err != nil || cfg == nil {
 		return ""
 	}
-	return config.DefaultAgent
+	return cfg.DefaultAgent
 }
 
 // ClearDefault removes the default agent setting
 func (p *AgentPicker) ClearDefault() error {
-	config, err := p.configManager.Load()
+	cfg, err := p.configManager.Load()
 	if err != nil {
 		return err
 	}
 
-	config.DefaultAgent = ""
-	return p.configManager.Save(config)
+	cfg.DefaultAgent = ""
+	return p.configManager.Save(cfg)
 }
