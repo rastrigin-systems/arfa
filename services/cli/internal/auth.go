@@ -14,25 +14,25 @@ import (
 
 // AuthService handles authentication operations
 type AuthService struct {
-	configManager  ConfigManagerInterface
-	platformClient PlatformClientInterface
+	configManager ConfigManagerInterface
+	apiClient     APIClientInterface
 }
 
 // NewAuthService creates a new AuthService with concrete types.
 // This is the primary constructor for production use.
-func NewAuthService(configManager *ConfigManager, platformClient *PlatformClient) *AuthService {
+func NewAuthService(configManager *ConfigManager, apiClient *APIClient) *AuthService {
 	return &AuthService{
-		configManager:  configManager,
-		platformClient: platformClient,
+		configManager: configManager,
+		apiClient:     apiClient,
 	}
 }
 
 // NewAuthServiceWithInterfaces creates a new AuthService with interface types.
 // This constructor enables dependency injection for testing with mocks.
-func NewAuthServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface) *AuthService {
+func NewAuthServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface) *AuthService {
 	return &AuthService{
-		configManager:  configManager,
-		platformClient: platformClient,
+		configManager: configManager,
+		apiClient:     apiClient,
 	}
 }
 
@@ -76,11 +76,11 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	}
 
 	// Update platform client URL
-	as.platformClient.SetBaseURL(platformURL)
+	as.apiClient.SetBaseURL(platformURL)
 
 	// Perform login
 	fmt.Println("\nAuthenticating...")
-	loginResp, err := as.platformClient.Login(ctx, email, password)
+	loginResp, err := as.apiClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -112,10 +112,10 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 // Login performs non-interactive login
 func (as *AuthService) Login(ctx context.Context, platformURL, email, password string) error {
 	// Update platform client URL
-	as.platformClient.SetBaseURL(platformURL)
+	as.apiClient.SetBaseURL(platformURL)
 
 	// Perform login
-	loginResp, err := as.platformClient.Login(ctx, email, password)
+	loginResp, err := as.apiClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -187,8 +187,8 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 	}
 
 	// Set token on platform client
-	as.platformClient.SetToken(config.Token)
-	as.platformClient.SetBaseURL(config.PlatformURL)
+	as.apiClient.SetToken(config.Token)
+	as.apiClient.SetBaseURL(config.PlatformURL)
 
 	return config, nil
 }

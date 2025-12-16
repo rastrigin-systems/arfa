@@ -19,10 +19,10 @@ func WithMockConfigManager(cm *cli.ConfigManager) Option {
 	return WithConfigManager(cm)
 }
 
-// WithMockPlatformClient sets a PlatformClient for testing.
+// WithMockAPIClient sets an APIClient for testing.
 // This allows injecting a mock or test implementation.
-func WithMockPlatformClient(pc *cli.PlatformClient) Option {
-	return WithPlatformClient(pc)
+func WithMockAPIClient(ac *cli.APIClient) Option {
+	return WithAPIClient(ac)
 }
 
 // WithMockAuthService sets an AuthService for testing.
@@ -59,9 +59,9 @@ func (b *TestContainerBuilder) WithConfigManager(cm *cli.ConfigManager) *TestCon
 	return b
 }
 
-// WithPlatformClient injects a PlatformClient for testing.
-func (b *TestContainerBuilder) WithPlatformClient(pc *cli.PlatformClient) *TestContainerBuilder {
-	b.opts = append(b.opts, WithPlatformClient(pc))
+// WithAPIClient injects an APIClient for testing.
+func (b *TestContainerBuilder) WithAPIClient(ac *cli.APIClient) *TestContainerBuilder {
+	b.opts = append(b.opts, WithAPIClient(ac))
 	return b
 }
 

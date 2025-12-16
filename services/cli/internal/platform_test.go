@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPlatformClient_Login(t *testing.T) {
+func TestAPIClient_Login(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/auth/login", r.URL.Path)
@@ -40,7 +40,7 @@ func TestPlatformClient_Login(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	ctx := context.Background()
 	resp, err := client.Login(ctx, "test@example.com", "password123")
 
@@ -55,7 +55,7 @@ func TestPlatformClient_Login(t *testing.T) {
 	assert.Equal(t, "test-token-abc123", client.token)
 }
 
-func TestPlatformClient_Login_InvalidCredentials(t *testing.T) {
+func TestAPIClient_Login_InvalidCredentials(t *testing.T) {
 	// Setup mock server that returns 401
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -63,7 +63,7 @@ func TestPlatformClient_Login_InvalidCredentials(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	ctx := context.Background()
 	resp, err := client.Login(ctx, "test@example.com", "wrong-password")
 
@@ -72,7 +72,7 @@ func TestPlatformClient_Login_InvalidCredentials(t *testing.T) {
 	assert.Contains(t, err.Error(), "login failed")
 }
 
-func TestPlatformClient_GetEmployeeInfo(t *testing.T) {
+func TestAPIClient_GetEmployeeInfo(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/employees/emp-123", r.URL.Path)
@@ -91,7 +91,7 @@ func TestPlatformClient_GetEmployeeInfo(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -105,7 +105,7 @@ func TestPlatformClient_GetEmployeeInfo(t *testing.T) {
 	assert.Equal(t, "org-456", info.OrgID)
 }
 
-func TestPlatformClient_GetEmployeeInfo_NotFound(t *testing.T) {
+func TestAPIClient_GetEmployeeInfo_NotFound(t *testing.T) {
 	// Setup mock server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -113,7 +113,7 @@ func TestPlatformClient_GetEmployeeInfo_NotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -124,7 +124,7 @@ func TestPlatformClient_GetEmployeeInfo_NotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to get employee info")
 }
 
-func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
+func TestAPIClient_GetResolvedAgentConfigs(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/employees/emp-123/agent-configs/resolved", r.URL.Path)
@@ -164,7 +164,7 @@ func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -186,7 +186,7 @@ func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
 	assert.False(t, configs[1].IsEnabled)
 }
 
-func TestPlatformClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
+func TestAPIClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := ResolvedConfigsResponse{
@@ -198,7 +198,7 @@ func TestPlatformClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -208,7 +208,7 @@ func TestPlatformClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 	assert.Len(t, configs, 0)
 }
 
-func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
+func TestAPIClient_GetClaudeCodeConfig(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/sync/claude-code", r.URL.Path)
@@ -304,7 +304,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -342,7 +342,7 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 	assert.Equal(t, "2024-11-02T12:00:00Z", config.SyncedAt)
 }
 
-func TestPlatformClient_GetClaudeCodeConfig_Empty(t *testing.T) {
+func TestAPIClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := ClaudeCodeSyncResponse{
@@ -357,7 +357,7 @@ func TestPlatformClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -370,7 +370,7 @@ func TestPlatformClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 	assert.Len(t, config.MCPServers, 0)
 }
 
-func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
+func TestAPIClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	// Setup mock server that returns 401
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -378,7 +378,7 @@ func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("invalid-token")
 
 	ctx := context.Background()
@@ -389,7 +389,7 @@ func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to get Claude Code config")
 }
 
-func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
+func TestAPIClient_GetMyResolvedAgentConfigs(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/employees/me/agent-configs/resolved", r.URL.Path)
@@ -429,7 +429,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -451,7 +451,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
 	assert.False(t, configs[1].IsEnabled)
 }
 
-func TestPlatformClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
+func TestAPIClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := ResolvedConfigsResponse{
@@ -463,7 +463,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	ctx := context.Background()
@@ -473,7 +473,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 	assert.Len(t, configs, 0)
 }
 
-func TestPlatformClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
+func TestAPIClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
 	// Setup mock server that returns 401
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -481,7 +481,7 @@ func TestPlatformClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("invalid-token")
 
 	ctx := context.Background()

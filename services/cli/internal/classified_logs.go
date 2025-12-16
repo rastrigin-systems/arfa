@@ -1,11 +1,8 @@
 package cli
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"sort"
 	"time"
 
@@ -32,56 +29,25 @@ type APILogsResponse struct {
 	PerPage    int           `json:"per_page"`
 }
 
-// GetClassifiedLogs retrieves classified logs from the API, optionally filtered by session ID
-func GetClassifiedLogs(configManager *ConfigManager, sessionID string) ([]types.ClassifiedLogEntry, error) {
-	config, err := configManager.Load()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+// GetClassifiedLogs retrieves classified logs from the API using the provided APIClient.
+// The APIClient must have a valid token set.
+func GetClassifiedLogs(ctx context.Context, apiClient *APIClient, sessionID string) ([]types.ClassifiedLogEntry, error) {
+	if apiClient == nil {
+		return nil, fmt.Errorf("API client is required")
 	}
 
-	if config.Token == "" {
-		return nil, fmt.Errorf("not authenticated - please run 'ubik login' first")
+	// Fetch logs using the APIClient
+	params := GetLogsParams{
+		EventCategory: "classified",
+		PerPage:       1000,
 	}
-
-	// Build API URL with filters
-	apiURL, err := url.Parse(config.PlatformURL + "/api/v1/logs")
-	if err != nil {
-		return nil, fmt.Errorf("invalid API URL: %w", err)
-	}
-
-	query := apiURL.Query()
-	query.Set("event_category", "classified")
-	// Note: employee_id is automatically derived from JWT token on the backend
-	query.Set("per_page", "1000") // Get a large batch
 	if sessionID != "" {
-		query.Set("session_id", sessionID)
+		params.SessionID = sessionID
 	}
-	apiURL.RawQuery = query.Encode()
 
-	// Make API request
-	req, err := http.NewRequest("GET", apiURL.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+config.Token)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	apiResp, err := apiClient.GetLogs(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch logs: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (%d): %s", resp.StatusCode, string(body))
-	}
-
-	// Parse response
-	var apiResp APILogsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	// Convert API logs to ClassifiedLogEntry
@@ -97,6 +63,25 @@ func GetClassifiedLogs(configManager *ConfigManager, sessionID string) ([]types.
 	})
 
 	return classifiedLogs, nil
+}
+
+// GetClassifiedLogsWithConfig retrieves classified logs using config for authentication.
+// This is a convenience function that creates an APIClient from the config.
+func GetClassifiedLogsWithConfig(configManager *ConfigManager, sessionID string) ([]types.ClassifiedLogEntry, error) {
+	config, err := configManager.Load()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if config.Token == "" {
+		return nil, fmt.Errorf("not authenticated - please run 'ubik login' first")
+	}
+
+	// Create APIClient with config
+	apiClient := NewAPIClient(config.PlatformURL)
+	apiClient.SetToken(config.Token)
+
+	return GetClassifiedLogs(context.Background(), apiClient, sessionID)
 }
 
 // convertAPILogToClassified converts an API log entry to a ClassifiedLogEntry

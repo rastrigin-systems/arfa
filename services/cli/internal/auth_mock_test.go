@@ -21,7 +21,7 @@ func TestAuthService_RequireAuth_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		expectedConfig := &cli.Config{
 			PlatformURL: "https://api.example.com",
@@ -53,7 +53,7 @@ func TestAuthService_RequireAuth_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations - not authenticated
 		mockConfigManager.EXPECT().IsAuthenticated().Return(false, nil)
@@ -75,7 +75,7 @@ func TestAuthService_RequireAuth_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations - authenticated but token expired
 		mockConfigManager.EXPECT().IsAuthenticated().Return(true, nil)
@@ -98,7 +98,7 @@ func TestAuthService_RequireAuth_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations - error from config manager
 		mockConfigManager.EXPECT().IsAuthenticated().Return(false, errors.New("config read error"))
@@ -123,7 +123,7 @@ func TestAuthService_Login_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		ctx := context.Background()
 		platformURL := "https://api.example.com"
@@ -165,7 +165,7 @@ func TestAuthService_Login_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		ctx := context.Background()
 		platformURL := "https://api.example.com"
@@ -192,7 +192,7 @@ func TestAuthService_Login_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		ctx := context.Background()
 		platformURL := "https://api.example.com"
@@ -233,7 +233,7 @@ func TestAuthService_Logout_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations
 		mockConfigManager.EXPECT().Clear().Return(nil)
@@ -253,7 +253,7 @@ func TestAuthService_Logout_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations
 		mockConfigManager.EXPECT().Clear().Return(errors.New("permission denied"))
@@ -277,7 +277,7 @@ func TestAuthService_IsAuthenticated_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		// Set expectations
 		mockConfigManager.EXPECT().IsAuthenticated().Return(true, nil)
@@ -301,7 +301,7 @@ func TestAuthService_GetConfig_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 
 		expectedConfig := &cli.Config{
 			PlatformURL: "https://api.example.com",

@@ -51,7 +51,7 @@ func NewRunCommand(c *container.Container) *cobra.Command {
 				platformURL = config.PlatformURL
 			}
 
-			platformClient, err := c.PlatformClient()
+			platformClient, err := c.APIClient()
 			if err != nil {
 				return fmt.Errorf("failed to get platform client: %w", err)
 			}
@@ -64,7 +64,7 @@ func NewRunCommand(c *container.Container) *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Warning: no auth token - logs will not be sent to platform\n")
 			}
 
-			apiClient := cli.NewPlatformAPIClient(platformClient)
+			apiClient := cli.NewLoggingAPIClientAdapter(platformClient)
 			logger, err := logging.NewLogger(loggerConfig, apiClient)
 			if err != nil {
 				// Continue without logging - log warning to stderr

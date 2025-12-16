@@ -10,12 +10,12 @@ import (
 
 // SkillsService handles skill management operations
 type SkillsService struct {
-	client        *PlatformClient
+	client        *APIClient
 	configManager *ConfigManager
 }
 
 // NewSkillsService creates a new skills service
-func NewSkillsService(client *PlatformClient, configManager *ConfigManager) *SkillsService {
+func NewSkillsService(client *APIClient, configManager *ConfigManager) *SkillsService {
 	return &SkillsService{
 		client:        client,
 		configManager: configManager,

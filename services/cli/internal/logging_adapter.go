@@ -6,19 +6,19 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 )
 
-// PlatformAPIClient adapts the CLI PlatformClient to the logging APIClient interface
-type PlatformAPIClient struct {
-	client *PlatformClient
+// LoggingAPIClientAdapter adapts the CLI APIClient to the logging APIClient interface
+type LoggingAPIClientAdapter struct {
+	client *APIClient
 }
 
-// NewPlatformAPIClient creates a new adapter for the platform client
-func NewPlatformAPIClient(client *PlatformClient) logging.APIClient {
-	return &PlatformAPIClient{client: client}
+// NewLoggingAPIClientAdapter creates a new adapter for the API client
+func NewLoggingAPIClientAdapter(client *APIClient) logging.APIClient {
+	return &LoggingAPIClientAdapter{client: client}
 }
 
 // CreateLog sends a single log entry to the API
-func (p *PlatformAPIClient) CreateLog(ctx context.Context, entry logging.LogEntry) error {
-	platformEntry := LogEntry{
+func (a *LoggingAPIClientAdapter) CreateLog(ctx context.Context, entry logging.LogEntry) error {
+	apiEntry := LogEntry{
 		SessionID:     entry.SessionID,
 		AgentID:       entry.AgentID,
 		EventType:     entry.EventType,
@@ -27,14 +27,14 @@ func (p *PlatformAPIClient) CreateLog(ctx context.Context, entry logging.LogEntr
 		Payload:       entry.Payload,
 	}
 
-	return p.client.CreateLog(ctx, platformEntry)
+	return a.client.CreateLog(ctx, apiEntry)
 }
 
 // CreateLogBatch sends multiple log entries in a single request
-func (p *PlatformAPIClient) CreateLogBatch(ctx context.Context, entries []logging.LogEntry) error {
-	platformEntries := make([]LogEntry, len(entries))
+func (a *LoggingAPIClientAdapter) CreateLogBatch(ctx context.Context, entries []logging.LogEntry) error {
+	apiEntries := make([]LogEntry, len(entries))
 	for i, entry := range entries {
-		platformEntries[i] = LogEntry{
+		apiEntries[i] = LogEntry{
 			SessionID:     entry.SessionID,
 			AgentID:       entry.AgentID,
 			EventType:     entry.EventType,
@@ -44,5 +44,5 @@ func (p *PlatformAPIClient) CreateLogBatch(ctx context.Context, entries []loggin
 		}
 	}
 
-	return p.client.CreateLogBatch(ctx, platformEntries)
+	return a.client.CreateLogBatch(ctx, apiEntries)
 }

@@ -12,7 +12,7 @@ import (
 // SyncService handles config synchronization
 type SyncService struct {
 	configManager    ConfigManagerInterface
-	platformClient   PlatformClientInterface
+	apiClient        APIClientInterface
 	authService      AuthServiceInterface
 	dockerClient     *DockerClient
 	containerManager ContainerManagerInterface
@@ -20,21 +20,21 @@ type SyncService struct {
 
 // NewSyncService creates a new SyncService with concrete types.
 // This is the primary constructor for production use.
-func NewSyncService(configManager *ConfigManager, platformClient *PlatformClient, authService *AuthService) *SyncService {
+func NewSyncService(configManager *ConfigManager, apiClient *APIClient, authService *AuthService) *SyncService {
 	return &SyncService{
-		configManager:  configManager,
-		platformClient: platformClient,
-		authService:    authService,
+		configManager: configManager,
+		apiClient:     apiClient,
+		authService:   authService,
 	}
 }
 
 // NewSyncServiceWithInterfaces creates a new SyncService with interface types.
 // This constructor enables dependency injection for testing with mocks.
-func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface, authService AuthServiceInterface) *SyncService {
+func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface, authService AuthServiceInterface) *SyncService {
 	return &SyncService{
-		configManager:  configManager,
-		platformClient: platformClient,
-		authService:    authService,
+		configManager: configManager,
+		apiClient:     apiClient,
+		authService:   authService,
 	}
 }
 
@@ -70,7 +70,7 @@ func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 	fmt.Println("✓ Fetching configs from platform...")
 
 	// Fetch resolved agent configs (using JWT-based /employees/me endpoint)
-	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs(ctx)
+	agentConfigs, err := ss.apiClient.GetMyResolvedAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch agent configs: %w", err)
 	}
@@ -134,7 +134,7 @@ func (ss *SyncService) SyncClaudeCode(ctx context.Context, targetDir string) err
 
 	// Fetch complete Claude Code config
 	fmt.Println("📥 Downloading configurations...")
-	config, err := ss.platformClient.GetClaudeCodeConfig(ctx)
+	config, err := ss.apiClient.GetClaudeCodeConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Claude Code config: %w", err)
 	}
@@ -395,7 +395,7 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 
 	// Fetch effective Claude token from platform
 	fmt.Println("\nFetching Claude API token...")
-	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken(ctx)
+	claudeToken, err := ss.apiClient.GetEffectiveClaudeToken(ctx)
 	if err != nil {
 		fmt.Printf("⚠ Warning: Could not fetch Claude token: %v\n", err)
 		fmt.Printf("  Falling back to provided API key (if any)\n")

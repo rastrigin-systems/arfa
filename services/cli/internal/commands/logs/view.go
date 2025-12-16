@@ -42,7 +42,7 @@ Examples:
 			}
 
 			// Get classified logs from the current session or storage
-			logs, err := cli.GetClassifiedLogs(configManager, sessionID)
+			logs, err := cli.GetClassifiedLogsWithConfig(configManager, sessionID)
 			if err != nil {
 				return fmt.Errorf("failed to get logs: %w", err)
 			}

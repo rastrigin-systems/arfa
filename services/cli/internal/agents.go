@@ -11,12 +11,12 @@ import (
 
 // AgentService handles agent management operations
 type AgentService struct {
-	client        *PlatformClient
+	client        *APIClient
 	configManager *ConfigManager
 }
 
 // NewAgentService creates a new agent service
-func NewAgentService(client *PlatformClient, configManager *ConfigManager) *AgentService {
+func NewAgentService(client *APIClient, configManager *ConfigManager) *AgentService {
 	return &AgentService{
 		client:        client,
 		configManager: configManager,

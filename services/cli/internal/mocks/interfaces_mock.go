@@ -129,31 +129,31 @@ func (mr *MockConfigManagerInterfaceMockRecorder) Save(config any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockConfigManagerInterface)(nil).Save), config)
 }
 
-// MockPlatformClientInterface is a mock of PlatformClientInterface interface.
-type MockPlatformClientInterface struct {
+// MockAPIClientInterface is a mock of APIClientInterface interface.
+type MockAPIClientInterface struct {
 	ctrl     *gomock.Controller
-	recorder *MockPlatformClientInterfaceMockRecorder
+	recorder *MockAPIClientInterfaceMockRecorder
 }
 
-// MockPlatformClientInterfaceMockRecorder is the mock recorder for MockPlatformClientInterface.
-type MockPlatformClientInterfaceMockRecorder struct {
-	mock *MockPlatformClientInterface
+// MockAPIClientInterfaceMockRecorder is the mock recorder for MockAPIClientInterface.
+type MockAPIClientInterfaceMockRecorder struct {
+	mock *MockAPIClientInterface
 }
 
-// NewMockPlatformClientInterface creates a new mock instance.
-func NewMockPlatformClientInterface(ctrl *gomock.Controller) *MockPlatformClientInterface {
-	mock := &MockPlatformClientInterface{ctrl: ctrl}
-	mock.recorder = &MockPlatformClientInterfaceMockRecorder{mock}
+// NewMockAPIClientInterface creates a new mock instance.
+func NewMockAPIClientInterface(ctrl *gomock.Controller) *MockAPIClientInterface {
+	mock := &MockAPIClientInterface{ctrl: ctrl}
+	mock.recorder = &MockAPIClientInterfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPlatformClientInterface) EXPECT() *MockPlatformClientInterfaceMockRecorder {
+func (m *MockAPIClientInterface) EXPECT() *MockAPIClientInterfaceMockRecorder {
 	return m.recorder
 }
 
 // CreateLog mocks base method.
-func (m *MockPlatformClientInterface) CreateLog(ctx context.Context, entry cli.LogEntry) error {
+func (m *MockAPIClientInterface) CreateLog(ctx context.Context, entry cli.LogEntry) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateLog", ctx, entry)
 	ret0, _ := ret[0].(error)
@@ -161,13 +161,13 @@ func (m *MockPlatformClientInterface) CreateLog(ctx context.Context, entry cli.L
 }
 
 // CreateLog indicates an expected call of CreateLog.
-func (mr *MockPlatformClientInterfaceMockRecorder) CreateLog(ctx, entry any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) CreateLog(ctx, entry any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLog", reflect.TypeOf((*MockPlatformClientInterface)(nil).CreateLog), ctx, entry)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLog", reflect.TypeOf((*MockAPIClientInterface)(nil).CreateLog), ctx, entry)
 }
 
 // CreateLogBatch mocks base method.
-func (m *MockPlatformClientInterface) CreateLogBatch(ctx context.Context, entries []cli.LogEntry) error {
+func (m *MockAPIClientInterface) CreateLogBatch(ctx context.Context, entries []cli.LogEntry) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateLogBatch", ctx, entries)
 	ret0, _ := ret[0].(error)
@@ -175,13 +175,13 @@ func (m *MockPlatformClientInterface) CreateLogBatch(ctx context.Context, entrie
 }
 
 // CreateLogBatch indicates an expected call of CreateLogBatch.
-func (mr *MockPlatformClientInterfaceMockRecorder) CreateLogBatch(ctx, entries any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) CreateLogBatch(ctx, entries any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLogBatch", reflect.TypeOf((*MockPlatformClientInterface)(nil).CreateLogBatch), ctx, entries)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLogBatch", reflect.TypeOf((*MockAPIClientInterface)(nil).CreateLogBatch), ctx, entries)
 }
 
 // GetClaudeCodeConfig mocks base method.
-func (m *MockPlatformClientInterface) GetClaudeCodeConfig(ctx context.Context) (*cli.ClaudeCodeSyncResponse, error) {
+func (m *MockAPIClientInterface) GetClaudeCodeConfig(ctx context.Context) (*cli.ClaudeCodeSyncResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClaudeCodeConfig", ctx)
 	ret0, _ := ret[0].(*cli.ClaudeCodeSyncResponse)
@@ -190,13 +190,13 @@ func (m *MockPlatformClientInterface) GetClaudeCodeConfig(ctx context.Context) (
 }
 
 // GetClaudeCodeConfig indicates an expected call of GetClaudeCodeConfig.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetClaudeCodeConfig(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetClaudeCodeConfig(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClaudeCodeConfig", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetClaudeCodeConfig), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClaudeCodeConfig", reflect.TypeOf((*MockAPIClientInterface)(nil).GetClaudeCodeConfig), ctx)
 }
 
 // GetClaudeTokenStatus mocks base method.
-func (m *MockPlatformClientInterface) GetClaudeTokenStatus(ctx context.Context) (*cli.ClaudeTokenStatusResponse, error) {
+func (m *MockAPIClientInterface) GetClaudeTokenStatus(ctx context.Context) (*cli.ClaudeTokenStatusResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClaudeTokenStatus", ctx)
 	ret0, _ := ret[0].(*cli.ClaudeTokenStatusResponse)
@@ -205,13 +205,13 @@ func (m *MockPlatformClientInterface) GetClaudeTokenStatus(ctx context.Context) 
 }
 
 // GetClaudeTokenStatus indicates an expected call of GetClaudeTokenStatus.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetClaudeTokenStatus(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetClaudeTokenStatus(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClaudeTokenStatus", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetClaudeTokenStatus), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClaudeTokenStatus", reflect.TypeOf((*MockAPIClientInterface)(nil).GetClaudeTokenStatus), ctx)
 }
 
 // GetCurrentEmployee mocks base method.
-func (m *MockPlatformClientInterface) GetCurrentEmployee(ctx context.Context) (*cli.EmployeeInfo, error) {
+func (m *MockAPIClientInterface) GetCurrentEmployee(ctx context.Context) (*cli.EmployeeInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCurrentEmployee", ctx)
 	ret0, _ := ret[0].(*cli.EmployeeInfo)
@@ -220,13 +220,13 @@ func (m *MockPlatformClientInterface) GetCurrentEmployee(ctx context.Context) (*
 }
 
 // GetCurrentEmployee indicates an expected call of GetCurrentEmployee.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetCurrentEmployee(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetCurrentEmployee(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentEmployee", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetCurrentEmployee), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentEmployee", reflect.TypeOf((*MockAPIClientInterface)(nil).GetCurrentEmployee), ctx)
 }
 
 // GetEffectiveClaudeToken mocks base method.
-func (m *MockPlatformClientInterface) GetEffectiveClaudeToken(ctx context.Context) (string, error) {
+func (m *MockAPIClientInterface) GetEffectiveClaudeToken(ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEffectiveClaudeToken", ctx)
 	ret0, _ := ret[0].(string)
@@ -235,13 +235,13 @@ func (m *MockPlatformClientInterface) GetEffectiveClaudeToken(ctx context.Contex
 }
 
 // GetEffectiveClaudeToken indicates an expected call of GetEffectiveClaudeToken.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetEffectiveClaudeToken(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetEffectiveClaudeToken(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveClaudeToken", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetEffectiveClaudeToken), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveClaudeToken", reflect.TypeOf((*MockAPIClientInterface)(nil).GetEffectiveClaudeToken), ctx)
 }
 
 // GetEffectiveClaudeTokenInfo mocks base method.
-func (m *MockPlatformClientInterface) GetEffectiveClaudeTokenInfo(ctx context.Context) (*cli.EffectiveClaudeTokenResponse, error) {
+func (m *MockAPIClientInterface) GetEffectiveClaudeTokenInfo(ctx context.Context) (*cli.EffectiveClaudeTokenResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEffectiveClaudeTokenInfo", ctx)
 	ret0, _ := ret[0].(*cli.EffectiveClaudeTokenResponse)
@@ -250,13 +250,13 @@ func (m *MockPlatformClientInterface) GetEffectiveClaudeTokenInfo(ctx context.Co
 }
 
 // GetEffectiveClaudeTokenInfo indicates an expected call of GetEffectiveClaudeTokenInfo.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetEffectiveClaudeTokenInfo(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetEffectiveClaudeTokenInfo(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveClaudeTokenInfo", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetEffectiveClaudeTokenInfo), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveClaudeTokenInfo", reflect.TypeOf((*MockAPIClientInterface)(nil).GetEffectiveClaudeTokenInfo), ctx)
 }
 
 // GetEmployeeAgentConfigs mocks base method.
-func (m *MockPlatformClientInterface) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]cli.EmployeeAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]cli.EmployeeAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeAgentConfigs", ctx, employeeID)
 	ret0, _ := ret[0].([]cli.EmployeeAgentConfigResponse)
@@ -265,13 +265,13 @@ func (m *MockPlatformClientInterface) GetEmployeeAgentConfigs(ctx context.Contex
 }
 
 // GetEmployeeAgentConfigs indicates an expected call of GetEmployeeAgentConfigs.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetEmployeeAgentConfigs(ctx, employeeID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeAgentConfigs(ctx, employeeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeAgentConfigs", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetEmployeeAgentConfigs), ctx, employeeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetEmployeeAgentConfigs), ctx, employeeID)
 }
 
 // GetEmployeeInfo mocks base method.
-func (m *MockPlatformClientInterface) GetEmployeeInfo(ctx context.Context, employeeID string) (*cli.EmployeeInfo, error) {
+func (m *MockAPIClientInterface) GetEmployeeInfo(ctx context.Context, employeeID string) (*cli.EmployeeInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeInfo", ctx, employeeID)
 	ret0, _ := ret[0].(*cli.EmployeeInfo)
@@ -280,13 +280,13 @@ func (m *MockPlatformClientInterface) GetEmployeeInfo(ctx context.Context, emplo
 }
 
 // GetEmployeeInfo indicates an expected call of GetEmployeeInfo.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetEmployeeInfo(ctx, employeeID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeInfo(ctx, employeeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeInfo", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetEmployeeInfo), ctx, employeeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeInfo", reflect.TypeOf((*MockAPIClientInterface)(nil).GetEmployeeInfo), ctx, employeeID)
 }
 
 // GetEmployeeSkill mocks base method.
-func (m *MockPlatformClientInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*cli.EmployeeSkill, error) {
+func (m *MockAPIClientInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*cli.EmployeeSkill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeSkill", ctx, skillID)
 	ret0, _ := ret[0].(*cli.EmployeeSkill)
@@ -295,13 +295,28 @@ func (m *MockPlatformClientInterface) GetEmployeeSkill(ctx context.Context, skil
 }
 
 // GetEmployeeSkill indicates an expected call of GetEmployeeSkill.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetEmployeeSkill(ctx, skillID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeSkill(ctx, skillID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeSkill", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetEmployeeSkill), ctx, skillID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeSkill", reflect.TypeOf((*MockAPIClientInterface)(nil).GetEmployeeSkill), ctx, skillID)
+}
+
+// GetLogs mocks base method.
+func (m *MockAPIClientInterface) GetLogs(ctx context.Context, params cli.GetLogsParams) (*cli.APILogsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLogs", ctx, params)
+	ret0, _ := ret[0].(*cli.APILogsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLogs indicates an expected call of GetLogs.
+func (mr *MockAPIClientInterfaceMockRecorder) GetLogs(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetLogs), ctx, params)
 }
 
 // GetMyResolvedAgentConfigs mocks base method.
-func (m *MockPlatformClientInterface) GetMyResolvedAgentConfigs(ctx context.Context) ([]cli.AgentConfig, error) {
+func (m *MockAPIClientInterface) GetMyResolvedAgentConfigs(ctx context.Context) ([]cli.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMyResolvedAgentConfigs", ctx)
 	ret0, _ := ret[0].([]cli.AgentConfig)
@@ -310,13 +325,13 @@ func (m *MockPlatformClientInterface) GetMyResolvedAgentConfigs(ctx context.Cont
 }
 
 // GetMyResolvedAgentConfigs indicates an expected call of GetMyResolvedAgentConfigs.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetMyResolvedAgentConfigs(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetMyResolvedAgentConfigs(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyResolvedAgentConfigs", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetMyResolvedAgentConfigs), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyResolvedAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetMyResolvedAgentConfigs), ctx)
 }
 
 // GetOrgAgentConfigs mocks base method.
-func (m *MockPlatformClientInterface) GetOrgAgentConfigs(ctx context.Context) ([]cli.OrgAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetOrgAgentConfigs(ctx context.Context) ([]cli.OrgAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrgAgentConfigs", ctx)
 	ret0, _ := ret[0].([]cli.OrgAgentConfigResponse)
@@ -325,13 +340,13 @@ func (m *MockPlatformClientInterface) GetOrgAgentConfigs(ctx context.Context) ([
 }
 
 // GetOrgAgentConfigs indicates an expected call of GetOrgAgentConfigs.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetOrgAgentConfigs(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetOrgAgentConfigs(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgAgentConfigs", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetOrgAgentConfigs), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetOrgAgentConfigs), ctx)
 }
 
 // GetResolvedAgentConfigs mocks base method.
-func (m *MockPlatformClientInterface) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]cli.AgentConfig, error) {
+func (m *MockAPIClientInterface) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]cli.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResolvedAgentConfigs", ctx, employeeID)
 	ret0, _ := ret[0].([]cli.AgentConfig)
@@ -340,13 +355,13 @@ func (m *MockPlatformClientInterface) GetResolvedAgentConfigs(ctx context.Contex
 }
 
 // GetResolvedAgentConfigs indicates an expected call of GetResolvedAgentConfigs.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetResolvedAgentConfigs(ctx, employeeID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetResolvedAgentConfigs(ctx, employeeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResolvedAgentConfigs", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetResolvedAgentConfigs), ctx, employeeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResolvedAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetResolvedAgentConfigs), ctx, employeeID)
 }
 
 // GetSkill mocks base method.
-func (m *MockPlatformClientInterface) GetSkill(ctx context.Context, skillID string) (*cli.Skill, error) {
+func (m *MockAPIClientInterface) GetSkill(ctx context.Context, skillID string) (*cli.Skill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSkill", ctx, skillID)
 	ret0, _ := ret[0].(*cli.Skill)
@@ -355,13 +370,13 @@ func (m *MockPlatformClientInterface) GetSkill(ctx context.Context, skillID stri
 }
 
 // GetSkill indicates an expected call of GetSkill.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetSkill(ctx, skillID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetSkill(ctx, skillID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSkill", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetSkill), ctx, skillID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSkill", reflect.TypeOf((*MockAPIClientInterface)(nil).GetSkill), ctx, skillID)
 }
 
 // GetTeamAgentConfigs mocks base method.
-func (m *MockPlatformClientInterface) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]cli.TeamAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]cli.TeamAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTeamAgentConfigs", ctx, teamID)
 	ret0, _ := ret[0].([]cli.TeamAgentConfigResponse)
@@ -370,13 +385,13 @@ func (m *MockPlatformClientInterface) GetTeamAgentConfigs(ctx context.Context, t
 }
 
 // GetTeamAgentConfigs indicates an expected call of GetTeamAgentConfigs.
-func (mr *MockPlatformClientInterfaceMockRecorder) GetTeamAgentConfigs(ctx, teamID any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) GetTeamAgentConfigs(ctx, teamID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamAgentConfigs", reflect.TypeOf((*MockPlatformClientInterface)(nil).GetTeamAgentConfigs), ctx, teamID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetTeamAgentConfigs), ctx, teamID)
 }
 
 // ListEmployeeSkills mocks base method.
-func (m *MockPlatformClientInterface) ListEmployeeSkills(ctx context.Context) (*cli.ListEmployeeSkillsResponse, error) {
+func (m *MockAPIClientInterface) ListEmployeeSkills(ctx context.Context) (*cli.ListEmployeeSkillsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListEmployeeSkills", ctx)
 	ret0, _ := ret[0].(*cli.ListEmployeeSkillsResponse)
@@ -385,13 +400,13 @@ func (m *MockPlatformClientInterface) ListEmployeeSkills(ctx context.Context) (*
 }
 
 // ListEmployeeSkills indicates an expected call of ListEmployeeSkills.
-func (mr *MockPlatformClientInterfaceMockRecorder) ListEmployeeSkills(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) ListEmployeeSkills(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmployeeSkills", reflect.TypeOf((*MockPlatformClientInterface)(nil).ListEmployeeSkills), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmployeeSkills", reflect.TypeOf((*MockAPIClientInterface)(nil).ListEmployeeSkills), ctx)
 }
 
 // ListSkills mocks base method.
-func (m *MockPlatformClientInterface) ListSkills(ctx context.Context) (*cli.ListSkillsResponse, error) {
+func (m *MockAPIClientInterface) ListSkills(ctx context.Context) (*cli.ListSkillsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSkills", ctx)
 	ret0, _ := ret[0].(*cli.ListSkillsResponse)
@@ -400,13 +415,13 @@ func (m *MockPlatformClientInterface) ListSkills(ctx context.Context) (*cli.List
 }
 
 // ListSkills indicates an expected call of ListSkills.
-func (mr *MockPlatformClientInterfaceMockRecorder) ListSkills(ctx any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) ListSkills(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSkills", reflect.TypeOf((*MockPlatformClientInterface)(nil).ListSkills), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSkills", reflect.TypeOf((*MockAPIClientInterface)(nil).ListSkills), ctx)
 }
 
 // Login mocks base method.
-func (m *MockPlatformClientInterface) Login(ctx context.Context, email, password string) (*cli.LoginResponse, error) {
+func (m *MockAPIClientInterface) Login(ctx context.Context, email, password string) (*cli.LoginResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, email, password)
 	ret0, _ := ret[0].(*cli.LoginResponse)
@@ -415,45 +430,45 @@ func (m *MockPlatformClientInterface) Login(ctx context.Context, email, password
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockPlatformClientInterfaceMockRecorder) Login(ctx, email, password any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) Login(ctx, email, password any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockPlatformClientInterface)(nil).Login), ctx, email, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAPIClientInterface)(nil).Login), ctx, email, password)
 }
 
 // SetBaseURL mocks base method.
-func (m *MockPlatformClientInterface) SetBaseURL(url string) {
+func (m *MockAPIClientInterface) SetBaseURL(url string) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetBaseURL", url)
 }
 
 // SetBaseURL indicates an expected call of SetBaseURL.
-func (mr *MockPlatformClientInterfaceMockRecorder) SetBaseURL(url any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) SetBaseURL(url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBaseURL", reflect.TypeOf((*MockPlatformClientInterface)(nil).SetBaseURL), url)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBaseURL", reflect.TypeOf((*MockAPIClientInterface)(nil).SetBaseURL), url)
 }
 
 // SetHTTPClient mocks base method.
-func (m *MockPlatformClientInterface) SetHTTPClient(client *http.Client) {
+func (m *MockAPIClientInterface) SetHTTPClient(client *http.Client) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetHTTPClient", client)
 }
 
 // SetHTTPClient indicates an expected call of SetHTTPClient.
-func (mr *MockPlatformClientInterfaceMockRecorder) SetHTTPClient(client any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) SetHTTPClient(client any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHTTPClient", reflect.TypeOf((*MockPlatformClientInterface)(nil).SetHTTPClient), client)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHTTPClient", reflect.TypeOf((*MockAPIClientInterface)(nil).SetHTTPClient), client)
 }
 
 // SetToken mocks base method.
-func (m *MockPlatformClientInterface) SetToken(token string) {
+func (m *MockAPIClientInterface) SetToken(token string) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetToken", token)
 }
 
 // SetToken indicates an expected call of SetToken.
-func (mr *MockPlatformClientInterfaceMockRecorder) SetToken(token any) *gomock.Call {
+func (mr *MockAPIClientInterfaceMockRecorder) SetToken(token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToken", reflect.TypeOf((*MockPlatformClientInterface)(nil).SetToken), token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToken", reflect.TypeOf((*MockAPIClientInterface)(nil).SetToken), token)
 }
 
 // MockAuthServiceInterface is a mock of AuthServiceInterface interface.

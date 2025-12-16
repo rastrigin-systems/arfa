@@ -64,7 +64,7 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
-			platformClient, err := c.PlatformClient()
+			platformClient, err := c.APIClient()
 			if err != nil {
 				return fmt.Errorf("failed to get platform client: %w", err)
 			}
@@ -89,7 +89,7 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 }
 
 // fetchAgentCascade fetches configuration from all levels for the specified agent
-func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, client cli.PlatformClientInterface) (*AgentConfigCascade, error) {
+func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, client cli.APIClientInterface) (*AgentConfigCascade, error) {
 	// Load config
 	cfg, err := configMgr.Load()
 	if err != nil {

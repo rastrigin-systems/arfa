@@ -37,7 +37,7 @@ func NewLoginCommand(c *container.Container) *cobra.Command {
 				}
 			}
 
-			platformClient, err := c.PlatformClient()
+			platformClient, err := c.APIClient()
 			if err != nil {
 				return fmt.Errorf("failed to get platform client: %w", err)
 			}
