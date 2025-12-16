@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
@@ -30,7 +31,8 @@ func NewInfoCommand() *cobra.Command {
 			}
 
 			agentService := cli.NewAgentService(platformClient, configManager)
-			agent, err := agentService.GetAgent(agentID)
+			ctx := context.Background()
+			agent, err := agentService.GetAgent(ctx, agentID)
 			if err != nil {
 				return fmt.Errorf("failed to get agent info: %w", err)
 			}

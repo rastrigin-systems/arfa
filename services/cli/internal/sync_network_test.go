@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -66,7 +67,8 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Perform sync
-	result, err := syncService.Sync()
+	ctx := context.Background()
+	result, err := syncService.Sync(ctx)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -86,7 +88,8 @@ func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Sync should fail when not authenticated
-	result, err := syncService.Sync()
+	ctx := context.Background()
+	result, err := syncService.Sync(ctx)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
@@ -134,7 +137,8 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Perform sync
-	result, err := syncService.Sync()
+	ctx := context.Background()
+	result, err := syncService.Sync(ctx)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)

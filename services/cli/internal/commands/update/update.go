@@ -1,6 +1,7 @@
 package update
 
 import (
+	"context"
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
@@ -31,9 +32,11 @@ func NewUpdateCommand() *cobra.Command {
 			agentService := cli.NewAgentService(platformClient, configManager)
 			syncService := cli.NewSyncService(configManager, platformClient, authService)
 
+			ctx := context.Background()
+
 			fmt.Println("Checking for updates...")
 
-			hasUpdates, err := agentService.CheckForUpdates(config.EmployeeID)
+			hasUpdates, err := agentService.CheckForUpdates(ctx, config.EmployeeID)
 			if err != nil {
 				return fmt.Errorf("failed to check for updates: %w", err)
 			}
@@ -47,7 +50,7 @@ func NewUpdateCommand() *cobra.Command {
 
 			if autoSync {
 				fmt.Println("\nSyncing updates...")
-				if _, err := syncService.Sync(); err != nil {
+				if _, err := syncService.Sync(ctx); err != nil {
 					return fmt.Errorf("failed to sync: %w", err)
 				}
 				fmt.Println("\n✓ Configuration updated successfully")

@@ -42,7 +42,7 @@ type SyncResult struct {
 }
 
 // Sync fetches configs from platform and stores them locally
-func (ss *SyncService) Sync() (*SyncResult, error) {
+func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 	// Ensure user is authenticated
 	config, err := ss.authService.RequireAuth()
 	if err != nil {
@@ -52,7 +52,7 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 	fmt.Println("✓ Fetching configs from platform...")
 
 	// Fetch resolved agent configs (using JWT-based /employees/me endpoint)
-	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs()
+	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch agent configs: %w", err)
 	}
@@ -104,7 +104,7 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 }
 
 // SyncClaudeCode fetches and installs complete Claude Code configuration
-func (ss *SyncService) SyncClaudeCode(targetDir string) error {
+func (ss *SyncService) SyncClaudeCode(ctx context.Context, targetDir string) error {
 	// Ensure user is authenticated
 	_, err := ss.authService.RequireAuth()
 	if err != nil {
@@ -116,7 +116,7 @@ func (ss *SyncService) SyncClaudeCode(targetDir string) error {
 
 	// Fetch complete Claude Code config
 	fmt.Println("📥 Downloading configurations...")
-	config, err := ss.platformClient.GetClaudeCodeConfig()
+	config, err := ss.platformClient.GetClaudeCodeConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Claude Code config: %w", err)
 	}
@@ -377,7 +377,7 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 
 	// Fetch effective Claude token from platform
 	fmt.Println("\nFetching Claude API token...")
-	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken()
+	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken(ctx)
 	if err != nil {
 		fmt.Printf("⚠ Warning: Could not fetch Claude token: %v\n", err)
 		fmt.Printf("  Falling back to provided API key (if any)\n")

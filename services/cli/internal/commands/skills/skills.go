@@ -1,6 +1,7 @@
 package skills
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -82,7 +83,8 @@ func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 				return err
 			}
 
-			skills, err := skillsService.ListCatalogSkills()
+			ctx := context.Background()
+			skills, err := skillsService.ListCatalogSkills(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to list skills: %w", err)
 			}
@@ -183,7 +185,8 @@ func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 			}
 
 			// Try to find skill in catalog by name
-			skill, err := skillsService.GetSkillByName(skillName)
+			ctx := context.Background()
+			skill, err := skillsService.GetSkillByName(ctx, skillName)
 			if err != nil {
 				return fmt.Errorf("failed to get skill: %w", err)
 			}
@@ -251,7 +254,8 @@ func NewMyCommand(configManager *cli.ConfigManager, platformClient *cli.Platform
 
 			skillsService := cli.NewSkillsService(platformClient, configManager)
 
-			skills, err := skillsService.ListEmployeeSkills()
+			ctx := context.Background()
+			skills, err := skillsService.ListEmployeeSkills(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to list employee skills: %w", err)
 			}

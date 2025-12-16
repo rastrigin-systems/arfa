@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -43,7 +44,8 @@ func TestAgentService_ListAgents(t *testing.T) {
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
-	agents, err := svc.ListAgents()
+	ctx := context.Background()
+	agents, err := svc.ListAgents(ctx)
 
 	require.NoError(t, err)
 	assert.Len(t, agents, 2)
@@ -74,7 +76,8 @@ func TestAgentService_GetAgent(t *testing.T) {
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
-	agent, err := svc.GetAgent("agent-1")
+	ctx := context.Background()
+	agent, err := svc.GetAgent(ctx, "agent-1")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Claude Code", agent.Name)
@@ -110,7 +113,8 @@ func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
-	configs, err := svc.ListEmployeeAgentConfigs("emp-1")
+	ctx := context.Background()
+	configs, err := svc.ListEmployeeAgentConfigs(ctx, "emp-1")
 
 	require.NoError(t, err)
 	assert.Len(t, configs, 1)
@@ -141,7 +145,8 @@ func TestAgentService_RequestAgent(t *testing.T) {
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
-	err := svc.RequestAgent("emp-1", "agent-1")
+	ctx := context.Background()
+	err := svc.RequestAgent(ctx, "emp-1", "agent-1")
 
 	require.NoError(t, err)
 }

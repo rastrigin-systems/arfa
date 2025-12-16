@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
@@ -37,13 +38,15 @@ func NewLoginCommand() *cobra.Command {
 			platformClient := cli.NewPlatformClient(platformURL)
 			authService := cli.NewAuthService(configManager, platformClient)
 
+			ctx := context.Background()
+
 			// Use interactive login if credentials not provided via flags
 			if email == "" || password == "" {
-				return authService.LoginInteractive()
+				return authService.LoginInteractive(ctx)
 			}
 
 			// Non-interactive login
-			if err := authService.Login(platformURL, email, password); err != nil {
+			if err := authService.Login(ctx, platformURL, email, password); err != nil {
 				return err
 			}
 

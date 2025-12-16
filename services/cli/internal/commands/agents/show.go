@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -97,15 +98,17 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 	client := cli.NewPlatformClient(cfg.PlatformURL)
 	client.SetToken(cfg.Token)
 
+	ctx := context.Background()
+
 	// 1. Get current employee info
-	employee, err := client.GetCurrentEmployee()
+	employee, err := client.GetCurrentEmployee(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current employee: %w", err)
 	}
 
 	// 2. Get all agent configs to find matching agent
 	// Get resolved config first to find the agent
-	resolvedConfigs, err := client.GetResolvedAgentConfigs(employee.ID)
+	resolvedConfigs, err := client.GetResolvedAgentConfigs(ctx, employee.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
@@ -126,7 +129,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 	}
 
 	// 3. Get org-level config
-	orgConfigs, err := client.GetOrgAgentConfigs()
+	orgConfigs, err := client.GetOrgAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get org configs: %w", err)
 	}
@@ -146,7 +149,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 	// 4. Get team-level config (if employee has team)
 	var teamConfig *ConfigLevel
 	if employee.TeamID != nil && *employee.TeamID != "" {
-		teamConfigs, err := client.GetTeamAgentConfigs(*employee.TeamID)
+		teamConfigs, err := client.GetTeamAgentConfigs(ctx, *employee.TeamID)
 		if err == nil { // Ignore errors for team configs
 			for _, cfg := range teamConfigs {
 				if cfg.AgentID == targetAgent.AgentID {
@@ -163,7 +166,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 
 	// 5. Get employee-level config
 	var employeeConfig *ConfigLevel
-	employeeConfigs, err := client.GetEmployeeAgentConfigs(employee.ID)
+	employeeConfigs, err := client.GetEmployeeAgentConfigs(ctx, employee.ID)
 	if err == nil { // Ignore errors for employee configs
 		for _, cfg := range employeeConfigs {
 			if cfg.AgentID == targetAgent.AgentID {

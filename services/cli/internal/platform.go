@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,14 +65,14 @@ type LoginEmployeeInfo struct {
 }
 
 // Login authenticates the user and returns a token
-func (pc *PlatformClient) Login(email, password string) (*LoginResponse, error) {
+func (pc *PlatformClient) Login(ctx context.Context, email, password string) (*LoginResponse, error) {
 	reqBody := LoginRequest{
 		Email:    email,
 		Password: password,
 	}
 
 	var resp LoginResponse
-	if err := pc.doRequest("POST", "/auth/login", reqBody, &resp); err != nil {
+	if err := pc.doRequest(ctx, "POST", "/auth/login", reqBody, &resp); err != nil {
 		return nil, fmt.Errorf("login failed: %w", err)
 	}
 
@@ -90,10 +91,10 @@ type EmployeeInfo struct {
 	TeamID   *string `json:"team_id"` // nullable
 }
 
-func (pc *PlatformClient) GetEmployeeInfo(employeeID string) (*EmployeeInfo, error) {
+func (pc *PlatformClient) GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error) {
 	var resp EmployeeInfo
 	endpoint := fmt.Sprintf("/employees/%s", employeeID)
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get employee info: %w", err)
 	}
 	return &resp, nil
@@ -141,10 +142,10 @@ type ResolvedConfigsResponse struct {
 }
 
 // GetResolvedAgentConfigs fetches resolved agent configurations for an employee
-func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentConfig, error) {
+func (pc *PlatformClient) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error) {
 	var resp ResolvedConfigsResponse
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs/resolved", employeeID)
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
 
@@ -175,10 +176,10 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(employeeID string) ([]AgentCon
 
 // GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee (JWT-based)
 // Uses /employees/me/agent-configs/resolved endpoint which derives employee from JWT token
-func (pc *PlatformClient) GetMyResolvedAgentConfigs() ([]AgentConfig, error) {
+func (pc *PlatformClient) GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error) {
 	var resp ResolvedConfigsResponse
 	endpoint := "/employees/me/agent-configs/resolved"
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
 
@@ -216,10 +217,10 @@ type ClaudeTokenStatusResponse struct {
 }
 
 // GetClaudeTokenStatus fetches the Claude token status for the current employee
-func (pc *PlatformClient) GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, error) {
+func (pc *PlatformClient) GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error) {
 	var resp ClaudeTokenStatusResponse
 	endpoint := "/employees/me/claude-token/status"
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get Claude token status: %w", err)
 	}
 	return &resp, nil
@@ -236,20 +237,20 @@ type EffectiveClaudeTokenResponse struct {
 
 // GetEffectiveClaudeToken fetches the effective Claude token for the current employee
 // Returns the actual token value (personal if set, otherwise company token)
-func (pc *PlatformClient) GetEffectiveClaudeToken() (string, error) {
+func (pc *PlatformClient) GetEffectiveClaudeToken(ctx context.Context) (string, error) {
 	var resp EffectiveClaudeTokenResponse
 	endpoint := "/employees/me/claude-token/effective"
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return "", fmt.Errorf("failed to get effective Claude token: %w", err)
 	}
 	return resp.Token, nil
 }
 
 // GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata
-func (pc *PlatformClient) GetEffectiveClaudeTokenInfo() (*EffectiveClaudeTokenResponse, error) {
+func (pc *PlatformClient) GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error) {
 	var resp EffectiveClaudeTokenResponse
 	endpoint := "/employees/me/claude-token/effective"
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
 	}
 	return &resp, nil
@@ -283,44 +284,44 @@ type EmployeeAgentConfigResponse struct {
 }
 
 // GetOrgAgentConfigs fetches organization-level agent configs
-func (pc *PlatformClient) GetOrgAgentConfigs() ([]OrgAgentConfigResponse, error) {
+func (pc *PlatformClient) GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error) {
 	var resp struct {
 		Configs []OrgAgentConfigResponse `json:"configs"`
 	}
-	if err := pc.doRequest("GET", "/organizations/current/agent-configs", nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", "/organizations/current/agent-configs", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get org agent configs: %w", err)
 	}
 	return resp.Configs, nil
 }
 
 // GetTeamAgentConfigs fetches team-level agent configs
-func (pc *PlatformClient) GetTeamAgentConfigs(teamID string) ([]TeamAgentConfigResponse, error) {
+func (pc *PlatformClient) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error) {
 	var resp struct {
 		Configs []TeamAgentConfigResponse `json:"configs"`
 	}
 	endpoint := fmt.Sprintf("/teams/%s/agent-configs", teamID)
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get team agent configs: %w", err)
 	}
 	return resp.Configs, nil
 }
 
 // GetEmployeeAgentConfigs fetches employee-level agent configs
-func (pc *PlatformClient) GetEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfigResponse, error) {
+func (pc *PlatformClient) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error) {
 	var resp struct {
 		Configs []EmployeeAgentConfigResponse `json:"configs"`
 	}
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := pc.doRequest("GET", endpoint, nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get employee agent configs: %w", err)
 	}
 	return resp.Configs, nil
 }
 
 // GetCurrentEmployee fetches information about the currently authenticated employee
-func (pc *PlatformClient) GetCurrentEmployee() (*EmployeeInfo, error) {
+func (pc *PlatformClient) GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error) {
 	var resp EmployeeInfo
-	if err := pc.doRequest("GET", "/auth/me", nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", "/auth/me", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get current employee: %w", err)
 	}
 	return &resp, nil
@@ -374,9 +375,9 @@ type MCPServerConfigSync struct {
 }
 
 // GetClaudeCodeConfig fetches the complete Claude Code configuration bundle
-func (pc *PlatformClient) GetClaudeCodeConfig() (*ClaudeCodeSyncResponse, error) {
+func (pc *PlatformClient) GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error) {
 	var resp ClaudeCodeSyncResponse
-	if err := pc.doRequest("GET", "/sync/claude-code", nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", "/sync/claude-code", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get Claude Code config: %w", err)
 	}
 	return &resp, nil
@@ -434,38 +435,38 @@ type ListEmployeeSkillsResponse struct {
 }
 
 // ListSkills fetches all available skills from the catalog
-func (pc *PlatformClient) ListSkills() (*ListSkillsResponse, error) {
+func (pc *PlatformClient) ListSkills(ctx context.Context) (*ListSkillsResponse, error) {
 	var resp ListSkillsResponse
-	if err := pc.doRequest("GET", "/skills", nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", "/skills", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list skills: %w", err)
 	}
 	return &resp, nil
 }
 
 // GetSkill fetches details for a specific skill by ID
-func (pc *PlatformClient) GetSkill(skillID string) (*Skill, error) {
+func (pc *PlatformClient) GetSkill(ctx context.Context, skillID string) (*Skill, error) {
 	var skill Skill
 	endpoint := fmt.Sprintf("/skills/%s", skillID)
-	if err := pc.doRequest("GET", endpoint, nil, &skill); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
 		return nil, fmt.Errorf("failed to get skill: %w", err)
 	}
 	return &skill, nil
 }
 
 // ListEmployeeSkills fetches skills assigned to the authenticated employee
-func (pc *PlatformClient) ListEmployeeSkills() (*ListEmployeeSkillsResponse, error) {
+func (pc *PlatformClient) ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error) {
 	var resp ListEmployeeSkillsResponse
-	if err := pc.doRequest("GET", "/employees/me/skills", nil, &resp); err != nil {
+	if err := pc.doRequest(ctx, "GET", "/employees/me/skills", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list employee skills: %w", err)
 	}
 	return &resp, nil
 }
 
 // GetEmployeeSkill fetches a specific skill assigned to the authenticated employee
-func (pc *PlatformClient) GetEmployeeSkill(skillID string) (*EmployeeSkill, error) {
+func (pc *PlatformClient) GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error) {
 	var skill EmployeeSkill
 	endpoint := fmt.Sprintf("/employees/me/skills/%s", skillID)
-	if err := pc.doRequest("GET", endpoint, nil, &skill); err != nil {
+	if err := pc.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
 		return nil, fmt.Errorf("failed to get employee skill: %w", err)
 	}
 	return &skill, nil
@@ -492,7 +493,7 @@ type CreateLogRequest struct {
 }
 
 // CreateLog sends a single log entry to the platform API
-func (pc *PlatformClient) CreateLog(entry LogEntry) error {
+func (pc *PlatformClient) CreateLog(ctx context.Context, entry LogEntry) error {
 	req := CreateLogRequest{
 		EventType:     entry.EventType,
 		EventCategory: entry.EventCategory,
@@ -511,7 +512,7 @@ func (pc *PlatformClient) CreateLog(entry LogEntry) error {
 		req.Payload = &entry.Payload
 	}
 
-	if err := pc.doRequest("POST", "/logs", req, nil); err != nil {
+	if err := pc.doRequest(ctx, "POST", "/logs", req, nil); err != nil {
 		return fmt.Errorf("failed to create log: %w", err)
 	}
 
@@ -519,11 +520,11 @@ func (pc *PlatformClient) CreateLog(entry LogEntry) error {
 }
 
 // CreateLogBatch sends multiple log entries in a single request
-func (pc *PlatformClient) CreateLogBatch(entries []LogEntry) error {
+func (pc *PlatformClient) CreateLogBatch(ctx context.Context, entries []LogEntry) error {
 	// For now, send logs individually
 	// TODO: Update API to support batch endpoint
 	for _, entry := range entries {
-		if err := pc.CreateLog(entry); err != nil {
+		if err := pc.CreateLog(ctx, entry); err != nil {
 			return err
 		}
 	}
@@ -531,7 +532,7 @@ func (pc *PlatformClient) CreateLogBatch(entries []LogEntry) error {
 }
 
 // doRequest is a helper method to perform HTTP requests
-func (pc *PlatformClient) doRequest(method, path string, body interface{}, result interface{}) error {
+func (pc *PlatformClient) doRequest(ctx context.Context, method, path string, body interface{}, result interface{}) error {
 	// Add /api/v1 prefix to all API calls
 	url := pc.baseURL + "/api/v1" + path
 
@@ -544,7 +545,7 @@ func (pc *PlatformClient) doRequest(method, path string, body interface{}, resul
 		reqBody = bytes.NewBuffer(jsonData)
 	}
 
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

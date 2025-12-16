@@ -44,6 +44,7 @@ type ConfigManagerInterface interface {
 
 // PlatformClientInterface defines the contract for API communication with the platform server.
 // Implementations handle all HTTP requests to the backend API.
+// All methods that make HTTP requests accept context.Context as the first parameter for cancellation and timeout support.
 type PlatformClientInterface interface {
 	// SetToken sets the authentication token for subsequent requests.
 	SetToken(token string)
@@ -60,79 +61,79 @@ type PlatformClientInterface interface {
 	// -------------------------------------------------------------------------
 
 	// Login authenticates the user and returns a token.
-	Login(email, password string) (*LoginResponse, error)
+	Login(ctx context.Context, email, password string) (*LoginResponse, error)
 
 	// GetCurrentEmployee fetches information about the currently authenticated employee.
-	GetCurrentEmployee() (*EmployeeInfo, error)
+	GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error)
 
 	// GetEmployeeInfo gets information about a specific employee by ID.
-	GetEmployeeInfo(employeeID string) (*EmployeeInfo, error)
+	GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Agent Configuration
 	// -------------------------------------------------------------------------
 
 	// GetResolvedAgentConfigs fetches resolved agent configurations for an employee.
-	GetResolvedAgentConfigs(employeeID string) ([]AgentConfig, error)
+	GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error)
 
 	// GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee.
 	// Uses JWT token to identify the employee.
-	GetMyResolvedAgentConfigs() ([]AgentConfig, error)
+	GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error)
 
 	// GetOrgAgentConfigs fetches organization-level agent configs.
-	GetOrgAgentConfigs() ([]OrgAgentConfigResponse, error)
+	GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error)
 
 	// GetTeamAgentConfigs fetches team-level agent configs.
-	GetTeamAgentConfigs(teamID string) ([]TeamAgentConfigResponse, error)
+	GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error)
 
 	// GetEmployeeAgentConfigs fetches employee-level agent configs.
-	GetEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfigResponse, error)
+	GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Claude Token Management
 	// -------------------------------------------------------------------------
 
 	// GetClaudeTokenStatus fetches the Claude token status for the current employee.
-	GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, error)
+	GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error)
 
 	// GetEffectiveClaudeToken fetches the effective Claude token value.
-	GetEffectiveClaudeToken() (string, error)
+	GetEffectiveClaudeToken(ctx context.Context) (string, error)
 
 	// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata.
-	GetEffectiveClaudeTokenInfo() (*EffectiveClaudeTokenResponse, error)
+	GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Sync
 	// -------------------------------------------------------------------------
 
 	// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle.
-	GetClaudeCodeConfig() (*ClaudeCodeSyncResponse, error)
+	GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Skills
 	// -------------------------------------------------------------------------
 
 	// ListSkills fetches all available skills from the catalog.
-	ListSkills() (*ListSkillsResponse, error)
+	ListSkills(ctx context.Context) (*ListSkillsResponse, error)
 
 	// GetSkill fetches details for a specific skill by ID.
-	GetSkill(skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills() (*ListEmployeeSkillsResponse, error)
+	ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee.
-	GetEmployeeSkill(skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
 
 	// -------------------------------------------------------------------------
 	// Logging
 	// -------------------------------------------------------------------------
 
 	// CreateLog sends a single log entry to the platform API.
-	CreateLog(entry LogEntry) error
+	CreateLog(ctx context.Context, entry LogEntry) error
 
 	// CreateLogBatch sends multiple log entries in a single request.
-	CreateLogBatch(entries []LogEntry) error
+	CreateLogBatch(ctx context.Context, entries []LogEntry) error
 }
 
 // ============================================================================
@@ -146,10 +147,10 @@ type PlatformClientInterface interface {
 // Implementations handle user login/logout and credential management.
 type AuthServiceInterface interface {
 	// LoginInteractive performs interactive login with prompts for URL, email, and password.
-	LoginInteractive() error
+	LoginInteractive(ctx context.Context) error
 
 	// Login performs non-interactive login with provided credentials.
-	Login(platformURL, email, password string) error
+	Login(ctx context.Context, platformURL, email, password string) error
 
 	// Logout removes stored credentials.
 	Logout() error
@@ -169,10 +170,10 @@ type AuthServiceInterface interface {
 // Implementations handle fetching configs from platform and storing locally.
 type SyncServiceInterface interface {
 	// Sync fetches configs from platform and stores them locally.
-	Sync() (*SyncResult, error)
+	Sync(ctx context.Context) (*SyncResult, error)
 
 	// SyncClaudeCode fetches and installs complete Claude Code configuration to targetDir.
-	SyncClaudeCode(targetDir string) error
+	SyncClaudeCode(ctx context.Context, targetDir string) error
 
 	// GetLocalAgentConfigs loads agent configs from local storage.
 	GetLocalAgentConfigs() ([]AgentConfig, error)
@@ -197,19 +198,19 @@ type SyncServiceInterface interface {
 // Implementations handle listing agents, managing configs, and checking updates.
 type AgentServiceInterface interface {
 	// ListAgents fetches all available agents from the platform.
-	ListAgents() ([]Agent, error)
+	ListAgents(ctx context.Context) ([]Agent, error)
 
 	// GetAgent fetches details for a specific agent.
-	GetAgent(agentID string) (*Agent, error)
+	GetAgent(ctx context.Context, agentID string) (*Agent, error)
 
 	// ListEmployeeAgentConfigs fetches employee's assigned agent configs.
-	ListEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfig, error)
+	ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error)
 
 	// RequestAgent creates an employee agent configuration (request for access).
-	RequestAgent(employeeID, agentID string) error
+	RequestAgent(ctx context.Context, employeeID, agentID string) error
 
 	// CheckForUpdates checks if there are config updates available.
-	CheckForUpdates(employeeID string) (bool, error)
+	CheckForUpdates(ctx context.Context, employeeID string) (bool, error)
 
 	// GetLocalAgents returns locally configured agents.
 	GetLocalAgents() ([]AgentConfig, error)
@@ -219,22 +220,22 @@ type AgentServiceInterface interface {
 // Implementations handle listing skills from catalog and local storage.
 type SkillsServiceInterface interface {
 	// ListCatalogSkills fetches all available skills from the platform catalog.
-	ListCatalogSkills() ([]Skill, error)
+	ListCatalogSkills(ctx context.Context) ([]Skill, error)
 
 	// GetSkill fetches details for a specific skill from the catalog.
-	GetSkill(skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*Skill, error)
 
 	// GetSkillByName fetches a skill by name (searches catalog).
-	GetSkillByName(name string) (*Skill, error)
+	GetSkillByName(ctx context.Context, name string) (*Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills() ([]EmployeeSkill, error)
+	ListEmployeeSkills(ctx context.Context) ([]EmployeeSkill, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the employee.
-	GetEmployeeSkill(skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
 
 	// GetEmployeeSkillByName fetches an employee skill by name.
-	GetEmployeeSkillByName(name string) (*EmployeeSkill, error)
+	GetEmployeeSkillByName(ctx context.Context, name string) (*EmployeeSkill, error)
 
 	// GetLocalSkills returns locally installed skills from .claude/skills/.
 	GetLocalSkills() ([]LocalSkillInfo, error)

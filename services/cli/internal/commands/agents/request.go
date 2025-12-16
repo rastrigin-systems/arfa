@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
@@ -30,9 +31,10 @@ func NewRequestCommand() *cobra.Command {
 			}
 
 			agentService := cli.NewAgentService(platformClient, configManager)
+			ctx := context.Background()
 
 			// Request the agent
-			if err := agentService.RequestAgent(config.EmployeeID, agentID); err != nil {
+			if err := agentService.RequestAgent(ctx, config.EmployeeID, agentID); err != nil {
 				return fmt.Errorf("failed to request agent: %w", err)
 			}
 

@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -69,7 +70,8 @@ func NewListCommand() *cobra.Command {
 			}
 
 			agentService := cli.NewAgentService(platformClient, configManager)
-			agents, err := agentService.ListAgents()
+			ctx := context.Background()
+			agents, err := agentService.ListAgents(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to list agents: %w", err)
 			}

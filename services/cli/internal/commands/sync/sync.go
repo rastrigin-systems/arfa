@@ -31,8 +31,10 @@ Optionally starts Docker containers for agents and MCP servers.`,
 			authService := cli.NewAuthService(configManager, platformClient)
 			syncService := cli.NewSyncService(configManager, platformClient, authService)
 
+			ctx := context.Background()
+
 			// Sync configs
-			result, err := syncService.Sync()
+			result, err := syncService.Sync(ctx)
 			if err != nil {
 				return err
 			}
@@ -63,7 +65,6 @@ Optionally starts Docker containers for agents and MCP servers.`,
 				syncService.SetDockerClient(dockerClient)
 
 				// Start containers
-				ctx := context.Background()
 				if err := syncService.StartContainers(ctx, workspace, apiKey); err != nil {
 					return fmt.Errorf("failed to start containers: %w", err)
 				}
