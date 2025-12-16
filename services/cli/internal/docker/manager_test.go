@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -10,35 +10,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewContainerManager(t *testing.T) {
+func TestNewManager(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	assert.NotNil(t, cm)
 	assert.Equal(t, "ubik-network", cm.networkName)
 	assert.NotNil(t, cm.dockerClient)
 }
 
-func TestContainerManager_SetupNetwork(t *testing.T) {
+func TestManager_SetupNetwork(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	ctx := context.Background()
 
 	// Remove network if it exists
@@ -62,18 +62,18 @@ func TestContainerManager_SetupNetwork(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestContainerManager_GetContainerStatus(t *testing.T) {
+func TestManager_GetContainerStatus(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	ctx := context.Background()
 
 	containers, err := cm.GetContainerStatus(ctx)
@@ -82,18 +82,18 @@ func TestContainerManager_GetContainerStatus(t *testing.T) {
 	t.Logf("Found %d ubik-managed containers", len(containers))
 }
 
-func TestContainerManager_StopContainers_NoContainers(t *testing.T) {
+func TestManager_StopContainers_NoContainers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	ctx := context.Background()
 
 	// Should handle case with no containers gracefully
@@ -101,18 +101,18 @@ func TestContainerManager_StopContainers_NoContainers(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestContainerManager_CleanupContainers_NoContainers(t *testing.T) {
+func TestManager_CleanupContainers_NoContainers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	ctx := context.Background()
 
 	// Should handle case with no stopped containers gracefully
@@ -184,18 +184,18 @@ func TestAgentSpec_Validation(t *testing.T) {
 }
 
 // Integration test: Create and start a simple container
-func TestContainerManager_StartMCPServer_Integration(t *testing.T) {
+func TestManager_StartMCPServer_Integration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	dockerClient, err := NewDockerClient()
+	dockerClient, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
 	defer dockerClient.Close()
 
-	cm := NewContainerManager(dockerClient)
+	cm := NewManager(dockerClient)
 	ctx := context.Background()
 
 	// Setup network

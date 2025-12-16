@@ -10,6 +10,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
@@ -216,7 +217,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	fmt.Println()
 
 	// Check if agent binary is installed
-	binaryPath, err := cli.FindAgentBinary(selectedAgent.AgentType)
+	binaryPath, err := docker.FindAgentBinary(selectedAgent.AgentType)
 	if err != nil {
 		return err
 	}
@@ -245,7 +246,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		jwtToken = cliConfig.Token
 	}
 
-	runnerConfig := cli.NativeRunnerConfig{
+	runnerConfig := docker.RunnerConfig{
 		AgentType: selectedAgent.AgentType,
 		AgentID:   selectedAgent.AgentID,
 		AgentName: selectedAgent.AgentName,
@@ -265,7 +266,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 
 	// Run agent natively
 	ctx := context.Background()
-	runner := cli.NewNativeRunner()
+	runner := docker.NewRunner()
 	startTime := time.Now()
 
 	err = runner.Run(ctx, runnerConfig, os.Stdin, os.Stdout, os.Stderr)

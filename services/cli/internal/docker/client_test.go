@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 // Note: These tests require Docker to be running
 // They are integration tests and should be run separately
 
-func TestNewDockerClient(t *testing.T) {
+func TestNewClient(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -26,12 +26,12 @@ func TestNewDockerClient(t *testing.T) {
 	assert.NotNil(t, client.cli)
 }
 
-func TestDockerClient_Close(t *testing.T) {
+func TestClient_Close(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -41,12 +41,12 @@ func TestDockerClient_Close(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestDockerClient_Ping(t *testing.T) {
+func TestClient_Ping(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -57,12 +57,12 @@ func TestDockerClient_Ping(t *testing.T) {
 	assert.NoError(t, err, "Docker daemon should be accessible")
 }
 
-func TestDockerClient_GetVersion(t *testing.T) {
+func TestClient_GetVersion(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -75,12 +75,12 @@ func TestDockerClient_GetVersion(t *testing.T) {
 	t.Logf("Docker version: %s", version)
 }
 
-func TestDockerClient_NetworkExists(t *testing.T) {
+func TestClient_NetworkExists(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -99,12 +99,12 @@ func TestDockerClient_NetworkExists(t *testing.T) {
 	assert.False(t, exists)
 }
 
-func TestDockerClient_CreateAndRemoveNetwork(t *testing.T) {
+func TestClient_CreateAndRemoveNetwork(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -136,12 +136,12 @@ func TestDockerClient_CreateAndRemoveNetwork(t *testing.T) {
 	assert.False(t, exists)
 }
 
-func TestDockerClient_ListContainers(t *testing.T) {
+func TestClient_ListContainers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -165,12 +165,12 @@ func TestDockerClient_ListContainers(t *testing.T) {
 	assert.LessOrEqual(t, len(runningContainers), len(containers))
 }
 
-func TestDockerClient_ContainerInfo(t *testing.T) {
+func TestClient_ContainerInfo(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}
@@ -191,12 +191,12 @@ func TestDockerClient_ContainerInfo(t *testing.T) {
 	}
 }
 
-func TestDockerClient_PullImage_Error(t *testing.T) {
+func TestClient_PullImage_Error(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Docker integration test in short mode")
 	}
 
-	client, err := NewDockerClient()
+	client, err := NewClient()
 	if err != nil {
 		t.Skipf("Docker not available: %v", err)
 	}

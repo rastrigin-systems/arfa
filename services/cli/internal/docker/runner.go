@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 	"golang.org/x/term"
 )
 
-// NativeRunner manages native process execution for agents
-type NativeRunner struct {
+// Runner manages native process execution for agents
+type Runner struct {
 	cmd               *exec.Cmd
 	pty               *os.File
 	workspace         string
@@ -31,59 +31,9 @@ type NativeRunner struct {
 	sessionRegistered bool
 }
 
-// NativeRunnerConfig contains configuration for starting an agent
-type NativeRunnerConfig struct {
-	AgentType   string
-	AgentID     string
-	AgentName   string
-	Workspace   string
-	APIKey      string
-	ProxyPort   int
-	CertPath    string
-	SessionID   string
-	Token       string            // JWT token for proxy authentication
-	EmployeeID  string            // Employee ID (for backward compatibility, prefer Token)
-	Environment map[string]string // Additional env vars from agent config
-}
-
-// AgentTypeMapping maps API agent types to CLI agent types
-// This translates the database agent_type values to the binary names
-var AgentTypeMapping = map[string]string{
-	// API types -> CLI types
-	"ide_assistant":   "claude-code",
-	"code_completion": "cursor",
-	"ai_editor":       "windsurf",
-	"gemini_agent":    "gemini",
-	"pair_programmer": "aider",
-	// Also allow direct CLI types for backwards compatibility
-	"claude-code": "claude-code",
-	"cursor":      "cursor",
-	"windsurf":    "windsurf",
-	"gemini":      "gemini",
-	"aider":       "aider",
-}
-
-// AgentBinary maps CLI agent types to their binary names
-var AgentBinaries = map[string][]string{
-	"claude-code": {"claude"},
-	"cursor":      {"cursor"},
-	"windsurf":    {"windsurf"},
-	"gemini":      {"gemini"},
-	"aider":       {"aider"},
-}
-
-// AgentEnvVars maps agent types to their API key environment variable names
-var AgentEnvVars = map[string]string{
-	"claude-code": "ANTHROPIC_API_KEY",
-	"cursor":      "ANTHROPIC_API_KEY",
-	"windsurf":    "ANTHROPIC_API_KEY",
-	"gemini":      "GEMINI_API_KEY",
-	"aider":       "ANTHROPIC_API_KEY",
-}
-
-// NewNativeRunner creates a new native runner instance
-func NewNativeRunner() *NativeRunner {
-	return &NativeRunner{}
+// NewRunner creates a new native runner instance
+func NewRunner() *Runner {
+	return &Runner{}
 }
 
 // NormalizeAgentType converts API agent types to CLI agent types
@@ -132,7 +82,7 @@ func getInstallInstructions(agentType string) string {
 }
 
 // Start launches the agent as a native process
-func (r *NativeRunner) Start(ctx context.Context, config NativeRunnerConfig) error {
+func (r *Runner) Start(ctx context.Context, config RunnerConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -211,7 +161,7 @@ func (r *NativeRunner) Start(ctx context.Context, config NativeRunnerConfig) err
 }
 
 // Run executes the agent and handles I/O proxying
-func (r *NativeRunner) Run(ctx context.Context, config NativeRunnerConfig, stdin io.Reader, stdout, stderr io.Writer) error {
+func (r *Runner) Run(ctx context.Context, config RunnerConfig, stdin io.Reader, stdout, stderr io.Writer) error {
 	// Try to register with security gateway for session-specific proxy
 	sessionResp, err := r.RegisterWithSecurityGateway(config)
 	if err != nil {
@@ -327,7 +277,7 @@ func (r *NativeRunner) Run(ctx context.Context, config NativeRunnerConfig, stdin
 }
 
 // resizePty resizes the PTY to match the terminal size
-func (r *NativeRunner) resizePty() {
+func (r *Runner) resizePty() {
 	if r.pty == nil {
 		return
 	}
@@ -343,7 +293,7 @@ func (r *NativeRunner) resizePty() {
 }
 
 // Stop terminates the agent process
-func (r *NativeRunner) Stop() error {
+func (r *Runner) Stop() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -379,7 +329,7 @@ func (r *NativeRunner) Stop() error {
 }
 
 // Wait waits for the process to complete
-func (r *NativeRunner) Wait() error {
+func (r *Runner) Wait() error {
 	if r.cmd == nil {
 		return nil
 	}
@@ -387,7 +337,7 @@ func (r *NativeRunner) Wait() error {
 }
 
 // IsRunning returns true if the process is still running
-func (r *NativeRunner) IsRunning() bool {
+func (r *Runner) IsRunning() bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -401,7 +351,7 @@ func (r *NativeRunner) IsRunning() bool {
 }
 
 // PID returns the process ID of the running agent
-func (r *NativeRunner) PID() int {
+func (r *Runner) PID() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -413,7 +363,7 @@ func (r *NativeRunner) PID() int {
 
 // RegisterWithSecurityGateway registers the session with the proxy daemon
 // and returns the allocated port for this session's proxy
-func (r *NativeRunner) RegisterWithSecurityGateway(config NativeRunnerConfig) (*httpproxy.ControlSessionResponse, error) {
+func (r *Runner) RegisterWithSecurityGateway(config RunnerConfig) (*httpproxy.ControlSessionResponse, error) {
 	// Get control client
 	client, err := httpproxy.NewDefaultControlClient()
 	if err != nil {
@@ -440,7 +390,7 @@ func (r *NativeRunner) RegisterWithSecurityGateway(config NativeRunnerConfig) (*
 }
 
 // UnregisterFromSecurityGateway unregisters the session from the proxy daemon
-func (r *NativeRunner) UnregisterFromSecurityGateway() error {
+func (r *Runner) UnregisterFromSecurityGateway() error {
 	if !r.sessionRegistered || r.controlClient == nil {
 		return nil
 	}

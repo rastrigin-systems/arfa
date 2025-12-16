@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
@@ -71,7 +71,7 @@ func NewStatusCommand(c *container.Container) *cobra.Command {
 
 					// Check if agent binary is installed
 					binaryStatus := ""
-					if _, err := cli.FindAgentBinary(ac.AgentType); err != nil {
+					if _, err := docker.FindAgentBinary(ac.AgentType); err != nil {
 						binaryStatus = " (not installed)"
 					}
 

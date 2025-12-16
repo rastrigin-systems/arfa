@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"os/exec"
@@ -86,7 +86,7 @@ func TestNormalizeAgentType(t *testing.T) {
 	}
 }
 
-func TestAgentTypeMapping(t *testing.T) {
+func TestAgentTypeMapping_Completeness(t *testing.T) {
 	// Verify all API agent types are mapped
 	expectedMappings := map[string]string{
 		"ide_assistant":   "claude-code",
@@ -105,7 +105,7 @@ func TestAgentTypeMapping(t *testing.T) {
 	}
 }
 
-func TestAgentBinaries(t *testing.T) {
+func TestAgentBinaries_Completeness(t *testing.T) {
 	// Verify all expected agent types are mapped
 	expectedAgents := []string{"claude-code", "cursor", "windsurf", "gemini", "aider"}
 
@@ -116,7 +116,7 @@ func TestAgentBinaries(t *testing.T) {
 	}
 }
 
-func TestAgentEnvVars(t *testing.T) {
+func TestAgentEnvVars_Completeness(t *testing.T) {
 	tests := []struct {
 		agentType   string
 		expectedVar string
@@ -142,8 +142,8 @@ func TestAgentEnvVars(t *testing.T) {
 	}
 }
 
-func TestNewNativeRunner(t *testing.T) {
-	runner := NewNativeRunner()
+func TestNewRunner(t *testing.T) {
+	runner := NewRunner()
 
 	if runner == nil {
 		t.Error("expected non-nil runner")
