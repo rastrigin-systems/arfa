@@ -9,6 +9,7 @@ import (
 
 	"github.com/fatih/color"
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
@@ -119,7 +120,7 @@ func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, c
 	}
 
 	// Find matching agent by name, type, or ID
-	var targetAgent *cli.AgentConfig
+	var targetAgent *api.AgentConfig
 	for i := range resolvedConfigs {
 		if resolvedConfigs[i].AgentName == agentName ||
 			resolvedConfigs[i].AgentType == agentName ||

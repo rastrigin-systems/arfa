@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/sync"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,13 +21,13 @@ import (
 // setupAuthenticatedConfig creates a config file with valid authentication.
 func setupAuthenticatedConfig(t *testing.T, tempDir, platformURL string) string {
 	configPath := filepath.Join(tempDir, "config.json")
-	config := cli.Config{
+	cfg := config.Config{
 		PlatformURL:  platformURL,
 		Token:        "valid-token",
 		TokenExpires: time.Now().Add(24 * time.Hour),
 		EmployeeID:   "emp-123",
 	}
-	configData, err := json.Marshal(config)
+	configData, err := json.Marshal(cfg)
 	require.NoError(t, err)
 	err = os.WriteFile(configPath, configData, 0600)
 	require.NoError(t, err)
@@ -47,8 +48,8 @@ func TestSyncCommand_Success(t *testing.T) {
 
 			switch r.URL.Path {
 			case "/api/v1/employees/me/agent-configs/resolved":
-				resp := cli.ResolvedConfigsResponse{
-					Configs: []cli.AgentConfigAPIResponse{
+				resp := api.ResolvedConfigsResponse{
+					Configs: []api.AgentConfigAPIResponse{
 						{
 							AgentID:   "agent-1",
 							AgentName: "Claude Code",
@@ -108,8 +109,8 @@ func TestSyncCommand_Success(t *testing.T) {
 			}
 
 			if r.URL.Path == "/api/v1/employees/me/agent-configs/resolved" {
-				resp := cli.ResolvedConfigsResponse{
-					Configs: []cli.AgentConfigAPIResponse{},
+				resp := api.ResolvedConfigsResponse{
+					Configs: []api.AgentConfigAPIResponse{},
 					Total:   0,
 				}
 				w.Header().Set("Content-Type", "application/json")
@@ -155,7 +156,7 @@ func TestSyncCommand_NotAuthenticated(t *testing.T) {
 		// Setup with empty config (not authenticated)
 		tempDir := t.TempDir()
 		configPath := filepath.Join(tempDir, "config.json")
-		emptyConfig := cli.Config{}
+		emptyConfig := config.Config{}
 		configData, _ := json.Marshal(emptyConfig)
 		os.WriteFile(configPath, configData, 0600)
 
@@ -187,7 +188,7 @@ func TestSyncCommand_NotAuthenticated(t *testing.T) {
 		// Setup with expired token
 		tempDir := t.TempDir()
 		configPath := filepath.Join(tempDir, "config.json")
-		expiredConfig := cli.Config{
+		expiredConfig := config.Config{
 			PlatformURL:  server.URL,
 			Token:        "expired-token",
 			TokenExpires: time.Now().Add(-1 * time.Hour), // Expired

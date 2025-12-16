@@ -7,9 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Note: Using local types defined in agents.go (Agent, ListAgentsResponse, etc.)
 
 func TestAgentService_ListAgents(t *testing.T) {
 	// Setup mock server
@@ -40,7 +43,7 @@ func TestAgentService_ListAgents(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewAPIClient(server.URL)
+	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -72,7 +75,7 @@ func TestAgentService_GetAgent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewAPIClient(server.URL)
+	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -109,7 +112,7 @@ func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewAPIClient(server.URL)
+	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -141,7 +144,7 @@ func TestAgentService_RequestAgent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewAPIClient(server.URL)
+	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)

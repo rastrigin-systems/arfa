@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 func TestNewAgentPicker(t *testing.T) {
@@ -16,7 +19,7 @@ func TestNewAgentPicker(t *testing.T) {
 
 	// Create config manager with temp dir
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 	if picker == nil {
@@ -36,7 +39,7 @@ func TestAgentPicker_GetDefaultAgent_NoConfig(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 	defaultAgent := picker.GetDefaultAgent()
@@ -55,13 +58,13 @@ func TestAgentPicker_GetDefaultAgent_WithConfig(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	// Save config with default agent
-	config := &Config{
+	cfg := &config.Config{
 		DefaultAgent: "test-agent-123",
 	}
-	if err := configManager.Save(config); err != nil {
+	if err := configManager.Save(cfg); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
 
@@ -82,13 +85,13 @@ func TestAgentPicker_ClearDefault(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	// Save config with default agent
-	config := &Config{
+	cfg := &config.Config{
 		DefaultAgent: "test-agent-123",
 	}
-	if err := configManager.Save(config); err != nil {
+	if err := configManager.Save(cfg); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
 
@@ -115,11 +118,11 @@ func TestAgentPicker_SelectAgent_NoAgents(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 
-	_, err = picker.SelectAgent([]AgentConfig{}, false, false)
+	_, err = picker.SelectAgent([]api.AgentConfig{}, false, false)
 	if err == nil {
 		t.Error("expected error for empty agents list")
 	}
@@ -137,11 +140,11 @@ func TestAgentPicker_SelectAgent_NoEnabledAgents(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 
-	agents := []AgentConfig{
+	agents := []api.AgentConfig{
 		{
 			AgentID:   "agent-1",
 			AgentName: "Test Agent",
@@ -167,16 +170,16 @@ func TestAgentPicker_SelectAgent_SingleAgent(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := NewConfigManagerWithPath(configPath)
+	configManager := config.NewManagerWithPath(configPath)
 
 	// Save empty config
-	if err := configManager.Save(&Config{}); err != nil {
+	if err := configManager.Save(&config.Config{}); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
 
 	picker := NewAgentPicker(configManager)
 
-	agents := []AgentConfig{
+	agents := []api.AgentConfig{
 		{
 			AgentID:     "agent-1",
 			AgentName:   "Test Agent",

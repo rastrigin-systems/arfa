@@ -5,6 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,9 +15,9 @@ import (
 func TestSyncService_SetDockerClient(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Initially no Docker client
@@ -44,9 +47,9 @@ func TestSyncService_SetDockerClient(t *testing.T) {
 func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	ctx := context.Background()
@@ -59,9 +62,9 @@ func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	ctx := context.Background()
@@ -74,9 +77,9 @@ func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 func TestSyncService_GetContainerStatus_NoContainerManager(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	ctx := context.Background()
@@ -105,9 +108,9 @@ func TestSyncService_StartContainers_NoConfigs(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Set Docker client
@@ -133,9 +136,9 @@ func TestSyncService_GetContainerStatus_WithDocker(t *testing.T) {
 
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Set Docker client
@@ -150,7 +153,7 @@ func TestSyncService_GetContainerStatus_WithDocker(t *testing.T) {
 }
 
 func TestConvertMCPServers(t *testing.T) {
-	configs := []MCPServerConfig{
+	configs := []api.MCPServerConfig{
 		{
 			ServerID:   "mcp-1",
 			ServerName: "Filesystem",
@@ -187,7 +190,7 @@ func TestConvertMCPServers(t *testing.T) {
 }
 
 func TestConvertMCPServers_Empty(t *testing.T) {
-	configs := []MCPServerConfig{}
+	configs := []api.MCPServerConfig{}
 	specs := convertMCPServers(configs)
 
 	assert.Empty(t, specs)
@@ -213,9 +216,9 @@ func TestSyncService_FullLifecycle_Integration(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	cm := NewConfigManagerWithPath(tempDir + "/config.json")
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(tempDir + "/config.json")
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Set Docker client

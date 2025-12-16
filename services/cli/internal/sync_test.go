@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,13 +15,13 @@ import (
 func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Create test agent configs
-	configs := []AgentConfig{
+	configs := []api.AgentConfig{
 		{
 			AgentID:   "agent-1",
 			AgentName: "Claude Code",
@@ -27,7 +30,7 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 			Configuration: map[string]interface{}{
 				"model": "claude-3-5-sonnet-20241022",
 			},
-			MCPServers: []MCPServerConfig{
+			MCPServers: []api.MCPServerConfig{
 				{
 					ServerID:   "mcp-1",
 					ServerName: "Filesystem",
@@ -47,7 +50,7 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 			Configuration: map[string]interface{}{
 				"version": "0.15.0",
 			},
-			MCPServers: []MCPServerConfig{},
+			MCPServers: []api.MCPServerConfig{},
 		},
 	}
 
@@ -84,7 +87,7 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 
 	// Verify loaded configs match
 	for _, loaded := range loadedConfigs {
-		var expected *AgentConfig
+		var expected *api.AgentConfig
 		for _, ec := range configs {
 			if ec.AgentID == loaded.AgentID {
 				expected = &ec
@@ -101,9 +104,9 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 func TestSyncService_GetAgentConfig(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Override home directory for testing
@@ -112,7 +115,7 @@ func TestSyncService_GetAgentConfig(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create test agent configs
-	configs := []AgentConfig{
+	configs := []api.AgentConfig{
 		{
 			AgentID:   "agent-1",
 			AgentName: "Claude Code",
@@ -153,9 +156,9 @@ func TestSyncService_GetAgentConfig(t *testing.T) {
 func TestSyncService_GetLocalAgentConfigs_EmptyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Override home directory for testing

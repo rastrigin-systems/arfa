@@ -12,18 +12,20 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // LogStreamer handles WebSocket connection and log streaming
 type LogStreamer struct {
-	apiClient     *APIClient
-	configManager *ConfigManager
+	apiClient     *api.Client
+	configManager *config.Manager
 	jsonOutput    bool // Whether to output full JSON
 	verbose       bool // Whether to show full payloads
 }
 
 // NewLogStreamer creates a new LogStreamer
-func NewLogStreamer(ac *APIClient, cm *ConfigManager) *LogStreamer {
+func NewLogStreamer(ac *api.Client, cm *config.Manager) *LogStreamer {
 	return &LogStreamer{
 		apiClient:     ac,
 		configManager: cm,

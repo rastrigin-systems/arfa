@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 )
 
 // WriteAgentFiles writes agent .md files to the specified directory
-func WriteAgentFiles(agentsDir string, agents []AgentConfigSync) error {
+func WriteAgentFiles(agentsDir string, agents []api.AgentConfigSync) error {
 	// Create agents directory
 	if err := os.MkdirAll(agentsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create agents directory: %w", err)
@@ -30,7 +32,7 @@ func WriteAgentFiles(agentsDir string, agents []AgentConfigSync) error {
 }
 
 // WriteSkillFiles writes skill files to the specified directory
-func WriteSkillFiles(skillsDir string, skills []SkillConfigSync) error {
+func WriteSkillFiles(skillsDir string, skills []api.SkillConfigSync) error {
 	// Create skills directory
 	if err := os.MkdirAll(skillsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create skills directory: %w", err)
@@ -71,7 +73,7 @@ func WriteSkillFiles(skillsDir string, skills []SkillConfigSync) error {
 }
 
 // MergeMCPConfig merges MCP servers into ~/.claude.json
-func MergeMCPConfig(configPath string, mcpServers []MCPServerConfigSync) error {
+func MergeMCPConfig(configPath string, mcpServers []api.MCPServerConfigSync) error {
 	// Read existing config (if exists)
 	var config map[string]interface{}
 

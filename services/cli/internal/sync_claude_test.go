@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +21,7 @@ func TestSyncService_WriteAgentFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Sample agent configs
-	agents := []AgentConfigSync{
+	agents := []api.AgentConfigSync{
 		{
 			ID:       "agent-1",
 			Name:     "go-backend-developer",
@@ -76,7 +79,7 @@ func TestSyncService_WriteAgentFiles_Empty(t *testing.T) {
 
 	// Write empty agent list
 	agentsDir := filepath.Join(tmpDir, ".claude", "agents")
-	err := WriteAgentFiles(agentsDir, []AgentConfigSync{})
+	err := WriteAgentFiles(agentsDir, []api.AgentConfigSync{})
 	require.NoError(t, err)
 
 	// Directory should still be created
@@ -89,7 +92,7 @@ func TestSyncService_WriteAgentFiles_Overwrite(t *testing.T) {
 	agentsDir := filepath.Join(tmpDir, ".claude", "agents")
 
 	// Write initial agent file
-	agents1 := []AgentConfigSync{
+	agents1 := []api.AgentConfigSync{
 		{
 			Name:      "go-backend-developer",
 			Filename:  "go-backend-developer.md",
@@ -101,7 +104,7 @@ func TestSyncService_WriteAgentFiles_Overwrite(t *testing.T) {
 	require.NoError(t, err)
 
 	// Overwrite with new content
-	agents2 := []AgentConfigSync{
+	agents2 := []api.AgentConfigSync{
 		{
 			Name:      "go-backend-developer",
 			Filename:  "go-backend-developer.md",
@@ -124,7 +127,7 @@ func TestSyncService_WriteSkillFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Sample skill configs
-	skills := []SkillConfigSync{
+	skills := []api.SkillConfigSync{
 		{
 			ID:          "skill-1",
 			Name:        "release-manager",
@@ -201,7 +204,7 @@ func TestSyncService_WriteSkillFiles_Empty(t *testing.T) {
 
 	// Write empty skill list
 	skillsDir := filepath.Join(tmpDir, ".claude", "skills")
-	err := WriteSkillFiles(skillsDir, []SkillConfigSync{})
+	err := WriteSkillFiles(skillsDir, []api.SkillConfigSync{})
 	require.NoError(t, err)
 
 	// Directory should still be created
@@ -228,7 +231,7 @@ func TestSyncService_MergeMCPConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	// New MCP servers to merge
-	mcpServers := []MCPServerConfigSync{
+	mcpServers := []api.MCPServerConfigSync{
 		{
 			Name:        "playwright",
 			DockerImage: "ubik/mcp-playwright:latest",
@@ -280,7 +283,7 @@ func TestSyncService_MergeMCPConfig_NewFile(t *testing.T) {
 	// No existing file
 
 	// New MCP servers
-	mcpServers := []MCPServerConfigSync{
+	mcpServers := []api.MCPServerConfigSync{
 		{
 			Name:        "playwright",
 			DockerImage: "ubik/mcp-playwright:latest",
@@ -313,7 +316,7 @@ func TestSyncService_MergeMCPConfig_OnlyEnabled(t *testing.T) {
 	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	// MCP servers (one disabled)
-	mcpServers := []MCPServerConfigSync{
+	mcpServers := []api.MCPServerConfigSync{
 		{
 			Name:        "playwright",
 			DockerImage: "ubik/mcp-playwright:latest",
@@ -362,8 +365,8 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	// Create mock HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/sync/claude-code" {
-			resp := ClaudeCodeSyncResponse{
-				Agents: []AgentConfigSync{
+			resp := api.ClaudeCodeSyncResponse{
+				Agents: []api.AgentConfigSync{
 					{
 						Name:      "go-backend-developer",
 						Filename:  "go-backend-developer.md",
@@ -377,7 +380,7 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 						IsEnabled: true,
 					},
 				},
-				Skills: []SkillConfigSync{
+				Skills: []api.SkillConfigSync{
 					{
 						Name:      "release-manager",
 						Version:   "1.0.0",
@@ -394,7 +397,7 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 						},
 					},
 				},
-				MCPServers: []MCPServerConfigSync{
+				MCPServers: []api.MCPServerConfigSync{
 					{
 						Name:        "playwright",
 						DockerImage: "ubik/mcp-playwright:latest",
@@ -418,19 +421,19 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	defer server.Close()
 
 	// Create services with real types
-	configManager := NewConfigManagerWithPath(filepath.Join(homeDir, ".ubik", "config.json"))
+	configManager := config.NewManagerWithPath(filepath.Join(homeDir, ".ubik", "config.json"))
 
 	// Save test config
-	testConfig := &Config{
+	testConfig := &config.Config{
 		Token:      "test-token",
 		EmployeeID: "emp-123",
 	}
 	configManager.Save(testConfig)
 
-	apiClient := NewAPIClient(server.URL)
+	apiClient := api.NewClient(server.URL)
 	apiClient.SetToken("test-token")
 
-	authService := NewAuthService(configManager, apiClient)
+	authService := auth.NewService(configManager, apiClient)
 
 	syncService := NewSyncService(configManager, apiClient, authService)
 

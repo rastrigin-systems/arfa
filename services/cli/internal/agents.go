@@ -7,16 +7,19 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // AgentService handles agent management operations
 type AgentService struct {
-	client        *APIClient
-	configManager *ConfigManager
+	client        *api.Client
+	configManager *config.Manager
 }
 
 // NewAgentService creates a new agent service
-func NewAgentService(client *APIClient, configManager *ConfigManager) *AgentService {
+func NewAgentService(client *api.Client, configManager *config.Manager) *AgentService {
 	return &AgentService{
 		client:        client,
 		configManager: configManager,
@@ -151,12 +154,12 @@ func (as *AgentService) CheckForUpdates(ctx context.Context, employeeID string) 
 }
 
 // GetLocalAgents returns locally configured agents
-func (as *AgentService) GetLocalAgents() ([]AgentConfig, error) {
+func (as *AgentService) GetLocalAgents() ([]api.AgentConfig, error) {
 	return as.getLocalAgentConfigsInternal()
 }
 
 // getLocalAgentConfigsInternal reads agent configs from ~/.ubik/config/agents/ directory
-func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
+func (as *AgentService) getLocalAgentConfigsInternal() ([]api.AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
@@ -166,7 +169,7 @@ func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 
 	// Check if agents directory exists
 	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {
-		return []AgentConfig{}, nil
+		return []api.AgentConfig{}, nil
 	}
 
 	entries, err := os.ReadDir(agentsDir)
@@ -174,7 +177,7 @@ func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 		return nil, fmt.Errorf("failed to read agents directory: %w", err)
 	}
 
-	var configs []AgentConfig
+	var configs []api.AgentConfig
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -217,7 +220,7 @@ func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 		}
 
 		// Load MCP servers if they exist
-		var mcpServers []MCPServerConfig
+		var mcpServers []api.MCPServerConfig
 		mcpPath := filepath.Join(agentDir, "mcp-servers.json")
 		if mcpData, err := os.ReadFile(mcpPath); err == nil {
 			if err := json.Unmarshal(mcpData, &mcpServers); err != nil {
@@ -225,7 +228,7 @@ func (as *AgentService) getLocalAgentConfigsInternal() ([]AgentConfig, error) {
 			}
 		}
 
-		configs = append(configs, AgentConfig{
+		configs = append(configs, api.AgentConfig{
 			AgentID:       metadata.AgentID,
 			AgentName:     metadata.AgentName,
 			AgentType:     metadata.AgentType,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
@@ -28,12 +28,12 @@ func NewLoginCommand(c *container.Container) *cobra.Command {
 			}
 
 			// If no URL provided via flag, check config for saved platform URL
-			if platformURL == "" || platformURL == cli.DefaultPlatformURL {
-				config, err := configManager.Load()
-				if err == nil && config.PlatformURL != "" {
-					platformURL = config.PlatformURL
+			if platformURL == "" || platformURL == config.DefaultPlatformURL {
+				cfg, err := configManager.Load()
+				if err == nil && cfg.PlatformURL != "" {
+					platformURL = cfg.PlatformURL
 				} else if platformURL == "" {
-					platformURL = cli.DefaultPlatformURL
+					platformURL = config.DefaultPlatformURL
 				}
 			}
 
@@ -65,7 +65,7 @@ func NewLoginCommand(c *container.Container) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or "+cli.DefaultPlatformURL+")")
+	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or "+config.DefaultPlatformURL+")")
 	cmd.Flags().StringVar(&email, "email", "", "Email address")
 	cmd.Flags().StringVar(&password, "password", "", "Password")
 

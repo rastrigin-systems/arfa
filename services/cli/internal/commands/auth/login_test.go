@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,17 +25,17 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
 				// Verify request body
-				var req cli.LoginRequest
+				var req api.LoginRequest
 				err := json.NewDecoder(r.Body).Decode(&req)
 				require.NoError(t, err)
 				assert.Equal(t, "test@example.com", req.Email)
 				assert.Equal(t, "password123", req.Password)
 
 				// Return success response
-				resp := cli.LoginResponse{
+				resp := api.LoginResponse{
 					Token:     "test-token-12345",
 					ExpiresAt: time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-					Employee: cli.LoginEmployeeInfo{
+					Employee: api.LoginEmployeeInfo{
 						ID:       "emp-123",
 						OrgID:    "org-456",
 						Email:    "test@example.com",
@@ -81,13 +82,13 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 		configData, err := os.ReadFile(configPath)
 		require.NoError(t, err)
 
-		var config cli.Config
-		err = json.Unmarshal(configData, &config)
+		var cfg config.Config
+		err = json.Unmarshal(configData, &cfg)
 		require.NoError(t, err)
 
-		assert.Equal(t, "test-token-12345", config.Token)
-		assert.Equal(t, "emp-123", config.EmployeeID)
-		assert.Equal(t, server.URL, config.PlatformURL)
+		assert.Equal(t, "test-token-12345", cfg.Token)
+		assert.Equal(t, "emp-123", cfg.EmployeeID)
+		assert.Equal(t, server.URL, cfg.PlatformURL)
 	})
 
 	t.Run("failure - invalid credentials", func(t *testing.T) {
@@ -173,10 +174,10 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/login" {
-			resp := cli.LoginResponse{
+			resp := api.LoginResponse{
 				Token:     "new-token",
 				ExpiresAt: time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-				Employee: cli.LoginEmployeeInfo{
+				Employee: api.LoginEmployeeInfo{
 					ID:    "emp-123",
 					OrgID: "org-456",
 					Email: "test@example.com",
@@ -194,7 +195,7 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "config.json")
 
-	existingConfig := cli.Config{
+	existingConfig := config.Config{
 		PlatformURL: server.URL,
 		Token:       "old-token",
 		EmployeeID:  "old-emp",
@@ -225,7 +226,7 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 
 	// Verify config was updated with new token
 	updatedData, _ := os.ReadFile(configPath)
-	var updatedConfig cli.Config
+	var updatedConfig config.Config
 	json.Unmarshal(updatedData, &updatedConfig)
 
 	assert.Equal(t, "new-token", updatedConfig.Token)

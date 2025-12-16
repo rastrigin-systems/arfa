@@ -82,7 +82,7 @@ func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 	if len(agentConfigs) == 0 {
 		fmt.Println("⚠ No agent configs found for your account")
 		return &SyncResult{
-			AgentConfigs: []AgentConfig{},
+			AgentConfigs: []api.AgentConfig{},
 			UpdatedAt:    time.Now(),
 		}, nil
 	}
@@ -213,7 +213,7 @@ type agentMetadata struct {
 
 // saveAgentConfigs saves agent configs to ~/.ubik/config/agents/
 // It also removes any agent directories that are not in the new config
-func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
+func (ss *SyncService) saveAgentConfigs(configs []api.AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
@@ -296,7 +296,7 @@ func (ss *SyncService) saveAgentConfigs(configs []AgentConfig) error {
 }
 
 // GetLocalAgentConfigs loads agent configs from local storage
-func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
+func (ss *SyncService) GetLocalAgentConfigs() ([]api.AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
@@ -306,7 +306,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 
 	// Check if agents directory exists
 	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {
-		return []AgentConfig{}, nil
+		return []api.AgentConfig{}, nil
 	}
 
 	entries, err := os.ReadDir(agentsDir)
@@ -314,7 +314,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 		return nil, fmt.Errorf("failed to read agents directory: %w", err)
 	}
 
-	var configs []AgentConfig
+	var configs []api.AgentConfig
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -349,7 +349,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 		}
 
 		// Load MCP servers if they exist
-		var mcpServers []MCPServerConfig
+		var mcpServers []api.MCPServerConfig
 		mcpPath := filepath.Join(agentDir, "mcp-servers.json")
 		if mcpData, err := os.ReadFile(mcpPath); err == nil {
 			if err := json.Unmarshal(mcpData, &mcpServers); err != nil {
@@ -358,7 +358,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 		}
 
 		// Build full AgentConfig
-		config := AgentConfig{
+		config := api.AgentConfig{
 			AgentID:       metadata.AgentID,
 			AgentName:     metadata.AgentName,
 			AgentType:     metadata.AgentType,
@@ -376,7 +376,7 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]AgentConfig, error) {
 }
 
 // GetAgentConfig retrieves a specific agent config by ID or name
-func (ss *SyncService) GetAgentConfig(idOrName string) (*AgentConfig, error) {
+func (ss *SyncService) GetAgentConfig(idOrName string) (*api.AgentConfig, error) {
 	configs, err := ss.GetLocalAgentConfigs()
 	if err != nil {
 		return nil, err
@@ -522,8 +522,8 @@ func (ss *SyncService) GetContainerStatus(ctx context.Context) ([]ContainerInfo,
 	return ss.containerManager.GetContainerStatus(ctx)
 }
 
-// Helper to convert MCPServerConfig to MCPServerSpec
-func convertMCPServers(configs []MCPServerConfig) []MCPServerSpec {
+// Helper to convert api.MCPServerConfig to MCPServerSpec
+func convertMCPServers(configs []api.MCPServerConfig) []MCPServerSpec {
 	specs := make([]MCPServerSpec, len(configs))
 	for i, cfg := range configs {
 		specs[i] = MCPServerSpec{
