@@ -1,11 +1,7 @@
 package cli
 
 import (
-	"io"
 	"net/http"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
 )
 
 // ============================================================================
@@ -242,119 +238,13 @@ type SkillsServiceInterface interface {
 	GetLocalSkill(name string) (*LocalSkillInfo, error)
 }
 
-// ============================================================================
-// Docker/Container Interfaces - PR 1.3
-// ============================================================================
-// Low-level interfaces for Docker daemon communication and container lifecycle.
-// ============================================================================
-
-// DockerClientInterface defines the contract for Docker daemon communication.
-// Implementations wrap the Docker SDK client for container operations.
-// NOTE: This interface uses the current signatures. Phase 2 will add context.Context.
-type DockerClientInterface interface {
-	// Close closes the Docker client connection.
-	Close() error
-
-	// Ping checks if Docker daemon is running.
-	Ping() error
-
-	// GetVersion returns Docker version information.
-	GetVersion() (string, error)
-
-	// -------------------------------------------------------------------------
-	// Image Operations
-	// -------------------------------------------------------------------------
-
-	// PullImage pulls a Docker image (or uses local if available).
-	PullImage(imageName string) error
-
-	// -------------------------------------------------------------------------
-	// Container Operations
-	// -------------------------------------------------------------------------
-
-	// CreateContainer creates a Docker container.
-	CreateContainer(config *DockerContainerConfig, hostConfig *DockerHostConfig, networkConfig *DockerNetworkConfig, containerName string) (string, error)
-
-	// StartContainer starts a Docker container.
-	StartContainer(containerID string) error
-
-	// StopContainer stops a Docker container.
-	StopContainer(containerID string, timeout *int) error
-
-	// RemoveContainer removes a Docker container.
-	RemoveContainer(containerID string, force bool) error
-
-	// RemoveContainerByName finds and removes a container by name.
-	RemoveContainerByName(name string) error
-
-	// ListContainers lists Docker containers with optional filters.
-	ListContainers(all bool, labelFilter map[string]string) ([]ContainerInfo, error)
-
-	// -------------------------------------------------------------------------
-	// Container Logs
-	// -------------------------------------------------------------------------
-
-	// GetContainerLogs retrieves logs from a container.
-	GetContainerLogs(containerID string, follow bool) (io.ReadCloser, error)
-
-	// StreamContainerLogs streams container logs to stdout/stderr.
-	StreamContainerLogs(containerID string) error
-
-	// -------------------------------------------------------------------------
-	// Network Operations
-	// -------------------------------------------------------------------------
-
-	// CreateNetwork creates a Docker network.
-	CreateNetwork(name string) (string, error)
-
-	// NetworkExists checks if a network exists.
-	NetworkExists(name string) (bool, error)
-
-	// RemoveNetwork removes a Docker network.
-	RemoveNetwork(name string) error
-}
-
-// ContainerManagerInterface defines the contract for managing containers.
-// Implementations orchestrate container lifecycle for agents and MCP servers.
-type ContainerManagerInterface interface {
-	// SetupNetwork creates the ubik network if it doesn't exist.
-	SetupNetwork() error
-
-	// StartMCPServer starts an MCP server container.
-	StartMCPServer(spec MCPServerSpec, workspacePath string) (string, error)
-
-	// StartAgent starts an agent container.
-	StartAgent(spec AgentSpec, workspacePath string) (string, error)
-
-	// StopContainers stops all ubik-managed containers.
-	StopContainers() error
-
-	// CleanupContainers removes all stopped ubik-managed containers.
-	CleanupContainers() error
-
-	// GetContainerStatus returns status of all ubik-managed containers.
-	GetContainerStatus() ([]ContainerInfo, error)
-}
-
-// DockerContainerConfig is an alias for container.Config from Docker SDK.
-// This allows the interface to not directly depend on Docker types.
-type DockerContainerConfig = container.Config
-
-// DockerHostConfig is an alias for container.HostConfig from Docker SDK.
-type DockerHostConfig = container.HostConfig
-
-// DockerNetworkConfig is an alias for network.NetworkingConfig from Docker SDK.
-type DockerNetworkConfig = network.NetworkingConfig
-
 // Compile-time interface implementation checks.
 // These ensure that the concrete types implement their respective interfaces.
 var (
-	_ ConfigManagerInterface    = (*ConfigManager)(nil)
-	_ PlatformClientInterface   = (*PlatformClient)(nil)
-	_ AuthServiceInterface      = (*AuthService)(nil)
-	_ SyncServiceInterface      = (*SyncService)(nil)
-	_ AgentServiceInterface     = (*AgentService)(nil)
-	_ SkillsServiceInterface    = (*SkillsService)(nil)
-	_ DockerClientInterface     = (*DockerClient)(nil)
-	_ ContainerManagerInterface = (*ContainerManager)(nil)
+	_ ConfigManagerInterface  = (*ConfigManager)(nil)
+	_ PlatformClientInterface = (*PlatformClient)(nil)
+	_ AuthServiceInterface    = (*AuthService)(nil)
+	_ SyncServiceInterface    = (*SyncService)(nil)
+	_ AgentServiceInterface   = (*AgentService)(nil)
+	_ SkillsServiceInterface  = (*SkillsService)(nil)
 )
