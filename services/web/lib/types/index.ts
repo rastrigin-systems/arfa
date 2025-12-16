@@ -11,6 +11,7 @@ import type { components } from '@/lib/api/schema';
 export type Agent = components['schemas']['Agent'];
 export type OrgAgentConfig = components['schemas']['OrgAgentConfig'];
 export type TeamAgentConfig = components['schemas']['TeamAgentConfig'];
+export type EmployeeAgentConfig = components['schemas']['EmployeeAgentConfig'];
 
 // Employee types
 export type Employee = components['schemas']['Employee'];

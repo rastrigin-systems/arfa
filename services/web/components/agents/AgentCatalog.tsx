@@ -3,19 +3,7 @@
 import { AgentCard } from './AgentCard';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  provider: string;
-  llm_provider: string;
-  llm_model: string;
-  is_public: boolean;
-  capabilities?: string[];
-  default_config?: Record<string, unknown>;
-};
+import type { Agent } from '@/lib/types';
 
 type AgentCatalogProps = {
   agents: Agent[];

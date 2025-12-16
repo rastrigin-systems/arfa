@@ -5,19 +5,13 @@ import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import type { Agent } from '@/lib/types';
 
 // Dynamically import Monaco Editor to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  provider: string;
-  default_config?: Record<string, unknown>;
-};
-
-type OrgAgentConfig = {
+// Minimal config type - only the fields used by the modal
+type ExistingConfig = {
   id: string;
   agent_id: string;
   config: Record<string, unknown>;
@@ -26,7 +20,7 @@ type OrgAgentConfig = {
 
 type ConfigEditorModalProps = {
   agent: Agent;
-  existingConfig: OrgAgentConfig | null;
+  existingConfig: ExistingConfig | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;

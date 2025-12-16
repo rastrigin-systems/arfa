@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import type { Agent } from '@/lib/types';
 
-// Minimal types for Agent
-export interface Agent {
-  id: string;
-  name: string;
-  description?: string;
-  version?: string;
-}
+export type { Agent };
 
 export interface AgentsParams {
   page: number;
