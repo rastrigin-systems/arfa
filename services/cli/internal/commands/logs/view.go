@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +42,7 @@ Examples:
 			}
 
 			// Get classified logs from the current session or storage
-			logs, err := cli.GetClassifiedLogsWithConfig(configManager, sessionID)
+			logs, err := logging.GetClassifiedLogsWithConfig(configManager, sessionID)
 			if err != nil {
 				return fmt.Errorf("failed to get logs: %w", err)
 			}
