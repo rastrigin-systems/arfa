@@ -49,22 +49,66 @@ Run `make` to see available commands (from services/cli/ or repository root).
 
 ```
 services/cli/
-├── cmd/ubik/main.go    # CLI entry point, Cobra commands
+├── cmd/ubik/main.go    # CLI entry point, creates DI container
 ├── internal/           # Implementation (not importable)
-│   ├── commands/       # Command implementations
-│   ├── logging/        # Activity logging to platform
-│   ├── auth.go         # JWT token management
-│   ├── sync.go         # Configuration sync
-│   ├── agents.go       # Agent management
-│   ├── docker.go       # Docker SDK wrapper
-│   ├── container.go    # Container lifecycle
-│   ├── proxy.go        # Proxy server
-│   ├── config.go       # Local config management
-│   └── workspace.go    # Workspace detection
+│   ├── commands/       # Command implementations (use container)
+│   │   ├── root.go     # Root command, distributes container
+│   │   ├── auth/       # Auth commands (login, logout)
+│   │   ├── agents/     # Agent commands (list, info, show)
+│   │   ├── sync/       # Sync command
+│   │   └── ...         # Other command groups
+│   ├── container/      # Dependency injection container
+│   │   └── container.go
+│   ├── mocks/          # Generated gomock interfaces
+│   │   └── interfaces_mock.go
+│   ├── interfaces.go   # Service interface definitions
+│   ├── auth.go         # AuthService implementation
+│   ├── sync.go         # SyncService implementation
+│   ├── agents.go       # AgentService implementation
+│   ├── docker.go       # DockerClient implementation
+│   ├── container.go    # ContainerManager implementation
+│   ├── config.go       # ConfigManager implementation
+│   ├── platform.go     # PlatformClient implementation
+│   └── ...             # Other implementations
 └── tests/
     ├── integration/    # Integration tests
     └── e2e/           # End-to-end tests
 ```
+
+### Dependency Injection Architecture
+
+**The CLI uses a DI container pattern for clean, testable code:**
+
+```go
+// main.go - Create container and pass to root command
+func main() {
+    c := container.New()
+    defer c.Close()
+    commands.NewRootCommand(version, c).Execute()
+}
+
+// Command receives container and gets services from it
+func NewLoginCommand(c *container.Container) *cobra.Command {
+    return &cobra.Command{
+        RunE: func(cmd *cobra.Command, args []string) error {
+            authService, err := c.AuthService()
+            if err != nil {
+                return err
+            }
+            return authService.Login(ctx, url, email, password)
+        },
+    }
+}
+```
+
+**Key interfaces** (defined in `internal/interfaces.go`):
+- `ConfigManagerInterface` - Local config (~/.ubik/config.json)
+- `PlatformClientInterface` - HTTP API communication
+- `AuthServiceInterface` - Authentication operations
+- `SyncServiceInterface` - Configuration sync
+- `AgentServiceInterface` - Agent management
+- `DockerClientInterface` - Docker SDK wrapper
+- `ContainerManagerInterface` - Container lifecycle
 
 ### Request Flow
 
@@ -147,23 +191,39 @@ func TestLogin(t *testing.T) {
 }
 ```
 
-**Mocking Docker SDK:**
+**Using gomock for service tests:**
 ```go
-func TestStartContainer(t *testing.T) {
+func TestAuthService_RequireAuth(t *testing.T) {
     ctrl := gomock.NewController(t)
-    mockDocker := mocks.NewMockDockerClient(ctrl)
+    defer ctrl.Finish()
 
-    // Expect container start
-    mockDocker.EXPECT().
-        ContainerStart(gomock.Any(), "container-id", gomock.Any()).
-        Return(nil)
+    mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
+    mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+
+    // Set expectations
+    mockConfigManager.EXPECT().IsAuthenticated().Return(true, nil)
+    mockConfigManager.EXPECT().IsTokenValid().Return(true, nil)
+    mockConfigManager.EXPECT().Load().Return(&Config{Token: "test"}, nil)
+    mockPlatformClient.EXPECT().SetToken("test")
+    mockPlatformClient.EXPECT().SetBaseURL(gomock.Any())
+
+    // Create service with interface-based constructor
+    authService := NewAuthServiceWithInterfaces(mockConfigManager, mockPlatformClient)
 
     // Test
-    cm := NewContainerManager(mockDocker)
-    err := cm.StartContainer("container-id")
-
-    assert.NoError(t, err)
+    config, err := authService.RequireAuth()
+    require.NoError(t, err)
+    assert.Equal(t, "test", config.Token)
 }
+```
+
+**Regenerating mocks:**
+```bash
+# From services/cli directory
+make mocks
+
+# Or directly
+go generate ./internal/mocks/...
 ```
 
 **See [../../docs/TESTING.md](../../docs/TESTING.md) for complete testing guide.**
@@ -174,38 +234,52 @@ func TestStartContainer(t *testing.T) {
 
 ### Adding New Command
 
-1. **Define command in `cmd/ubik/main.go`:**
+1. **Create command file accepting container:**
    ```go
-   var statusCmd = &cobra.Command{
-       Use:   "status",
-       Short: "Show sync status",
-       Run: func(cmd *cobra.Command, args []string) {
-           // Call internal package
-       },
+   // internal/commands/myfeature/myfeature.go
+   func NewMyFeatureCommand(c *container.Container) *cobra.Command {
+       return &cobra.Command{
+           Use:   "myfeature",
+           Short: "My new feature",
+           RunE: func(cmd *cobra.Command, args []string) error {
+               // Get services from container
+               authService, err := c.AuthService()
+               if err != nil {
+                   return fmt.Errorf("failed to get auth service: %w", err)
+               }
+
+               // Use services
+               config, err := authService.RequireAuth()
+               if err != nil {
+                   return err
+               }
+
+               // Implement feature logic
+               return nil
+           },
+       }
    }
    ```
 
-2. **Write tests FIRST:**
+2. **Register command in root.go:**
    ```go
-   // internal/sync_test.go
-   func TestGetSyncStatus(t *testing.T) {
-       // Write failing test
-   }
+   // internal/commands/root.go
+   rootCmd.AddCommand(myfeature.NewMyFeatureCommand(c))
    ```
 
-3. **Implement logic:**
+3. **Write tests with mocks:**
    ```go
-   // internal/sync.go
-   func GetSyncStatus() (*SyncStatus, error) {
-       // Implement to pass tests
-   }
-   ```
+   // internal/commands/myfeature/myfeature_test.go
+   func TestMyFeatureCommand(t *testing.T) {
+       ctrl := gomock.NewController(t)
+       defer ctrl.Finish()
 
-4. **Register command:**
-   ```go
-   // cmd/ubik/main.go
-   func init() {
-       rootCmd.AddCommand(statusCmd)
+       mockAuth := mocks.NewMockAuthServiceInterface(ctrl)
+       mockAuth.EXPECT().RequireAuth().Return(&Config{}, nil)
+
+       c := container.New(container.WithAuthService(mockAuth))
+       cmd := NewMyFeatureCommand(c)
+       // Execute and assert
    }
    ```
 
