@@ -13,6 +13,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -176,13 +177,13 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	}
 
 	// Workspace selection
-	workspaceService := cli.NewWorkspaceService()
-	var workspace string
+	workspaceService := workspace.NewService()
+	var workspacePath string
 
 	if workspaceFlag != "" {
 		// Validate provided workspace
-		workspace = workspaceFlag
-		if err := workspaceService.ValidatePath(workspace); err != nil {
+		workspacePath = workspaceFlag
+		if err := workspaceService.ValidatePath(workspacePath); err != nil {
 			return fmt.Errorf("invalid workspace: %w", err)
 		}
 	} else {
@@ -194,10 +195,10 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 
 		// Check if CWD is valid - if so, use it directly (no prompt)
 		if err := workspaceService.ValidatePath(cwd); err == nil {
-			workspace = cwd
+			workspacePath = cwd
 		} else {
 			// CWD is not valid, prompt for selection
-			workspace, err = workspaceService.SelectWorkspace(cwd)
+			workspacePath, err = workspaceService.SelectWorkspace(cwd)
 			if err != nil {
 				return fmt.Errorf("workspace selection failed: %w", err)
 			}
@@ -205,7 +206,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	}
 
 	// Get and display workspace info
-	workspaceInfo, err := workspaceService.GetWorkspaceInfo(workspace)
+	workspaceInfo, err := workspaceService.GetWorkspaceInfo(workspacePath)
 	if err != nil {
 		return fmt.Errorf("failed to get workspace info: %w", err)
 	}
@@ -247,7 +248,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		AgentType: selectedAgent.AgentType,
 		AgentID:   selectedAgent.AgentID,
 		AgentName: selectedAgent.AgentName,
-		Workspace: workspace,
+		Workspace: workspacePath,
 		ProxyPort: proxyPort,
 		CertPath:  certPath,
 		SessionID: sessionID,
@@ -280,7 +281,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Printf("Session:\n")
 	fmt.Printf("  Agent:     %s\n", selectedAgent.AgentName)
-	fmt.Printf("  Directory: %s\n", workspace)
+	fmt.Printf("  Directory: %s\n", workspacePath)
 	fmt.Printf("  Duration:  %s\n", duration)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 

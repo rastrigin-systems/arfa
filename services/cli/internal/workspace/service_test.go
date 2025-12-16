@@ -1,4 +1,4 @@
-package cli
+package workspace
 
 import (
 	"os"
@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestWorkspaceService_SelectWorkspace tests the workspace selection logic
-func TestWorkspaceService_SelectWorkspace(t *testing.T) {
+// TestService_SelectWorkspace tests the workspace selection logic
+func TestService_SelectWorkspace(t *testing.T) {
 	tests := []struct {
 		name          string
 		input         string // Simulated user input
@@ -60,11 +60,11 @@ func TestWorkspaceService_SelectWorkspace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := NewWorkspaceService()
+			svc := NewService()
 
 			// Simulate user input
 			reader := strings.NewReader(tt.input)
-			path, err := ws.SelectWorkspaceWithReader(tt.defaultPath, reader)
+			path, err := svc.SelectWorkspaceWithReader(tt.defaultPath, reader)
 
 			if tt.shouldError {
 				assert.Error(t, err)
@@ -85,8 +85,8 @@ func TestWorkspaceService_SelectWorkspace(t *testing.T) {
 	}
 }
 
-// TestWorkspaceService_GetWorkspaceInfo tests workspace information gathering
-func TestWorkspaceService_GetWorkspaceInfo(t *testing.T) {
+// TestService_GetWorkspaceInfo tests workspace information gathering
+func TestService_GetWorkspaceInfo(t *testing.T) {
 	// Create a temporary directory with known files
 	tempDir := t.TempDir()
 
@@ -108,8 +108,8 @@ func TestWorkspaceService_GetWorkspaceInfo(t *testing.T) {
 	f.WriteString("test content in subdir")
 	f.Close()
 
-	ws := NewWorkspaceService()
-	info, err := ws.GetWorkspaceInfo(tempDir)
+	svc := NewService()
+	info, err := svc.GetWorkspaceInfo(tempDir)
 
 	require.NoError(t, err)
 	assert.Equal(t, tempDir, info.Path)
@@ -118,10 +118,10 @@ func TestWorkspaceService_GetWorkspaceInfo(t *testing.T) {
 	assert.True(t, info.Exists, "Directory should exist")
 }
 
-// TestWorkspaceService_GetWorkspaceInfo_NonExistent tests info for non-existent path
-func TestWorkspaceService_GetWorkspaceInfo_NonExistent(t *testing.T) {
-	ws := NewWorkspaceService()
-	info, err := ws.GetWorkspaceInfo("/this/path/does/not/exist/12345")
+// TestService_GetWorkspaceInfo_NonExistent tests info for non-existent path
+func TestService_GetWorkspaceInfo_NonExistent(t *testing.T) {
+	svc := NewService()
+	info, err := svc.GetWorkspaceInfo("/this/path/does/not/exist/12345")
 
 	require.NoError(t, err) // Should not error, but info.Exists should be false
 	assert.False(t, info.Exists)
@@ -129,9 +129,9 @@ func TestWorkspaceService_GetWorkspaceInfo_NonExistent(t *testing.T) {
 	assert.Equal(t, int64(0), info.TotalSize)
 }
 
-// TestWorkspaceService_ValidatePath tests path validation
-func TestWorkspaceService_ValidatePath(t *testing.T) {
-	ws := NewWorkspaceService()
+// TestService_ValidatePath tests path validation
+func TestService_ValidatePath(t *testing.T) {
+	svc := NewService()
 
 	tests := []struct {
 		name        string
@@ -167,7 +167,7 @@ func TestWorkspaceService_ValidatePath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ws.ValidatePath(tt.path)
+			err := svc.ValidatePath(tt.path)
 			if tt.expectValid {
 				assert.NoError(t, err)
 			} else {
@@ -177,9 +177,9 @@ func TestWorkspaceService_ValidatePath(t *testing.T) {
 	}
 }
 
-// TestWorkspaceService_FormatSize tests size formatting
-func TestWorkspaceService_FormatSize(t *testing.T) {
-	ws := NewWorkspaceService()
+// TestService_FormatSize tests size formatting
+func TestService_FormatSize(t *testing.T) {
+	svc := NewService()
 
 	tests := []struct {
 		size     int64
@@ -197,7 +197,7 @@ func TestWorkspaceService_FormatSize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := ws.FormatSize(tt.size)
+			result := svc.FormatSize(tt.size)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
