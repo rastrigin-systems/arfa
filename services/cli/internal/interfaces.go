@@ -130,9 +130,121 @@ type PlatformClientInterface interface {
 	CreateLogBatch(entries []LogEntry) error
 }
 
+// ============================================================================
+// Service Interfaces - PR 1.2
+// ============================================================================
+// Higher-level service interfaces that orchestrate business logic using the
+// core interfaces above.
+// ============================================================================
+
+// AuthServiceInterface defines the contract for authentication operations.
+// Implementations handle user login/logout and credential management.
+type AuthServiceInterface interface {
+	// LoginInteractive performs interactive login with prompts for URL, email, and password.
+	LoginInteractive() error
+
+	// Login performs non-interactive login with provided credentials.
+	Login(platformURL, email, password string) error
+
+	// Logout removes stored credentials.
+	Logout() error
+
+	// IsAuthenticated checks if user is authenticated.
+	IsAuthenticated() (bool, error)
+
+	// GetConfig returns the current configuration.
+	GetConfig() (*Config, error)
+
+	// RequireAuth ensures user is authenticated and token is valid.
+	// Returns the current config with platform client configured.
+	RequireAuth() (*Config, error)
+}
+
+// SyncServiceInterface defines the contract for configuration synchronization.
+// Implementations handle fetching configs from platform and storing locally.
+type SyncServiceInterface interface {
+	// Sync fetches configs from platform and stores them locally.
+	Sync() (*SyncResult, error)
+
+	// SyncClaudeCode fetches and installs complete Claude Code configuration to targetDir.
+	SyncClaudeCode(targetDir string) error
+
+	// GetLocalAgentConfigs loads agent configs from local storage.
+	GetLocalAgentConfigs() ([]AgentConfig, error)
+
+	// GetAgentConfig retrieves a specific agent config by ID or name.
+	GetAgentConfig(idOrName string) (*AgentConfig, error)
+
+	// SetDockerClient sets the Docker client for container operations.
+	SetDockerClient(dockerClient *DockerClient)
+
+	// StartContainers starts Docker containers for synced agent configs.
+	StartContainers(workspacePath string, apiKey string) error
+
+	// StopContainers stops all running containers.
+	StopContainers() error
+
+	// GetContainerStatus returns the status of all containers.
+	GetContainerStatus() ([]ContainerInfo, error)
+}
+
+// AgentServiceInterface defines the contract for agent management operations.
+// Implementations handle listing agents, managing configs, and checking updates.
+type AgentServiceInterface interface {
+	// ListAgents fetches all available agents from the platform.
+	ListAgents() ([]Agent, error)
+
+	// GetAgent fetches details for a specific agent.
+	GetAgent(agentID string) (*Agent, error)
+
+	// ListEmployeeAgentConfigs fetches employee's assigned agent configs.
+	ListEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfig, error)
+
+	// RequestAgent creates an employee agent configuration (request for access).
+	RequestAgent(employeeID, agentID string) error
+
+	// CheckForUpdates checks if there are config updates available.
+	CheckForUpdates(employeeID string) (bool, error)
+
+	// GetLocalAgents returns locally configured agents.
+	GetLocalAgents() ([]AgentConfig, error)
+}
+
+// SkillsServiceInterface defines the contract for skill management operations.
+// Implementations handle listing skills from catalog and local storage.
+type SkillsServiceInterface interface {
+	// ListCatalogSkills fetches all available skills from the platform catalog.
+	ListCatalogSkills() ([]Skill, error)
+
+	// GetSkill fetches details for a specific skill from the catalog.
+	GetSkill(skillID string) (*Skill, error)
+
+	// GetSkillByName fetches a skill by name (searches catalog).
+	GetSkillByName(name string) (*Skill, error)
+
+	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
+	ListEmployeeSkills() ([]EmployeeSkill, error)
+
+	// GetEmployeeSkill fetches a specific skill assigned to the employee.
+	GetEmployeeSkill(skillID string) (*EmployeeSkill, error)
+
+	// GetEmployeeSkillByName fetches an employee skill by name.
+	GetEmployeeSkillByName(name string) (*EmployeeSkill, error)
+
+	// GetLocalSkills returns locally installed skills from .claude/skills/.
+	GetLocalSkills() ([]LocalSkillInfo, error)
+
+	// GetLocalSkill returns details for a specific locally installed skill.
+	GetLocalSkill(name string) (*LocalSkillInfo, error)
+}
+
 // Compile-time interface implementation checks.
 // These ensure that the concrete types implement their respective interfaces.
 var (
 	_ ConfigManagerInterface  = (*ConfigManager)(nil)
 	_ PlatformClientInterface = (*PlatformClient)(nil)
+	_ AuthServiceInterface    = (*AuthService)(nil)
+	_ SyncServiceInterface    = (*SyncService)(nil)
+	_ AgentServiceInterface   = (*AgentService)(nil)
+	_ SkillsServiceInterface  = (*SkillsService)(nil)
 )
