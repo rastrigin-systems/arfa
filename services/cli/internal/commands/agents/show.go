@@ -1,4 +1,4 @@
-package commands
+package agents
 
 import (
 	"encoding/json"
@@ -36,8 +36,8 @@ type ConfigLevel struct {
 	Source    string                 `json:"source"` // org name, team name, "You"
 }
 
-// NewAgentsShowCommand creates the 'agents show' command
-func NewAgentsShowCommand() *cobra.Command {
+// NewShowCommand creates the 'agents show' command
+func NewShowCommand() *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
@@ -372,7 +372,7 @@ func printConfigMap(out interface{ Write([]byte) (int, error) }, config map[stri
 			fmt.Fprintf(out, "%s⬆️ overrides", strings.Repeat(" ", padding))
 		}
 
-		fmt.Fprintf(out, "%s│\n", strings.Repeat(" ", max(0, 55-len(indent)-len(key)-len(valueStr))))
+		fmt.Fprintf(out, "%s│\n", strings.Repeat(" ", maxInt(0, 55-len(indent)-len(key)-len(valueStr))))
 	}
 }
 
@@ -416,7 +416,7 @@ func mergeConfigs(base, override map[string]interface{}) map[string]interface{} 
 	return result
 }
 
-func max(a, b int) int {
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}
