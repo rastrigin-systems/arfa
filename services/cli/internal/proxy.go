@@ -163,7 +163,7 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 	}
 
 	// Attach to container
-	resp, err := ps.dockerClient.cli.ContainerAttach(ctx, options.ContainerID, attachOpts)
+	resp, err := ps.dockerClient.ContainerAttach(ctx, options.ContainerID, attachOpts)
 	if err != nil {
 		return fmt.Errorf("failed to attach to container: %w", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
@@ -295,4 +296,9 @@ func (dc *DockerClient) RemoveContainerByName(ctx context.Context, name string) 
 	}
 
 	return nil
+}
+
+// ContainerAttach attaches to a running container for interactive I/O.
+func (dc *DockerClient) ContainerAttach(ctx context.Context, containerID string, opts container.AttachOptions) (types.HijackedResponse, error) {
+	return dc.cli.ContainerAttach(ctx, containerID, opts)
 }
