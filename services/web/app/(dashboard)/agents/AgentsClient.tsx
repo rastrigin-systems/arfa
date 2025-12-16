@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { CompactAgentCard } from '@/components/agents/CompactAgentCard';
 import {
   Dialog,
@@ -13,32 +13,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  provider: string;
-  llm_provider: string;
-  llm_model: string;
-  is_public: boolean;
-  capabilities?: string[];
-  default_config?: Record<string, unknown>;
-};
-
-type OrgAgentConfig = {
-  id: string;
-  org_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
+import {
+  clientCreateOrgAgentConfig,
+  clientUpdateOrgAgentConfig,
+  type OrgAgentConfig,
+} from '@/lib/api/org-configs';
+import type { Agent } from '@/lib/types';
 
 type AgentsClientProps = {
   initialAgents: Agent[];
@@ -57,8 +37,9 @@ export function AgentsClient({ initialAgents, initialOrgConfigs }: AgentsClientP
   const { toast } = useToast();
 
   // Build set of enabled agent IDs
-  const enabledAgentIds = new Set(
-    orgConfigs.filter((config) => config.is_enabled).map((config) => config.agent_id)
+  const enabledAgentIds = useMemo(
+    () => new Set(orgConfigs.filter((config) => config.is_enabled).map((config) => config.agent_id)),
+    [orgConfigs]
   );
 
   const handleToggle = async (agentId: string, shouldEnable: boolean) => {
@@ -87,16 +68,7 @@ export function AgentsClient({ initialAgents, initialOrgConfigs }: AgentsClientP
 
       if (existingConfig) {
         // Update existing config to enable it
-        const response = await fetch(`/api/organizations/current/agent-configs/${existingConfig.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ is_enabled: true }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to enable agent');
-        }
+        await clientUpdateOrgAgentConfig(existingConfig.id, { is_enabled: true });
 
         // Update local state
         setOrgConfigs((prev) =>
@@ -104,23 +76,13 @@ export function AgentsClient({ initialAgents, initialOrgConfigs }: AgentsClientP
         );
       } else {
         // Create new config
-        const response = await fetch('/api/organizations/current/agent-configs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            agent_id: agentId,
-            config: agent.default_config || {},
-            is_enabled: true,
-          }),
+        const newConfig = await clientCreateOrgAgentConfig({
+          agent_id: agentId,
+          config: agent.default_config || {},
+          is_enabled: true,
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to enable agent');
-        }
-
-        const data = await response.json();
-        setOrgConfigs((prev) => [...prev, data]);
+        setOrgConfigs((prev) => [...prev, newConfig]);
       }
 
       toast({
@@ -151,16 +113,7 @@ export function AgentsClient({ initialAgents, initialOrgConfigs }: AgentsClientP
     setConfirmDialog({ open: false, agent: null });
 
     try {
-      const response = await fetch(`/api/organizations/current/agent-configs/${existingConfig.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ is_enabled: false }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to disable agent');
-      }
+      await clientUpdateOrgAgentConfig(existingConfig.id, { is_enabled: false });
 
       // Update local state
       setOrgConfigs((prev) =>

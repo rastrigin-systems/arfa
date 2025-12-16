@@ -12,8 +12,6 @@ import {
   ChevronRight,
   Building2,
   FileStack,
-  Server,
-  ClipboardList,
   Shield,
   Bug,
 } from 'lucide-react';
@@ -95,16 +93,6 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       href: '/configs',
       icon: <FileStack className="h-4 w-4" />,
       label: 'Configs',
-    },
-    {
-      href: '/mcp',
-      icon: <Server className="h-4 w-4" />,
-      label: 'MCP',
-    },
-    {
-      href: '/requests',
-      icon: <ClipboardList className="h-4 w-4" />,
-      label: 'Requests',
     },
     {
       href: '/logs',

@@ -1,40 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { OrgAgentConfigTable } from '@/components/agents/OrgAgentConfigTable';
 import { ConfigEditorModal } from '@/components/agents/ConfigEditorModal';
 import { TeamAgentConfigsTab } from '@/components/agents/TeamAgentConfigsTab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { AgentCatalog } from '@/components/agents/AgentCatalog';
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  provider: string;
-  llm_provider: string;
-  llm_model: string;
-  is_public: boolean;
-  capabilities?: string[];
-  default_config?: Record<string, unknown>;
-};
-
-type OrgAgentConfig = {
-  id: string;
-  org_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
+import { clientDeleteOrgAgentConfig, type OrgAgentConfig } from '@/lib/api/org-configs';
+import type { Agent } from '@/lib/types';
 
 type OrgAgentConfigsClientProps = {
   initialConfigs: OrgAgentConfig[];
@@ -48,9 +33,14 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingConfig, setEditingConfig] = useState<OrgAgentConfig | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; config: OrgAgentConfig | null }>({
+    open: false,
+    config: null,
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Build set of enabled agent IDs
-  const enabledAgentIds = new Set(configs.map((config) => config.agent_id));
+  const enabledAgentIds = useMemo(() => new Set(configs.map((config) => config.agent_id)), [configs]);
 
   const handleEnableAgent = (agent: Agent) => {
     setSelectedAgent(agent);
@@ -79,29 +69,24 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
     }
   };
 
-  const handleDeleteConfig = async (config: OrgAgentConfig) => {
-    if (!confirm(`Are you sure you want to delete the configuration for ${config.agent_name}?`)) {
-      return;
-    }
+  const handleDeleteConfig = (config: OrgAgentConfig) => {
+    setDeleteConfirm({ open: true, config });
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteConfirm.config) return;
+
+    setIsDeleting(true);
     try {
-      // Use Next.js API route for auth forwarding
-      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete configuration');
-      }
+      await clientDeleteOrgAgentConfig(deleteConfirm.config.id);
 
       toast({
         title: 'Success',
-        description: `Configuration for ${config.agent_name} deleted successfully`,
+        description: `Configuration for ${deleteConfirm.config.agent_name} deleted successfully`,
         variant: 'success',
       });
 
-      // Refresh data
+      setDeleteConfirm({ open: false, config: null });
       router.refresh();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -110,6 +95,8 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
         description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -167,6 +154,31 @@ export function OrgAgentConfigsClient({ initialConfigs, initialAgents }: OrgAgen
           onSuccess={handleModalSuccess}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, config: null })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Configuration?</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete the configuration for{' '}
+            <strong>{deleteConfirm.config?.agent_name}</strong>? This action cannot be undone.
+          </DialogDescription>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm({ open: false, config: null })}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
