@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"context"
@@ -12,9 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Note: Using local types defined in agents.go (Agent, ListAgentsResponse, etc.)
-
-func TestAgentService_ListAgents(t *testing.T) {
+func TestService_ListAgents(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/agents", r.URL.Path)
@@ -46,7 +44,7 @@ func TestAgentService_ListAgents(t *testing.T) {
 	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
-	svc := NewAgentService(client, nil)
+	svc := NewService(client, nil)
 	ctx := context.Background()
 	agents, err := svc.ListAgents(ctx)
 
@@ -56,7 +54,7 @@ func TestAgentService_ListAgents(t *testing.T) {
 	assert.Equal(t, "Cursor", agents[1].Name)
 }
 
-func TestAgentService_GetAgent(t *testing.T) {
+func TestService_GetAgent(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/agents/agent-1", r.URL.Path)
@@ -78,7 +76,7 @@ func TestAgentService_GetAgent(t *testing.T) {
 	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
-	svc := NewAgentService(client, nil)
+	svc := NewService(client, nil)
 	ctx := context.Background()
 	agent, err := svc.GetAgent(ctx, "agent-1")
 
@@ -88,7 +86,7 @@ func TestAgentService_GetAgent(t *testing.T) {
 	assert.Equal(t, "enterprise", agent.PricingTier)
 }
 
-func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
+func TestService_ListEmployeeAgentConfigs(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/employees/emp-1/agent-configs", r.URL.Path)
@@ -115,7 +113,7 @@ func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
 	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
-	svc := NewAgentService(client, nil)
+	svc := NewService(client, nil)
 	ctx := context.Background()
 	configs, err := svc.ListEmployeeAgentConfigs(ctx, "emp-1")
 
@@ -125,7 +123,7 @@ func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
 	assert.True(t, configs[0].IsEnabled)
 }
 
-func TestAgentService_RequestAgent(t *testing.T) {
+func TestService_RequestAgent(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/employees/emp-1/agent-configs", r.URL.Path)
@@ -147,25 +145,25 @@ func TestAgentService_RequestAgent(t *testing.T) {
 	client := api.NewClient(server.URL)
 	client.SetToken("test-token")
 
-	svc := NewAgentService(client, nil)
+	svc := NewService(client, nil)
 	ctx := context.Background()
 	err := svc.RequestAgent(ctx, "emp-1", "agent-1")
 
 	require.NoError(t, err)
 }
 
-func TestAgentService_CheckForUpdates(t *testing.T) {
+func TestService_CheckForUpdates(t *testing.T) {
 	// Skip this test for now - requires mocking home directory
 	// TODO: Implement proper mocking of os.UserHomeDir()
 	t.Skip("Requires HOME directory mocking - implement later")
 }
 
-func TestAgentService_CheckForUpdates_NoUpdates(t *testing.T) {
+func TestService_CheckForUpdates_NoUpdates(t *testing.T) {
 	// Skip this test for now - requires mocking home directory
 	t.Skip("Requires HOME directory mocking - implement later")
 }
 
-func TestAgentService_GetLocalAgents(t *testing.T) {
+func TestService_GetLocalAgents(t *testing.T) {
 	// Skip this test for now - requires mocking home directory
 	t.Skip("Requires HOME directory mocking - implement later")
 }

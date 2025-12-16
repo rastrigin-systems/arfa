@@ -6,6 +6,7 @@ import (
 	gosync "sync"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/agent"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
@@ -26,7 +27,7 @@ type Container struct {
 	apiClient     *api.Client
 	authService   *auth.Service
 	syncService   *sync.Service
-	agentService  *cli.AgentService
+	agentService  *agent.Service
 	skillsService *cli.SkillsService
 	dockerClient  *cli.DockerClient
 }
@@ -207,7 +208,7 @@ func (c *Container) SyncService() (*sync.Service, error) {
 }
 
 // AgentService returns the AgentService, creating it if necessary.
-func (c *Container) AgentService() (*cli.AgentService, error) {
+func (c *Container) AgentService() (*agent.Service, error) {
 	c.mu.RLock()
 	if c.agentService != nil {
 		c.mu.RUnlock()
@@ -238,7 +239,7 @@ func (c *Container) AgentService() (*cli.AgentService, error) {
 	}
 	c.mu.Lock()
 
-	c.agentService = cli.NewAgentService(ac, cm)
+	c.agentService = agent.NewService(ac, cm)
 	return c.agentService, nil
 }
 

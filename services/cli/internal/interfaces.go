@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/agent"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
@@ -210,13 +211,13 @@ type SyncServiceInterface interface {
 // Implementations handle listing agents, managing configs, and checking updates.
 type AgentServiceInterface interface {
 	// ListAgents fetches all available agents from the platform.
-	ListAgents(ctx context.Context) ([]Agent, error)
+	ListAgents(ctx context.Context) ([]agent.Agent, error)
 
 	// GetAgent fetches details for a specific agent.
-	GetAgent(ctx context.Context, agentID string) (*Agent, error)
+	GetAgent(ctx context.Context, agentID string) (*agent.Agent, error)
 
 	// ListEmployeeAgentConfigs fetches employee's assigned agent configs.
-	ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error)
+	ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]agent.EmployeeAgentConfig, error)
 
 	// RequestAgent creates an employee agent configuration (request for access).
 	RequestAgent(ctx context.Context, employeeID, agentID string) error
@@ -368,7 +369,7 @@ var (
 	_ APIClientInterface        = (*api.Client)(nil)
 	_ AuthServiceInterface      = (*auth.Service)(nil)
 	_ SyncServiceInterface      = (*sync.Service)(nil)
-	_ AgentServiceInterface     = (*AgentService)(nil)
+	_ AgentServiceInterface     = (*agent.Service)(nil)
 	_ SkillsServiceInterface    = (*SkillsService)(nil)
 	_ DockerClientInterface     = (*DockerClient)(nil)
 	_ ContainerManagerInterface = (*ContainerManager)(nil)

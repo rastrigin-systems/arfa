@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"context"
@@ -6,102 +6,66 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
-// AgentService handles agent management operations
-type AgentService struct {
-	client        *api.Client
-	configManager *config.Manager
+// Service handles agent management operations
+type Service struct {
+	client        APIClientInterface
+	configManager ConfigManagerInterface
 }
 
-// NewAgentService creates a new agent service
-func NewAgentService(client *api.Client, configManager *config.Manager) *AgentService {
-	return &AgentService{
+// NewService creates a new agent service with concrete types.
+// This is the primary constructor for production use.
+func NewService(client *api.Client, configManager *config.Manager) *Service {
+	return &Service{
 		client:        client,
 		configManager: configManager,
 	}
 }
 
-// Agent represents an agent from the catalog
-type Agent struct {
-	ID                 string                 `json:"id"`
-	Name               string                 `json:"name"`
-	Provider           string                 `json:"provider"`
-	Description        string                 `json:"description"`
-	LogoURL            string                 `json:"logo_url"`
-	SupportedPlatforms []string               `json:"supported_platforms"`
-	PricingTier        string                 `json:"pricing_tier"`
-	DefaultConfig      map[string]interface{} `json:"default_config"`
-	CreatedAt          time.Time              `json:"created_at"`
-	UpdatedAt          time.Time              `json:"updated_at"`
-}
-
-// ListAgentsResponse represents the response from list agents endpoint
-type ListAgentsResponse struct {
-	Agents []Agent `json:"agents"`
-	Total  int     `json:"total"`
-}
-
-// EmployeeAgentConfig represents an employee's agent configuration
-type EmployeeAgentConfig struct {
-	ID         string                 `json:"id"`
-	EmployeeID string                 `json:"employee_id"`
-	AgentID    string                 `json:"agent_id"`
-	AgentName  string                 `json:"agent_name"`
-	Config     map[string]interface{} `json:"config"`
-	IsEnabled  bool                   `json:"is_enabled"`
-	CreatedAt  time.Time              `json:"created_at"`
-	UpdatedAt  time.Time              `json:"updated_at"`
-}
-
-// ListEmployeeAgentConfigsResponse represents employee agent configs
-type ListEmployeeAgentConfigsResponse struct {
-	AgentConfigs []EmployeeAgentConfig `json:"agent_configs"`
-	Total        int                   `json:"total"`
-}
-
-// CreateEmployeeAgentConfigRequest represents a request to create an agent config
-type CreateEmployeeAgentConfigRequest struct {
-	AgentID   string                 `json:"agent_id"`
-	Config    map[string]interface{} `json:"config,omitempty"`
-	IsEnabled bool                   `json:"is_enabled"`
+// NewServiceWithInterfaces creates a new agent service with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewServiceWithInterfaces(client APIClientInterface, configManager ConfigManagerInterface) *Service {
+	return &Service{
+		client:        client,
+		configManager: configManager,
+	}
 }
 
 // ListAgents fetches all available agents from the platform
-func (as *AgentService) ListAgents(ctx context.Context) ([]Agent, error) {
+func (s *Service) ListAgents(ctx context.Context) ([]Agent, error) {
 	var resp ListAgentsResponse
-	if err := as.client.DoRequest(ctx, "GET", "/agents", nil, &resp); err != nil {
+	if err := s.client.DoRequest(ctx, "GET", "/agents", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list agents: %w", err)
 	}
 	return resp.Agents, nil
 }
 
 // GetAgent fetches details for a specific agent
-func (as *AgentService) GetAgent(ctx context.Context, agentID string) (*Agent, error) {
+func (s *Service) GetAgent(ctx context.Context, agentID string) (*Agent, error) {
 	var agent Agent
 	endpoint := fmt.Sprintf("/agents/%s", agentID)
-	if err := as.client.DoRequest(ctx, "GET", endpoint, nil, &agent); err != nil {
+	if err := s.client.DoRequest(ctx, "GET", endpoint, nil, &agent); err != nil {
 		return nil, fmt.Errorf("failed to get agent: %w", err)
 	}
 	return &agent, nil
 }
 
 // ListEmployeeAgentConfigs fetches employee's assigned agent configs
-func (as *AgentService) ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error) {
+func (s *Service) ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error) {
 	var resp ListEmployeeAgentConfigsResponse
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := as.client.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := s.client.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list employee agent configs: %w", err)
 	}
 	return resp.AgentConfigs, nil
 }
 
 // RequestAgent creates an employee agent configuration (request for access)
-func (as *AgentService) RequestAgent(ctx context.Context, employeeID, agentID string) error {
+func (s *Service) RequestAgent(ctx context.Context, employeeID, agentID string) error {
 	reqBody := CreateEmployeeAgentConfigRequest{
 		AgentID:   agentID,
 		Config:    nil, // Use default config
@@ -109,7 +73,7 @@ func (as *AgentService) RequestAgent(ctx context.Context, employeeID, agentID st
 	}
 
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := as.client.DoRequest(ctx, "POST", endpoint, reqBody, nil); err != nil {
+	if err := s.client.DoRequest(ctx, "POST", endpoint, reqBody, nil); err != nil {
 		return fmt.Errorf("failed to request agent: %w", err)
 	}
 
@@ -117,15 +81,15 @@ func (as *AgentService) RequestAgent(ctx context.Context, employeeID, agentID st
 }
 
 // CheckForUpdates checks if there are config updates available
-func (as *AgentService) CheckForUpdates(ctx context.Context, employeeID string) (bool, error) {
+func (s *Service) CheckForUpdates(ctx context.Context, employeeID string) (bool, error) {
 	// Get local configs from ~/.ubik/agents/
-	localConfigs, err := as.getLocalAgentConfigsInternal()
+	localConfigs, err := s.getLocalAgentConfigsInternal()
 	if err != nil {
 		return false, fmt.Errorf("failed to read local configs: %w", err)
 	}
 
 	// Get remote configs
-	remoteConfigs, err := as.client.GetResolvedAgentConfigs(ctx, employeeID)
+	remoteConfigs, err := s.client.GetResolvedAgentConfigs(ctx, employeeID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch remote configs: %w", err)
 	}
@@ -154,12 +118,12 @@ func (as *AgentService) CheckForUpdates(ctx context.Context, employeeID string) 
 }
 
 // GetLocalAgents returns locally configured agents
-func (as *AgentService) GetLocalAgents() ([]api.AgentConfig, error) {
-	return as.getLocalAgentConfigsInternal()
+func (s *Service) GetLocalAgents() ([]api.AgentConfig, error) {
+	return s.getLocalAgentConfigsInternal()
 }
 
 // getLocalAgentConfigsInternal reads agent configs from ~/.ubik/config/agents/ directory
-func (as *AgentService) getLocalAgentConfigsInternal() ([]api.AgentConfig, error) {
+func (s *Service) getLocalAgentConfigsInternal() ([]api.AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
