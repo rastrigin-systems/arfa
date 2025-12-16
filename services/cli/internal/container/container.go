@@ -10,6 +10,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
 
@@ -28,7 +29,7 @@ type Container struct {
 	authService   *auth.Service
 	syncService   *sync.Service
 	agentService  *agent.Service
-	skillsService *cli.SkillsService
+	skillsService *skill.Service
 	dockerClient  *cli.DockerClient
 }
 
@@ -244,7 +245,7 @@ func (c *Container) AgentService() (*agent.Service, error) {
 }
 
 // SkillsService returns the SkillsService, creating it if necessary.
-func (c *Container) SkillsService() (*cli.SkillsService, error) {
+func (c *Container) SkillsService() (*skill.Service, error) {
 	c.mu.RLock()
 	if c.skillsService != nil {
 		c.mu.RUnlock()
@@ -275,7 +276,7 @@ func (c *Container) SkillsService() (*cli.SkillsService, error) {
 	}
 	c.mu.Lock()
 
-	c.skillsService = cli.NewSkillsService(ac, cm)
+	c.skillsService = skill.NewService(ac, cm)
 	return c.skillsService, nil
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
 
@@ -251,10 +252,10 @@ type SkillsServiceInterface interface {
 	GetEmployeeSkillByName(ctx context.Context, name string) (*api.EmployeeSkill, error)
 
 	// GetLocalSkills returns locally installed skills from .claude/skills/.
-	GetLocalSkills() ([]LocalSkillInfo, error)
+	GetLocalSkills() ([]skill.LocalSkillInfo, error)
 
 	// GetLocalSkill returns details for a specific locally installed skill.
-	GetLocalSkill(name string) (*LocalSkillInfo, error)
+	GetLocalSkill(name string) (*skill.LocalSkillInfo, error)
 }
 
 // ============================================================================
@@ -370,7 +371,7 @@ var (
 	_ AuthServiceInterface      = (*auth.Service)(nil)
 	_ SyncServiceInterface      = (*sync.Service)(nil)
 	_ AgentServiceInterface     = (*agent.Service)(nil)
-	_ SkillsServiceInterface    = (*SkillsService)(nil)
+	_ SkillsServiceInterface    = (*skill.Service)(nil)
 	_ DockerClientInterface     = (*DockerClient)(nil)
 	_ ContainerManagerInterface = (*ContainerManager)(nil)
 )

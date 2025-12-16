@@ -19,6 +19,7 @@ import (
 	agent "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/agent"
 	api "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	config "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	skill "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
 	sync "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -900,10 +901,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetEmployeeSkillByName(ctx, na
 }
 
 // GetLocalSkill mocks base method.
-func (m *MockSkillsServiceInterface) GetLocalSkill(name string) (*cli.LocalSkillInfo, error) {
+func (m *MockSkillsServiceInterface) GetLocalSkill(name string) (*skill.LocalSkillInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLocalSkill", name)
-	ret0, _ := ret[0].(*cli.LocalSkillInfo)
+	ret0, _ := ret[0].(*skill.LocalSkillInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -915,10 +916,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetLocalSkill(name any) *gomoc
 }
 
 // GetLocalSkills mocks base method.
-func (m *MockSkillsServiceInterface) GetLocalSkills() ([]cli.LocalSkillInfo, error) {
+func (m *MockSkillsServiceInterface) GetLocalSkills() ([]skill.LocalSkillInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLocalSkills")
-	ret0, _ := ret[0].([]cli.LocalSkillInfo)
+	ret0, _ := ret[0].([]skill.LocalSkillInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
