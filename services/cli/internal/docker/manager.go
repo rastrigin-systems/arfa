@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -13,22 +13,22 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-// ContainerManager manages Docker containers for agents and MCP servers
-type ContainerManager struct {
-	dockerClient *DockerClient
+// Manager manages Docker containers for agents and MCP servers
+type Manager struct {
+	dockerClient *Client
 	networkName  string
 }
 
-// NewContainerManager creates a new container manager
-func NewContainerManager(dockerClient *DockerClient) *ContainerManager {
-	return &ContainerManager{
+// NewManager creates a new container manager
+func NewManager(dockerClient *Client) *Manager {
+	return &Manager{
 		dockerClient: dockerClient,
 		networkName:  "ubik-network",
 	}
 }
 
 // SetupNetwork creates the ubik network if it doesn't exist
-func (cm *ContainerManager) SetupNetwork(ctx context.Context) error {
+func (cm *Manager) SetupNetwork(ctx context.Context) error {
 	exists, err := cm.dockerClient.NetworkExists(ctx, cm.networkName)
 	if err != nil {
 		return fmt.Errorf("failed to check network: %w", err)
@@ -49,38 +49,8 @@ func (cm *ContainerManager) SetupNetwork(ctx context.Context) error {
 	return nil
 }
 
-// MCPServerSpec defines configuration for an MCP server container
-type MCPServerSpec struct {
-	ServerID   string
-	ServerName string
-	ServerType string
-	Image      string
-	Port       int
-	Config     map[string]interface{}
-}
-
-// ProxyConfig defines configuration for the MITM proxy
-type ProxyConfig struct {
-	Host     string
-	Port     int
-	CertPath string
-}
-
-// AgentSpec defines configuration for an agent container
-type AgentSpec struct {
-	AgentID       string
-	AgentName     string
-	AgentType     string
-	Image         string
-	Configuration map[string]interface{}
-	MCPServers    []MCPServerSpec
-	APIKey        string // Deprecated: Use ClaudeToken instead
-	ClaudeToken   string // Claude API token (from hybrid auth)
-	ProxyConfig   *ProxyConfig
-}
-
 // StartMCPServer starts an MCP server container
-func (cm *ContainerManager) StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error) {
+func (cm *Manager) StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error) {
 	containerName := fmt.Sprintf("ubik-mcp-%s", spec.ServerID)
 
 	fmt.Printf("  Starting %s (%s)...\n", spec.ServerName, spec.ServerType)
@@ -155,7 +125,7 @@ func (cm *ContainerManager) StartMCPServer(ctx context.Context, spec MCPServerSp
 }
 
 // StartAgent starts an agent container
-func (cm *ContainerManager) StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error) {
+func (cm *Manager) StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error) {
 	containerName := fmt.Sprintf("ubik-agent-%s", spec.AgentID)
 
 	fmt.Printf("  Starting %s (%s)...\n", spec.AgentName, spec.AgentType)
@@ -331,7 +301,7 @@ func (cm *ContainerManager) StartAgent(ctx context.Context, spec AgentSpec, work
 }
 
 // StopContainers stops all ubik-managed containers
-func (cm *ContainerManager) StopContainers(ctx context.Context) error {
+func (cm *Manager) StopContainers(ctx context.Context) error {
 	containers, err := cm.dockerClient.ListContainers(ctx, false, map[string]string{
 		"com.ubik.managed": "true",
 	})
@@ -360,7 +330,7 @@ func (cm *ContainerManager) StopContainers(ctx context.Context) error {
 }
 
 // CleanupContainers removes all stopped ubik-managed containers
-func (cm *ContainerManager) CleanupContainers(ctx context.Context) error {
+func (cm *Manager) CleanupContainers(ctx context.Context) error {
 	containers, err := cm.dockerClient.ListContainers(ctx, true, map[string]string{
 		"com.ubik.managed": "true",
 	})
@@ -397,7 +367,7 @@ func (cm *ContainerManager) CleanupContainers(ctx context.Context) error {
 }
 
 // GetContainerStatus returns status of all ubik-managed containers
-func (cm *ContainerManager) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
+func (cm *Manager) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
 	return cm.dockerClient.ListContainers(ctx, true, map[string]string{
 		"com.ubik.managed": "true",
 	})

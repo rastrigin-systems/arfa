@@ -5,11 +5,11 @@ package container
 import (
 	gosync "sync"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/agent"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
@@ -30,7 +30,7 @@ type Container struct {
 	syncService   *sync.Service
 	agentService  *agent.Service
 	skillsService *skill.Service
-	dockerClient  *cli.DockerClient
+	dockerClient  *docker.Client
 }
 
 // Option is a functional option for configuring the Container.
@@ -282,7 +282,7 @@ func (c *Container) SkillsService() (*skill.Service, error) {
 
 // DockerClient returns the DockerClient, creating it if necessary.
 // Note: This requires Docker to be available on the system.
-func (c *Container) DockerClient() (*cli.DockerClient, error) {
+func (c *Container) DockerClient() (*docker.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -290,7 +290,7 @@ func (c *Container) DockerClient() (*cli.DockerClient, error) {
 		return c.dockerClient, nil
 	}
 
-	dc, err := cli.NewDockerClient()
+	dc, err := docker.NewClient()
 	if err != nil {
 		return nil, err
 	}

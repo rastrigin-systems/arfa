@@ -11,6 +11,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
@@ -304,7 +305,7 @@ type DockerClientInterface interface {
 	RemoveContainerByName(ctx context.Context, name string) error
 
 	// ListContainers lists Docker containers with optional filters.
-	ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error)
+	ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]docker.ContainerInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Container Logs
@@ -338,10 +339,10 @@ type ContainerManagerInterface interface {
 	SetupNetwork(ctx context.Context) error
 
 	// StartMCPServer starts an MCP server container.
-	StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error)
+	StartMCPServer(ctx context.Context, spec docker.MCPServerSpec, workspacePath string) (string, error)
 
 	// StartAgent starts an agent container.
-	StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error)
+	StartAgent(ctx context.Context, spec docker.AgentSpec, workspacePath string) (string, error)
 
 	// StopContainers stops all ubik-managed containers.
 	StopContainers(ctx context.Context) error
@@ -350,7 +351,7 @@ type ContainerManagerInterface interface {
 	CleanupContainers(ctx context.Context) error
 
 	// GetContainerStatus returns status of all ubik-managed containers.
-	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]docker.ContainerInfo, error)
 }
 
 // DockerContainerConfig is an alias for container.Config from Docker SDK.
@@ -372,6 +373,6 @@ var (
 	_ SyncServiceInterface      = (*sync.Service)(nil)
 	_ AgentServiceInterface     = (*agent.Service)(nil)
 	_ SkillsServiceInterface    = (*skill.Service)(nil)
-	_ DockerClientInterface     = (*DockerClient)(nil)
-	_ ContainerManagerInterface = (*ContainerManager)(nil)
+	_ DockerClientInterface     = (*docker.Client)(nil)
+	_ ContainerManagerInterface = (*docker.Manager)(nil)
 )

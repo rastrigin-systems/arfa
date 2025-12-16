@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -14,31 +14,31 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
-// DockerClient wraps the Docker SDK client.
+// Client wraps the Docker SDK client.
 // All methods accept context.Context as the first parameter for cancellation and timeout support.
-type DockerClient struct {
+type Client struct {
 	cli *client.Client
 }
 
-// NewDockerClient creates a new Docker client
-func NewDockerClient() (*DockerClient, error) {
+// NewClient creates a new Docker client
+func NewClient() (*Client, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Docker client: %w", err)
 	}
 
-	return &DockerClient{
+	return &Client{
 		cli: cli,
 	}, nil
 }
 
 // Close closes the Docker client connection
-func (dc *DockerClient) Close() error {
+func (dc *Client) Close() error {
 	return dc.cli.Close()
 }
 
 // Ping checks if Docker daemon is running
-func (dc *DockerClient) Ping(ctx context.Context) error {
+func (dc *Client) Ping(ctx context.Context) error {
 	_, err := dc.cli.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("Docker daemon not accessible: %w", err)
@@ -47,7 +47,7 @@ func (dc *DockerClient) Ping(ctx context.Context) error {
 }
 
 // GetVersion returns Docker version information
-func (dc *DockerClient) GetVersion(ctx context.Context) (string, error) {
+func (dc *Client) GetVersion(ctx context.Context) (string, error) {
 	version, err := dc.cli.ServerVersion(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get Docker version: %w", err)
@@ -56,7 +56,7 @@ func (dc *DockerClient) GetVersion(ctx context.Context) (string, error) {
 }
 
 // PullImage pulls a Docker image (or uses local if available)
-func (dc *DockerClient) PullImage(ctx context.Context, imageName string) error {
+func (dc *Client) PullImage(ctx context.Context, imageName string) error {
 	// Check if image exists locally
 	_, err := dc.cli.ImageInspect(ctx, imageName)
 	if err == nil {
@@ -83,7 +83,7 @@ func (dc *DockerClient) PullImage(ctx context.Context, imageName string) error {
 }
 
 // CreateContainer creates a Docker container
-func (dc *DockerClient) CreateContainer(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, containerName string) (string, error) {
+func (dc *Client) CreateContainer(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, containerName string) (string, error) {
 	resp, err := dc.cli.ContainerCreate(ctx, config, hostConfig, networkConfig, nil, containerName)
 	if err != nil {
 		return "", fmt.Errorf("failed to create container %s: %w", containerName, err)
@@ -99,7 +99,7 @@ func (dc *DockerClient) CreateContainer(ctx context.Context, config *container.C
 }
 
 // StartContainer starts a Docker container
-func (dc *DockerClient) StartContainer(ctx context.Context, containerID string) error {
+func (dc *Client) StartContainer(ctx context.Context, containerID string) error {
 	if err := dc.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container %s: %w", containerID, err)
 	}
@@ -107,7 +107,7 @@ func (dc *DockerClient) StartContainer(ctx context.Context, containerID string) 
 }
 
 // StopContainer stops a Docker container
-func (dc *DockerClient) StopContainer(ctx context.Context, containerID string, timeout *int) error {
+func (dc *Client) StopContainer(ctx context.Context, containerID string, timeout *int) error {
 	if err := dc.cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: timeout}); err != nil {
 		return fmt.Errorf("failed to stop container %s: %w", containerID, err)
 	}
@@ -115,25 +115,15 @@ func (dc *DockerClient) StopContainer(ctx context.Context, containerID string, t
 }
 
 // RemoveContainer removes a Docker container
-func (dc *DockerClient) RemoveContainer(ctx context.Context, containerID string, force bool) error {
+func (dc *Client) RemoveContainer(ctx context.Context, containerID string, force bool) error {
 	if err := dc.cli.ContainerRemove(ctx, containerID, container.RemoveOptions{Force: force}); err != nil {
 		return fmt.Errorf("failed to remove container %s: %w", containerID, err)
 	}
 	return nil
 }
 
-// ContainerInfo represents basic container information
-type ContainerInfo struct {
-	ID      string
-	Name    string
-	Image   string
-	State   string
-	Status  string
-	Created int64
-}
-
 // ListContainers lists Docker containers with optional filters
-func (dc *DockerClient) ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error) {
+func (dc *Client) ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error) {
 	options := container.ListOptions{
 		All: all,
 	}
@@ -177,7 +167,7 @@ func (dc *DockerClient) ListContainers(ctx context.Context, all bool, labelFilte
 }
 
 // GetContainerLogs retrieves logs from a container
-func (dc *DockerClient) GetContainerLogs(ctx context.Context, containerID string, follow bool) (io.ReadCloser, error) {
+func (dc *Client) GetContainerLogs(ctx context.Context, containerID string, follow bool) (io.ReadCloser, error) {
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -194,7 +184,7 @@ func (dc *DockerClient) GetContainerLogs(ctx context.Context, containerID string
 }
 
 // StreamContainerLogs streams container logs to stdout/stderr
-func (dc *DockerClient) StreamContainerLogs(ctx context.Context, containerID string) error {
+func (dc *Client) StreamContainerLogs(ctx context.Context, containerID string) error {
 	logs, err := dc.GetContainerLogs(ctx, containerID, true)
 	if err != nil {
 		return err
@@ -211,7 +201,7 @@ func (dc *DockerClient) StreamContainerLogs(ctx context.Context, containerID str
 }
 
 // CreateNetwork creates a Docker network
-func (dc *DockerClient) CreateNetwork(ctx context.Context, name string) (string, error) {
+func (dc *Client) CreateNetwork(ctx context.Context, name string) (string, error) {
 	resp, err := dc.cli.NetworkCreate(ctx, name, network.CreateOptions{
 		Driver: "bridge",
 		Labels: map[string]string{
@@ -226,7 +216,7 @@ func (dc *DockerClient) CreateNetwork(ctx context.Context, name string) (string,
 }
 
 // NetworkExists checks if a network exists
-func (dc *DockerClient) NetworkExists(ctx context.Context, name string) (bool, error) {
+func (dc *Client) NetworkExists(ctx context.Context, name string) (bool, error) {
 	networks, err := dc.cli.NetworkList(ctx, network.ListOptions{})
 	if err != nil {
 		return false, fmt.Errorf("failed to list networks: %w", err)
@@ -242,7 +232,7 @@ func (dc *DockerClient) NetworkExists(ctx context.Context, name string) (bool, e
 }
 
 // RemoveNetwork removes a Docker network
-func (dc *DockerClient) RemoveNetwork(ctx context.Context, name string) error {
+func (dc *Client) RemoveNetwork(ctx context.Context, name string) error {
 	if err := dc.cli.NetworkRemove(ctx, name); err != nil {
 		return fmt.Errorf("failed to remove network %s: %w", name, err)
 	}
@@ -250,7 +240,7 @@ func (dc *DockerClient) RemoveNetwork(ctx context.Context, name string) error {
 }
 
 // RemoveContainerByName finds and removes a container by name
-func (dc *DockerClient) RemoveContainerByName(ctx context.Context, name string) error {
+func (dc *Client) RemoveContainerByName(ctx context.Context, name string) error {
 	// List all containers (including stopped ones)
 	containers, err := dc.cli.ContainerList(ctx, container.ListOptions{
 		All: true,
@@ -299,6 +289,6 @@ func (dc *DockerClient) RemoveContainerByName(ctx context.Context, name string) 
 }
 
 // ContainerAttach attaches to a running container for interactive I/O.
-func (dc *DockerClient) ContainerAttach(ctx context.Context, containerID string, opts container.AttachOptions) (types.HijackedResponse, error) {
+func (dc *Client) ContainerAttach(ctx context.Context, containerID string, opts container.AttachOptions) (types.HijackedResponse, error) {
 	return dc.cli.ContainerAttach(ctx, containerID, opts)
 }
