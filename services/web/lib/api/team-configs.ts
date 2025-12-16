@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from './client';
+import { type ApiError, getErrorMessage } from './errors';
 import type { components } from './schema';
 
 // Re-export types from schema
@@ -16,13 +17,8 @@ export type CreateTeamAgentConfigRequest = components['schemas']['CreateTeamAgen
 export type UpdateTeamAgentConfigRequest = components['schemas']['UpdateTeamAgentConfigRequest'];
 export type ListTeamAgentConfigsResponse = components['schemas']['ListTeamAgentConfigsResponse'];
 
-/**
- * API error response
- */
-export interface ApiError {
-  error: string;
-  message?: string;
-}
+// Re-export ApiError for backwards compatibility
+export type { ApiError };
 
 // =============================================================================
 // Client-side functions (for use in client components via Next.js API routes)
@@ -123,8 +119,7 @@ export async function listTeamAgentConfigs(teamId: string): Promise<TeamAgentCon
   });
 
   if (error) {
-    const err = error as ApiError;
-    throw new Error(err.message || err.error || `Failed to list team agent configs (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to list team agent configs (${response?.status})`));
   }
 
   return data?.configs || [];
@@ -140,8 +135,7 @@ export async function getTeamAgentConfig(teamId: string, configId: string): Prom
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to get team agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to get team agent config (${response?.status})`));
   }
 
   return data;
@@ -161,8 +155,7 @@ export async function createTeamAgentConfig(
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to create team agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to create team agent config (${response?.status})`));
   }
 
   return data;
@@ -183,8 +176,7 @@ export async function updateTeamAgentConfig(
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to update team agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to update team agent config (${response?.status})`));
   }
 
   return data;
@@ -200,7 +192,6 @@ export async function deleteTeamAgentConfig(teamId: string, configId: string): P
   });
 
   if (error) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to delete team agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to delete team agent config (${response?.status})`));
   }
 }

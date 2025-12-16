@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 
 type RouteParams = { params: Promise<{ id: string; configId: string }> };
 
@@ -25,15 +26,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMessage = (error as any).error || 'Failed to update employee agent config';
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      return NextResponse.json(
+        { error: getErrorMessage(error, 'Failed to update employee agent config') },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }
@@ -57,15 +59,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMessage = (error as any).error || 'Failed to delete employee agent config';
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      return NextResponse.json(
+        { error: getErrorMessage(error, 'Failed to delete employee agent config') },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }

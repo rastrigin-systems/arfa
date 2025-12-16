@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 import { ConfigurationHierarchy } from '@/components/employees/ConfigurationHierarchy';
 
@@ -101,6 +102,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
 
 export function EmployeeDetailClient({ employee, agentConfigs, orgConfigs, teamConfigs, resolvedConfigs }: EmployeeDetailClientProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleEdit = () => {
@@ -112,9 +114,12 @@ export function EmployeeDetailClient({ employee, agentConfigs, orgConfigs, teamC
   };
 
   const handleConfirmDelete = async () => {
-    // TODO: Implement delete API call
-    console.log('Delete employee:', employee.id);
-    alert('Delete functionality coming soon');
+    // TODO: Implement delete API call when backend supports it
+    toast({
+      title: 'Not implemented',
+      description: 'Delete functionality is not yet available',
+      variant: 'destructive',
+    });
     setShowDeleteModal(false);
   };
 

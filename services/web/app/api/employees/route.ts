@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 import type { components, paths } from '@/lib/api/schema';
 
 type EmployeeStatus = components["parameters"]["Status"];
@@ -83,8 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { error: (error as any).message || 'Failed to create employee' },
+        { error: getErrorMessage(error, 'Failed to create employee') },
         { status: 500 }
       );
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }

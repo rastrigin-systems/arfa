@@ -222,9 +222,8 @@ export async function createInvitation(
  * Resend an existing invitation email
  * TODO: Backend endpoint needs to be implemented: POST /invitations/{id}/resend
  */
-export async function resendInvitation(invitationId: string): Promise<{ message: string }> {
+export async function resendInvitation(_invitationId: string): Promise<{ message: string }> {
   // Placeholder implementation - simulates success
-  console.log('Resending invitation:', invitationId);
   return { message: 'Invitation email resent successfully' };
 
   /* When backend is ready, uncomment this:
@@ -246,9 +245,8 @@ export async function resendInvitation(invitationId: string): Promise<{ message:
  * Cancel (delete) an invitation
  * TODO: Backend endpoint needs to be implemented: DELETE /invitations/{id}
  */
-export async function cancelInvitation(invitationId: string): Promise<{ message: string }> {
+export async function cancelInvitation(_invitationId: string): Promise<{ message: string }> {
   // Placeholder implementation - simulates success
-  console.log('Cancelling invitation:', invitationId);
   return { message: 'Invitation cancelled successfully' };
 
   /* When backend is ready, uncomment this:

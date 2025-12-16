@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 
 export async function GET() {
   // Get token from httpOnly cookie
@@ -20,17 +21,16 @@ export async function GET() {
 
     if (error) {
       return NextResponse.json(
-        { error: 'Failed to fetch roles' },
+        { error: getErrorMessage(error, 'Failed to fetch roles') },
         { status: 500 }
       );
     }
 
-    // Return the roles array
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return NextResponse.json({ roles: (data as any)?.roles || [] });
+    // Return the roles array - API returns { data: Role[] }
+    return NextResponse.json({ roles: data?.data ?? [] });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }
