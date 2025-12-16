@@ -1,4 +1,4 @@
-package cli
+package skill
 
 import (
 	"context"
@@ -11,34 +11,33 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
-// SkillsService handles skill management operations
-type SkillsService struct {
-	client        *api.Client
-	configManager *config.Manager
+// Service handles skill management operations
+type Service struct {
+	client        APIClientInterface
+	configManager ConfigManagerInterface
 }
 
-// NewSkillsService creates a new skills service
-func NewSkillsService(client *api.Client, configManager *config.Manager) *SkillsService {
-	return &SkillsService{
+// NewService creates a new skill service with concrete types.
+// This is the primary constructor for production use.
+func NewService(client *api.Client, configManager *config.Manager) *Service {
+	return &Service{
 		client:        client,
 		configManager: configManager,
 	}
 }
 
-// LocalSkillInfo represents locally installed skill information
-type LocalSkillInfo struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	Description string   `json:"description,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Files       []string `json:"files"`
-	IsEnabled   bool     `json:"is_enabled"`
-	InstalledAt string   `json:"installed_at,omitempty"`
+// NewServiceWithInterfaces creates a new skill service with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewServiceWithInterfaces(client APIClientInterface, configManager ConfigManagerInterface) *Service {
+	return &Service{
+		client:        client,
+		configManager: configManager,
+	}
 }
 
 // ListCatalogSkills fetches all available skills from the platform catalog
-func (ss *SkillsService) ListCatalogSkills(ctx context.Context) ([]api.Skill, error) {
-	resp, err := ss.client.ListSkills(ctx)
+func (s *Service) ListCatalogSkills(ctx context.Context) ([]api.Skill, error) {
+	resp, err := s.client.ListSkills(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list catalog skills: %w", err)
 	}
@@ -46,8 +45,8 @@ func (ss *SkillsService) ListCatalogSkills(ctx context.Context) ([]api.Skill, er
 }
 
 // GetSkill fetches details for a specific skill from the catalog
-func (ss *SkillsService) GetSkill(ctx context.Context, skillID string) (*api.Skill, error) {
-	skill, err := ss.client.GetSkill(ctx, skillID)
+func (s *Service) GetSkill(ctx context.Context, skillID string) (*api.Skill, error) {
+	skill, err := s.client.GetSkill(ctx, skillID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get skill: %w", err)
 	}
@@ -55,8 +54,8 @@ func (ss *SkillsService) GetSkill(ctx context.Context, skillID string) (*api.Ski
 }
 
 // GetSkillByName fetches a skill by name (searches catalog)
-func (ss *SkillsService) GetSkillByName(ctx context.Context, name string) (*api.Skill, error) {
-	skills, err := ss.ListCatalogSkills(ctx)
+func (s *Service) GetSkillByName(ctx context.Context, name string) (*api.Skill, error) {
+	skills, err := s.ListCatalogSkills(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +70,8 @@ func (ss *SkillsService) GetSkillByName(ctx context.Context, name string) (*api.
 }
 
 // ListEmployeeSkills fetches skills assigned to the authenticated employee
-func (ss *SkillsService) ListEmployeeSkills(ctx context.Context) ([]api.EmployeeSkill, error) {
-	resp, err := ss.client.ListEmployeeSkills(ctx)
+func (s *Service) ListEmployeeSkills(ctx context.Context) ([]api.EmployeeSkill, error) {
+	resp, err := s.client.ListEmployeeSkills(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list employee skills: %w", err)
 	}
@@ -80,8 +79,8 @@ func (ss *SkillsService) ListEmployeeSkills(ctx context.Context) ([]api.Employee
 }
 
 // GetEmployeeSkill fetches a specific skill assigned to the employee
-func (ss *SkillsService) GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error) {
-	skill, err := ss.client.GetEmployeeSkill(ctx, skillID)
+func (s *Service) GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error) {
+	skill, err := s.client.GetEmployeeSkill(ctx, skillID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get employee skill: %w", err)
 	}
@@ -89,8 +88,8 @@ func (ss *SkillsService) GetEmployeeSkill(ctx context.Context, skillID string) (
 }
 
 // GetEmployeeSkillByName fetches an employee skill by name
-func (ss *SkillsService) GetEmployeeSkillByName(ctx context.Context, name string) (*api.EmployeeSkill, error) {
-	skills, err := ss.ListEmployeeSkills(ctx)
+func (s *Service) GetEmployeeSkillByName(ctx context.Context, name string) (*api.EmployeeSkill, error) {
+	skills, err := s.ListEmployeeSkills(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +104,7 @@ func (ss *SkillsService) GetEmployeeSkillByName(ctx context.Context, name string
 }
 
 // GetLocalSkills returns locally installed skills from .claude/skills/
-func (ss *SkillsService) GetLocalSkills() ([]LocalSkillInfo, error) {
+func (s *Service) GetLocalSkills() ([]LocalSkillInfo, error) {
 	// Get current working directory (or could be configurable)
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -181,8 +180,8 @@ func (ss *SkillsService) GetLocalSkills() ([]LocalSkillInfo, error) {
 }
 
 // GetLocalSkill returns details for a specific locally installed skill
-func (ss *SkillsService) GetLocalSkill(name string) (*LocalSkillInfo, error) {
-	skills, err := ss.GetLocalSkills()
+func (s *Service) GetLocalSkill(name string) (*LocalSkillInfo, error) {
+	skills, err := s.GetLocalSkills()
 	if err != nil {
 		return nil, err
 	}
