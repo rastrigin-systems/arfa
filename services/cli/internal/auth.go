@@ -66,7 +66,7 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	}
 
 	// Update platform client URL
-	as.platformClient.baseURL = platformURL
+	as.platformClient.SetBaseURL(platformURL)
 
 	// Perform login
 	fmt.Println("\nAuthenticating...")
@@ -102,7 +102,7 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 // Login performs non-interactive login
 func (as *AuthService) Login(ctx context.Context, platformURL, email, password string) error {
 	// Update platform client URL
-	as.platformClient.baseURL = platformURL
+	as.platformClient.SetBaseURL(platformURL)
 
 	// Perform login
 	loginResp, err := as.platformClient.Login(ctx, email, password)
@@ -178,7 +178,7 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 
 	// Set token on platform client
 	as.platformClient.SetToken(config.Token)
-	as.platformClient.baseURL = config.PlatformURL
+	as.platformClient.SetBaseURL(config.PlatformURL)
 
 	return config, nil
 }

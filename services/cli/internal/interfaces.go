@@ -182,7 +182,12 @@ type SyncServiceInterface interface {
 	GetAgentConfig(idOrName string) (*AgentConfig, error)
 
 	// SetDockerClient sets the Docker client for container operations.
+	// Deprecated: Use SetContainerManager instead for better dependency injection.
 	SetDockerClient(dockerClient *DockerClient)
+
+	// SetContainerManager sets the container manager directly.
+	// This is the preferred way to inject container management dependencies.
+	SetContainerManager(cm ContainerManagerInterface)
 
 	// StartContainers starts Docker containers for synced agent configs.
 	StartContainers(ctx context.Context, workspacePath string, apiKey string) error

@@ -15,7 +15,7 @@ type SyncService struct {
 	platformClient   *PlatformClient
 	authService      *AuthService
 	dockerClient     *DockerClient
-	containerManager *ContainerManager
+	containerManager ContainerManagerInterface
 }
 
 // NewSyncService creates a new SyncService
@@ -27,12 +27,19 @@ func NewSyncService(configManager *ConfigManager, platformClient *PlatformClient
 	}
 }
 
-// SetDockerClient sets the Docker client (optional for testing)
+// SetDockerClient sets the Docker client and creates a ContainerManager.
+// Deprecated: Use SetContainerManager instead for better dependency injection.
 func (ss *SyncService) SetDockerClient(dockerClient *DockerClient) {
 	ss.dockerClient = dockerClient
 	if dockerClient != nil {
 		ss.containerManager = NewContainerManager(dockerClient)
 	}
+}
+
+// SetContainerManager sets the container manager directly.
+// This is the preferred way to inject container management dependencies.
+func (ss *SyncService) SetContainerManager(cm ContainerManagerInterface) {
+	ss.containerManager = cm
 }
 
 // SyncResult represents the result of a sync operation
