@@ -14,12 +14,22 @@ import (
 
 // AuthService handles authentication operations
 type AuthService struct {
-	configManager  *ConfigManager
-	platformClient *PlatformClient
+	configManager  ConfigManagerInterface
+	platformClient PlatformClientInterface
 }
 
-// NewAuthService creates a new AuthService
+// NewAuthService creates a new AuthService with concrete types.
+// This is the primary constructor for production use.
 func NewAuthService(configManager *ConfigManager, platformClient *PlatformClient) *AuthService {
+	return &AuthService{
+		configManager:  configManager,
+		platformClient: platformClient,
+	}
+}
+
+// NewAuthServiceWithInterfaces creates a new AuthService with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewAuthServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface) *AuthService {
 	return &AuthService{
 		configManager:  configManager,
 		platformClient: platformClient,
