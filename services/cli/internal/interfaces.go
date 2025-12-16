@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"net/http"
 
@@ -183,13 +184,13 @@ type SyncServiceInterface interface {
 	SetDockerClient(dockerClient *DockerClient)
 
 	// StartContainers starts Docker containers for synced agent configs.
-	StartContainers(workspacePath string, apiKey string) error
+	StartContainers(ctx context.Context, workspacePath string, apiKey string) error
 
 	// StopContainers stops all running containers.
-	StopContainers() error
+	StopContainers(ctx context.Context) error
 
 	// GetContainerStatus returns the status of all containers.
-	GetContainerStatus() ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
 }
 
 // AgentServiceInterface defines the contract for agent management operations.
@@ -250,90 +251,91 @@ type SkillsServiceInterface interface {
 
 // DockerClientInterface defines the contract for Docker daemon communication.
 // Implementations wrap the Docker SDK client for container operations.
-// NOTE: This interface uses the current signatures. Phase 2 will add context.Context.
+// All methods accept context.Context as the first parameter for cancellation and timeout support.
 type DockerClientInterface interface {
 	// Close closes the Docker client connection.
 	Close() error
 
 	// Ping checks if Docker daemon is running.
-	Ping() error
+	Ping(ctx context.Context) error
 
 	// GetVersion returns Docker version information.
-	GetVersion() (string, error)
+	GetVersion(ctx context.Context) (string, error)
 
 	// -------------------------------------------------------------------------
 	// Image Operations
 	// -------------------------------------------------------------------------
 
 	// PullImage pulls a Docker image (or uses local if available).
-	PullImage(imageName string) error
+	PullImage(ctx context.Context, imageName string) error
 
 	// -------------------------------------------------------------------------
 	// Container Operations
 	// -------------------------------------------------------------------------
 
 	// CreateContainer creates a Docker container.
-	CreateContainer(config *DockerContainerConfig, hostConfig *DockerHostConfig, networkConfig *DockerNetworkConfig, containerName string) (string, error)
+	CreateContainer(ctx context.Context, config *DockerContainerConfig, hostConfig *DockerHostConfig, networkConfig *DockerNetworkConfig, containerName string) (string, error)
 
 	// StartContainer starts a Docker container.
-	StartContainer(containerID string) error
+	StartContainer(ctx context.Context, containerID string) error
 
 	// StopContainer stops a Docker container.
-	StopContainer(containerID string, timeout *int) error
+	StopContainer(ctx context.Context, containerID string, timeout *int) error
 
 	// RemoveContainer removes a Docker container.
-	RemoveContainer(containerID string, force bool) error
+	RemoveContainer(ctx context.Context, containerID string, force bool) error
 
 	// RemoveContainerByName finds and removes a container by name.
-	RemoveContainerByName(name string) error
+	RemoveContainerByName(ctx context.Context, name string) error
 
 	// ListContainers lists Docker containers with optional filters.
-	ListContainers(all bool, labelFilter map[string]string) ([]ContainerInfo, error)
+	ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Container Logs
 	// -------------------------------------------------------------------------
 
 	// GetContainerLogs retrieves logs from a container.
-	GetContainerLogs(containerID string, follow bool) (io.ReadCloser, error)
+	GetContainerLogs(ctx context.Context, containerID string, follow bool) (io.ReadCloser, error)
 
 	// StreamContainerLogs streams container logs to stdout/stderr.
-	StreamContainerLogs(containerID string) error
+	StreamContainerLogs(ctx context.Context, containerID string) error
 
 	// -------------------------------------------------------------------------
 	// Network Operations
 	// -------------------------------------------------------------------------
 
 	// CreateNetwork creates a Docker network.
-	CreateNetwork(name string) (string, error)
+	CreateNetwork(ctx context.Context, name string) (string, error)
 
 	// NetworkExists checks if a network exists.
-	NetworkExists(name string) (bool, error)
+	NetworkExists(ctx context.Context, name string) (bool, error)
 
 	// RemoveNetwork removes a Docker network.
-	RemoveNetwork(name string) error
+	RemoveNetwork(ctx context.Context, name string) error
 }
 
 // ContainerManagerInterface defines the contract for managing containers.
 // Implementations orchestrate container lifecycle for agents and MCP servers.
+// All methods accept context.Context as the first parameter for cancellation and timeout support.
 type ContainerManagerInterface interface {
 	// SetupNetwork creates the ubik network if it doesn't exist.
-	SetupNetwork() error
+	SetupNetwork(ctx context.Context) error
 
 	// StartMCPServer starts an MCP server container.
-	StartMCPServer(spec MCPServerSpec, workspacePath string) (string, error)
+	StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error)
 
 	// StartAgent starts an agent container.
-	StartAgent(spec AgentSpec, workspacePath string) (string, error)
+	StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error)
 
 	// StopContainers stops all ubik-managed containers.
-	StopContainers() error
+	StopContainers(ctx context.Context) error
 
 	// CleanupContainers removes all stopped ubik-managed containers.
-	CleanupContainers() error
+	CleanupContainers(ctx context.Context) error
 
 	// GetContainerStatus returns status of all ubik-managed containers.
-	GetContainerStatus() ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
 }
 
 // DockerContainerConfig is an alias for container.Config from Docker SDK.

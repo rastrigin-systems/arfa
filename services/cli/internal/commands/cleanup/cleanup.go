@@ -1,6 +1,7 @@
 package cleanup
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -37,7 +38,8 @@ func NewCleanupCommand() *cobra.Command {
 				syncService.SetDockerClient(dockerClient)
 
 				fmt.Println("Stopping and removing containers...")
-				if err := syncService.StopContainers(); err != nil {
+				ctx := context.Background()
+				if err := syncService.StopContainers(ctx); err != nil {
 					fmt.Printf("Warning: failed to stop some containers: %v\n", err)
 				}
 

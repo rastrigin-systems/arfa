@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -38,25 +39,26 @@ func TestContainerManager_SetupNetwork(t *testing.T) {
 	defer dockerClient.Close()
 
 	cm := NewContainerManager(dockerClient)
+	ctx := context.Background()
 
 	// Remove network if it exists
-	dockerClient.RemoveNetwork(cm.networkName)
+	dockerClient.RemoveNetwork(ctx, cm.networkName)
 
 	// Setup network (first time)
-	err = cm.SetupNetwork()
+	err = cm.SetupNetwork(ctx)
 	require.NoError(t, err)
 
 	// Verify network exists
-	exists, err := dockerClient.NetworkExists(cm.networkName)
+	exists, err := dockerClient.NetworkExists(ctx, cm.networkName)
 	require.NoError(t, err)
 	assert.True(t, exists)
 
 	// Setup network again (should be idempotent)
-	err = cm.SetupNetwork()
+	err = cm.SetupNetwork(ctx)
 	require.NoError(t, err)
 
 	// Cleanup
-	err = dockerClient.RemoveNetwork(cm.networkName)
+	err = dockerClient.RemoveNetwork(ctx, cm.networkName)
 	assert.NoError(t, err)
 }
 
@@ -72,8 +74,9 @@ func TestContainerManager_GetContainerStatus(t *testing.T) {
 	defer dockerClient.Close()
 
 	cm := NewContainerManager(dockerClient)
+	ctx := context.Background()
 
-	containers, err := cm.GetContainerStatus()
+	containers, err := cm.GetContainerStatus(ctx)
 	require.NoError(t, err)
 	assert.NotNil(t, containers)
 	t.Logf("Found %d ubik-managed containers", len(containers))
@@ -91,9 +94,10 @@ func TestContainerManager_StopContainers_NoContainers(t *testing.T) {
 	defer dockerClient.Close()
 
 	cm := NewContainerManager(dockerClient)
+	ctx := context.Background()
 
 	// Should handle case with no containers gracefully
-	err = cm.StopContainers()
+	err = cm.StopContainers(ctx)
 	assert.NoError(t, err)
 }
 
@@ -109,9 +113,10 @@ func TestContainerManager_CleanupContainers_NoContainers(t *testing.T) {
 	defer dockerClient.Close()
 
 	cm := NewContainerManager(dockerClient)
+	ctx := context.Background()
 
 	// Should handle case with no stopped containers gracefully
-	err = cm.CleanupContainers()
+	err = cm.CleanupContainers(ctx)
 	assert.NoError(t, err)
 }
 
@@ -191,11 +196,12 @@ func TestContainerManager_StartMCPServer_Integration(t *testing.T) {
 	defer dockerClient.Close()
 
 	cm := NewContainerManager(dockerClient)
+	ctx := context.Background()
 
 	// Setup network
-	err = cm.SetupNetwork()
+	err = cm.SetupNetwork(ctx)
 	require.NoError(t, err)
-	defer dockerClient.RemoveNetwork(cm.networkName)
+	defer dockerClient.RemoveNetwork(ctx, cm.networkName)
 
 	// Create temp workspace
 	tmpDir := t.TempDir()
@@ -213,12 +219,12 @@ func TestContainerManager_StartMCPServer_Integration(t *testing.T) {
 
 	// This will try to start but will likely fail since alpine doesn't have MCP server
 	// We're just testing that the function doesn't panic
-	containerID, err := cm.StartMCPServer(spec, tmpDir)
+	containerID, err := cm.StartMCPServer(ctx, spec, tmpDir)
 
 	// Clean up if container was created
 	if containerID != "" {
-		dockerClient.StopContainer(containerID, nil)
-		dockerClient.RemoveContainer(containerID, true)
+		dockerClient.StopContainer(ctx, containerID, nil)
+		dockerClient.RemoveContainer(ctx, containerID, true)
 	}
 
 	// We expect it to work or fail gracefully

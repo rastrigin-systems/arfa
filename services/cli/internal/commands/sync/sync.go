@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -62,7 +63,8 @@ Optionally starts Docker containers for agents and MCP servers.`,
 				syncService.SetDockerClient(dockerClient)
 
 				// Start containers
-				if err := syncService.StartContainers(workspace, apiKey); err != nil {
+				ctx := context.Background()
+				if err := syncService.StartContainers(ctx, workspace, apiKey); err != nil {
 					return fmt.Errorf("failed to start containers: %w", err)
 				}
 

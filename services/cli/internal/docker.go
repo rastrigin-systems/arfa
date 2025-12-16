@@ -13,10 +13,10 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
-// DockerClient wraps the Docker SDK client
+// DockerClient wraps the Docker SDK client.
+// All methods accept context.Context as the first parameter for cancellation and timeout support.
 type DockerClient struct {
 	cli *client.Client
-	ctx context.Context
 }
 
 // NewDockerClient creates a new Docker client
@@ -28,7 +28,6 @@ func NewDockerClient() (*DockerClient, error) {
 
 	return &DockerClient{
 		cli: cli,
-		ctx: context.Background(),
 	}, nil
 }
 
@@ -38,8 +37,8 @@ func (dc *DockerClient) Close() error {
 }
 
 // Ping checks if Docker daemon is running
-func (dc *DockerClient) Ping() error {
-	_, err := dc.cli.Ping(dc.ctx)
+func (dc *DockerClient) Ping(ctx context.Context) error {
+	_, err := dc.cli.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("Docker daemon not accessible: %w", err)
 	}
@@ -47,8 +46,8 @@ func (dc *DockerClient) Ping() error {
 }
 
 // GetVersion returns Docker version information
-func (dc *DockerClient) GetVersion() (string, error) {
-	version, err := dc.cli.ServerVersion(dc.ctx)
+func (dc *DockerClient) GetVersion(ctx context.Context) (string, error) {
+	version, err := dc.cli.ServerVersion(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get Docker version: %w", err)
 	}
@@ -56,9 +55,9 @@ func (dc *DockerClient) GetVersion() (string, error) {
 }
 
 // PullImage pulls a Docker image (or uses local if available)
-func (dc *DockerClient) PullImage(imageName string) error {
+func (dc *DockerClient) PullImage(ctx context.Context, imageName string) error {
 	// Check if image exists locally
-	_, err := dc.cli.ImageInspect(dc.ctx, imageName)
+	_, err := dc.cli.ImageInspect(ctx, imageName)
 	if err == nil {
 		fmt.Printf("  Using local image %s\n", imageName)
 		return nil
@@ -67,7 +66,7 @@ func (dc *DockerClient) PullImage(imageName string) error {
 	// Image doesn't exist locally, pull it
 	fmt.Printf("  Pulling %s...\n", imageName)
 
-	reader, err := dc.cli.ImagePull(dc.ctx, imageName, image.PullOptions{})
+	reader, err := dc.cli.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image %s: %w", imageName, err)
 	}
@@ -83,8 +82,8 @@ func (dc *DockerClient) PullImage(imageName string) error {
 }
 
 // CreateContainer creates a Docker container
-func (dc *DockerClient) CreateContainer(config *container.Config, hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, containerName string) (string, error) {
-	resp, err := dc.cli.ContainerCreate(dc.ctx, config, hostConfig, networkConfig, nil, containerName)
+func (dc *DockerClient) CreateContainer(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkConfig *network.NetworkingConfig, containerName string) (string, error) {
+	resp, err := dc.cli.ContainerCreate(ctx, config, hostConfig, networkConfig, nil, containerName)
 	if err != nil {
 		return "", fmt.Errorf("failed to create container %s: %w", containerName, err)
 	}
@@ -99,24 +98,24 @@ func (dc *DockerClient) CreateContainer(config *container.Config, hostConfig *co
 }
 
 // StartContainer starts a Docker container
-func (dc *DockerClient) StartContainer(containerID string) error {
-	if err := dc.cli.ContainerStart(dc.ctx, containerID, container.StartOptions{}); err != nil {
+func (dc *DockerClient) StartContainer(ctx context.Context, containerID string) error {
+	if err := dc.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container %s: %w", containerID, err)
 	}
 	return nil
 }
 
 // StopContainer stops a Docker container
-func (dc *DockerClient) StopContainer(containerID string, timeout *int) error {
-	if err := dc.cli.ContainerStop(dc.ctx, containerID, container.StopOptions{Timeout: timeout}); err != nil {
+func (dc *DockerClient) StopContainer(ctx context.Context, containerID string, timeout *int) error {
+	if err := dc.cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: timeout}); err != nil {
 		return fmt.Errorf("failed to stop container %s: %w", containerID, err)
 	}
 	return nil
 }
 
 // RemoveContainer removes a Docker container
-func (dc *DockerClient) RemoveContainer(containerID string, force bool) error {
-	if err := dc.cli.ContainerRemove(dc.ctx, containerID, container.RemoveOptions{Force: force}); err != nil {
+func (dc *DockerClient) RemoveContainer(ctx context.Context, containerID string, force bool) error {
+	if err := dc.cli.ContainerRemove(ctx, containerID, container.RemoveOptions{Force: force}); err != nil {
 		return fmt.Errorf("failed to remove container %s: %w", containerID, err)
 	}
 	return nil
@@ -133,7 +132,7 @@ type ContainerInfo struct {
 }
 
 // ListContainers lists Docker containers with optional filters
-func (dc *DockerClient) ListContainers(all bool, labelFilter map[string]string) ([]ContainerInfo, error) {
+func (dc *DockerClient) ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error) {
 	options := container.ListOptions{
 		All: all,
 	}
@@ -147,7 +146,7 @@ func (dc *DockerClient) ListContainers(all bool, labelFilter map[string]string) 
 		// Note: The API expects filters in a specific format, this is simplified
 	}
 
-	containers, err := dc.cli.ContainerList(dc.ctx, options)
+	containers, err := dc.cli.ContainerList(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list containers: %w", err)
 	}
@@ -177,7 +176,7 @@ func (dc *DockerClient) ListContainers(all bool, labelFilter map[string]string) 
 }
 
 // GetContainerLogs retrieves logs from a container
-func (dc *DockerClient) GetContainerLogs(containerID string, follow bool) (io.ReadCloser, error) {
+func (dc *DockerClient) GetContainerLogs(ctx context.Context, containerID string, follow bool) (io.ReadCloser, error) {
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -185,7 +184,7 @@ func (dc *DockerClient) GetContainerLogs(containerID string, follow bool) (io.Re
 		Timestamps: false,
 	}
 
-	logs, err := dc.cli.ContainerLogs(dc.ctx, containerID, options)
+	logs, err := dc.cli.ContainerLogs(ctx, containerID, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container logs: %w", err)
 	}
@@ -194,8 +193,8 @@ func (dc *DockerClient) GetContainerLogs(containerID string, follow bool) (io.Re
 }
 
 // StreamContainerLogs streams container logs to stdout/stderr
-func (dc *DockerClient) StreamContainerLogs(containerID string) error {
-	logs, err := dc.GetContainerLogs(containerID, true)
+func (dc *DockerClient) StreamContainerLogs(ctx context.Context, containerID string) error {
+	logs, err := dc.GetContainerLogs(ctx, containerID, true)
 	if err != nil {
 		return err
 	}
@@ -211,8 +210,8 @@ func (dc *DockerClient) StreamContainerLogs(containerID string) error {
 }
 
 // CreateNetwork creates a Docker network
-func (dc *DockerClient) CreateNetwork(name string) (string, error) {
-	resp, err := dc.cli.NetworkCreate(dc.ctx, name, network.CreateOptions{
+func (dc *DockerClient) CreateNetwork(ctx context.Context, name string) (string, error) {
+	resp, err := dc.cli.NetworkCreate(ctx, name, network.CreateOptions{
 		Driver: "bridge",
 		Labels: map[string]string{
 			"com.ubik.managed": "true",
@@ -226,8 +225,8 @@ func (dc *DockerClient) CreateNetwork(name string) (string, error) {
 }
 
 // NetworkExists checks if a network exists
-func (dc *DockerClient) NetworkExists(name string) (bool, error) {
-	networks, err := dc.cli.NetworkList(dc.ctx, network.ListOptions{})
+func (dc *DockerClient) NetworkExists(ctx context.Context, name string) (bool, error) {
+	networks, err := dc.cli.NetworkList(ctx, network.ListOptions{})
 	if err != nil {
 		return false, fmt.Errorf("failed to list networks: %w", err)
 	}
@@ -242,17 +241,17 @@ func (dc *DockerClient) NetworkExists(name string) (bool, error) {
 }
 
 // RemoveNetwork removes a Docker network
-func (dc *DockerClient) RemoveNetwork(name string) error {
-	if err := dc.cli.NetworkRemove(dc.ctx, name); err != nil {
+func (dc *DockerClient) RemoveNetwork(ctx context.Context, name string) error {
+	if err := dc.cli.NetworkRemove(ctx, name); err != nil {
 		return fmt.Errorf("failed to remove network %s: %w", name, err)
 	}
 	return nil
 }
 
 // RemoveContainerByName finds and removes a container by name
-func (dc *DockerClient) RemoveContainerByName(name string) error {
+func (dc *DockerClient) RemoveContainerByName(ctx context.Context, name string) error {
 	// List all containers (including stopped ones)
-	containers, err := dc.cli.ContainerList(dc.ctx, container.ListOptions{
+	containers, err := dc.cli.ContainerList(ctx, container.ListOptions{
 		All: true,
 	})
 	if err != nil {
@@ -285,13 +284,13 @@ func (dc *DockerClient) RemoveContainerByName(name string) error {
 
 	// Stop container if it's running (use default 10s timeout)
 	timeout := 10
-	_ = dc.StopContainer(containerID, &timeout)
+	_ = dc.StopContainer(ctx, containerID, &timeout)
 
 	// Remove container
 	removeOptions := container.RemoveOptions{
 		Force: true, // Force removal even if running
 	}
-	if err := dc.cli.ContainerRemove(dc.ctx, containerID, removeOptions); err != nil {
+	if err := dc.cli.ContainerRemove(ctx, containerID, removeOptions); err != nil {
 		return fmt.Errorf("failed to remove container %s: %w", name, err)
 	}
 

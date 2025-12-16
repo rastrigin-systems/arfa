@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,8 +27,8 @@ func NewContainerManager(dockerClient *DockerClient) *ContainerManager {
 }
 
 // SetupNetwork creates the ubik network if it doesn't exist
-func (cm *ContainerManager) SetupNetwork() error {
-	exists, err := cm.dockerClient.NetworkExists(cm.networkName)
+func (cm *ContainerManager) SetupNetwork(ctx context.Context) error {
+	exists, err := cm.dockerClient.NetworkExists(ctx, cm.networkName)
 	if err != nil {
 		return fmt.Errorf("failed to check network: %w", err)
 	}
@@ -38,7 +39,7 @@ func (cm *ContainerManager) SetupNetwork() error {
 	}
 
 	fmt.Printf("Creating network '%s'...\n", cm.networkName)
-	_, err = cm.dockerClient.CreateNetwork(cm.networkName)
+	_, err = cm.dockerClient.CreateNetwork(ctx, cm.networkName)
 	if err != nil {
 		return fmt.Errorf("failed to create network: %w", err)
 	}
@@ -78,13 +79,13 @@ type AgentSpec struct {
 }
 
 // StartMCPServer starts an MCP server container
-func (cm *ContainerManager) StartMCPServer(spec MCPServerSpec, workspacePath string) (string, error) {
+func (cm *ContainerManager) StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error) {
 	containerName := fmt.Sprintf("ubik-mcp-%s", spec.ServerID)
 
 	fmt.Printf("  Starting %s (%s)...\n", spec.ServerName, spec.ServerType)
 
 	// Pull image
-	if err := cm.dockerClient.PullImage(spec.Image); err != nil {
+	if err := cm.dockerClient.PullImage(ctx, spec.Image); err != nil {
 		return "", fmt.Errorf("failed to pull MCP image: %w", err)
 	}
 
@@ -138,13 +139,13 @@ func (cm *ContainerManager) StartMCPServer(spec MCPServerSpec, workspacePath str
 	}
 
 	// Create container
-	containerID, err := cm.dockerClient.CreateContainer(config, hostConfig, networkConfig, containerName)
+	containerID, err := cm.dockerClient.CreateContainer(ctx, config, hostConfig, networkConfig, containerName)
 	if err != nil {
 		return "", err
 	}
 
 	// Start container
-	if err := cm.dockerClient.StartContainer(containerID); err != nil {
+	if err := cm.dockerClient.StartContainer(ctx, containerID); err != nil {
 		return "", err
 	}
 
@@ -153,19 +154,19 @@ func (cm *ContainerManager) StartMCPServer(spec MCPServerSpec, workspacePath str
 }
 
 // StartAgent starts an agent container
-func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (string, error) {
+func (cm *ContainerManager) StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error) {
 	containerName := fmt.Sprintf("ubik-agent-%s", spec.AgentID)
 
 	fmt.Printf("  Starting %s (%s)...\n", spec.AgentName, spec.AgentType)
 
 	// Check if container with this name already exists and remove it
-	if err := cm.dockerClient.RemoveContainerByName(containerName); err != nil {
+	if err := cm.dockerClient.RemoveContainerByName(ctx, containerName); err != nil {
 		// Log warning but continue - container might not exist
 		fmt.Printf("  Note: Cleaned up existing container\n")
 	}
 
 	// Pull image
-	if err := cm.dockerClient.PullImage(spec.Image); err != nil {
+	if err := cm.dockerClient.PullImage(ctx, spec.Image); err != nil {
 		return "", fmt.Errorf("failed to pull agent image: %w", err)
 	}
 
@@ -314,13 +315,13 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 	}
 
 	// Create container
-	containerID, err := cm.dockerClient.CreateContainer(config, hostConfig, networkConfig, containerName)
+	containerID, err := cm.dockerClient.CreateContainer(ctx, config, hostConfig, networkConfig, containerName)
 	if err != nil {
 		return "", err
 	}
 
 	// Start container
-	if err := cm.dockerClient.StartContainer(containerID); err != nil {
+	if err := cm.dockerClient.StartContainer(ctx, containerID); err != nil {
 		return "", err
 	}
 
@@ -329,8 +330,8 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 }
 
 // StopContainers stops all ubik-managed containers
-func (cm *ContainerManager) StopContainers() error {
-	containers, err := cm.dockerClient.ListContainers(false, map[string]string{
+func (cm *ContainerManager) StopContainers(ctx context.Context) error {
+	containers, err := cm.dockerClient.ListContainers(ctx, false, map[string]string{
 		"com.ubik.managed": "true",
 	})
 	if err != nil {
@@ -347,7 +348,7 @@ func (cm *ContainerManager) StopContainers() error {
 
 	for _, c := range containers {
 		fmt.Printf("  Stopping %s...\n", c.Name)
-		if err := cm.dockerClient.StopContainer(c.ID, &timeout); err != nil {
+		if err := cm.dockerClient.StopContainer(ctx, c.ID, &timeout); err != nil {
 			fmt.Printf("  ⚠ Failed to stop %s: %v\n", c.Name, err)
 		} else {
 			fmt.Printf("  ✓ %s stopped\n", c.Name)
@@ -358,8 +359,8 @@ func (cm *ContainerManager) StopContainers() error {
 }
 
 // CleanupContainers removes all stopped ubik-managed containers
-func (cm *ContainerManager) CleanupContainers() error {
-	containers, err := cm.dockerClient.ListContainers(true, map[string]string{
+func (cm *ContainerManager) CleanupContainers(ctx context.Context) error {
+	containers, err := cm.dockerClient.ListContainers(ctx, true, map[string]string{
 		"com.ubik.managed": "true",
 	})
 	if err != nil {
@@ -383,7 +384,7 @@ func (cm *ContainerManager) CleanupContainers() error {
 	for _, c := range containers {
 		if c.State != "running" {
 			fmt.Printf("  Removing %s...\n", c.Name)
-			if err := cm.dockerClient.RemoveContainer(c.ID, false); err != nil {
+			if err := cm.dockerClient.RemoveContainer(ctx, c.ID, false); err != nil {
 				fmt.Printf("  ⚠ Failed to remove %s: %v\n", c.Name, err)
 			} else {
 				fmt.Printf("  ✓ %s removed\n", c.Name)
@@ -395,8 +396,8 @@ func (cm *ContainerManager) CleanupContainers() error {
 }
 
 // GetContainerStatus returns status of all ubik-managed containers
-func (cm *ContainerManager) GetContainerStatus() ([]ContainerInfo, error) {
-	return cm.dockerClient.ListContainers(true, map[string]string{
+func (cm *ContainerManager) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
+	return cm.dockerClient.ListContainers(ctx, true, map[string]string{
 		"com.ubik.managed": "true",
 	})
 }
