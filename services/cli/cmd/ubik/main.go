@@ -5,12 +5,17 @@ import (
 	"os"
 
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 )
 
 var version = "v0.2.0-dev"
 
 func main() {
-	if err := commands.NewRootCommand(version).Execute(); err != nil {
+	// Create dependency injection container
+	c := container.New()
+	defer c.Close()
+
+	if err := commands.NewRootCommand(version, c).Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}

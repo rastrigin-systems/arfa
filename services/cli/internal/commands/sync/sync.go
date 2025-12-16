@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewSyncCommand() *cobra.Command {
+// NewSyncCommand creates the sync command with dependencies from the container.
+func NewSyncCommand(c *container.Container) *cobra.Command {
 	var (
 		startContainers bool
 		workspace       string
@@ -22,14 +23,10 @@ func NewSyncCommand() *cobra.Command {
 		Long: `Fetches resolved configs from the platform and stores them locally.
 Optionally starts Docker containers for agents and MCP servers.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			syncService, err := c.SyncService()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get sync service: %w", err)
 			}
-
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
-			syncService := cli.NewSyncService(configManager, platformClient, authService)
 
 			ctx := context.Background()
 
@@ -56,11 +53,10 @@ Optionally starts Docker containers for agents and MCP servers.`,
 				workspace = absWorkspace
 
 				// Setup Docker client
-				dockerClient, err := cli.NewDockerClient()
+				dockerClient, err := c.DockerClient()
 				if err != nil {
-					return fmt.Errorf("failed to create Docker client: %w", err)
+					return fmt.Errorf("failed to get Docker client: %w", err)
 				}
-				defer dockerClient.Close()
 
 				syncService.SetDockerClient(dockerClient)
 

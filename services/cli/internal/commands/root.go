@@ -1,10 +1,6 @@
 package commands
 
 import (
-	"fmt"
-	"os"
-
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/agents"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/cleanup"
@@ -16,11 +12,13 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/status"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/sync"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/update"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-// NewRootCommand creates and returns the root command with all subcommands registered
-func NewRootCommand(version string) *cobra.Command {
+// NewRootCommand creates and returns the root command with all subcommands registered.
+// The container parameter provides dependency injection for all subcommands.
+func NewRootCommand(version string, c *container.Container) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "ubik",
 		Short: "ubik - Container-orchestrated AI agent management",
@@ -48,49 +46,25 @@ Examples:
 	rootCmd.Flags().Bool("set-default", false, "Set default agent without starting a session")
 
 	// Register auth commands
-	rootCmd.AddCommand(auth.NewLoginCommand())
-	rootCmd.AddCommand(auth.NewLogoutCommand())
+	rootCmd.AddCommand(auth.NewLoginCommand(c))
+	rootCmd.AddCommand(auth.NewLogoutCommand(c))
 
 	// Register config commands
-	rootCmd.AddCommand(config.NewConfigCommand())
-	rootCmd.AddCommand(sync.NewSyncCommand())
-	rootCmd.AddCommand(status.NewStatusCommand())
-	rootCmd.AddCommand(update.NewUpdateCommand())
-	rootCmd.AddCommand(cleanup.NewCleanupCommand())
+	rootCmd.AddCommand(config.NewConfigCommand(c))
+	rootCmd.AddCommand(sync.NewSyncCommand(c))
+	rootCmd.AddCommand(status.NewStatusCommand(c))
+	rootCmd.AddCommand(update.NewUpdateCommand(c))
+	rootCmd.AddCommand(cleanup.NewCleanupCommand(c))
 
 	// Register command groups
-	rootCmd.AddCommand(agents.NewAgentsCommand())
-	rootCmd.AddCommand(newSkillsCommand())
-	rootCmd.AddCommand(logs.NewLogsCommand())
-	rootCmd.AddCommand(proxy.NewProxyCommand())
+	rootCmd.AddCommand(agents.NewAgentsCommand(c))
+	rootCmd.AddCommand(skills.NewSkillsCommand(c))
+	rootCmd.AddCommand(logs.NewLogsCommand(c))
+	rootCmd.AddCommand(proxy.NewProxyCommand(c))
 
 	// Legacy top-level commands (aliases for proxy start/stop)
-	rootCmd.AddCommand(newStartCommand())
-	rootCmd.AddCommand(newStopCommand())
+	rootCmd.AddCommand(proxy.NewStartCommand(c))
+	rootCmd.AddCommand(proxy.NewStopCommand(c))
 
 	return rootCmd
-}
-
-// newSkillsCommand creates the skills command with initialized dependencies
-func newSkillsCommand() *cobra.Command {
-	configManager, err := cli.NewConfigManager()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to create config manager: %v\n", err)
-		os.Exit(1)
-	}
-
-	platformClient := cli.NewPlatformClient("")
-	authService := cli.NewAuthService(configManager, platformClient)
-
-	return skills.NewSkillsCommand(configManager, platformClient, authService)
-}
-
-// newStartCommand creates the legacy 'start' command (alias for 'proxy start')
-func newStartCommand() *cobra.Command {
-	return proxy.NewStartCommand()
-}
-
-// newStopCommand creates the legacy 'stop' command (alias for 'proxy stop')
-func newStopCommand() *cobra.Command {
-	return proxy.NewStopCommand()
 }

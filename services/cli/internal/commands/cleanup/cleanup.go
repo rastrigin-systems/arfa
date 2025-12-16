@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewCleanupCommand() *cobra.Command {
+// NewCleanupCommand creates the cleanup command with dependencies from the container.
+func NewCleanupCommand(c *container.Container) *cobra.Command {
 	var removeContainers bool
 	var removeConfig bool
 
@@ -18,22 +19,22 @@ func NewCleanupCommand() *cobra.Command {
 		Short: "Clean up containers and local state",
 		Long:  "Remove Docker containers and optionally reset local configuration.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
 			if removeContainers {
-				platformClient := cli.NewPlatformClient("")
-				authService := cli.NewAuthService(configManager, platformClient)
-				syncService := cli.NewSyncService(configManager, platformClient, authService)
+				syncService, err := c.SyncService()
+				if err != nil {
+					return fmt.Errorf("failed to get sync service: %w", err)
+				}
 
 				// Setup Docker client
-				dockerClient, err := cli.NewDockerClient()
+				dockerClient, err := c.DockerClient()
 				if err != nil {
-					return fmt.Errorf("failed to create Docker client: %w", err)
+					return fmt.Errorf("failed to get Docker client: %w", err)
 				}
-				defer dockerClient.Close()
 
 				syncService.SetDockerClient(dockerClient)
 

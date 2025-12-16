@@ -9,6 +9,7 @@ import (
 
 	"github.com/fatih/color"
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -37,8 +38,8 @@ type ConfigLevel struct {
 	Source    string                 `json:"source"` // org name, team name, "You"
 }
 
-// NewShowCommand creates the 'agents show' command
-func NewShowCommand() *cobra.Command {
+// NewShowCommand creates the 'agents show' command with dependencies from the container.
+func NewShowCommand(c *container.Container) *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
@@ -58,8 +59,18 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			agentName := args[0]
 
+			configManager, err := c.ConfigManager()
+			if err != nil {
+				return fmt.Errorf("failed to get config manager: %w", err)
+			}
+
+			platformClient, err := c.PlatformClient()
+			if err != nil {
+				return fmt.Errorf("failed to get platform client: %w", err)
+			}
+
 			// Fetch cascade data
-			cascade, err := fetchAgentCascade(agentName)
+			cascade, err := fetchAgentCascade(agentName, configManager, platformClient)
 			if err != nil {
 				return fmt.Errorf("failed to fetch agent configuration: %w", err)
 			}
@@ -78,13 +89,8 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 }
 
 // fetchAgentCascade fetches configuration from all levels for the specified agent
-func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
+func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, client cli.PlatformClientInterface) (*AgentConfigCascade, error) {
 	// Load config
-	configMgr, err := cli.NewConfigManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create config manager: %w", err)
-	}
-
 	cfg, err := configMgr.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
@@ -94,8 +100,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 		return nil, fmt.Errorf("not logged in. Run 'ubik login' first")
 	}
 
-	// Create API client
-	client := cli.NewPlatformClient(cfg.PlatformURL)
+	// Set token on client
 	client.SetToken(cfg.Token)
 
 	ctx := context.Background()

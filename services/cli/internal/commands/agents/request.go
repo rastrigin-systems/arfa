@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewRequestCommand() *cobra.Command {
+// NewRequestCommand creates the request command with dependencies from the container.
+func NewRequestCommand(c *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "request <agent-id>",
 		Short: "Request access to an agent",
@@ -17,20 +18,21 @@ func NewRequestCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			agentID := args[0]
 
-			configManager, err := cli.NewConfigManager()
+			authService, err := c.AuthService()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get auth service: %w", err)
 			}
-
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
 
 			config, err := authService.RequireAuth()
 			if err != nil {
 				return err
 			}
 
-			agentService := cli.NewAgentService(platformClient, configManager)
+			agentService, err := c.AgentService()
+			if err != nil {
+				return fmt.Errorf("failed to get agent service: %w", err)
+			}
+
 			ctx := context.Background()
 
 			// Request the agent

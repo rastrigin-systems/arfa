@@ -7,27 +7,27 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-// NewSkillsCommand creates the skills command group
-func NewSkillsCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewSkillsCommand creates the skills command group with dependencies from the container.
+func NewSkillsCommand(c *container.Container) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "skills",
 		Short: "Manage Claude Code skills",
 		Long:  "View available Claude Code skills and manage skill access.",
 	}
 
-	cmd.AddCommand(NewListCommand(configManager, platformClient, authService))
-	cmd.AddCommand(NewShowCommand(configManager, platformClient, authService))
-	cmd.AddCommand(NewMyCommand(configManager, platformClient, authService))
+	cmd.AddCommand(NewListCommand(c))
+	cmd.AddCommand(NewShowCommand(c))
+	cmd.AddCommand(NewMyCommand(c))
 
 	return cmd
 }
 
-// NewListCommand creates the skills list command
-func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewListCommand creates the skills list command with dependencies from the container.
+func NewListCommand(c *container.Container) *cobra.Command {
 	var showLocal bool
 
 	cmd := &cobra.Command{
@@ -35,7 +35,10 @@ func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 		Short: "List available skills",
 		Long:  "Display all available skills from the platform catalog or locally installed skills.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			skillsService := cli.NewSkillsService(platformClient, configManager)
+			skillsService, err := c.SkillsService()
+			if err != nil {
+				return fmt.Errorf("failed to get skills service: %w", err)
+			}
 
 			// If showing local skills, no need to authenticate
 			if showLocal {
@@ -78,7 +81,12 @@ func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 			}
 
 			// For catalog skills, require authentication
-			_, err := authService.RequireAuth()
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
+
+			_, err = authService.RequireAuth()
 			if err != nil {
 				return err
 			}
@@ -128,8 +136,8 @@ func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 	return cmd
 }
 
-// NewShowCommand creates the skills show command
-func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewShowCommand creates the skills show command with dependencies from the container.
+func NewShowCommand(c *container.Container) *cobra.Command {
 	var showLocal bool
 
 	cmd := &cobra.Command{
@@ -139,7 +147,11 @@ func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			skillName := args[0]
-			skillsService := cli.NewSkillsService(platformClient, configManager)
+
+			skillsService, err := c.SkillsService()
+			if err != nil {
+				return fmt.Errorf("failed to get skills service: %w", err)
+			}
 
 			// If showing local skill, no authentication needed
 			if showLocal {
@@ -179,7 +191,12 @@ func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 			}
 
 			// For catalog/employee skills, require authentication
-			_, err := authService.RequireAuth()
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
+
+			_, err = authService.RequireAuth()
 			if err != nil {
 				return err
 			}
@@ -237,8 +254,8 @@ func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.Platfo
 	return cmd
 }
 
-// NewMyCommand creates the skills my command
-func NewMyCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewMyCommand creates the skills my command with dependencies from the container.
+func NewMyCommand(c *container.Container) *cobra.Command {
 	var showDetails bool
 
 	cmd := &cobra.Command{
@@ -247,12 +264,20 @@ func NewMyCommand(configManager *cli.ConfigManager, platformClient *cli.Platform
 		Long:  "Display skills that have been assigned to you by your organization.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Require authentication
-			_, err := authService.RequireAuth()
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
+
+			_, err = authService.RequireAuth()
 			if err != nil {
 				return err
 			}
 
-			skillsService := cli.NewSkillsService(platformClient, configManager)
+			skillsService, err := c.SkillsService()
+			if err != nil {
+				return fmt.Errorf("failed to get skills service: %w", err)
+			}
 
 			ctx := context.Background()
 			skills, err := skillsService.ListEmployeeSkills(ctx)

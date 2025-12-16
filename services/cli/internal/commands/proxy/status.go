@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewStatusCommand() *cobra.Command {
+// NewStatusCommand creates the status command with dependencies from the container.
+func NewStatusCommand(_ *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show proxy daemon status",

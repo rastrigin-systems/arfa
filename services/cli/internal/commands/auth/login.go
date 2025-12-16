@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewLoginCommand() *cobra.Command {
+// NewLoginCommand creates the login command with dependencies from the container.
+func NewLoginCommand(c *container.Container) *cobra.Command {
 	var (
 		platformURL string
 		email       string
@@ -20,23 +22,31 @@ func NewLoginCommand() *cobra.Command {
 		Short: "Authenticate with the platform",
 		Long:  "Login to the platform and store authentication token locally.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
 			// If no URL provided via flag, check config for saved platform URL
-			if platformURL == "" || platformURL == "https://api.ubik.io" {
+			if platformURL == "" || platformURL == cli.DefaultPlatformURL {
 				config, err := configManager.Load()
 				if err == nil && config.PlatformURL != "" {
 					platformURL = config.PlatformURL
 				} else if platformURL == "" {
-					platformURL = "https://api.ubik.io" // Final fallback
+					platformURL = cli.DefaultPlatformURL
 				}
 			}
 
-			platformClient := cli.NewPlatformClient(platformURL)
-			authService := cli.NewAuthService(configManager, platformClient)
+			platformClient, err := c.PlatformClient()
+			if err != nil {
+				return fmt.Errorf("failed to get platform client: %w", err)
+			}
+			platformClient.SetBaseURL(platformURL)
+
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
 
 			ctx := context.Background()
 
@@ -55,7 +65,7 @@ func NewLoginCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or https://api.ubik.io)")
+	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or "+cli.DefaultPlatformURL+")")
 	cmd.Flags().StringVar(&email, "email", "", "Email address")
 	cmd.Flags().StringVar(&password, "password", "", "Password")
 

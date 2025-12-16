@@ -3,11 +3,13 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewStopCommand() *cobra.Command {
+// NewStopCommand creates the stop command with dependencies from the container.
+func NewStopCommand(_ *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the proxy daemon",

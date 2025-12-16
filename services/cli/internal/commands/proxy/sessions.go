@@ -7,11 +7,13 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewSessionsCommand() *cobra.Command {
+// NewSessionsCommand creates the sessions command with dependencies from the container.
+func NewSessionsCommand(_ *container.Container) *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{

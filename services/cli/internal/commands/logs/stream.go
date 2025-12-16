@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewStreamCommand() *cobra.Command {
+// NewStreamCommand creates the stream command with dependencies from the container.
+func NewStreamCommand(c *container.Container) *cobra.Command {
 	var (
 		follow  bool
 		jsonOut bool
@@ -20,12 +22,15 @@ func NewStreamCommand() *cobra.Command {
 		Short: "Stream real-time activity logs",
 		Long:  "Connects to the platform via WebSocket to stream activity logs in real-time.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
+			platformClient, err := c.PlatformClient()
+			if err != nil {
+				return fmt.Errorf("failed to get platform client: %w", err)
+			}
 
 			logStreamer := cli.NewLogStreamer(platformClient, configManager)
 			logStreamer.SetJSONOutput(jsonOut)
