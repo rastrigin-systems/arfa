@@ -11,15 +11,26 @@ import (
 
 // SyncService handles config synchronization
 type SyncService struct {
-	configManager    *ConfigManager
-	platformClient   *PlatformClient
-	authService      *AuthService
+	configManager    ConfigManagerInterface
+	platformClient   PlatformClientInterface
+	authService      AuthServiceInterface
 	dockerClient     *DockerClient
 	containerManager ContainerManagerInterface
 }
 
-// NewSyncService creates a new SyncService
+// NewSyncService creates a new SyncService with concrete types.
+// This is the primary constructor for production use.
 func NewSyncService(configManager *ConfigManager, platformClient *PlatformClient, authService *AuthService) *SyncService {
+	return &SyncService{
+		configManager:  configManager,
+		platformClient: platformClient,
+		authService:    authService,
+	}
+}
+
+// NewSyncServiceWithInterfaces creates a new SyncService with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface, authService AuthServiceInterface) *SyncService {
 	return &SyncService{
 		configManager:  configManager,
 		platformClient: platformClient,
