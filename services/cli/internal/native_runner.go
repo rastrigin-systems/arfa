@@ -220,12 +220,13 @@ func (r *NativeRunner) Run(ctx context.Context, config NativeRunnerConfig, stdin
 		// In the future, we may want to make this required (fail-closed)
 		fmt.Fprintf(stderr, "Note: Security gateway not available (%v)\n", err)
 	} else {
-		// Override proxy port with the session-allocated port
-		config.ProxyPort = sessionResp.Port
+		// Session registered - keep using main proxy port (8082)
+		// Note: Per-session ports are allocated but not listened on yet
+		// The session is tracked in the daemon's session manager for log correlation
 		if sessionResp.CertPath != "" {
 			config.CertPath = sessionResp.CertPath
 		}
-		fmt.Fprintf(stderr, "Registered with security gateway on port %d\n", sessionResp.Port)
+		fmt.Fprintf(stderr, "✓ Session registered: %s\n", sessionResp.SessionID)
 	}
 
 	// Ensure we unregister when done
