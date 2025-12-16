@@ -6,48 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronDown, ChevronRight, Building2, Users, User, CheckCircle2, ArrowUp } from 'lucide-react';
-
-type OrgAgentConfig = {
-  readonly id: string;
-  org_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type TeamAgentConfig = {
-  readonly id: string;
-  team_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config_override: Record<string, unknown>;
-  is_enabled: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type EmployeeAgentConfig = {
-  readonly id: string;
-  employee_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config_override: Record<string, unknown>;
-  override_reason?: string | null;
-  is_enabled: boolean;
-  sync_token?: string | null;
-  last_synced_at?: string | null;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
+import type { OrgAgentConfig, TeamAgentConfig, EmployeeAgentConfig } from '@/lib/types';
 
 type ResolvedAgentConfig = {
   agent_id: string;
@@ -290,11 +249,6 @@ function EmployeeConfigCard({ config }: EmployeeConfigCardProps) {
               <ArrowUp className="h-3 w-3 text-purple-500 ml-1" aria-label="Overrides team/org value" />
             )}
           </div>
-          {config.override_reason && (
-            <p className="text-sm text-muted-foreground">
-              Reason: &quot;{config.override_reason}&quot;
-            </p>
-          )}
           {config.last_synced_at && (
             <p className="text-xs text-muted-foreground mt-1">
               Last synced: {formatDate(config.last_synced_at)}

@@ -28,7 +28,11 @@ describe('ConfigEditorModal', () => {
     id: '123e4567-e89b-12d3-a456-426614174001',
     name: 'Claude Code',
     type: 'claude-code',
+    description: 'AI-powered code assistant',
     provider: 'anthropic',
+    llm_provider: 'anthropic',
+    llm_model: 'claude-3-5-sonnet-20241022',
+    is_public: true,
     default_config: { model: 'claude-3-5-sonnet-20241022', temperature: 0.2 },
   };
 

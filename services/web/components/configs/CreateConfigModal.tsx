@@ -12,14 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useTeams } from '@/lib/hooks/useTeams';
 import { useEmployees } from '@/lib/hooks/useEmployees';
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  default_config?: Record<string, unknown>;
-};
+import type { Agent } from '@/lib/types';
 
 type ConfigWithLevel = {
   id: string;

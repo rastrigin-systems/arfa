@@ -3,19 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Power, PowerOff } from 'lucide-react';
-
-type OrgAgentConfig = {
-  id: string;
-  org_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
+import type { OrgAgentConfig } from '@/lib/types';
 
 type OrgAgentConfigTableProps = {
   configs: OrgAgentConfig[];
