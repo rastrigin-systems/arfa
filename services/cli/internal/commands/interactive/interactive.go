@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
@@ -143,7 +142,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		MaxRetries:    5,
 		RetryBackoff:  1 * time.Second,
 	}
-	loggingClient := cli.NewLoggingAPIClientAdapter(apiClient)
+	loggingClient := logging.NewAPIClientAdapter(apiClient)
 	logger, err := logging.NewLogger(loggerConfig, loggingClient)
 	if err != nil {
 		// Log error but continue - logging is optional

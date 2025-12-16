@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
@@ -64,7 +63,7 @@ func NewRunCommand(c *container.Container) *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Warning: no auth token - logs will not be sent to platform\n")
 			}
 
-			apiClient := cli.NewLoggingAPIClientAdapter(platformClient)
+			apiClient := logging.NewAPIClientAdapter(platformClient)
 			logger, err := logging.NewLogger(loggerConfig, apiClient)
 			if err != nil {
 				// Continue without logging - log warning to stderr
