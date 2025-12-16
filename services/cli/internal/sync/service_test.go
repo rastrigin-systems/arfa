@@ -1,4 +1,4 @@
-package cli
+package sync
 
 import (
 	"os"
@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
+func TestService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	tempDir := t.TempDir()
 
 	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := api.NewClient("https://test.example.com")
 	authService := auth.NewService(cm, pc)
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Create test agent configs
 	configs := []api.AgentConfig{
@@ -101,13 +101,13 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	}
 }
 
-func TestSyncService_GetAgentConfig(t *testing.T) {
+func TestService_GetAgentConfig(t *testing.T) {
 	tempDir := t.TempDir()
 
 	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := api.NewClient("https://test.example.com")
 	authService := auth.NewService(cm, pc)
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Override home directory for testing
 	originalHome := os.Getenv("HOME")
@@ -153,13 +153,13 @@ func TestSyncService_GetAgentConfig(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found")
 }
 
-func TestSyncService_GetLocalAgentConfigs_EmptyDirectory(t *testing.T) {
+func TestService_GetLocalAgentConfigs_EmptyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 
 	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := api.NewClient("https://test.example.com")
 	authService := auth.NewService(cm, pc)
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Override home directory for testing
 	originalHome := os.Getenv("HOME")

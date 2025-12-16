@@ -1,4 +1,4 @@
-package cli
+package sync
 
 import (
 	"context"
@@ -13,29 +13,29 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
-// SyncService handles config synchronization
-type SyncService struct {
+// Service handles config synchronization
+type Service struct {
 	configManager    ConfigManagerInterface
 	apiClient        APIClientInterface
 	authService      AuthServiceInterface
-	dockerClient     *DockerClient
+	dockerClient     DockerClientInterface
 	containerManager ContainerManagerInterface
 }
 
-// NewSyncService creates a new SyncService with concrete types.
+// NewService creates a new Service with concrete types.
 // This is the primary constructor for production use.
-func NewSyncService(configManager *config.Manager, apiClient *api.Client, authService *auth.Service) *SyncService {
-	return &SyncService{
+func NewService(configManager *config.Manager, apiClient *api.Client, authService *auth.Service) *Service {
+	return &Service{
 		configManager: configManager,
 		apiClient:     apiClient,
 		authService:   authService,
 	}
 }
 
-// NewSyncServiceWithInterfaces creates a new SyncService with interface types.
+// NewServiceWithInterfaces creates a new Service with interface types.
 // This constructor enables dependency injection for testing with mocks.
-func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface, authService AuthServiceInterface) *SyncService {
-	return &SyncService{
+func NewServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface, authService AuthServiceInterface) *Service {
+	return &Service{
 		configManager: configManager,
 		apiClient:     apiClient,
 		authService:   authService,
@@ -44,29 +44,26 @@ func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, apiClien
 
 // SetDockerClient sets the Docker client and creates a ContainerManager.
 // Deprecated: Use SetContainerManager instead for better dependency injection.
-func (ss *SyncService) SetDockerClient(dockerClient *DockerClient) {
-	ss.dockerClient = dockerClient
-	if dockerClient != nil {
-		ss.containerManager = NewContainerManager(dockerClient)
-	}
+func (s *Service) SetDockerClient(dockerClient DockerClientInterface) {
+	s.dockerClient = dockerClient
 }
 
 // SetContainerManager sets the container manager directly.
 // This is the preferred way to inject container management dependencies.
-func (ss *SyncService) SetContainerManager(cm ContainerManagerInterface) {
-	ss.containerManager = cm
+func (s *Service) SetContainerManager(cm ContainerManagerInterface) {
+	s.containerManager = cm
 }
 
-// SyncResult represents the result of a sync operation
-type SyncResult struct {
+// Result represents the result of a sync operation
+type Result struct {
 	AgentConfigs []api.AgentConfig
 	UpdatedAt    time.Time
 }
 
 // Sync fetches configs from platform and stores them locally
-func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
+func (s *Service) Sync(ctx context.Context) (*Result, error) {
 	// Ensure user is authenticated
-	config, err := ss.authService.RequireAuth()
+	config, err := s.authService.RequireAuth()
 	if err != nil {
 		return nil, err
 	}
@@ -74,21 +71,21 @@ func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 	fmt.Println("✓ Fetching configs from platform...")
 
 	// Fetch resolved agent configs (using JWT-based /employees/me endpoint)
-	agentConfigs, err := ss.apiClient.GetMyResolvedAgentConfigs(ctx)
+	agentConfigs, err := s.apiClient.GetMyResolvedAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch agent configs: %w", err)
 	}
 
 	if len(agentConfigs) == 0 {
 		fmt.Println("⚠ No agent configs found for your account")
-		return &SyncResult{
+		return &Result{
 			AgentConfigs: []api.AgentConfig{},
 			UpdatedAt:    time.Now(),
 		}, nil
 	}
 
 	// Save configs to local storage
-	if err := ss.saveAgentConfigs(agentConfigs); err != nil {
+	if err := s.saveAgentConfigs(agentConfigs); err != nil {
 		return nil, fmt.Errorf("failed to save agent configs: %w", err)
 	}
 
@@ -108,7 +105,7 @@ func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 
 	// Update last sync time
 	config.LastSync = time.Now()
-	if err := ss.configManager.Save(config); err != nil {
+	if err := s.configManager.Save(config); err != nil {
 		return nil, fmt.Errorf("failed to update config: %w", err)
 	}
 
@@ -119,16 +116,16 @@ func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 		}
 	}
 
-	return &SyncResult{
+	return &Result{
 		AgentConfigs: agentConfigs,
 		UpdatedAt:    time.Now(),
 	}, nil
 }
 
 // SyncClaudeCode fetches and installs complete Claude Code configuration
-func (ss *SyncService) SyncClaudeCode(ctx context.Context, targetDir string) error {
+func (s *Service) SyncClaudeCode(ctx context.Context, targetDir string) error {
 	// Ensure user is authenticated
-	_, err := ss.authService.RequireAuth()
+	_, err := s.authService.RequireAuth()
 	if err != nil {
 		return err
 	}
@@ -138,7 +135,7 @@ func (ss *SyncService) SyncClaudeCode(ctx context.Context, targetDir string) err
 
 	// Fetch complete Claude Code config
 	fmt.Println("📥 Downloading configurations...")
-	config, err := ss.apiClient.GetClaudeCodeConfig(ctx)
+	config, err := s.apiClient.GetClaudeCodeConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Claude Code config: %w", err)
 	}
@@ -213,7 +210,7 @@ type agentMetadata struct {
 
 // saveAgentConfigs saves agent configs to ~/.ubik/config/agents/
 // It also removes any agent directories that are not in the new config
-func (ss *SyncService) saveAgentConfigs(configs []api.AgentConfig) error {
+func (s *Service) saveAgentConfigs(configs []api.AgentConfig) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
@@ -296,7 +293,7 @@ func (ss *SyncService) saveAgentConfigs(configs []api.AgentConfig) error {
 }
 
 // GetLocalAgentConfigs loads agent configs from local storage
-func (ss *SyncService) GetLocalAgentConfigs() ([]api.AgentConfig, error) {
+func (s *Service) GetLocalAgentConfigs() ([]api.AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
@@ -376,8 +373,8 @@ func (ss *SyncService) GetLocalAgentConfigs() ([]api.AgentConfig, error) {
 }
 
 // GetAgentConfig retrieves a specific agent config by ID or name
-func (ss *SyncService) GetAgentConfig(idOrName string) (*api.AgentConfig, error) {
-	configs, err := ss.GetLocalAgentConfigs()
+func (s *Service) GetAgentConfig(idOrName string) (*api.AgentConfig, error) {
+	configs, err := s.GetLocalAgentConfigs()
 	if err != nil {
 		return nil, err
 	}
@@ -392,14 +389,14 @@ func (ss *SyncService) GetAgentConfig(idOrName string) (*api.AgentConfig, error)
 }
 
 // StartContainers starts Docker containers for synced agent configs
-func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string, apiKey string) error {
-	if ss.dockerClient == nil || ss.containerManager == nil {
+func (s *Service) StartContainers(ctx context.Context, workspacePath string, apiKey string) error {
+	if s.dockerClient == nil || s.containerManager == nil {
 		return fmt.Errorf("Docker client not configured")
 	}
 
 	// Fetch effective Claude token from platform
 	fmt.Println("\nFetching Claude API token...")
-	claudeToken, err := ss.apiClient.GetEffectiveClaudeToken(ctx)
+	claudeToken, err := s.apiClient.GetEffectiveClaudeToken(ctx)
 	if err != nil {
 		fmt.Printf("⚠ Warning: Could not fetch Claude token: %v\n", err)
 		fmt.Printf("  Falling back to provided API key (if any)\n")
@@ -411,25 +408,25 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 
 	// Check Docker is running
 	fmt.Println("\nChecking Docker...")
-	if err := ss.dockerClient.Ping(ctx); err != nil {
+	if err := s.dockerClient.Ping(ctx); err != nil {
 		return fmt.Errorf("Docker is not running: %w", err)
 	}
 	fmt.Println("✓ Docker is running")
 
 	// Get Docker version
-	version, err := ss.dockerClient.GetVersion(ctx)
+	version, err := s.dockerClient.GetVersion(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get Docker version: %w", err)
 	}
 	fmt.Printf("✓ Docker version: %s\n", version)
 
 	// Setup network
-	if err := ss.containerManager.SetupNetwork(ctx); err != nil {
+	if err := s.containerManager.SetupNetwork(ctx); err != nil {
 		return fmt.Errorf("failed to setup network: %w", err)
 	}
 
 	// Get local agent configs
-	configs, err := ss.GetLocalAgentConfigs()
+	configs, err := s.GetLocalAgentConfigs()
 	if err != nil {
 		return fmt.Errorf("failed to get agent configs: %w", err)
 	}
@@ -462,7 +459,7 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 				Config:     mcp.Config,
 			}
 
-			_, err := ss.containerManager.StartMCPServer(ctx, mcpSpec, workspacePath)
+			_, err := s.containerManager.StartMCPServer(ctx, mcpSpec, workspacePath)
 			if err != nil {
 				fmt.Printf("  ⚠ Failed to start MCP server %s: %v\n", mcp.ServerName, err)
 			}
@@ -497,7 +494,7 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 			APIKey:        apiKey,      // Fallback for backward compatibility
 		}
 
-		_, err := ss.containerManager.StartAgent(ctx, agentSpec, workspacePath)
+		_, err := s.containerManager.StartAgent(ctx, agentSpec, workspacePath)
 		if err != nil {
 			fmt.Printf("  ⚠ Failed to start agent %s: %v\n", config.AgentName, err)
 		}
@@ -507,19 +504,19 @@ func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string
 }
 
 // StopContainers stops all running containers
-func (ss *SyncService) StopContainers(ctx context.Context) error {
-	if ss.containerManager == nil {
+func (s *Service) StopContainers(ctx context.Context) error {
+	if s.containerManager == nil {
 		return fmt.Errorf("container manager not configured")
 	}
-	return ss.containerManager.StopContainers(ctx)
+	return s.containerManager.StopContainers(ctx)
 }
 
 // GetContainerStatus returns the status of all containers
-func (ss *SyncService) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
-	if ss.containerManager == nil {
+func (s *Service) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
+	if s.containerManager == nil {
 		return nil, fmt.Errorf("container manager not configured")
 	}
-	return ss.containerManager.GetContainerStatus(ctx)
+	return s.containerManager.GetContainerStatus(ctx)
 }
 
 // Helper to convert api.MCPServerConfig to MCPServerSpec

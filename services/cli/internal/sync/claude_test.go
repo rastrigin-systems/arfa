@@ -1,4 +1,4 @@
-package cli
+package sync
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSyncService_WriteAgentFiles(t *testing.T) {
+func TestService_WriteAgentFiles(t *testing.T) {
 	// Create temporary directory
 	tmpDir := t.TempDir()
 
@@ -74,7 +74,7 @@ func TestSyncService_WriteAgentFiles(t *testing.T) {
 	assert.Contains(t, string(content2), "# Frontend Developer")
 }
 
-func TestSyncService_WriteAgentFiles_Empty(t *testing.T) {
+func TestService_WriteAgentFiles_Empty(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Write empty agent list
@@ -87,7 +87,7 @@ func TestSyncService_WriteAgentFiles_Empty(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSyncService_WriteAgentFiles_Overwrite(t *testing.T) {
+func TestService_WriteAgentFiles_Overwrite(t *testing.T) {
 	tmpDir := t.TempDir()
 	agentsDir := filepath.Join(tmpDir, ".claude", "agents")
 
@@ -123,7 +123,7 @@ func TestSyncService_WriteAgentFiles_Overwrite(t *testing.T) {
 	assert.NotContains(t, string(content), "# Old Content")
 }
 
-func TestSyncService_WriteSkillFiles(t *testing.T) {
+func TestService_WriteSkillFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Sample skill configs
@@ -199,7 +199,7 @@ func TestSyncService_WriteSkillFiles(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSyncService_WriteSkillFiles_Empty(t *testing.T) {
+func TestService_WriteSkillFiles_Empty(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Write empty skill list
@@ -212,7 +212,7 @@ func TestSyncService_WriteSkillFiles_Empty(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSyncService_MergeMCPConfig(t *testing.T) {
+func TestService_MergeMCPConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, ".claude.json")
 
@@ -276,7 +276,7 @@ func TestSyncService_MergeMCPConfig(t *testing.T) {
 	assert.Equal(t, float64(8001), playwrightConfig["config"].(map[string]interface{})["port"])
 }
 
-func TestSyncService_MergeMCPConfig_NewFile(t *testing.T) {
+func TestService_MergeMCPConfig_NewFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, ".claude.json")
 
@@ -302,16 +302,16 @@ func TestSyncService_MergeMCPConfig_NewFile(t *testing.T) {
 	data, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 
-	var config map[string]interface{}
-	err = json.Unmarshal(data, &config)
+	var cfg map[string]interface{}
+	err = json.Unmarshal(data, &cfg)
 	require.NoError(t, err)
 
 	// Verify config structure
-	servers := config["mcpServers"].(map[string]interface{})
+	servers := cfg["mcpServers"].(map[string]interface{})
 	assert.Contains(t, servers, "playwright")
 }
 
-func TestSyncService_MergeMCPConfig_OnlyEnabled(t *testing.T) {
+func TestService_MergeMCPConfig_OnlyEnabled(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, ".claude.json")
 
@@ -339,17 +339,17 @@ func TestSyncService_MergeMCPConfig_OnlyEnabled(t *testing.T) {
 	data, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 
-	var config map[string]interface{}
-	err = json.Unmarshal(data, &config)
+	var cfg map[string]interface{}
+	err = json.Unmarshal(data, &cfg)
 	require.NoError(t, err)
 
 	// Verify only enabled server is added
-	servers := config["mcpServers"].(map[string]interface{})
+	servers := cfg["mcpServers"].(map[string]interface{})
 	assert.Contains(t, servers, "playwright")
 	assert.NotContains(t, servers, "disabled-server")
 }
 
-func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
+func TestService_SyncClaudeCode_Integration(t *testing.T) {
 	// TODO: Fix this integration test - currently has issues with PlatformClient base URL
 	t.Skip("Skipping integration test temporarily")
 
@@ -435,7 +435,7 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 
 	authService := auth.NewService(configManager, apiClient)
 
-	syncService := NewSyncService(configManager, apiClient, authService)
+	syncService := NewService(configManager, apiClient, authService)
 
 	// Run sync
 	targetDir := filepath.Join(tmpDir, "workspace")
@@ -472,11 +472,11 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	data, err := os.ReadFile(claudeConfigPath)
 	require.NoError(t, err)
 
-	var config map[string]interface{}
-	err = json.Unmarshal(data, &config)
+	var cfg map[string]interface{}
+	err = json.Unmarshal(data, &cfg)
 	require.NoError(t, err)
 
-	servers := config["mcpServers"].(map[string]interface{})
+	servers := cfg["mcpServers"].(map[string]interface{})
 	assert.Contains(t, servers, "playwright")
 	assert.Contains(t, servers, "github-mcp-server")
 }

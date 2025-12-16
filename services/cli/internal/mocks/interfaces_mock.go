@@ -18,6 +18,7 @@ import (
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	api "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	config "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	sync "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -25,6 +26,7 @@ import (
 type MockConfigManagerInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockConfigManagerInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockConfigManagerInterfaceMockRecorder is the mock recorder for MockConfigManagerInterface.
@@ -135,6 +137,7 @@ func (mr *MockConfigManagerInterfaceMockRecorder) Save(cfg any) *gomock.Call {
 type MockAPIClientInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIClientInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIClientInterfaceMockRecorder is the mock recorder for MockAPIClientInterface.
@@ -477,6 +480,7 @@ func (mr *MockAPIClientInterfaceMockRecorder) SetToken(token any) *gomock.Call {
 type MockAuthServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockAuthServiceInterfaceMockRecorder is the mock recorder for MockAuthServiceInterface.
@@ -587,6 +591,7 @@ func (mr *MockAuthServiceInterfaceMockRecorder) RequireAuth() *gomock.Call {
 type MockSyncServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockSyncServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockSyncServiceInterfaceMockRecorder is the mock recorder for MockSyncServiceInterface.
@@ -622,10 +627,10 @@ func (mr *MockSyncServiceInterfaceMockRecorder) GetAgentConfig(idOrName any) *go
 }
 
 // GetContainerStatus mocks base method.
-func (m *MockSyncServiceInterface) GetContainerStatus(ctx context.Context) ([]cli.ContainerInfo, error) {
+func (m *MockSyncServiceInterface) GetContainerStatus(ctx context.Context) ([]sync.ContainerInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetContainerStatus", ctx)
-	ret0, _ := ret[0].([]cli.ContainerInfo)
+	ret0, _ := ret[0].([]sync.ContainerInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -652,7 +657,7 @@ func (mr *MockSyncServiceInterfaceMockRecorder) GetLocalAgentConfigs() *gomock.C
 }
 
 // SetContainerManager mocks base method.
-func (m *MockSyncServiceInterface) SetContainerManager(cm cli.ContainerManagerInterface) {
+func (m *MockSyncServiceInterface) SetContainerManager(cm sync.ContainerManagerInterface) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetContainerManager", cm)
 }
@@ -664,7 +669,7 @@ func (mr *MockSyncServiceInterfaceMockRecorder) SetContainerManager(cm any) *gom
 }
 
 // SetDockerClient mocks base method.
-func (m *MockSyncServiceInterface) SetDockerClient(dockerClient *cli.DockerClient) {
+func (m *MockSyncServiceInterface) SetDockerClient(dockerClient sync.DockerClientInterface) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetDockerClient", dockerClient)
 }
@@ -704,10 +709,10 @@ func (mr *MockSyncServiceInterfaceMockRecorder) StopContainers(ctx any) *gomock.
 }
 
 // Sync mocks base method.
-func (m *MockSyncServiceInterface) Sync(ctx context.Context) (*cli.SyncResult, error) {
+func (m *MockSyncServiceInterface) Sync(ctx context.Context) (*sync.Result, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Sync", ctx)
-	ret0, _ := ret[0].(*cli.SyncResult)
+	ret0, _ := ret[0].(*sync.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -736,6 +741,7 @@ func (mr *MockSyncServiceInterfaceMockRecorder) SyncClaudeCode(ctx, targetDir an
 type MockAgentServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockAgentServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockAgentServiceInterfaceMockRecorder is the mock recorder for MockAgentServiceInterface.
@@ -848,6 +854,7 @@ func (mr *MockAgentServiceInterfaceMockRecorder) RequestAgent(ctx, employeeID, a
 type MockSkillsServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockSkillsServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockSkillsServiceInterfaceMockRecorder is the mock recorder for MockSkillsServiceInterface.
@@ -991,6 +998,7 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) ListEmployeeSkills(ctx any) *g
 type MockDockerClientInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockDockerClientInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockDockerClientInterfaceMockRecorder is the mock recorder for MockDockerClientInterface.
@@ -1025,18 +1033,18 @@ func (mr *MockDockerClientInterfaceMockRecorder) Close() *gomock.Call {
 }
 
 // CreateContainer mocks base method.
-func (m *MockDockerClientInterface) CreateContainer(ctx context.Context, config *cli.DockerContainerConfig, hostConfig *cli.DockerHostConfig, networkConfig *cli.DockerNetworkConfig, containerName string) (string, error) {
+func (m *MockDockerClientInterface) CreateContainer(ctx context.Context, arg1 *cli.DockerContainerConfig, hostConfig *cli.DockerHostConfig, networkConfig *cli.DockerNetworkConfig, containerName string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateContainer", ctx, config, hostConfig, networkConfig, containerName)
+	ret := m.ctrl.Call(m, "CreateContainer", ctx, arg1, hostConfig, networkConfig, containerName)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateContainer indicates an expected call of CreateContainer.
-func (mr *MockDockerClientInterfaceMockRecorder) CreateContainer(ctx, config, hostConfig, networkConfig, containerName any) *gomock.Call {
+func (mr *MockDockerClientInterfaceMockRecorder) CreateContainer(ctx, arg1, hostConfig, networkConfig, containerName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockDockerClientInterface)(nil).CreateContainer), ctx, config, hostConfig, networkConfig, containerName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockDockerClientInterface)(nil).CreateContainer), ctx, arg1, hostConfig, networkConfig, containerName)
 }
 
 // CreateNetwork mocks base method.
@@ -1230,6 +1238,7 @@ func (mr *MockDockerClientInterfaceMockRecorder) StreamContainerLogs(ctx, contai
 type MockContainerManagerInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockContainerManagerInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockContainerManagerInterfaceMockRecorder is the mock recorder for MockContainerManagerInterface.

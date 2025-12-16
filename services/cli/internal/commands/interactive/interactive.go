@@ -12,6 +12,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 
 	apiClient := api.NewClient("")
 	authService := auth.NewService(configManager, apiClient)
-	syncService := cli.NewSyncService(configManager, apiClient, authService)
+	syncService := sync.NewService(configManager, apiClient, authService)
 
 	// Ensure authenticated
 	_, err = authService.RequireAuth()
