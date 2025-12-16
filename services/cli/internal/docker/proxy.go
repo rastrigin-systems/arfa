@@ -1,4 +1,4 @@
-package cli
+package docker
 
 import (
 	"context"
@@ -10,17 +10,16 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
 	"golang.org/x/term"
 )
 
 // ProxyService handles I/O proxying between CLI and container
 type ProxyService struct {
-	dockerClient *docker.Client
+	dockerClient *Client
 }
 
-// Logger interface for I/O logging (minimal interface to avoid circular dependency)
-type Logger interface {
+// ProxyLogger interface for I/O logging (minimal interface to avoid circular dependency)
+type ProxyLogger interface {
 	InterceptStdout(original io.Writer) io.Writer
 	InterceptStderr(original io.Writer) io.Writer
 	InterceptStdin(original io.Reader) io.Reader
@@ -43,7 +42,7 @@ type ProxyOptions struct {
 	Stdin       io.Reader
 	Stdout      io.Writer
 	Stderr      io.Writer
-	Logger      Logger // Optional logger for I/O capture
+	Logger      ProxyLogger // Optional logger for I/O capture
 }
 
 // NewProxyService creates a new proxy service
@@ -52,7 +51,7 @@ func NewProxyService() *ProxyService {
 }
 
 // SetDockerClient sets the Docker client for the proxy service
-func (ps *ProxyService) SetDockerClient(client *docker.Client) {
+func (ps *ProxyService) SetDockerClient(client *Client) {
 	ps.dockerClient = client
 }
 
