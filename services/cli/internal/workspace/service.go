@@ -1,4 +1,4 @@
-package cli
+package workspace
 
 import (
 	"bufio"
@@ -9,30 +9,22 @@ import (
 	"strings"
 )
 
-// WorkspaceService handles workspace selection and validation
-type WorkspaceService struct{}
+// Service handles workspace selection and validation
+type Service struct{}
 
-// WorkspaceInfo contains information about a workspace directory
-type WorkspaceInfo struct {
-	Path      string
-	Exists    bool
-	FileCount int
-	TotalSize int64
-}
-
-// NewWorkspaceService creates a new workspace service
-func NewWorkspaceService() *WorkspaceService {
-	return &WorkspaceService{}
+// NewService creates a new workspace service
+func NewService() *Service {
+	return &Service{}
 }
 
 // SelectWorkspace prompts the user to select a workspace directory
 // If user presses Enter without input, uses defaultPath
-func (ws *WorkspaceService) SelectWorkspace(defaultPath string) (string, error) {
-	return ws.SelectWorkspaceWithReader(defaultPath, os.Stdin)
+func (s *Service) SelectWorkspace(defaultPath string) (string, error) {
+	return s.SelectWorkspaceWithReader(defaultPath, os.Stdin)
 }
 
 // SelectWorkspaceWithReader is a testable version that accepts a custom reader
-func (ws *WorkspaceService) SelectWorkspaceWithReader(defaultPath string, reader io.Reader) (string, error) {
+func (s *Service) SelectWorkspaceWithReader(defaultPath string, reader io.Reader) (string, error) {
 	// Resolve default path to absolute
 	defaultAbs, err := filepath.Abs(defaultPath)
 	if err != nil {
@@ -59,7 +51,7 @@ func (ws *WorkspaceService) SelectWorkspaceWithReader(defaultPath string, reader
 	}
 
 	// Validate path exists
-	if err := ws.ValidatePath(absPath); err != nil {
+	if err := s.ValidatePath(absPath); err != nil {
 		return "", err
 	}
 
@@ -67,7 +59,7 @@ func (ws *WorkspaceService) SelectWorkspaceWithReader(defaultPath string, reader
 }
 
 // ValidatePath checks if a path exists and is accessible
-func (ws *WorkspaceService) ValidatePath(path string) error {
+func (s *Service) ValidatePath(path string) error {
 	if path == "" {
 		return fmt.Errorf("path cannot be empty")
 	}
@@ -100,8 +92,8 @@ func (ws *WorkspaceService) ValidatePath(path string) error {
 }
 
 // GetWorkspaceInfo gathers information about a workspace directory
-func (ws *WorkspaceService) GetWorkspaceInfo(path string) (*WorkspaceInfo, error) {
-	info := &WorkspaceInfo{
+func (s *Service) GetWorkspaceInfo(path string) (*Info, error) {
+	info := &Info{
 		Path:   path,
 		Exists: false,
 	}
@@ -147,7 +139,7 @@ func (ws *WorkspaceService) GetWorkspaceInfo(path string) (*WorkspaceInfo, error
 }
 
 // FormatSize formats a byte size into a human-readable string
-func (ws *WorkspaceService) FormatSize(bytes int64) string {
+func (s *Service) FormatSize(bytes int64) string {
 	const (
 		KB = 1024
 		MB = 1024 * KB
@@ -167,12 +159,12 @@ func (ws *WorkspaceService) FormatSize(bytes int64) string {
 }
 
 // DisplayWorkspaceInfo prints workspace information to the console
-func (ws *WorkspaceService) DisplayWorkspaceInfo(info *WorkspaceInfo) {
+func (s *Service) DisplayWorkspaceInfo(info *Info) {
 	if !info.Exists {
-		fmt.Printf("⚠ Workspace not found: %s\n", info.Path)
+		fmt.Printf("Warning: Workspace not found: %s\n", info.Path)
 		return
 	}
 
-	sizeStr := ws.FormatSize(info.TotalSize)
-	fmt.Printf("✓ Workspace: %s (%s, %d files)\n", info.Path, sizeStr, info.FileCount)
+	sizeStr := s.FormatSize(info.TotalSize)
+	fmt.Printf("Workspace: %s (%s, %d files)\n", info.Path, sizeStr, info.FileCount)
 }
