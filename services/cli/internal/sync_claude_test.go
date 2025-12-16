@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -442,7 +443,8 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	targetDir := filepath.Join(tmpDir, "workspace")
 	os.MkdirAll(targetDir, 0755)
 
-	err := syncService.SyncClaudeCode(targetDir)
+	ctx := context.Background()
+	err := syncService.SyncClaudeCode(ctx, targetDir)
 	require.NoError(t, err)
 
 	// Verify agent files

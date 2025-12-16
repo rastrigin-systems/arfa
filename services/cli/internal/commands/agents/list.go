@@ -1,15 +1,17 @@
 package agents
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewListCommand() *cobra.Command {
+// NewListCommand creates the list command with dependencies from the container.
+func NewListCommand(c *container.Container) *cobra.Command {
 	var showLocal bool
 
 	cmd := &cobra.Command{
@@ -17,14 +19,13 @@ func NewListCommand() *cobra.Command {
 		Short: "List available agents",
 		Long:  "Display all available AI agents from the platform catalog or locally configured agents.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			agentService, err := c.AgentService()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get agent service: %w", err)
 			}
 
 			// If showing local agents, no need to authenticate
 			if showLocal {
-				agentService := cli.NewAgentService(nil, configManager)
 				agents, err := agentService.GetLocalAgents()
 				if err != nil {
 					return fmt.Errorf("failed to get local agents: %w", err)
@@ -56,20 +57,21 @@ func NewListCommand() *cobra.Command {
 				fmt.Println()
 
 				return nil
-
 			}
 
 			// For platform agents, require authentication
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
 
 			_, err = authService.RequireAuth()
 			if err != nil {
 				return err
 			}
 
-			agentService := cli.NewAgentService(platformClient, configManager)
-			agents, err := agentService.ListAgents()
+			ctx := context.Background()
+			agents, err := agentService.ListAgents(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to list agents: %w", err)
 			}
@@ -80,7 +82,10 @@ func NewListCommand() *cobra.Command {
 			}
 
 			// Get user's enabled agents to show status
-			syncService := cli.NewSyncService(configManager, platformClient, authService)
+			syncService, err := c.SyncService()
+			if err != nil {
+				return fmt.Errorf("failed to get sync service: %w", err)
+			}
 			enabledAgents, _ := syncService.GetLocalAgentConfigs()
 
 			// Build map of enabled agent IDs

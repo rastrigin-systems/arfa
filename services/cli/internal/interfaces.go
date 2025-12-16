@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"net/http"
 
@@ -43,6 +44,7 @@ type ConfigManagerInterface interface {
 
 // PlatformClientInterface defines the contract for API communication with the platform server.
 // Implementations handle all HTTP requests to the backend API.
+// All methods that make HTTP requests accept context.Context as the first parameter for cancellation and timeout support.
 type PlatformClientInterface interface {
 	// SetToken sets the authentication token for subsequent requests.
 	SetToken(token string)
@@ -59,79 +61,79 @@ type PlatformClientInterface interface {
 	// -------------------------------------------------------------------------
 
 	// Login authenticates the user and returns a token.
-	Login(email, password string) (*LoginResponse, error)
+	Login(ctx context.Context, email, password string) (*LoginResponse, error)
 
 	// GetCurrentEmployee fetches information about the currently authenticated employee.
-	GetCurrentEmployee() (*EmployeeInfo, error)
+	GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error)
 
 	// GetEmployeeInfo gets information about a specific employee by ID.
-	GetEmployeeInfo(employeeID string) (*EmployeeInfo, error)
+	GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Agent Configuration
 	// -------------------------------------------------------------------------
 
 	// GetResolvedAgentConfigs fetches resolved agent configurations for an employee.
-	GetResolvedAgentConfigs(employeeID string) ([]AgentConfig, error)
+	GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error)
 
 	// GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee.
 	// Uses JWT token to identify the employee.
-	GetMyResolvedAgentConfigs() ([]AgentConfig, error)
+	GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error)
 
 	// GetOrgAgentConfigs fetches organization-level agent configs.
-	GetOrgAgentConfigs() ([]OrgAgentConfigResponse, error)
+	GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error)
 
 	// GetTeamAgentConfigs fetches team-level agent configs.
-	GetTeamAgentConfigs(teamID string) ([]TeamAgentConfigResponse, error)
+	GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error)
 
 	// GetEmployeeAgentConfigs fetches employee-level agent configs.
-	GetEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfigResponse, error)
+	GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Claude Token Management
 	// -------------------------------------------------------------------------
 
 	// GetClaudeTokenStatus fetches the Claude token status for the current employee.
-	GetClaudeTokenStatus() (*ClaudeTokenStatusResponse, error)
+	GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error)
 
 	// GetEffectiveClaudeToken fetches the effective Claude token value.
-	GetEffectiveClaudeToken() (string, error)
+	GetEffectiveClaudeToken(ctx context.Context) (string, error)
 
 	// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata.
-	GetEffectiveClaudeTokenInfo() (*EffectiveClaudeTokenResponse, error)
+	GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Sync
 	// -------------------------------------------------------------------------
 
 	// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle.
-	GetClaudeCodeConfig() (*ClaudeCodeSyncResponse, error)
+	GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Skills
 	// -------------------------------------------------------------------------
 
 	// ListSkills fetches all available skills from the catalog.
-	ListSkills() (*ListSkillsResponse, error)
+	ListSkills(ctx context.Context) (*ListSkillsResponse, error)
 
 	// GetSkill fetches details for a specific skill by ID.
-	GetSkill(skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills() (*ListEmployeeSkillsResponse, error)
+	ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee.
-	GetEmployeeSkill(skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
 
 	// -------------------------------------------------------------------------
 	// Logging
 	// -------------------------------------------------------------------------
 
 	// CreateLog sends a single log entry to the platform API.
-	CreateLog(entry LogEntry) error
+	CreateLog(ctx context.Context, entry LogEntry) error
 
 	// CreateLogBatch sends multiple log entries in a single request.
-	CreateLogBatch(entries []LogEntry) error
+	CreateLogBatch(ctx context.Context, entries []LogEntry) error
 }
 
 // ============================================================================
@@ -145,10 +147,10 @@ type PlatformClientInterface interface {
 // Implementations handle user login/logout and credential management.
 type AuthServiceInterface interface {
 	// LoginInteractive performs interactive login with prompts for URL, email, and password.
-	LoginInteractive() error
+	LoginInteractive(ctx context.Context) error
 
 	// Login performs non-interactive login with provided credentials.
-	Login(platformURL, email, password string) error
+	Login(ctx context.Context, platformURL, email, password string) error
 
 	// Logout removes stored credentials.
 	Logout() error
@@ -168,10 +170,10 @@ type AuthServiceInterface interface {
 // Implementations handle fetching configs from platform and storing locally.
 type SyncServiceInterface interface {
 	// Sync fetches configs from platform and stores them locally.
-	Sync() (*SyncResult, error)
+	Sync(ctx context.Context) (*SyncResult, error)
 
 	// SyncClaudeCode fetches and installs complete Claude Code configuration to targetDir.
-	SyncClaudeCode(targetDir string) error
+	SyncClaudeCode(ctx context.Context, targetDir string) error
 
 	// GetLocalAgentConfigs loads agent configs from local storage.
 	GetLocalAgentConfigs() ([]AgentConfig, error)
@@ -180,35 +182,40 @@ type SyncServiceInterface interface {
 	GetAgentConfig(idOrName string) (*AgentConfig, error)
 
 	// SetDockerClient sets the Docker client for container operations.
+	// Deprecated: Use SetContainerManager instead for better dependency injection.
 	SetDockerClient(dockerClient *DockerClient)
 
+	// SetContainerManager sets the container manager directly.
+	// This is the preferred way to inject container management dependencies.
+	SetContainerManager(cm ContainerManagerInterface)
+
 	// StartContainers starts Docker containers for synced agent configs.
-	StartContainers(workspacePath string, apiKey string) error
+	StartContainers(ctx context.Context, workspacePath string, apiKey string) error
 
 	// StopContainers stops all running containers.
-	StopContainers() error
+	StopContainers(ctx context.Context) error
 
 	// GetContainerStatus returns the status of all containers.
-	GetContainerStatus() ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
 }
 
 // AgentServiceInterface defines the contract for agent management operations.
 // Implementations handle listing agents, managing configs, and checking updates.
 type AgentServiceInterface interface {
 	// ListAgents fetches all available agents from the platform.
-	ListAgents() ([]Agent, error)
+	ListAgents(ctx context.Context) ([]Agent, error)
 
 	// GetAgent fetches details for a specific agent.
-	GetAgent(agentID string) (*Agent, error)
+	GetAgent(ctx context.Context, agentID string) (*Agent, error)
 
 	// ListEmployeeAgentConfigs fetches employee's assigned agent configs.
-	ListEmployeeAgentConfigs(employeeID string) ([]EmployeeAgentConfig, error)
+	ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error)
 
 	// RequestAgent creates an employee agent configuration (request for access).
-	RequestAgent(employeeID, agentID string) error
+	RequestAgent(ctx context.Context, employeeID, agentID string) error
 
 	// CheckForUpdates checks if there are config updates available.
-	CheckForUpdates(employeeID string) (bool, error)
+	CheckForUpdates(ctx context.Context, employeeID string) (bool, error)
 
 	// GetLocalAgents returns locally configured agents.
 	GetLocalAgents() ([]AgentConfig, error)
@@ -218,22 +225,22 @@ type AgentServiceInterface interface {
 // Implementations handle listing skills from catalog and local storage.
 type SkillsServiceInterface interface {
 	// ListCatalogSkills fetches all available skills from the platform catalog.
-	ListCatalogSkills() ([]Skill, error)
+	ListCatalogSkills(ctx context.Context) ([]Skill, error)
 
 	// GetSkill fetches details for a specific skill from the catalog.
-	GetSkill(skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*Skill, error)
 
 	// GetSkillByName fetches a skill by name (searches catalog).
-	GetSkillByName(name string) (*Skill, error)
+	GetSkillByName(ctx context.Context, name string) (*Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills() ([]EmployeeSkill, error)
+	ListEmployeeSkills(ctx context.Context) ([]EmployeeSkill, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the employee.
-	GetEmployeeSkill(skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
 
 	// GetEmployeeSkillByName fetches an employee skill by name.
-	GetEmployeeSkillByName(name string) (*EmployeeSkill, error)
+	GetEmployeeSkillByName(ctx context.Context, name string) (*EmployeeSkill, error)
 
 	// GetLocalSkills returns locally installed skills from .claude/skills/.
 	GetLocalSkills() ([]LocalSkillInfo, error)
@@ -250,90 +257,91 @@ type SkillsServiceInterface interface {
 
 // DockerClientInterface defines the contract for Docker daemon communication.
 // Implementations wrap the Docker SDK client for container operations.
-// NOTE: This interface uses the current signatures. Phase 2 will add context.Context.
+// All methods accept context.Context as the first parameter for cancellation and timeout support.
 type DockerClientInterface interface {
 	// Close closes the Docker client connection.
 	Close() error
 
 	// Ping checks if Docker daemon is running.
-	Ping() error
+	Ping(ctx context.Context) error
 
 	// GetVersion returns Docker version information.
-	GetVersion() (string, error)
+	GetVersion(ctx context.Context) (string, error)
 
 	// -------------------------------------------------------------------------
 	// Image Operations
 	// -------------------------------------------------------------------------
 
 	// PullImage pulls a Docker image (or uses local if available).
-	PullImage(imageName string) error
+	PullImage(ctx context.Context, imageName string) error
 
 	// -------------------------------------------------------------------------
 	// Container Operations
 	// -------------------------------------------------------------------------
 
 	// CreateContainer creates a Docker container.
-	CreateContainer(config *DockerContainerConfig, hostConfig *DockerHostConfig, networkConfig *DockerNetworkConfig, containerName string) (string, error)
+	CreateContainer(ctx context.Context, config *DockerContainerConfig, hostConfig *DockerHostConfig, networkConfig *DockerNetworkConfig, containerName string) (string, error)
 
 	// StartContainer starts a Docker container.
-	StartContainer(containerID string) error
+	StartContainer(ctx context.Context, containerID string) error
 
 	// StopContainer stops a Docker container.
-	StopContainer(containerID string, timeout *int) error
+	StopContainer(ctx context.Context, containerID string, timeout *int) error
 
 	// RemoveContainer removes a Docker container.
-	RemoveContainer(containerID string, force bool) error
+	RemoveContainer(ctx context.Context, containerID string, force bool) error
 
 	// RemoveContainerByName finds and removes a container by name.
-	RemoveContainerByName(name string) error
+	RemoveContainerByName(ctx context.Context, name string) error
 
 	// ListContainers lists Docker containers with optional filters.
-	ListContainers(all bool, labelFilter map[string]string) ([]ContainerInfo, error)
+	ListContainers(ctx context.Context, all bool, labelFilter map[string]string) ([]ContainerInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Container Logs
 	// -------------------------------------------------------------------------
 
 	// GetContainerLogs retrieves logs from a container.
-	GetContainerLogs(containerID string, follow bool) (io.ReadCloser, error)
+	GetContainerLogs(ctx context.Context, containerID string, follow bool) (io.ReadCloser, error)
 
 	// StreamContainerLogs streams container logs to stdout/stderr.
-	StreamContainerLogs(containerID string) error
+	StreamContainerLogs(ctx context.Context, containerID string) error
 
 	// -------------------------------------------------------------------------
 	// Network Operations
 	// -------------------------------------------------------------------------
 
 	// CreateNetwork creates a Docker network.
-	CreateNetwork(name string) (string, error)
+	CreateNetwork(ctx context.Context, name string) (string, error)
 
 	// NetworkExists checks if a network exists.
-	NetworkExists(name string) (bool, error)
+	NetworkExists(ctx context.Context, name string) (bool, error)
 
 	// RemoveNetwork removes a Docker network.
-	RemoveNetwork(name string) error
+	RemoveNetwork(ctx context.Context, name string) error
 }
 
 // ContainerManagerInterface defines the contract for managing containers.
 // Implementations orchestrate container lifecycle for agents and MCP servers.
+// All methods accept context.Context as the first parameter for cancellation and timeout support.
 type ContainerManagerInterface interface {
 	// SetupNetwork creates the ubik network if it doesn't exist.
-	SetupNetwork() error
+	SetupNetwork(ctx context.Context) error
 
 	// StartMCPServer starts an MCP server container.
-	StartMCPServer(spec MCPServerSpec, workspacePath string) (string, error)
+	StartMCPServer(ctx context.Context, spec MCPServerSpec, workspacePath string) (string, error)
 
 	// StartAgent starts an agent container.
-	StartAgent(spec AgentSpec, workspacePath string) (string, error)
+	StartAgent(ctx context.Context, spec AgentSpec, workspacePath string) (string, error)
 
 	// StopContainers stops all ubik-managed containers.
-	StopContainers() error
+	StopContainers(ctx context.Context) error
 
 	// CleanupContainers removes all stopped ubik-managed containers.
-	CleanupContainers() error
+	CleanupContainers(ctx context.Context) error
 
 	// GetContainerStatus returns status of all ubik-managed containers.
-	GetContainerStatus() ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
 }
 
 // DockerContainerConfig is an alias for container.Config from Docker SDK.
@@ -349,12 +357,12 @@ type DockerNetworkConfig = network.NetworkingConfig
 // Compile-time interface implementation checks.
 // These ensure that the concrete types implement their respective interfaces.
 var (
-	_ ConfigManagerInterface     = (*ConfigManager)(nil)
-	_ PlatformClientInterface    = (*PlatformClient)(nil)
-	_ AuthServiceInterface       = (*AuthService)(nil)
-	_ SyncServiceInterface       = (*SyncService)(nil)
-	_ AgentServiceInterface      = (*AgentService)(nil)
-	_ SkillsServiceInterface     = (*SkillsService)(nil)
-	_ DockerClientInterface      = (*DockerClient)(nil)
-	_ ContainerManagerInterface  = (*ContainerManager)(nil)
+	_ ConfigManagerInterface    = (*ConfigManager)(nil)
+	_ PlatformClientInterface   = (*PlatformClient)(nil)
+	_ AuthServiceInterface      = (*AuthService)(nil)
+	_ SyncServiceInterface      = (*SyncService)(nil)
+	_ AgentServiceInterface     = (*AgentService)(nil)
+	_ SkillsServiceInterface    = (*SkillsService)(nil)
+	_ DockerClientInterface     = (*DockerClient)(nil)
+	_ ContainerManagerInterface = (*ContainerManager)(nil)
 )

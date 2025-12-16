@@ -5,24 +5,32 @@ import (
 	"time"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewStatusCommand() *cobra.Command {
+// NewStatusCommand creates the status command with dependencies from the container.
+func NewStatusCommand(c *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show current status",
 		Long:  "Display current authentication status, agent configs, and proxy daemon status.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
-			platformClient := cli.NewPlatformClient("")
-			authService := cli.NewAuthService(configManager, platformClient)
-			syncService := cli.NewSyncService(configManager, platformClient, authService)
+			authService, err := c.AuthService()
+			if err != nil {
+				return fmt.Errorf("failed to get auth service: %w", err)
+			}
+
+			syncService, err := c.SyncService()
+			if err != nil {
+				return fmt.Errorf("failed to get sync service: %w", err)
+			}
 
 			// Check authentication
 			authenticated, err := authService.IsAuthenticated()

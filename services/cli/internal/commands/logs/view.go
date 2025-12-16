@@ -6,11 +6,13 @@ import (
 
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
 	"github.com/spf13/cobra"
 )
 
-func NewViewCommand() *cobra.Command {
+// NewViewCommand creates the view command with dependencies from the container.
+func NewViewCommand(c *container.Container) *cobra.Command {
 	var (
 		format    string
 		sessionID string
@@ -34,9 +36,9 @@ Examples:
   ubik logs view --format=json      # View logs as JSON
   ubik logs view --no-emoji         # Disable emoji icons`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
 			// Get classified logs from the current session or storage

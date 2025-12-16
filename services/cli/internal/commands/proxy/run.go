@@ -9,12 +9,14 @@ import (
 	"time"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/spf13/cobra"
 )
 
-func NewRunCommand() *cobra.Command {
+// NewRunCommand creates the run command with dependencies from the container.
+func NewRunCommand(c *container.Container) *cobra.Command {
 	var port int
 
 	cmd := &cobra.Command{
@@ -32,9 +34,9 @@ func NewRunCommand() *cobra.Command {
 				RetryBackoff:  1 * time.Second,
 			}
 
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
 			// Load config to get platform URL and auth token
@@ -49,7 +51,10 @@ func NewRunCommand() *cobra.Command {
 				platformURL = config.PlatformURL
 			}
 
-			platformClient := cli.NewPlatformClient(platformURL)
+			platformClient, err := c.PlatformClient()
+			if err != nil {
+				return fmt.Errorf("failed to get platform client: %w", err)
+			}
 
 			// Set auth token if available
 			if config != nil && config.Token != "" {

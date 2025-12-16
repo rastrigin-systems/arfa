@@ -27,7 +27,7 @@ func (p *PlatformAPIClient) CreateLog(ctx context.Context, entry logging.LogEntr
 		Payload:       entry.Payload,
 	}
 
-	return p.client.CreateLog(platformEntry)
+	return p.client.CreateLog(ctx, platformEntry)
 }
 
 // CreateLogBatch sends multiple log entries in a single request
@@ -44,5 +44,5 @@ func (p *PlatformAPIClient) CreateLogBatch(ctx context.Context, entries []loggin
 		}
 	}
 
-	return p.client.CreateLogBatch(platformEntries)
+	return p.client.CreateLogBatch(ctx, platformEntries)
 }

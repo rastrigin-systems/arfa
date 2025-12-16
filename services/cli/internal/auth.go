@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -13,11 +14,12 @@ import (
 
 // AuthService handles authentication operations
 type AuthService struct {
-	configManager  *ConfigManager
-	platformClient *PlatformClient
+	configManager  ConfigManagerInterface
+	platformClient PlatformClientInterface
 }
 
-// NewAuthService creates a new AuthService
+// NewAuthService creates a new AuthService with concrete types.
+// This is the primary constructor for production use.
 func NewAuthService(configManager *ConfigManager, platformClient *PlatformClient) *AuthService {
 	return &AuthService{
 		configManager:  configManager,
@@ -25,8 +27,17 @@ func NewAuthService(configManager *ConfigManager, platformClient *PlatformClient
 	}
 }
 
+// NewAuthServiceWithInterfaces creates a new AuthService with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewAuthServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface) *AuthService {
+	return &AuthService{
+		configManager:  configManager,
+		platformClient: platformClient,
+	}
+}
+
 // LoginInteractive performs interactive login
-func (as *AuthService) LoginInteractive() error {
+func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	// Load existing config to get saved platform URL
@@ -65,11 +76,11 @@ func (as *AuthService) LoginInteractive() error {
 	}
 
 	// Update platform client URL
-	as.platformClient.baseURL = platformURL
+	as.platformClient.SetBaseURL(platformURL)
 
 	// Perform login
 	fmt.Println("\nAuthenticating...")
-	loginResp, err := as.platformClient.Login(email, password)
+	loginResp, err := as.platformClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -99,12 +110,12 @@ func (as *AuthService) LoginInteractive() error {
 }
 
 // Login performs non-interactive login
-func (as *AuthService) Login(platformURL, email, password string) error {
+func (as *AuthService) Login(ctx context.Context, platformURL, email, password string) error {
 	// Update platform client URL
-	as.platformClient.baseURL = platformURL
+	as.platformClient.SetBaseURL(platformURL)
 
 	// Perform login
-	loginResp, err := as.platformClient.Login(email, password)
+	loginResp, err := as.platformClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -177,7 +188,7 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 
 	// Set token on platform client
 	as.platformClient.SetToken(config.Token)
-	as.platformClient.baseURL = config.PlatformURL
+	as.platformClient.SetBaseURL(config.PlatformURL)
 
 	return config, nil
 }

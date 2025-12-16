@@ -3,11 +3,13 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewHealthCommand() *cobra.Command {
+// NewHealthCommand creates the health command with dependencies from the container.
+func NewHealthCommand(_ *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "health",
 		Short: "Check security gateway health",

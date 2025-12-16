@@ -9,12 +9,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // setupTestEnvironment creates a temporary config directory and config file for testing
-func setupTestEnvironment(t *testing.T, mockServerURL string) string {
+// Returns the container configured with the test environment
+func setupTestEnvironment(t *testing.T, mockServerURL string) *container.Container {
 	tempDir := t.TempDir()
 
 	// Create .ubik directory
@@ -42,7 +44,13 @@ func setupTestEnvironment(t *testing.T, mockServerURL string) string {
 		os.Setenv("HOME", originalHome)
 	})
 
-	return tempDir
+	// Create container with the config path
+	c := container.New(
+		container.WithConfigPath(configPath),
+		container.WithPlatformURL(mockServerURL),
+	)
+
+	return c
 }
 
 // TestAgentsShowCommand_Success tests showing agent config cascade
@@ -140,10 +148,10 @@ func TestAgentsShowCommand_Success(t *testing.T) {
 	defer mockServer.Close()
 
 	// Setup test environment with mock server URL
-	setupTestEnvironment(t, mockServer.URL)
+	c := setupTestEnvironment(t, mockServer.URL)
 
 	// Create command
-	cmd := NewShowCommand()
+	cmd := NewShowCommand(c)
 	cmd.SetArgs([]string{"Claude Code"})
 
 	// Capture output
@@ -221,10 +229,10 @@ func TestAgentsShowCommand_JSONOutput(t *testing.T) {
 	defer mockServer.Close()
 
 	// Setup test environment
-	setupTestEnvironment(t, mockServer.URL)
+	c := setupTestEnvironment(t, mockServer.URL)
 
 	// Create command with --json flag
-	cmd := NewShowCommand()
+	cmd := NewShowCommand(c)
 	cmd.SetArgs([]string{"Claude Code", "--json"})
 
 	var buf bytes.Buffer
@@ -269,9 +277,9 @@ func TestAgentsShowCommand_AgentNotFound(t *testing.T) {
 	defer mockServer.Close()
 
 	// Setup test environment
-	setupTestEnvironment(t, mockServer.URL)
+	c := setupTestEnvironment(t, mockServer.URL)
 
-	cmd := NewShowCommand()
+	cmd := NewShowCommand(c)
 	cmd.SetArgs([]string{"NonExistentAgent"})
 
 	var buf bytes.Buffer
@@ -284,7 +292,8 @@ func TestAgentsShowCommand_AgentNotFound(t *testing.T) {
 
 // TestAgentsShowCommand_NoAgentSpecified tests error when no agent name provided
 func TestAgentsShowCommand_NoAgentSpecified(t *testing.T) {
-	cmd := NewShowCommand()
+	c := container.New()
+	cmd := NewShowCommand(c)
 	cmd.SetArgs([]string{}) // No agent name
 
 	err := cmd.Execute()

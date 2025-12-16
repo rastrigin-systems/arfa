@@ -1,4 +1,4 @@
-.PHONY: build install test test-unit test-integration test-e2e coverage clean help
+.PHONY: build install test test-unit test-integration test-e2e coverage clean help mocks
 
 # Build CLI binary
 build:
@@ -70,6 +70,12 @@ clean:
 	rm -f ../../bin/ubik-cli
 	rm -f ../../coverage-cli-*.out
 
+# Generate mocks for testing
+mocks:
+	@echo "🔧 Generating mocks..."
+	go generate ./internal/mocks/...
+	@echo "✅ Mocks generated in internal/mocks/"
+
 # Show help
 help:
 	@echo "CLI Service Makefile"
@@ -83,5 +89,6 @@ help:
 	@echo "  test-integration   Run integration tests only"
 	@echo "  test-e2e           Run e2e tests only"
 	@echo "  coverage           Show test coverage report"
+	@echo "  mocks              Generate mock implementations"
 	@echo "  clean              Clean build artifacts"
 	@echo "  help               Show this help"

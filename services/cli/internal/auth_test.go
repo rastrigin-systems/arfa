@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -187,7 +188,8 @@ func TestAuthService_Login_Success(t *testing.T) {
 	authService := NewAuthService(cm, pc)
 
 	// Perform login
-	err := authService.Login(server.URL, "test@example.com", "password123")
+	ctx := context.Background()
+	err := authService.Login(ctx, server.URL, "test@example.com", "password123")
 	require.NoError(t, err)
 
 	// Verify config was saved
@@ -213,7 +215,8 @@ func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	authService := NewAuthService(cm, pc)
 
 	// Perform login - should fail
-	err := authService.Login(server.URL, "test@example.com", "wrong-password")
+	ctx := context.Background()
+	err := authService.Login(ctx, server.URL, "test@example.com", "wrong-password")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "authentication failed")
 

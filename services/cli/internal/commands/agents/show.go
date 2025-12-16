@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/fatih/color"
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -36,8 +38,8 @@ type ConfigLevel struct {
 	Source    string                 `json:"source"` // org name, team name, "You"
 }
 
-// NewShowCommand creates the 'agents show' command
-func NewShowCommand() *cobra.Command {
+// NewShowCommand creates the 'agents show' command with dependencies from the container.
+func NewShowCommand(c *container.Container) *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
@@ -57,8 +59,18 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			agentName := args[0]
 
+			configManager, err := c.ConfigManager()
+			if err != nil {
+				return fmt.Errorf("failed to get config manager: %w", err)
+			}
+
+			platformClient, err := c.PlatformClient()
+			if err != nil {
+				return fmt.Errorf("failed to get platform client: %w", err)
+			}
+
 			// Fetch cascade data
-			cascade, err := fetchAgentCascade(agentName)
+			cascade, err := fetchAgentCascade(agentName, configManager, platformClient)
 			if err != nil {
 				return fmt.Errorf("failed to fetch agent configuration: %w", err)
 			}
@@ -77,13 +89,8 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 }
 
 // fetchAgentCascade fetches configuration from all levels for the specified agent
-func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
+func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, client cli.PlatformClientInterface) (*AgentConfigCascade, error) {
 	// Load config
-	configMgr, err := cli.NewConfigManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create config manager: %w", err)
-	}
-
 	cfg, err := configMgr.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
@@ -93,19 +100,20 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 		return nil, fmt.Errorf("not logged in. Run 'ubik login' first")
 	}
 
-	// Create API client
-	client := cli.NewPlatformClient(cfg.PlatformURL)
+	// Set token on client
 	client.SetToken(cfg.Token)
 
+	ctx := context.Background()
+
 	// 1. Get current employee info
-	employee, err := client.GetCurrentEmployee()
+	employee, err := client.GetCurrentEmployee(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current employee: %w", err)
 	}
 
 	// 2. Get all agent configs to find matching agent
 	// Get resolved config first to find the agent
-	resolvedConfigs, err := client.GetResolvedAgentConfigs(employee.ID)
+	resolvedConfigs, err := client.GetResolvedAgentConfigs(ctx, employee.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
@@ -126,7 +134,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 	}
 
 	// 3. Get org-level config
-	orgConfigs, err := client.GetOrgAgentConfigs()
+	orgConfigs, err := client.GetOrgAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get org configs: %w", err)
 	}
@@ -146,7 +154,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 	// 4. Get team-level config (if employee has team)
 	var teamConfig *ConfigLevel
 	if employee.TeamID != nil && *employee.TeamID != "" {
-		teamConfigs, err := client.GetTeamAgentConfigs(*employee.TeamID)
+		teamConfigs, err := client.GetTeamAgentConfigs(ctx, *employee.TeamID)
 		if err == nil { // Ignore errors for team configs
 			for _, cfg := range teamConfigs {
 				if cfg.AgentID == targetAgent.AgentID {
@@ -163,7 +171,7 @@ func fetchAgentCascade(agentName string) (*AgentConfigCascade, error) {
 
 	// 5. Get employee-level config
 	var employeeConfig *ConfigLevel
-	employeeConfigs, err := client.GetEmployeeAgentConfigs(employee.ID)
+	employeeConfigs, err := client.GetEmployeeAgentConfigs(ctx, employee.ID)
 	if err == nil { // Ignore errors for employee configs
 		for _, cfg := range employeeConfigs {
 			if cfg.AgentID == targetAgent.AgentID {

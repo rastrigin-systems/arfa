@@ -1,20 +1,22 @@
 package agents
 
 import (
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewAgentsCommand() *cobra.Command {
+// NewAgentsCommand creates the agents command group with dependencies from the container.
+func NewAgentsCommand(c *container.Container) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "agents",
 		Short: "Manage AI agents",
 		Long:  "View available AI agents and manage agent access.",
 	}
 
-	cmd.AddCommand(NewListCommand())
-	cmd.AddCommand(NewInfoCommand())
-	cmd.AddCommand(NewRequestCommand())
-	cmd.AddCommand(NewShowCommand())
+	cmd.AddCommand(NewListCommand(c))
+	cmd.AddCommand(NewInfoCommand(c))
+	cmd.AddCommand(NewRequestCommand(c))
+	cmd.AddCommand(NewShowCommand(c))
 
 	return cmd
 }

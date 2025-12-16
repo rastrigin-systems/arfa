@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,8 @@ func TestPlatformClient_Login(t *testing.T) {
 	defer server.Close()
 
 	client := NewPlatformClient(server.URL)
-	resp, err := client.Login("test@example.com", "password123")
+	ctx := context.Background()
+	resp, err := client.Login(ctx, "test@example.com", "password123")
 
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -62,7 +64,8 @@ func TestPlatformClient_Login_InvalidCredentials(t *testing.T) {
 	defer server.Close()
 
 	client := NewPlatformClient(server.URL)
-	resp, err := client.Login("test@example.com", "wrong-password")
+	ctx := context.Background()
+	resp, err := client.Login(ctx, "test@example.com", "wrong-password")
 
 	require.Error(t, err)
 	assert.Nil(t, resp)
@@ -91,7 +94,8 @@ func TestPlatformClient_GetEmployeeInfo(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	info, err := client.GetEmployeeInfo("emp-123")
+	ctx := context.Background()
+	info, err := client.GetEmployeeInfo(ctx, "emp-123")
 
 	require.NoError(t, err)
 	assert.NotNil(t, info)
@@ -112,7 +116,8 @@ func TestPlatformClient_GetEmployeeInfo_NotFound(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	info, err := client.GetEmployeeInfo("emp-999")
+	ctx := context.Background()
+	info, err := client.GetEmployeeInfo(ctx, "emp-999")
 
 	require.Error(t, err)
 	assert.Nil(t, info)
@@ -162,7 +167,8 @@ func TestPlatformClient_GetResolvedAgentConfigs(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	configs, err := client.GetResolvedAgentConfigs("emp-123")
+	ctx := context.Background()
+	configs, err := client.GetResolvedAgentConfigs(ctx, "emp-123")
 
 	require.NoError(t, err)
 	assert.Len(t, configs, 2)
@@ -195,7 +201,8 @@ func TestPlatformClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	configs, err := client.GetResolvedAgentConfigs("emp-123")
+	ctx := context.Background()
+	configs, err := client.GetResolvedAgentConfigs(ctx, "emp-123")
 
 	require.NoError(t, err)
 	assert.Len(t, configs, 0)
@@ -300,7 +307,8 @@ func TestPlatformClient_GetClaudeCodeConfig(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	config, err := client.GetClaudeCodeConfig()
+	ctx := context.Background()
+	config, err := client.GetClaudeCodeConfig(ctx)
 
 	require.NoError(t, err)
 	assert.NotNil(t, config)
@@ -352,7 +360,8 @@ func TestPlatformClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	config, err := client.GetClaudeCodeConfig()
+	ctx := context.Background()
+	config, err := client.GetClaudeCodeConfig(ctx)
 
 	require.NoError(t, err)
 	assert.NotNil(t, config)
@@ -372,7 +381,8 @@ func TestPlatformClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("invalid-token")
 
-	config, err := client.GetClaudeCodeConfig()
+	ctx := context.Background()
+	config, err := client.GetClaudeCodeConfig(ctx)
 
 	require.Error(t, err)
 	assert.Nil(t, config)
@@ -422,7 +432,8 @@ func TestPlatformClient_GetMyResolvedAgentConfigs(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	configs, err := client.GetMyResolvedAgentConfigs()
+	ctx := context.Background()
+	configs, err := client.GetMyResolvedAgentConfigs(ctx)
 
 	require.NoError(t, err)
 	assert.Len(t, configs, 2)
@@ -455,7 +466,8 @@ func TestPlatformClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("test-token")
 
-	configs, err := client.GetMyResolvedAgentConfigs()
+	ctx := context.Background()
+	configs, err := client.GetMyResolvedAgentConfigs(ctx)
 
 	require.NoError(t, err)
 	assert.Len(t, configs, 0)
@@ -472,7 +484,8 @@ func TestPlatformClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
 	client := NewPlatformClient(server.URL)
 	client.SetToken("invalid-token")
 
-	configs, err := client.GetMyResolvedAgentConfigs()
+	ctx := context.Background()
+	configs, err := client.GetMyResolvedAgentConfigs(ctx)
 
 	require.Error(t, err)
 	assert.Nil(t, configs)

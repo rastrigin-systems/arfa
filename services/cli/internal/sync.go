@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,14 +11,15 @@ import (
 
 // SyncService handles config synchronization
 type SyncService struct {
-	configManager    *ConfigManager
-	platformClient   *PlatformClient
-	authService      *AuthService
+	configManager    ConfigManagerInterface
+	platformClient   PlatformClientInterface
+	authService      AuthServiceInterface
 	dockerClient     *DockerClient
-	containerManager *ContainerManager
+	containerManager ContainerManagerInterface
 }
 
-// NewSyncService creates a new SyncService
+// NewSyncService creates a new SyncService with concrete types.
+// This is the primary constructor for production use.
 func NewSyncService(configManager *ConfigManager, platformClient *PlatformClient, authService *AuthService) *SyncService {
 	return &SyncService{
 		configManager:  configManager,
@@ -26,12 +28,29 @@ func NewSyncService(configManager *ConfigManager, platformClient *PlatformClient
 	}
 }
 
-// SetDockerClient sets the Docker client (optional for testing)
+// NewSyncServiceWithInterfaces creates a new SyncService with interface types.
+// This constructor enables dependency injection for testing with mocks.
+func NewSyncServiceWithInterfaces(configManager ConfigManagerInterface, platformClient PlatformClientInterface, authService AuthServiceInterface) *SyncService {
+	return &SyncService{
+		configManager:  configManager,
+		platformClient: platformClient,
+		authService:    authService,
+	}
+}
+
+// SetDockerClient sets the Docker client and creates a ContainerManager.
+// Deprecated: Use SetContainerManager instead for better dependency injection.
 func (ss *SyncService) SetDockerClient(dockerClient *DockerClient) {
 	ss.dockerClient = dockerClient
 	if dockerClient != nil {
 		ss.containerManager = NewContainerManager(dockerClient)
 	}
+}
+
+// SetContainerManager sets the container manager directly.
+// This is the preferred way to inject container management dependencies.
+func (ss *SyncService) SetContainerManager(cm ContainerManagerInterface) {
+	ss.containerManager = cm
 }
 
 // SyncResult represents the result of a sync operation
@@ -41,7 +60,7 @@ type SyncResult struct {
 }
 
 // Sync fetches configs from platform and stores them locally
-func (ss *SyncService) Sync() (*SyncResult, error) {
+func (ss *SyncService) Sync(ctx context.Context) (*SyncResult, error) {
 	// Ensure user is authenticated
 	config, err := ss.authService.RequireAuth()
 	if err != nil {
@@ -51,7 +70,7 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 	fmt.Println("✓ Fetching configs from platform...")
 
 	// Fetch resolved agent configs (using JWT-based /employees/me endpoint)
-	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs()
+	agentConfigs, err := ss.platformClient.GetMyResolvedAgentConfigs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch agent configs: %w", err)
 	}
@@ -103,7 +122,7 @@ func (ss *SyncService) Sync() (*SyncResult, error) {
 }
 
 // SyncClaudeCode fetches and installs complete Claude Code configuration
-func (ss *SyncService) SyncClaudeCode(targetDir string) error {
+func (ss *SyncService) SyncClaudeCode(ctx context.Context, targetDir string) error {
 	// Ensure user is authenticated
 	_, err := ss.authService.RequireAuth()
 	if err != nil {
@@ -115,7 +134,7 @@ func (ss *SyncService) SyncClaudeCode(targetDir string) error {
 
 	// Fetch complete Claude Code config
 	fmt.Println("📥 Downloading configurations...")
-	config, err := ss.platformClient.GetClaudeCodeConfig()
+	config, err := ss.platformClient.GetClaudeCodeConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Claude Code config: %w", err)
 	}
@@ -369,14 +388,14 @@ func (ss *SyncService) GetAgentConfig(idOrName string) (*AgentConfig, error) {
 }
 
 // StartContainers starts Docker containers for synced agent configs
-func (ss *SyncService) StartContainers(workspacePath string, apiKey string) error {
+func (ss *SyncService) StartContainers(ctx context.Context, workspacePath string, apiKey string) error {
 	if ss.dockerClient == nil || ss.containerManager == nil {
 		return fmt.Errorf("Docker client not configured")
 	}
 
 	// Fetch effective Claude token from platform
 	fmt.Println("\nFetching Claude API token...")
-	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken()
+	claudeToken, err := ss.platformClient.GetEffectiveClaudeToken(ctx)
 	if err != nil {
 		fmt.Printf("⚠ Warning: Could not fetch Claude token: %v\n", err)
 		fmt.Printf("  Falling back to provided API key (if any)\n")
@@ -388,20 +407,20 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 
 	// Check Docker is running
 	fmt.Println("\nChecking Docker...")
-	if err := ss.dockerClient.Ping(); err != nil {
+	if err := ss.dockerClient.Ping(ctx); err != nil {
 		return fmt.Errorf("Docker is not running: %w", err)
 	}
 	fmt.Println("✓ Docker is running")
 
 	// Get Docker version
-	version, err := ss.dockerClient.GetVersion()
+	version, err := ss.dockerClient.GetVersion(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get Docker version: %w", err)
 	}
 	fmt.Printf("✓ Docker version: %s\n", version)
 
 	// Setup network
-	if err := ss.containerManager.SetupNetwork(); err != nil {
+	if err := ss.containerManager.SetupNetwork(ctx); err != nil {
 		return fmt.Errorf("failed to setup network: %w", err)
 	}
 
@@ -439,7 +458,7 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 				Config:     mcp.Config,
 			}
 
-			_, err := ss.containerManager.StartMCPServer(mcpSpec, workspacePath)
+			_, err := ss.containerManager.StartMCPServer(ctx, mcpSpec, workspacePath)
 			if err != nil {
 				fmt.Printf("  ⚠ Failed to start MCP server %s: %v\n", mcp.ServerName, err)
 			}
@@ -474,7 +493,7 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 			APIKey:        apiKey,      // Fallback for backward compatibility
 		}
 
-		_, err := ss.containerManager.StartAgent(agentSpec, workspacePath)
+		_, err := ss.containerManager.StartAgent(ctx, agentSpec, workspacePath)
 		if err != nil {
 			fmt.Printf("  ⚠ Failed to start agent %s: %v\n", config.AgentName, err)
 		}
@@ -484,19 +503,19 @@ func (ss *SyncService) StartContainers(workspacePath string, apiKey string) erro
 }
 
 // StopContainers stops all running containers
-func (ss *SyncService) StopContainers() error {
+func (ss *SyncService) StopContainers(ctx context.Context) error {
 	if ss.containerManager == nil {
 		return fmt.Errorf("container manager not configured")
 	}
-	return ss.containerManager.StopContainers()
+	return ss.containerManager.StopContainers(ctx)
 }
 
 // GetContainerStatus returns the status of all containers
-func (ss *SyncService) GetContainerStatus() ([]ContainerInfo, error) {
+func (ss *SyncService) GetContainerStatus(ctx context.Context) ([]ContainerInfo, error) {
 	if ss.containerManager == nil {
 		return nil, fmt.Errorf("container manager not configured")
 	}
-	return ss.containerManager.GetContainerStatus()
+	return ss.containerManager.GetContainerStatus(ctx)
 }
 
 // Helper to convert MCPServerConfig to MCPServerSpec

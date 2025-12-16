@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -52,8 +53,9 @@ func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
+	ctx := context.Background()
 	// Try to start containers without Docker client
-	err := syncService.StartContainers("/tmp", "test-key")
+	err := syncService.StartContainers(ctx, "/tmp", "test-key")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "Docker client not configured")
 }
@@ -68,8 +70,9 @@ func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
+	ctx := context.Background()
 	// Try to stop containers without container manager
-	err := syncService.StopContainers()
+	err := syncService.StopContainers(ctx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "container manager not configured")
 }
@@ -84,8 +87,9 @@ func TestSyncService_GetContainerStatus_NoContainerManager(t *testing.T) {
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
+	ctx := context.Background()
 	// Try to get status without container manager
-	status, err := syncService.GetContainerStatus()
+	status, err := syncService.GetContainerStatus(ctx)
 	assert.Error(t, err)
 	assert.Nil(t, status)
 	assert.Contains(t, err.Error(), "container manager not configured")
@@ -119,8 +123,9 @@ func TestSyncService_StartContainers_NoConfigs(t *testing.T) {
 	// Set Docker client
 	syncService.SetDockerClient(dockerClient)
 
+	ctx := context.Background()
 	// Try to start containers with no configs
-	err = syncService.StartContainers(tempDir, "test-key")
+	err = syncService.StartContainers(ctx, tempDir, "test-key")
 	// Should not error, but should print "No agent configs to start"
 	assert.NoError(t, err)
 }
@@ -148,8 +153,9 @@ func TestSyncService_GetContainerStatus_WithDocker(t *testing.T) {
 	// Set Docker client
 	syncService.SetDockerClient(dockerClient)
 
+	ctx := context.Background()
 	// Get container status
-	status, err := syncService.GetContainerStatus()
+	status, err := syncService.GetContainerStatus(ctx)
 	require.NoError(t, err)
 	assert.NotNil(t, status)
 	t.Logf("Found %d ubik-managed containers", len(status))
@@ -229,18 +235,20 @@ func TestSyncService_FullLifecycle_Integration(t *testing.T) {
 	// Set Docker client
 	syncService.SetDockerClient(dockerClient)
 
+	ctx := context.Background()
+
 	// Test 1: Get container status (should be empty initially)
-	status, err := syncService.GetContainerStatus()
+	status, err := syncService.GetContainerStatus(ctx)
 	require.NoError(t, err)
 	initialCount := len(status)
 	t.Logf("Initial container count: %d", initialCount)
 
 	// Test 2: Stop containers (should not error even if none exist)
-	err = syncService.StopContainers()
+	err = syncService.StopContainers(ctx)
 	assert.NoError(t, err)
 
 	// Test 3: Get status again
-	status, err = syncService.GetContainerStatus()
+	status, err = syncService.GetContainerStatus(ctx)
 	require.NoError(t, err)
 	t.Logf("Final container count: %d", len(status))
 }

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,6 @@ func TestNewDockerClient(t *testing.T) {
 
 	assert.NotNil(t, client)
 	assert.NotNil(t, client.cli)
-	assert.NotNil(t, client.ctx)
 }
 
 func TestDockerClient_Close(t *testing.T) {
@@ -52,7 +52,8 @@ func TestDockerClient_Ping(t *testing.T) {
 	}
 	defer client.Close()
 
-	err = client.Ping()
+	ctx := context.Background()
+	err = client.Ping(ctx)
 	assert.NoError(t, err, "Docker daemon should be accessible")
 }
 
@@ -67,7 +68,8 @@ func TestDockerClient_GetVersion(t *testing.T) {
 	}
 	defer client.Close()
 
-	version, err := client.GetVersion()
+	ctx := context.Background()
+	version, err := client.GetVersion(ctx)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, version)
 	t.Logf("Docker version: %s", version)
@@ -84,13 +86,15 @@ func TestDockerClient_NetworkExists(t *testing.T) {
 	}
 	defer client.Close()
 
+	ctx := context.Background()
+
 	// Check for default bridge network
-	exists, err := client.NetworkExists("bridge")
+	exists, err := client.NetworkExists(ctx, "bridge")
 	assert.NoError(t, err)
 	assert.True(t, exists, "bridge network should always exist")
 
 	// Check for non-existent network
-	exists, err = client.NetworkExists("nonexistent-network-12345")
+	exists, err = client.NetworkExists(ctx, "nonexistent-network-12345")
 	assert.NoError(t, err)
 	assert.False(t, exists)
 }
@@ -106,27 +110,28 @@ func TestDockerClient_CreateAndRemoveNetwork(t *testing.T) {
 	}
 	defer client.Close()
 
+	ctx := context.Background()
 	networkName := "test-network-12345"
 
 	// Clean up if exists
-	client.RemoveNetwork(networkName)
+	client.RemoveNetwork(ctx, networkName)
 
 	// Create network
-	networkID, err := client.CreateNetwork(networkName)
+	networkID, err := client.CreateNetwork(ctx, networkName)
 	require.NoError(t, err)
 	assert.NotEmpty(t, networkID)
 
 	// Verify it exists
-	exists, err := client.NetworkExists(networkName)
+	exists, err := client.NetworkExists(ctx, networkName)
 	require.NoError(t, err)
 	assert.True(t, exists)
 
 	// Remove network
-	err = client.RemoveNetwork(networkName)
+	err = client.RemoveNetwork(ctx, networkName)
 	require.NoError(t, err)
 
 	// Verify it's gone
-	exists, err = client.NetworkExists(networkName)
+	exists, err = client.NetworkExists(ctx, networkName)
 	require.NoError(t, err)
 	assert.False(t, exists)
 }
@@ -142,14 +147,16 @@ func TestDockerClient_ListContainers(t *testing.T) {
 	}
 	defer client.Close()
 
+	ctx := context.Background()
+
 	// List all containers (running and stopped)
-	containers, err := client.ListContainers(true, nil)
+	containers, err := client.ListContainers(ctx, true, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, containers)
 	t.Logf("Found %d containers (all)", len(containers))
 
 	// List only running containers
-	runningContainers, err := client.ListContainers(false, nil)
+	runningContainers, err := client.ListContainers(ctx, false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, runningContainers)
 	t.Logf("Found %d containers (running)", len(runningContainers))
@@ -169,7 +176,8 @@ func TestDockerClient_ContainerInfo(t *testing.T) {
 	}
 	defer client.Close()
 
-	containers, err := client.ListContainers(true, nil)
+	ctx := context.Background()
+	containers, err := client.ListContainers(ctx, true, nil)
 	require.NoError(t, err)
 
 	if len(containers) > 0 {
@@ -194,7 +202,8 @@ func TestDockerClient_PullImage_Error(t *testing.T) {
 	}
 	defer client.Close()
 
+	ctx := context.Background()
 	// Try to pull non-existent image
-	err = client.PullImage("this-image-definitely-does-not-exist-12345:latest")
+	err = client.PullImage(ctx, "this-image-definitely-does-not-exist-12345:latest")
 	assert.Error(t, err, "Should fail to pull non-existent image")
 }

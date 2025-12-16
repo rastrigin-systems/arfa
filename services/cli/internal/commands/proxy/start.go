@@ -3,11 +3,13 @@ package proxy
 import (
 	"fmt"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
-func NewStartCommand() *cobra.Command {
+// NewStartCommand creates the start command with dependencies from the container.
+func NewStartCommand(_ *container.Container) *cobra.Command {
 	var port int
 
 	cmd := &cobra.Command{

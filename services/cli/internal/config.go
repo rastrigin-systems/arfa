@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// DefaultPlatformURL is the default platform API URL.
+const DefaultPlatformURL = "https://api.ubik.io"
+
 // Config represents the local CLI configuration stored in ~/.ubik/config.json
 type Config struct {
 	PlatformURL  string    `json:"platform_url"`
@@ -23,7 +26,7 @@ type ConfigManager struct {
 	configPath string
 }
 
-// NewConfigManager creates a new ConfigManager
+// NewConfigManager creates a new ConfigManager with default path (~/.ubik/config.json)
 func NewConfigManager() (*ConfigManager, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -41,6 +44,14 @@ func NewConfigManager() (*ConfigManager, error) {
 	return &ConfigManager{
 		configPath: configPath,
 	}, nil
+}
+
+// NewConfigManagerWithPath creates a new ConfigManager with a custom config path.
+// Use this for testing or when you need a non-default config location.
+func NewConfigManagerWithPath(configPath string) *ConfigManager {
+	return &ConfigManager{
+		configPath: configPath,
+	}
 }
 
 // Load reads the config from disk

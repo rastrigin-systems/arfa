@@ -3,19 +3,20 @@ package config
 import (
 	"fmt"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
-func NewConfigCommand() *cobra.Command {
+// NewConfigCommand creates the config command with dependencies from the container.
+func NewConfigCommand(c *container.Container) *cobra.Command {
 	return &cobra.Command{
 		Use:   "config",
 		Short: "Manage local configuration",
 		Long:  "View and manage local CLI configuration.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configManager, err := cli.NewConfigManager()
+			configManager, err := c.ConfigManager()
 			if err != nil {
-				return fmt.Errorf("failed to create config manager: %w", err)
+				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
 			config, err := configManager.Load()
