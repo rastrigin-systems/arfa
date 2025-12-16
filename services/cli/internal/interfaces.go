@@ -357,12 +357,12 @@ type DockerNetworkConfig = network.NetworkingConfig
 // Compile-time interface implementation checks.
 // These ensure that the concrete types implement their respective interfaces.
 var (
-	_ ConfigManagerInterface     = (*ConfigManager)(nil)
-	_ PlatformClientInterface    = (*PlatformClient)(nil)
-	_ AuthServiceInterface       = (*AuthService)(nil)
-	_ SyncServiceInterface       = (*SyncService)(nil)
-	_ AgentServiceInterface      = (*AgentService)(nil)
-	_ SkillsServiceInterface     = (*SkillsService)(nil)
-	_ DockerClientInterface      = (*DockerClient)(nil)
-	_ ContainerManagerInterface  = (*ContainerManager)(nil)
+	_ ConfigManagerInterface    = (*ConfigManager)(nil)
+	_ PlatformClientInterface   = (*PlatformClient)(nil)
+	_ AuthServiceInterface      = (*AuthService)(nil)
+	_ SyncServiceInterface      = (*SyncService)(nil)
+	_ AgentServiceInterface     = (*AgentService)(nil)
+	_ SkillsServiceInterface    = (*SkillsService)(nil)
+	_ DockerClientInterface     = (*DockerClient)(nil)
+	_ ContainerManagerInterface = (*ContainerManager)(nil)
 )
