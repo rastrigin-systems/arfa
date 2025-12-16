@@ -1,4 +1,4 @@
-package commands
+package skills
 
 import (
 	"fmt"
@@ -18,15 +18,15 @@ func NewSkillsCommand(configManager *cli.ConfigManager, platformClient *cli.Plat
 		Long:  "View available Claude Code skills and manage skill access.",
 	}
 
-	cmd.AddCommand(NewSkillsListCommand(configManager, platformClient, authService))
-	cmd.AddCommand(NewSkillsShowCommand(configManager, platformClient, authService))
-	cmd.AddCommand(NewSkillsMyCommand(configManager, platformClient, authService))
+	cmd.AddCommand(NewListCommand(configManager, platformClient, authService))
+	cmd.AddCommand(NewShowCommand(configManager, platformClient, authService))
+	cmd.AddCommand(NewMyCommand(configManager, platformClient, authService))
 
 	return cmd
 }
 
-// NewSkillsListCommand creates the skills list command
-func NewSkillsListCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewListCommand creates the skills list command
+func NewListCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
 	var showLocal bool
 
 	cmd := &cobra.Command{
@@ -126,8 +126,8 @@ func NewSkillsListCommand(configManager *cli.ConfigManager, platformClient *cli.
 	return cmd
 }
 
-// NewSkillsShowCommand creates the skills show command
-func NewSkillsShowCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewShowCommand creates the skills show command
+func NewShowCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
 	var showLocal bool
 
 	cmd := &cobra.Command{
@@ -234,8 +234,8 @@ func NewSkillsShowCommand(configManager *cli.ConfigManager, platformClient *cli.
 	return cmd
 }
 
-// NewSkillsMyCommand creates the skills my command
-func NewSkillsMyCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
+// NewMyCommand creates the skills my command
+func NewMyCommand(configManager *cli.ConfigManager, platformClient *cli.PlatformClient, authService *cli.AuthService) *cobra.Command {
 	var showDetails bool
 
 	cmd := &cobra.Command{

@@ -1,4 +1,4 @@
-package commands
+package agents
 
 import (
 	"bytes"
@@ -143,7 +143,7 @@ func TestAgentsShowCommand_Success(t *testing.T) {
 	setupTestEnvironment(t, mockServer.URL)
 
 	// Create command
-	cmd := NewAgentsShowCommand()
+	cmd := NewShowCommand()
 	cmd.SetArgs([]string{"Claude Code"})
 
 	// Capture output
@@ -224,7 +224,7 @@ func TestAgentsShowCommand_JSONOutput(t *testing.T) {
 	setupTestEnvironment(t, mockServer.URL)
 
 	// Create command with --json flag
-	cmd := NewAgentsShowCommand()
+	cmd := NewShowCommand()
 	cmd.SetArgs([]string{"Claude Code", "--json"})
 
 	var buf bytes.Buffer
@@ -271,7 +271,7 @@ func TestAgentsShowCommand_AgentNotFound(t *testing.T) {
 	// Setup test environment
 	setupTestEnvironment(t, mockServer.URL)
 
-	cmd := NewAgentsShowCommand()
+	cmd := NewShowCommand()
 	cmd.SetArgs([]string{"NonExistentAgent"})
 
 	var buf bytes.Buffer
@@ -284,7 +284,7 @@ func TestAgentsShowCommand_AgentNotFound(t *testing.T) {
 
 // TestAgentsShowCommand_NoAgentSpecified tests error when no agent name provided
 func TestAgentsShowCommand_NoAgentSpecified(t *testing.T) {
-	cmd := NewAgentsShowCommand()
+	cmd := NewShowCommand()
 	cmd.SetArgs([]string{}) // No agent name
 
 	err := cmd.Execute()
