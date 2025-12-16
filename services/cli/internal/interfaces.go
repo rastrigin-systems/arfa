@@ -42,10 +42,10 @@ type ConfigManagerInterface interface {
 	GetConfigPath() string
 }
 
-// PlatformClientInterface defines the contract for API communication with the platform server.
+// APIClientInterface defines the contract for API communication with the platform server.
 // Implementations handle all HTTP requests to the backend API.
 // All methods that make HTTP requests accept context.Context as the first parameter for cancellation and timeout support.
-type PlatformClientInterface interface {
+type APIClientInterface interface {
 	// SetToken sets the authentication token for subsequent requests.
 	SetToken(token string)
 
@@ -134,6 +134,9 @@ type PlatformClientInterface interface {
 
 	// CreateLogBatch sends multiple log entries in a single request.
 	CreateLogBatch(ctx context.Context, entries []LogEntry) error
+
+	// GetLogs fetches logs from the API with optional filters.
+	GetLogs(ctx context.Context, params GetLogsParams) (*APILogsResponse, error)
 }
 
 // ============================================================================
@@ -358,7 +361,7 @@ type DockerNetworkConfig = network.NetworkingConfig
 // These ensure that the concrete types implement their respective interfaces.
 var (
 	_ ConfigManagerInterface    = (*ConfigManager)(nil)
-	_ PlatformClientInterface   = (*PlatformClient)(nil)
+	_ APIClientInterface        = (*APIClient)(nil)
 	_ AuthServiceInterface      = (*AuthService)(nil)
 	_ SyncServiceInterface      = (*SyncService)(nil)
 	_ AgentServiceInterface     = (*AgentService)(nil)

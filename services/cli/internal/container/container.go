@@ -18,13 +18,13 @@ type Container struct {
 	platformURL string
 
 	// Lazily initialized services
-	configManager  *cli.ConfigManager
-	platformClient *cli.PlatformClient
-	authService    *cli.AuthService
-	syncService    *cli.SyncService
-	agentService   *cli.AgentService
-	skillsService  *cli.SkillsService
-	dockerClient   *cli.DockerClient
+	configManager *cli.ConfigManager
+	apiClient     *cli.APIClient
+	authService   *cli.AuthService
+	syncService   *cli.SyncService
+	agentService  *cli.AgentService
+	skillsService *cli.SkillsService
+	dockerClient  *cli.DockerClient
 }
 
 // Option is a functional option for configuring the Container.
@@ -64,11 +64,11 @@ func WithConfigManager(cm *cli.ConfigManager) Option {
 	}
 }
 
-// WithPlatformClient sets a pre-configured PlatformClient.
+// WithAPIClient sets a pre-configured APIClient.
 // Use this for testing with mock implementations.
-func WithPlatformClient(pc *cli.PlatformClient) Option {
+func WithAPIClient(ac *cli.APIClient) Option {
 	return func(c *Container) {
-		c.platformClient = pc
+		c.apiClient = ac
 	}
 }
 
@@ -107,13 +107,13 @@ func (c *Container) ConfigManager() (*cli.ConfigManager, error) {
 	return c.configManager, nil
 }
 
-// PlatformClient returns the PlatformClient, creating it if necessary.
-func (c *Container) PlatformClient() (*cli.PlatformClient, error) {
+// APIClient returns the APIClient, creating it if necessary.
+func (c *Container) APIClient() (*cli.APIClient, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.platformClient != nil {
-		return c.platformClient, nil
+	if c.apiClient != nil {
+		return c.apiClient, nil
 	}
 
 	platformURL := c.platformURL
@@ -121,8 +121,8 @@ func (c *Container) PlatformClient() (*cli.PlatformClient, error) {
 		platformURL = cli.DefaultPlatformURL
 	}
 
-	c.platformClient = cli.NewPlatformClient(platformURL)
-	return c.platformClient, nil
+	c.apiClient = cli.NewAPIClient(platformURL)
+	return c.apiClient, nil
 }
 
 // AuthService returns the AuthService, creating it if necessary.
@@ -150,14 +150,14 @@ func (c *Container) AuthService() (*cli.AuthService, error) {
 		c.mu.Lock()
 		return nil, err
 	}
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	if err != nil {
 		c.mu.Lock()
 		return nil, err
 	}
 	c.mu.Lock()
 
-	c.authService = cli.NewAuthService(cm, pc)
+	c.authService = cli.NewAuthService(cm, ac)
 	return c.authService, nil
 }
 
@@ -186,7 +186,7 @@ func (c *Container) SyncService() (*cli.SyncService, error) {
 		c.mu.Lock()
 		return nil, err
 	}
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	if err != nil {
 		c.mu.Lock()
 		return nil, err
@@ -198,7 +198,7 @@ func (c *Container) SyncService() (*cli.SyncService, error) {
 	}
 	c.mu.Lock()
 
-	c.syncService = cli.NewSyncService(cm, pc, as)
+	c.syncService = cli.NewSyncService(cm, ac, as)
 	return c.syncService, nil
 }
 
@@ -222,7 +222,7 @@ func (c *Container) AgentService() (*cli.AgentService, error) {
 
 	// Get dependencies (unlock temporarily to avoid deadlock)
 	c.mu.Unlock()
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	if err != nil {
 		c.mu.Lock()
 		return nil, err
@@ -234,7 +234,7 @@ func (c *Container) AgentService() (*cli.AgentService, error) {
 	}
 	c.mu.Lock()
 
-	c.agentService = cli.NewAgentService(pc, cm)
+	c.agentService = cli.NewAgentService(ac, cm)
 	return c.agentService, nil
 }
 
@@ -258,7 +258,7 @@ func (c *Container) SkillsService() (*cli.SkillsService, error) {
 
 	// Get dependencies (unlock temporarily to avoid deadlock)
 	c.mu.Unlock()
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	if err != nil {
 		c.mu.Lock()
 		return nil, err
@@ -270,7 +270,7 @@ func (c *Container) SkillsService() (*cli.SkillsService, error) {
 	}
 	c.mu.Lock()
 
-	c.skillsService = cli.NewSkillsService(pc, cm)
+	c.skillsService = cli.NewSkillsService(ac, cm)
 	return c.skillsService, nil
 }
 

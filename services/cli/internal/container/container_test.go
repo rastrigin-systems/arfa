@@ -43,26 +43,26 @@ func TestContainer_ConfigManager_WithCustomPath(t *testing.T) {
 	assert.Same(t, cm, cm2)
 }
 
-func TestContainer_PlatformClient_WithCustomURL(t *testing.T) {
+func TestContainer_APIClient_WithCustomURL(t *testing.T) {
 	customURL := "https://custom.example.com"
 	c := New(WithPlatformURL(customURL))
 
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	require.NoError(t, err)
-	assert.NotNil(t, pc)
+	assert.NotNil(t, ac)
 
 	// Second call should return same instance
-	pc2, err := c.PlatformClient()
+	ac2, err := c.APIClient()
 	require.NoError(t, err)
-	assert.Same(t, pc, pc2)
+	assert.Same(t, ac, ac2)
 }
 
-func TestContainer_PlatformClient_WithDefaultURL(t *testing.T) {
+func TestContainer_APIClient_WithDefaultURL(t *testing.T) {
 	c := New()
 
-	pc, err := c.PlatformClient()
+	ac, err := c.APIClient()
 	require.NoError(t, err)
-	assert.NotNil(t, pc)
+	assert.NotNil(t, ac)
 }
 
 func TestContainer_WithPreConfiguredServices(t *testing.T) {
@@ -71,11 +71,11 @@ func TestContainer_WithPreConfiguredServices(t *testing.T) {
 
 	// Pre-configure services
 	cm := cli.NewConfigManagerWithPath(configPath)
-	pc := cli.NewPlatformClient("https://test.example.com")
+	ac := cli.NewAPIClient("https://test.example.com")
 
 	c := New(
 		WithConfigManager(cm),
-		WithPlatformClient(pc),
+		WithAPIClient(ac),
 	)
 
 	// Should return pre-configured instances
@@ -83,9 +83,9 @@ func TestContainer_WithPreConfiguredServices(t *testing.T) {
 	require.NoError(t, err)
 	assert.Same(t, cm, gotCm)
 
-	gotPc, err := c.PlatformClient()
+	gotAc, err := c.APIClient()
 	require.NoError(t, err)
-	assert.Same(t, pc, gotPc)
+	assert.Same(t, ac, gotAc)
 }
 
 func TestContainer_AuthService(t *testing.T) {

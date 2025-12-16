@@ -55,7 +55,7 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup auth service
-	pc := NewPlatformClient(server.URL)
+	pc := NewAPIClient(server.URL)
 	pc.SetToken("test-token")
 	authService := NewAuthService(cm, pc)
 
@@ -83,7 +83,7 @@ func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -130,7 +130,7 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup auth service
-	pc := NewPlatformClient(server.URL)
+	pc := NewAPIClient(server.URL)
 	pc.SetToken("test-token")
 	authService := NewAuthService(cm, pc)
 

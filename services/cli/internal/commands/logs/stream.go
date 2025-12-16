@@ -27,7 +27,7 @@ func NewStreamCommand(c *container.Container) *cobra.Command {
 				return fmt.Errorf("failed to get config manager: %w", err)
 			}
 
-			platformClient, err := c.PlatformClient()
+			platformClient, err := c.APIClient()
 			if err != nil {
 				return fmt.Errorf("failed to get platform client: %w", err)
 			}

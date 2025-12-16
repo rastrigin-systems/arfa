@@ -16,19 +16,19 @@ import (
 
 // LogStreamer handles WebSocket connection and log streaming
 type LogStreamer struct {
-	platformClient *PlatformClient
-	configManager  *ConfigManager
-	jsonOutput     bool // Whether to output full JSON
-	verbose        bool // Whether to show full payloads
+	apiClient     *APIClient
+	configManager *ConfigManager
+	jsonOutput    bool // Whether to output full JSON
+	verbose       bool // Whether to show full payloads
 }
 
 // NewLogStreamer creates a new LogStreamer
-func NewLogStreamer(pc *PlatformClient, cm *ConfigManager) *LogStreamer {
+func NewLogStreamer(ac *APIClient, cm *ConfigManager) *LogStreamer {
 	return &LogStreamer{
-		platformClient: pc,
-		configManager:  cm,
-		jsonOutput:     false,
-		verbose:        false,
+		apiClient:     ac,
+		configManager: cm,
+		jsonOutput:    false,
+		verbose:       false,
 	}
 }
 

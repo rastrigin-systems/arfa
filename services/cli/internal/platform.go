@@ -7,19 +7,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
-// PlatformClient handles API communication with the platform server
-type PlatformClient struct {
+// APIClient handles API communication with the platform server.
+// This is the single HTTP client for all platform API calls.
+type APIClient struct {
 	baseURL    string
 	httpClient *http.Client
 	token      string
 }
 
-// NewPlatformClient creates a new platform API client
-func NewPlatformClient(baseURL string) *PlatformClient {
-	return &PlatformClient{
+// NewAPIClient creates a new platform API client
+func NewAPIClient(baseURL string) *APIClient {
+	return &APIClient{
 		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
@@ -28,54 +30,81 @@ func NewPlatformClient(baseURL string) *PlatformClient {
 }
 
 // SetToken sets the authentication token
-func (pc *PlatformClient) SetToken(token string) {
-	pc.token = token
+func (c *APIClient) SetToken(token string) {
+	c.token = token
 }
 
 // SetBaseURL sets the base URL for API requests.
 // This allows overriding the URL at runtime (e.g., during login).
-func (pc *PlatformClient) SetBaseURL(url string) {
-	pc.baseURL = url
+func (c *APIClient) SetBaseURL(url string) {
+	c.baseURL = url
 }
 
 // SetHTTPClient sets a custom HTTP client (for testing)
-func (pc *PlatformClient) SetHTTPClient(client *http.Client) {
-	pc.httpClient = client
+func (c *APIClient) SetHTTPClient(client *http.Client) {
+	c.httpClient = client
 }
 
+// BaseURL returns the current base URL
+func (c *APIClient) BaseURL() string {
+	return c.baseURL
+}
+
+// Token returns the current token
+func (c *APIClient) Token() string {
+	return c.token
+}
+
+// ============================================================================
+// Authentication
+// ============================================================================
+
 // Login authenticates the user and returns a token
-func (pc *PlatformClient) Login(ctx context.Context, email, password string) (*LoginResponse, error) {
+func (c *APIClient) Login(ctx context.Context, email, password string) (*LoginResponse, error) {
 	reqBody := LoginRequest{
 		Email:    email,
 		Password: password,
 	}
 
 	var resp LoginResponse
-	if err := pc.doRequest(ctx, "POST", "/auth/login", reqBody, &resp); err != nil {
+	if err := c.doRequest(ctx, "POST", "/auth/login", reqBody, &resp); err != nil {
 		return nil, fmt.Errorf("login failed: %w", err)
 	}
 
 	// Store token for subsequent requests
-	pc.token = resp.Token
+	c.token = resp.Token
 
 	return &resp, nil
 }
 
+// GetCurrentEmployee fetches information about the currently authenticated employee
+func (c *APIClient) GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error) {
+	var resp EmployeeInfo
+	if err := c.doRequest(ctx, "GET", "/auth/me", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get current employee: %w", err)
+	}
+	return &resp, nil
+}
+
 // GetEmployeeInfo gets information about a specific employee
-func (pc *PlatformClient) GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error) {
+func (c *APIClient) GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error) {
 	var resp EmployeeInfo
 	endpoint := fmt.Sprintf("/employees/%s", employeeID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get employee info: %w", err)
 	}
 	return &resp, nil
 }
 
+// ============================================================================
+// Agent Configuration
+// ============================================================================
+
 // GetResolvedAgentConfigs fetches resolved agent configurations for an employee
-func (pc *PlatformClient) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error) {
+func (c *APIClient) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error) {
 	var resp ResolvedConfigsResponse
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs/resolved", employeeID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
 	return convertAPIConfigsToAgentConfigs(resp.Configs), nil
@@ -83,14 +112,221 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(ctx context.Context, employeeI
 
 // GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee (JWT-based)
 // Uses /employees/me/agent-configs/resolved endpoint which derives employee from JWT token
-func (pc *PlatformClient) GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error) {
+func (c *APIClient) GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error) {
 	var resp ResolvedConfigsResponse
 	endpoint := "/employees/me/agent-configs/resolved"
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
 	return convertAPIConfigsToAgentConfigs(resp.Configs), nil
 }
+
+// GetOrgAgentConfigs fetches organization-level agent configs
+func (c *APIClient) GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error) {
+	var resp struct {
+		Configs []OrgAgentConfigResponse `json:"configs"`
+	}
+	if err := c.doRequest(ctx, "GET", "/organizations/current/agent-configs", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get org agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// GetTeamAgentConfigs fetches team-level agent configs
+func (c *APIClient) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error) {
+	var resp struct {
+		Configs []TeamAgentConfigResponse `json:"configs"`
+	}
+	endpoint := fmt.Sprintf("/teams/%s/agent-configs", teamID)
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get team agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// GetEmployeeAgentConfigs fetches employee-level agent configs
+func (c *APIClient) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error) {
+	var resp struct {
+		Configs []EmployeeAgentConfigResponse `json:"configs"`
+	}
+	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get employee agent configs: %w", err)
+	}
+	return resp.Configs, nil
+}
+
+// ============================================================================
+// Claude Token Management
+// ============================================================================
+
+// GetClaudeTokenStatus fetches the Claude token status for the current employee
+func (c *APIClient) GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error) {
+	var resp ClaudeTokenStatusResponse
+	endpoint := "/employees/me/claude-token/status"
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get Claude token status: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetEffectiveClaudeToken fetches the effective Claude token for the current employee
+// Returns the actual token value (personal if set, otherwise company token)
+func (c *APIClient) GetEffectiveClaudeToken(ctx context.Context) (string, error) {
+	var resp EffectiveClaudeTokenResponse
+	endpoint := "/employees/me/claude-token/effective"
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return "", fmt.Errorf("failed to get effective Claude token: %w", err)
+	}
+	return resp.Token, nil
+}
+
+// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata
+func (c *APIClient) GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error) {
+	var resp EffectiveClaudeTokenResponse
+	endpoint := "/employees/me/claude-token/effective"
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
+	}
+	return &resp, nil
+}
+
+// ============================================================================
+// Sync
+// ============================================================================
+
+// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle
+func (c *APIClient) GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error) {
+	var resp ClaudeCodeSyncResponse
+	if err := c.doRequest(ctx, "GET", "/sync/claude-code", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get Claude Code config: %w", err)
+	}
+	return &resp, nil
+}
+
+// ============================================================================
+// Skills
+// ============================================================================
+
+// ListSkills fetches all available skills from the catalog
+func (c *APIClient) ListSkills(ctx context.Context) (*ListSkillsResponse, error) {
+	var resp ListSkillsResponse
+	if err := c.doRequest(ctx, "GET", "/skills", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list skills: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetSkill fetches details for a specific skill by ID
+func (c *APIClient) GetSkill(ctx context.Context, skillID string) (*Skill, error) {
+	var skill Skill
+	endpoint := fmt.Sprintf("/skills/%s", skillID)
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
+		return nil, fmt.Errorf("failed to get skill: %w", err)
+	}
+	return &skill, nil
+}
+
+// ListEmployeeSkills fetches skills assigned to the authenticated employee
+func (c *APIClient) ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error) {
+	var resp ListEmployeeSkillsResponse
+	if err := c.doRequest(ctx, "GET", "/employees/me/skills", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list employee skills: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee
+func (c *APIClient) GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error) {
+	var skill EmployeeSkill
+	endpoint := fmt.Sprintf("/employees/me/skills/%s", skillID)
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
+		return nil, fmt.Errorf("failed to get employee skill: %w", err)
+	}
+	return &skill, nil
+}
+
+// ============================================================================
+// Logging
+// ============================================================================
+
+// CreateLog sends a single log entry to the platform API
+func (c *APIClient) CreateLog(ctx context.Context, entry LogEntry) error {
+	req := CreateLogRequest{
+		EventType:     entry.EventType,
+		EventCategory: entry.EventCategory,
+	}
+
+	if entry.SessionID != "" {
+		req.SessionID = &entry.SessionID
+	}
+	if entry.AgentID != "" {
+		req.AgentID = &entry.AgentID
+	}
+	if entry.Content != "" {
+		req.Content = &entry.Content
+	}
+	if entry.Payload != nil {
+		req.Payload = &entry.Payload
+	}
+
+	if err := c.doRequest(ctx, "POST", "/logs", req, nil); err != nil {
+		return fmt.Errorf("failed to create log: %w", err)
+	}
+
+	return nil
+}
+
+// CreateLogBatch sends multiple log entries in a single request
+func (c *APIClient) CreateLogBatch(ctx context.Context, entries []LogEntry) error {
+	// For now, send logs individually
+	// TODO: Update API to support batch endpoint
+	for _, entry := range entries {
+		if err := c.CreateLog(ctx, entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetLogsParams contains parameters for fetching logs
+type GetLogsParams struct {
+	SessionID     string
+	EventCategory string
+	PerPage       int
+}
+
+// GetLogs fetches logs from the API with optional filters
+func (c *APIClient) GetLogs(ctx context.Context, params GetLogsParams) (*APILogsResponse, error) {
+	// Build query parameters
+	query := url.Values{}
+	if params.SessionID != "" {
+		query.Set("session_id", params.SessionID)
+	}
+	if params.EventCategory != "" {
+		query.Set("event_category", params.EventCategory)
+	}
+	if params.PerPage > 0 {
+		query.Set("per_page", fmt.Sprintf("%d", params.PerPage))
+	} else {
+		query.Set("per_page", "1000") // Default
+	}
+
+	endpoint := "/logs"
+	if len(query) > 0 {
+		endpoint = fmt.Sprintf("/logs?%s", query.Encode())
+	}
+
+	var resp APILogsResponse
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get logs: %w", err)
+	}
+	return &resp, nil
+}
+
+// ============================================================================
+// Internal Helpers
+// ============================================================================
 
 // convertAPIConfigsToAgentConfigs converts API response to internal format.
 func convertAPIConfigsToAgentConfigs(apiConfigs []AgentConfigAPIResponse) []AgentConfig {
@@ -118,179 +354,10 @@ func getDockerImage(api AgentConfigAPIResponse) string {
 	return fmt.Sprintf("ubik/%s:latest", api.AgentType)
 }
 
-// GetClaudeTokenStatus fetches the Claude token status for the current employee
-func (pc *PlatformClient) GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error) {
-	var resp ClaudeTokenStatusResponse
-	endpoint := "/employees/me/claude-token/status"
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get Claude token status: %w", err)
-	}
-	return &resp, nil
-}
-
-// GetEffectiveClaudeToken fetches the effective Claude token for the current employee
-// Returns the actual token value (personal if set, otherwise company token)
-func (pc *PlatformClient) GetEffectiveClaudeToken(ctx context.Context) (string, error) {
-	var resp EffectiveClaudeTokenResponse
-	endpoint := "/employees/me/claude-token/effective"
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
-		return "", fmt.Errorf("failed to get effective Claude token: %w", err)
-	}
-	return resp.Token, nil
-}
-
-// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata
-func (pc *PlatformClient) GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error) {
-	var resp EffectiveClaudeTokenResponse
-	endpoint := "/employees/me/claude-token/effective"
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
-	}
-	return &resp, nil
-}
-
-// GetOrgAgentConfigs fetches organization-level agent configs
-func (pc *PlatformClient) GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error) {
-	var resp struct {
-		Configs []OrgAgentConfigResponse `json:"configs"`
-	}
-	if err := pc.doRequest(ctx, "GET", "/organizations/current/agent-configs", nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get org agent configs: %w", err)
-	}
-	return resp.Configs, nil
-}
-
-// GetTeamAgentConfigs fetches team-level agent configs
-func (pc *PlatformClient) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error) {
-	var resp struct {
-		Configs []TeamAgentConfigResponse `json:"configs"`
-	}
-	endpoint := fmt.Sprintf("/teams/%s/agent-configs", teamID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get team agent configs: %w", err)
-	}
-	return resp.Configs, nil
-}
-
-// GetEmployeeAgentConfigs fetches employee-level agent configs
-func (pc *PlatformClient) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error) {
-	var resp struct {
-		Configs []EmployeeAgentConfigResponse `json:"configs"`
-	}
-	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get employee agent configs: %w", err)
-	}
-	return resp.Configs, nil
-}
-
-// GetCurrentEmployee fetches information about the currently authenticated employee
-func (pc *PlatformClient) GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error) {
-	var resp EmployeeInfo
-	if err := pc.doRequest(ctx, "GET", "/auth/me", nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get current employee: %w", err)
-	}
-	return &resp, nil
-}
-
-// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle
-func (pc *PlatformClient) GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error) {
-	var resp ClaudeCodeSyncResponse
-	if err := pc.doRequest(ctx, "GET", "/sync/claude-code", nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to get Claude Code config: %w", err)
-	}
-	return &resp, nil
-}
-
-// ============================================================================
-// Skills API Methods
-// ============================================================================
-
-// ListSkills fetches all available skills from the catalog
-func (pc *PlatformClient) ListSkills(ctx context.Context) (*ListSkillsResponse, error) {
-	var resp ListSkillsResponse
-	if err := pc.doRequest(ctx, "GET", "/skills", nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to list skills: %w", err)
-	}
-	return &resp, nil
-}
-
-// GetSkill fetches details for a specific skill by ID
-func (pc *PlatformClient) GetSkill(ctx context.Context, skillID string) (*Skill, error) {
-	var skill Skill
-	endpoint := fmt.Sprintf("/skills/%s", skillID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
-		return nil, fmt.Errorf("failed to get skill: %w", err)
-	}
-	return &skill, nil
-}
-
-// ListEmployeeSkills fetches skills assigned to the authenticated employee
-func (pc *PlatformClient) ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error) {
-	var resp ListEmployeeSkillsResponse
-	if err := pc.doRequest(ctx, "GET", "/employees/me/skills", nil, &resp); err != nil {
-		return nil, fmt.Errorf("failed to list employee skills: %w", err)
-	}
-	return &resp, nil
-}
-
-// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee
-func (pc *PlatformClient) GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error) {
-	var skill EmployeeSkill
-	endpoint := fmt.Sprintf("/employees/me/skills/%s", skillID)
-	if err := pc.doRequest(ctx, "GET", endpoint, nil, &skill); err != nil {
-		return nil, fmt.Errorf("failed to get employee skill: %w", err)
-	}
-	return &skill, nil
-}
-
-// ============================================================================
-// Logging API Methods
-// ============================================================================
-
-// CreateLog sends a single log entry to the platform API
-func (pc *PlatformClient) CreateLog(ctx context.Context, entry LogEntry) error {
-	req := CreateLogRequest{
-		EventType:     entry.EventType,
-		EventCategory: entry.EventCategory,
-	}
-
-	if entry.SessionID != "" {
-		req.SessionID = &entry.SessionID
-	}
-	if entry.AgentID != "" {
-		req.AgentID = &entry.AgentID
-	}
-	if entry.Content != "" {
-		req.Content = &entry.Content
-	}
-	if entry.Payload != nil {
-		req.Payload = &entry.Payload
-	}
-
-	if err := pc.doRequest(ctx, "POST", "/logs", req, nil); err != nil {
-		return fmt.Errorf("failed to create log: %w", err)
-	}
-
-	return nil
-}
-
-// CreateLogBatch sends multiple log entries in a single request
-func (pc *PlatformClient) CreateLogBatch(ctx context.Context, entries []LogEntry) error {
-	// For now, send logs individually
-	// TODO: Update API to support batch endpoint
-	for _, entry := range entries {
-		if err := pc.CreateLog(ctx, entry); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // doRequest is a helper method to perform HTTP requests
-func (pc *PlatformClient) doRequest(ctx context.Context, method, path string, body interface{}, result interface{}) error {
-	// Add /api/v1 prefix to all API calls
-	url := pc.baseURL + "/api/v1" + path
+func (c *APIClient) doRequest(ctx context.Context, method, path string, body interface{}, result interface{}) error {
+	// Add /api/v1 prefix to all API calls (unless path already contains query params with full path)
+	apiURL := c.baseURL + "/api/v1" + path
 
 	var reqBody io.Reader
 	if body != nil {
@@ -301,7 +368,7 @@ func (pc *PlatformClient) doRequest(ctx context.Context, method, path string, bo
 		reqBody = bytes.NewBuffer(jsonData)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, apiURL, reqBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -309,11 +376,11 @@ func (pc *PlatformClient) doRequest(ctx context.Context, method, path string, bo
 	req.Header.Set("Content-Type", "application/json")
 
 	// Add authorization header if token is set
-	if pc.token != "" {
-		req.Header.Set("Authorization", "Bearer "+pc.token)
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
-	resp, err := pc.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
@@ -336,3 +403,4 @@ func (pc *PlatformClient) doRequest(ctx context.Context, method, path string, bo
 
 	return nil
 }
+

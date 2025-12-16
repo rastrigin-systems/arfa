@@ -51,7 +51,7 @@ func TestAuthService_IsAuthenticated(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 
 	// Initially not authenticated
@@ -80,7 +80,7 @@ func TestAuthService_Logout(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 
 	// Save config
@@ -108,7 +108,7 @@ func TestAuthService_GetConfig(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 
 	// Save config
@@ -134,7 +134,7 @@ func TestAuthService_RequireAuth_NotAuthenticated(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 
 	// RequireAuth should fail when not authenticated
@@ -150,7 +150,7 @@ func TestAuthService_RequireAuth_Authenticated(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 
 	// Save config
@@ -184,7 +184,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 	server := createMockLoginServer(t, "test@example.com", "password123")
 	defer server.Close()
 
-	pc := NewPlatformClient(server.URL)
+	pc := NewAPIClient(server.URL)
 	authService := NewAuthService(cm, pc)
 
 	// Perform login
@@ -211,7 +211,7 @@ func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	server := createMockLoginServerWithError(t, 401)
 	defer server.Close()
 
-	pc := NewPlatformClient(server.URL)
+	pc := NewAPIClient(server.URL)
 	authService := NewAuthService(cm, pc)
 
 	// Perform login - should fail

@@ -20,7 +20,7 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 
 		ctx := context.Background()
@@ -66,7 +66,7 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 
 		ctx := context.Background()
@@ -91,7 +91,7 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 
 		ctx := context.Background()
@@ -123,7 +123,7 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 
 		ctx := context.Background()
@@ -162,7 +162,7 @@ func TestSyncService_SetContainerManager(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-	mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+	mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 	mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 	mockContainerManager := mocks.NewMockContainerManagerInterface(ctrl)
 
@@ -183,7 +183,7 @@ func TestSyncService_StopContainers_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 		mockContainerManager := mocks.NewMockContainerManagerInterface(ctrl)
 
@@ -208,7 +208,7 @@ func TestSyncService_StopContainers_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 
 		ctx := context.Background()
@@ -232,7 +232,7 @@ func TestSyncService_GetContainerStatus_WithMocks(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-		mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
+		mockPlatformClient := mocks.NewMockAPIClientInterface(ctrl)
 		mockAuthService := mocks.NewMockAuthServiceInterface(ctrl)
 		mockContainerManager := mocks.NewMockContainerManagerInterface(ctrl)
 

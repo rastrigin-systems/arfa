@@ -40,7 +40,7 @@ func TestAgentService_ListAgents(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -72,7 +72,7 @@ func TestAgentService_GetAgent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -109,7 +109,7 @@ func TestAgentService_ListEmployeeAgentConfigs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)
@@ -141,7 +141,7 @@ func TestAgentService_RequestAgent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewPlatformClient(server.URL)
+	client := NewAPIClient(server.URL)
 	client.SetToken("test-token")
 
 	svc := NewAgentService(client, nil)

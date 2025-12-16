@@ -429,15 +429,15 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	}
 	configManager.Save(testConfig)
 
-	platformClient := NewPlatformClient(server.URL)
-	platformClient.SetToken("test-token")
+	apiClient := NewAPIClient(server.URL)
+	apiClient.SetToken("test-token")
 
 	authService := &AuthService{
-		configManager:  configManager,
-		platformClient: platformClient,
+		configManager: configManager,
+		apiClient:     apiClient,
 	}
 
-	syncService := NewSyncService(configManager, platformClient, authService)
+	syncService := NewSyncService(configManager, apiClient, authService)
 
 	// Run sync
 	targetDir := filepath.Join(tmpDir, "workspace")

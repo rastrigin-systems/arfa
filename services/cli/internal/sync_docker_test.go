@@ -15,7 +15,7 @@ func TestSyncService_SetDockerClient(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -49,7 +49,7 @@ func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -66,7 +66,7 @@ func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -83,7 +83,7 @@ func TestSyncService_GetContainerStatus_NoContainerManager(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -116,7 +116,7 @@ func TestSyncService_StartContainers_NoConfigs(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -146,7 +146,7 @@ func TestSyncService_GetContainerStatus_WithDocker(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
@@ -228,7 +228,7 @@ func TestSyncService_FullLifecycle_Integration(t *testing.T) {
 	cm := &ConfigManager{
 		configPath: tempDir + "/config.json",
 	}
-	pc := NewPlatformClient("https://test.example.com")
+	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 

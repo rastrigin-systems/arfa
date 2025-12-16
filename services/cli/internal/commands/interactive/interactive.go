@@ -30,9 +30,9 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		return fmt.Errorf("failed to create config manager: %w", err)
 	}
 
-	platformClient := cli.NewPlatformClient("")
-	authService := cli.NewAuthService(configManager, platformClient)
-	syncService := cli.NewSyncService(configManager, platformClient, authService)
+	apiClient := cli.NewAPIClient("")
+	authService := cli.NewAuthService(configManager, apiClient)
+	syncService := cli.NewSyncService(configManager, apiClient, authService)
 
 	// Ensure authenticated
 	_, err = authService.RequireAuth()
@@ -136,8 +136,8 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		MaxRetries:    5,
 		RetryBackoff:  1 * time.Second,
 	}
-	apiClient := cli.NewPlatformAPIClient(platformClient)
-	logger, err := logging.NewLogger(loggerConfig, apiClient)
+	loggingClient := cli.NewLoggingAPIClientAdapter(apiClient)
+	logger, err := logging.NewLogger(loggerConfig, loggingClient)
 	if err != nil {
 		// Log error but continue - logging is optional
 		fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
