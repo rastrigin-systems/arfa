@@ -1,8 +1,16 @@
 // API types for invitation endpoints
 // NOTE: Team management endpoints (list, create, resend, cancel) are placeholders
 // until backend implementation is complete
+//
+// TYPE MISMATCH DOCUMENTATION:
+// The local Invitation/AcceptInvitationResponse types expect nested objects
+// (organization, inviter, role, team) but the OpenAPI schema has flat fields
+// (org_name, role_name, team_name). The API actually returns nested data
+// that matches our local types, but the schema is incomplete.
+// TODO: Update OpenAPI spec to match actual API response structure.
 
 import { apiClient } from './client';
+import { getErrorMessage } from './errors';
 
 export interface InvitationOrganization {
   id: string;
@@ -122,12 +130,17 @@ export async function validateInvitation(token: string): Promise<ValidateInvitat
   });
 
   if (error) {
-    throw { status: response?.status, ...(error as ApiError) };
+    // Preserve status for error handling in hooks
+    const apiError: ApiError & { status?: number } = {
+      error: getErrorMessage(error, 'Failed to validate invitation'),
+      status: response?.status,
+    };
+    throw apiError;
   }
 
-  // Transform API response to expected format
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { invitation: data } as any as ValidateInvitationResponse;
+  // API returns nested objects matching our Invitation type, but schema is incomplete
+  // See TYPE MISMATCH DOCUMENTATION at top of file
+  return { invitation: data as unknown as Invitation };
 }
 
 /**
@@ -144,12 +157,17 @@ export async function acceptInvitation(
   });
 
   if (error) {
-    throw { status: response?.status, ...(error as ApiError) };
+    // Preserve status for error handling in hooks
+    const apiError: ApiError & { status?: number } = {
+      error: getErrorMessage(error, 'Failed to accept invitation'),
+      status: response?.status,
+    };
+    throw apiError;
   }
 
-  // Transform API response to expected format
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return data as any as AcceptInvitationResponse;
+  // API returns nested objects matching our AcceptInvitationResponse type
+  // See TYPE MISMATCH DOCUMENTATION at top of file
+  return data as unknown as AcceptInvitationResponse;
 }
 
 // ============================================================================
@@ -158,45 +176,26 @@ export async function acceptInvitation(
 
 /**
  * Get paginated list of invitations with optional status filter
- * TODO: Backend endpoint needs to be implemented: GET /invitations
+ * TODO: Backend endpoint GET /invitations needs to be implemented
  */
 export async function getInvitations(params: InvitationsParams): Promise<InvitationsResponse> {
-  // Placeholder implementation - returns empty list until backend is ready
+  // Placeholder - returns empty list until backend endpoint is available
   return {
     invitations: [],
     total: 0,
     page: params.page,
     limit: params.limit,
   };
-
-  /* When backend is ready, uncomment this:
-  const { data, error } = await apiClient.GET('/invitations', {
-    params: {
-      query: params as any,
-    },
-  });
-
-  if (error) {
-    throw new Error((error as any).message || 'Failed to fetch invitations');
-  }
-
-  return {
-    invitations: (data as any).invitations || [],
-    total: (data as any).total || 0,
-    page: params.page,
-    limit: params.limit,
-  };
-  */
 }
 
 /**
  * Create a new invitation
- * TODO: Backend endpoint needs to be implemented: POST /invitations
+ * TODO: Backend endpoint POST /invitations needs to be implemented
  */
 export async function createInvitation(
   params: CreateInvitationParams
 ): Promise<CreateInvitationResponse['invitation']> {
-  // Placeholder implementation - simulates success
+  // Placeholder - simulates success until backend endpoint is available
   return {
     id: 'mock-' + Date.now(),
     email: params.email,
@@ -204,62 +203,22 @@ export async function createInvitation(
     invitation_url: 'https://app.ubik.io/accept-invite?token=mock-token',
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
-
-  /* When backend is ready, uncomment this:
-  const { data, error } = await apiClient.POST('/invitations', {
-    body: params as any,
-  });
-
-  if (error) {
-    throw new Error((error as any).message || 'Failed to create invitation');
-  }
-
-  return (data as any).invitation;
-  */
 }
 
 /**
  * Resend an existing invitation email
- * TODO: Backend endpoint needs to be implemented: POST /invitations/{id}/resend
+ * TODO: Backend endpoint POST /invitations/{id}/resend needs to be implemented
  */
 export async function resendInvitation(_invitationId: string): Promise<{ message: string }> {
-  // Placeholder implementation - simulates success
+  // Placeholder - simulates success until backend endpoint is available
   return { message: 'Invitation email resent successfully' };
-
-  /* When backend is ready, uncomment this:
-  const { data, error } = await apiClient.POST('/invitations/{id}/resend', {
-    params: {
-      path: { id: invitationId },
-    },
-  });
-
-  if (error) {
-    throw new Error((error as any).message || 'Failed to resend invitation');
-  }
-
-  return data as { message: string };
-  */
 }
 
 /**
  * Cancel (delete) an invitation
- * TODO: Backend endpoint needs to be implemented: DELETE /invitations/{id}
+ * TODO: Backend endpoint DELETE /invitations/{id} needs to be implemented
  */
 export async function cancelInvitation(_invitationId: string): Promise<{ message: string }> {
-  // Placeholder implementation - simulates success
+  // Placeholder - simulates success until backend endpoint is available
   return { message: 'Invitation cancelled successfully' };
-
-  /* When backend is ready, uncomment this:
-  const { data, error } = await apiClient.DELETE('/invitations/{id}', {
-    params: {
-      path: { id: invitationId },
-    },
-  });
-
-  if (error) {
-    throw new Error((error as any).message || 'Failed to cancel invitation');
-  }
-
-  return data as { message: string };
-  */
 }

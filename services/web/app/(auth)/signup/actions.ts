@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 import { setServerToken } from '@/lib/auth';
 import { z } from 'zod';
 
@@ -74,22 +75,18 @@ export async function signupAction(
 
   try {
     // Call register API
-    // TODO: Update when POST /auth/register endpoint is added to OpenAPI spec
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error, response } = await apiClient.POST('/auth/register' as any, {
+    const { data, error } = await apiClient.POST('/auth/register', {
       body: {
         full_name,
         email,
         org_name,
         org_slug,
         password,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any,
+      },
     });
 
-    if (error || !response.ok) {
-      // Extract error message from API response
-      const errorMessage = error?.error || error?.message || 'Registration failed. Please try again.';
+    if (error) {
+      const errorMessage = getErrorMessage(error, 'Registration failed. Please try again.');
       return {
         errors: {
           _form: [errorMessage],
@@ -106,8 +103,7 @@ export async function signupAction(
     }
 
     // Store token in httpOnly cookie
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await setServerToken((data as any).token);
+    await setServerToken(data.token);
   } catch (err) {
     console.error('Signup error:', err);
     return {
@@ -123,22 +119,18 @@ export async function signupAction(
 
 export async function checkSlugAvailability(slug: string): Promise<{ available: boolean }> {
   try {
-    // TODO: Update when GET /auth/check-slug endpoint is added to OpenAPI spec
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error, response } = await apiClient.GET('/auth/check-slug' as any, {
+    const { data, error } = await apiClient.GET('/auth/check-slug', {
       params: {
         query: { slug },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any,
+      },
     });
 
-    if (error || !response.ok || !data) {
+    if (error || !data) {
       // Default to unavailable on error
       return { available: false };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { available: (data as any).available };
+    return { available: data.available };
   } catch (err) {
     console.error('Slug availability check error:', err);
     // Default to unavailable on error

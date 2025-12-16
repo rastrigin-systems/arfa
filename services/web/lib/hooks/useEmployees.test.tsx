@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEmployees, useUpdateEmployee } from './useEmployees';
 import * as employeesApi from '../api/employees';
-import type { Employee } from '../api/types';
+import type { Employee } from '../api/employees';
 
 // Mock API for updateEmployee which still uses the api client
 vi.mock('../api/employees', () => ({
@@ -35,12 +35,13 @@ describe('useEmployees', () => {
     const mockEmployees: Employee[] = [
       {
         id: 'emp-1',
+        org_id: 'org-1',
         email: 'john@example.com',
         full_name: 'John Smith',
         status: 'active',
-        role: { id: 'role-1', name: 'Admin' },
-        team: { id: 'team-1', name: 'Engineering' },
-        created_at: '2024-01-01T00:00:00Z',
+        role_id: 'role-1',
+        team_id: 'team-1',
+        team_name: 'Engineering',
       },
     ];
 
@@ -92,12 +93,13 @@ describe('useUpdateEmployee', () => {
   it('should update employee', async () => {
     const updatedEmployee: Employee = {
       id: 'emp-1',
+      org_id: 'org-1',
       email: 'john@example.com',
       full_name: 'John Smith',
       status: 'active',
-      role: { id: 'role-1', name: 'Admin' },
-      team: { id: 'team-2', name: 'Sales' },
-      created_at: '2024-01-01T00:00:00Z',
+      role_id: 'role-1',
+      team_id: 'team-2',
+      team_name: 'Sales',
     };
 
     vi.mocked(employeesApi.updateEmployee).mockResolvedValue(updatedEmployee);
