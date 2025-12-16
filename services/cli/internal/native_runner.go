@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -449,99 +448,4 @@ func (r *NativeRunner) UnregisterFromSecurityGateway() error {
 	err := r.controlClient.UnregisterSession(r.sessionID)
 	r.sessionRegistered = false
 	return err
-}
-
-// ProcessInfo represents information about a running agent process
-type ProcessInfo struct {
-	PID       int
-	AgentID   string
-	AgentName string
-	AgentType string
-	Workspace string
-	SessionID string
-	StartTime time.Time
-}
-
-// ProcessManager tracks running agent processes
-type ProcessManager struct {
-	processes map[int]*ProcessInfo
-	mu        sync.RWMutex
-}
-
-// NewProcessManager creates a new process manager
-func NewProcessManager() *ProcessManager {
-	return &ProcessManager{
-		processes: make(map[int]*ProcessInfo),
-	}
-}
-
-// Register adds a process to the manager
-func (pm *ProcessManager) Register(info *ProcessInfo) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	pm.processes[info.PID] = info
-}
-
-// Unregister removes a process from the manager
-func (pm *ProcessManager) Unregister(pid int) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	delete(pm.processes, pid)
-}
-
-// List returns all registered processes
-func (pm *ProcessManager) List() []*ProcessInfo {
-	pm.mu.RLock()
-	defer pm.mu.RUnlock()
-
-	result := make([]*ProcessInfo, 0, len(pm.processes))
-	for _, p := range pm.processes {
-		result = append(result, p)
-	}
-	return result
-}
-
-// GetByPID returns a process by its PID
-func (pm *ProcessManager) GetByPID(pid int) *ProcessInfo {
-	pm.mu.RLock()
-	defer pm.mu.RUnlock()
-	return pm.processes[pid]
-}
-
-// SaveToFile persists process info to disk
-func (pm *ProcessManager) SaveToFile() error {
-	pm.mu.RLock()
-	defer pm.mu.RUnlock()
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	processFile := filepath.Join(homeDir, ".ubik", "processes.json")
-
-	// Create directory if needed
-	os.MkdirAll(filepath.Dir(processFile), 0700)
-
-	// Write process info
-	// TODO: Implement JSON marshaling
-	return nil
-}
-
-// LoadFromFile loads process info from disk
-func (pm *ProcessManager) LoadFromFile() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	processFile := filepath.Join(homeDir, ".ubik", "processes.json")
-
-	// Check if file exists
-	if _, err := os.Stat(processFile); os.IsNotExist(err) {
-		return nil
-	}
-
-	// TODO: Implement JSON unmarshaling
-	return nil
 }

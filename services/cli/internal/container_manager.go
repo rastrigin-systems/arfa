@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -93,7 +94,7 @@ func (cm *ContainerManager) StartMCPServer(ctx context.Context, spec MCPServerSp
 	config := &container.Config{
 		Image: spec.Image,
 		Env: []string{
-			fmt.Sprintf("MCP_CONFIG=%s", toJSON(spec.Config)),
+			fmt.Sprintf("MCP_CONFIG=%s", mustMarshalJSON(spec.Config)),
 		},
 		Labels: map[string]string{
 			"com.ubik.managed":   "true",
@@ -172,7 +173,7 @@ func (cm *ContainerManager) StartAgent(ctx context.Context, spec AgentSpec, work
 
 	// Prepare environment variables
 	env := []string{
-		fmt.Sprintf("AGENT_CONFIG=%s", toJSON(spec.Configuration)),
+		fmt.Sprintf("AGENT_CONFIG=%s", mustMarshalJSON(spec.Configuration)),
 	}
 
 	// Add API token based on agent type
@@ -198,7 +199,7 @@ func (cm *ContainerManager) StartAgent(ctx context.Context, spec AgentSpec, work
 				"url": fmt.Sprintf("http://ubik-mcp-%s:%d", mcp.ServerID, mcp.Port),
 			}
 		}
-		env = append(env, fmt.Sprintf("MCP_CONFIG=%s", toJSON(mcpConfig)))
+		env = append(env, fmt.Sprintf("MCP_CONFIG=%s", mustMarshalJSON(mcpConfig)))
 	}
 
 	// Add Proxy config
@@ -402,10 +403,13 @@ func (cm *ContainerManager) GetContainerStatus(ctx context.Context) ([]Container
 	})
 }
 
-// Helper function to convert map to JSON string
-func toJSON(v interface{}) string {
-	// This is a simplified version - in production, use proper JSON marshaling
-	return fmt.Sprintf("%v", v)
+// mustMarshalJSON converts a value to JSON string, returning empty object on error.
+func mustMarshalJSON(v interface{}) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "{}"
+	}
+	return string(data)
 }
 
 // GetWorkspacePath prompts user for workspace or uses default
@@ -417,59 +421,4 @@ func GetWorkspacePath(defaultPath string) (string, error) {
 		return "", fmt.Errorf("failed to resolve workspace path: %w", err)
 	}
 	return absPath, nil
-}
-
-// detectHostTools detects and returns mounts for host development tools
-// This allows containers to use the host's installed runtimes (Go, Node, Python, etc.)
-func detectHostTools() []mount.Mount {
-	var mounts []mount.Mount
-
-	// Tool detection map: executable name -> typical install paths
-	tools := map[string][]string{
-		"go":      {"/usr/local/go", "/opt/homebrew/opt/go/libexec"},
-		"node":    {}, // Skip Node - already in base image
-		"python3": {}, // Skip Python - already in base image
-	}
-
-	for tool, paths := range tools {
-		if len(paths) == 0 {
-			continue // Skip tools already in container
-		}
-
-		// Try to find the tool on the host
-		toolPath := findTool(tool, paths)
-		if toolPath != "" {
-			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   toolPath,
-				Target:   toolPath, // Mount at same path in container
-				ReadOnly: true,
-			})
-			fmt.Printf("  ✓ Mounting host %s from %s\n", tool, toolPath)
-		}
-	}
-
-	return mounts
-}
-
-// findTool attempts to locate a tool on the host system
-func findTool(name string, candidatePaths []string) string {
-	// First check candidate paths
-	for _, path := range candidatePaths {
-		if fileExists(path) {
-			return path
-		}
-	}
-
-	// No need to use exec.Command - just check known paths
-	return ""
-}
-
-// fileExists checks if a file or directory exists
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return err == nil && info != nil
 }

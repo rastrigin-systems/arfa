@@ -62,18 +62,33 @@ services/cli/
 │   ├── mocks/          # Generated gomock interfaces
 │   │   └── interfaces_mock.go
 │   ├── interfaces.go   # Service interface definitions
+│   ├── types_api.go    # API request/response types (auth, agent, sync, skill, log)
 │   ├── auth.go         # AuthService implementation
 │   ├── sync.go         # SyncService implementation
 │   ├── agents.go       # AgentService implementation
 │   ├── docker.go       # DockerClient implementation
-│   ├── container.go    # ContainerManager implementation
+│   ├── container_manager.go  # ContainerManager (Docker containers)
 │   ├── config.go       # ConfigManager implementation
-│   ├── platform.go     # PlatformClient implementation
+│   ├── platform.go     # PlatformClient (HTTP API client only)
+│   ├── proxy.go        # ProxyService implementation
+│   ├── native_runner.go # NativeRunner for agent processes
 │   └── ...             # Other implementations
 └── tests/
     ├── integration/    # Integration tests
     └── e2e/           # End-to-end tests
 ```
+
+### Type Organization
+
+**API types (`types_api.go`)** - All request/response types for platform API:
+- Authentication: `LoginRequest`, `LoginResponse`, `LoginEmployeeInfo`, `EmployeeInfo`
+- Agent configs: `AgentConfig`, `AgentConfigAPIResponse`, `MCPServerConfig`, etc.
+- Sync types: `ClaudeCodeSyncResponse`, `AgentConfigSync`, `SkillConfigSync`, `MCPServerConfigSync`
+- Token types: `ClaudeTokenStatusResponse`, `EffectiveClaudeTokenResponse`
+- Skill types: `Skill`, `SkillFile`, `EmployeeSkill`, `ListSkillsResponse`
+- Log types: `LogEntry`, `CreateLogRequest`
+
+**Platform client (`platform.go`)** - HTTP API client methods only, no type definitions.
 
 ### Dependency Injection Architecture
 

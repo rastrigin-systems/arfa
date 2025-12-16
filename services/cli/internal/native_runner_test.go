@@ -159,53 +159,6 @@ func TestNewNativeRunner(t *testing.T) {
 	}
 }
 
-func TestProcessManager(t *testing.T) {
-	pm := NewProcessManager()
-
-	// Test empty state
-	if len(pm.List()) != 0 {
-		t.Error("expected empty process list")
-	}
-
-	// Register a process
-	info := &ProcessInfo{
-		PID:       12345,
-		AgentID:   "test-agent",
-		AgentName: "Test Agent",
-		AgentType: "claude-code",
-		Workspace: "/tmp/test",
-		SessionID: "test-session",
-	}
-
-	pm.Register(info)
-
-	// Verify registration
-	if len(pm.List()) != 1 {
-		t.Errorf("expected 1 process, got %d", len(pm.List()))
-	}
-
-	// Get by PID
-	retrieved := pm.GetByPID(12345)
-	if retrieved == nil {
-		t.Error("expected to find registered process")
-	}
-	if retrieved.AgentID != "test-agent" {
-		t.Errorf("expected agent ID 'test-agent', got %s", retrieved.AgentID)
-	}
-
-	// Get non-existent PID
-	notFound := pm.GetByPID(99999)
-	if notFound != nil {
-		t.Error("expected nil for non-existent PID")
-	}
-
-	// Unregister
-	pm.Unregister(12345)
-	if len(pm.List()) != 0 {
-		t.Error("expected empty process list after unregister")
-	}
-}
-
 func TestGetInstallInstructions(t *testing.T) {
 	tests := []struct {
 		agentType        string

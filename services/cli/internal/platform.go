@@ -43,27 +43,6 @@ func (pc *PlatformClient) SetHTTPClient(client *http.Client) {
 	pc.httpClient = client
 }
 
-// LoginRequest represents a login request
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// LoginResponse represents a login response
-type LoginResponse struct {
-	Token     string            `json:"token"`
-	ExpiresAt string            `json:"expires_at"`
-	Employee  LoginEmployeeInfo `json:"employee"`
-}
-
-// LoginEmployeeInfo contains employee info from login response
-type LoginEmployeeInfo struct {
-	ID       string `json:"id"`
-	OrgID    string `json:"org_id"`
-	Email    string `json:"email"`
-	FullName string `json:"full_name"`
-}
-
 // Login authenticates the user and returns a token
 func (pc *PlatformClient) Login(ctx context.Context, email, password string) (*LoginResponse, error) {
 	reqBody := LoginRequest{
@@ -82,15 +61,7 @@ func (pc *PlatformClient) Login(ctx context.Context, email, password string) (*L
 	return &resp, nil
 }
 
-// GetEmployeeInfo gets information about the current employee
-type EmployeeInfo struct {
-	ID       string  `json:"id"`
-	Email    string  `json:"email"`
-	FullName string  `json:"full_name"`
-	OrgID    string  `json:"org_id"`
-	TeamID   *string `json:"team_id"` // nullable
-}
-
+// GetEmployeeInfo gets information about a specific employee
 func (pc *PlatformClient) GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error) {
 	var resp EmployeeInfo
 	endpoint := fmt.Sprintf("/employees/%s", employeeID)
@@ -100,47 +71,6 @@ func (pc *PlatformClient) GetEmployeeInfo(ctx context.Context, employeeID string
 	return &resp, nil
 }
 
-// AgentConfigAPIResponse represents an agent config as returned by the API
-type AgentConfigAPIResponse struct {
-	AgentID      string                 `json:"agent_id"`
-	AgentName    string                 `json:"agent_name"`
-	AgentType    string                 `json:"agent_type"`
-	IsEnabled    bool                   `json:"is_enabled"`
-	Config       map[string]interface{} `json:"config"`
-	Provider     string                 `json:"provider"`
-	DockerImage  *string                `json:"docker_image"` // Docker image reference (nullable)
-	SyncToken    string                 `json:"sync_token"`
-	SystemPrompt string                 `json:"system_prompt"`
-	LastSyncedAt *string                `json:"last_synced_at"` // nullable timestamp
-}
-
-// AgentConfig represents a resolved agent configuration (internal use)
-type AgentConfig struct {
-	AgentID       string                 `json:"agent_id"`
-	AgentName     string                 `json:"agent_name"`
-	AgentType     string                 `json:"agent_type"`
-	Provider      string                 `json:"provider"`
-	DockerImage   string                 `json:"docker_image"` // Docker image reference
-	IsEnabled     bool                   `json:"is_enabled"`
-	Configuration map[string]interface{} `json:"configuration"`
-	MCPServers    []MCPServerConfig      `json:"mcp_servers"`
-}
-
-// MCPServerConfig represents an MCP server configuration
-type MCPServerConfig struct {
-	ServerID   string                 `json:"server_id"`
-	ServerName string                 `json:"server_name"`
-	ServerType string                 `json:"server_type"`
-	IsEnabled  bool                   `json:"is_enabled"`
-	Config     map[string]interface{} `json:"config"`
-}
-
-// ResolvedConfigsResponse represents the response from the resolved configs endpoint
-type ResolvedConfigsResponse struct {
-	Configs []AgentConfigAPIResponse `json:"configs"`
-	Total   int                      `json:"total"`
-}
-
 // GetResolvedAgentConfigs fetches resolved agent configurations for an employee
 func (pc *PlatformClient) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error) {
 	var resp ResolvedConfigsResponse
@@ -148,30 +78,7 @@ func (pc *PlatformClient) GetResolvedAgentConfigs(ctx context.Context, employeeI
 	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
-
-	// Convert API response to internal format
-	configs := make([]AgentConfig, len(resp.Configs))
-	for i, apiConfig := range resp.Configs {
-		// Use DockerImage from API or fall back to constructed image name
-		dockerImage := ""
-		if apiConfig.DockerImage != nil && *apiConfig.DockerImage != "" {
-			dockerImage = *apiConfig.DockerImage
-		} else {
-			dockerImage = fmt.Sprintf("ubik/%s:latest", apiConfig.AgentType)
-		}
-		configs[i] = AgentConfig{
-			AgentID:       apiConfig.AgentID,
-			AgentName:     apiConfig.AgentName,
-			AgentType:     apiConfig.AgentType,
-			Provider:      apiConfig.Provider,
-			DockerImage:   dockerImage,
-			IsEnabled:     apiConfig.IsEnabled,
-			Configuration: apiConfig.Config,
-			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
-		}
-	}
-
-	return configs, nil
+	return convertAPIConfigsToAgentConfigs(resp.Configs), nil
 }
 
 // GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee (JWT-based)
@@ -182,38 +89,33 @@ func (pc *PlatformClient) GetMyResolvedAgentConfigs(ctx context.Context) ([]Agen
 	if err := pc.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to get resolved configs: %w", err)
 	}
+	return convertAPIConfigsToAgentConfigs(resp.Configs), nil
+}
 
-	// Convert API response to internal format (same as GetResolvedAgentConfigs)
-	configs := make([]AgentConfig, len(resp.Configs))
-	for i, apiConfig := range resp.Configs {
-		// Use DockerImage from API or fall back to constructed image name
-		dockerImage := ""
-		if apiConfig.DockerImage != nil && *apiConfig.DockerImage != "" {
-			dockerImage = *apiConfig.DockerImage
-		} else {
-			dockerImage = fmt.Sprintf("ubik/%s:latest", apiConfig.AgentType)
-		}
+// convertAPIConfigsToAgentConfigs converts API response to internal format.
+func convertAPIConfigsToAgentConfigs(apiConfigs []AgentConfigAPIResponse) []AgentConfig {
+	configs := make([]AgentConfig, len(apiConfigs))
+	for i, api := range apiConfigs {
 		configs[i] = AgentConfig{
-			AgentID:       apiConfig.AgentID,
-			AgentName:     apiConfig.AgentName,
-			AgentType:     apiConfig.AgentType,
-			Provider:      apiConfig.Provider,
-			DockerImage:   dockerImage,
-			IsEnabled:     apiConfig.IsEnabled,
-			Configuration: apiConfig.Config,
+			AgentID:       api.AgentID,
+			AgentName:     api.AgentName,
+			AgentType:     api.AgentType,
+			Provider:      api.Provider,
+			DockerImage:   getDockerImage(api),
+			IsEnabled:     api.IsEnabled,
+			Configuration: api.Config,
 			MCPServers:    []MCPServerConfig{}, // TODO: Fetch MCP servers separately if needed
 		}
 	}
-
-	return configs, nil
+	return configs
 }
 
-// ClaudeTokenStatusResponse represents the Claude token status response
-type ClaudeTokenStatusResponse struct {
-	EmployeeID        string `json:"employee_id"`
-	HasPersonalToken  bool   `json:"has_personal_token"`
-	HasCompanyToken   bool   `json:"has_company_token"`
-	ActiveTokenSource string `json:"active_token_source"` // "personal", "company", or "none"
+// getDockerImage returns the Docker image from API response or constructs a default.
+func getDockerImage(api AgentConfigAPIResponse) string {
+	if api.DockerImage != nil && *api.DockerImage != "" {
+		return *api.DockerImage
+	}
+	return fmt.Sprintf("ubik/%s:latest", api.AgentType)
 }
 
 // GetClaudeTokenStatus fetches the Claude token status for the current employee
@@ -224,15 +126,6 @@ func (pc *PlatformClient) GetClaudeTokenStatus(ctx context.Context) (*ClaudeToke
 		return nil, fmt.Errorf("failed to get Claude token status: %w", err)
 	}
 	return &resp, nil
-}
-
-// EffectiveClaudeTokenResponse represents the effective token response
-type EffectiveClaudeTokenResponse struct {
-	Token      string `json:"token"`
-	Source     string `json:"source"` // "personal" or "company"
-	OrgID      string `json:"org_id"`
-	OrgName    string `json:"org_name"`
-	EmployeeID string `json:"employee_id"`
 }
 
 // GetEffectiveClaudeToken fetches the effective Claude token for the current employee
@@ -254,33 +147,6 @@ func (pc *PlatformClient) GetEffectiveClaudeTokenInfo(ctx context.Context) (*Eff
 		return nil, fmt.Errorf("failed to get effective Claude token: %w", err)
 	}
 	return &resp, nil
-}
-
-// OrgAgentConfigResponse represents an org-level agent config
-type OrgAgentConfigResponse struct {
-	ID        string                 `json:"id"`
-	AgentID   string                 `json:"agent_id"`
-	AgentName string                 `json:"agent_name"`
-	Config    map[string]interface{} `json:"config"`
-	IsEnabled bool                   `json:"is_enabled"`
-}
-
-// TeamAgentConfigResponse represents a team-level agent config
-type TeamAgentConfigResponse struct {
-	ID             string                 `json:"id"`
-	AgentID        string                 `json:"agent_id"`
-	AgentName      string                 `json:"agent_name"`
-	ConfigOverride map[string]interface{} `json:"config_override"`
-	IsEnabled      bool                   `json:"is_enabled"`
-}
-
-// EmployeeAgentConfigResponse represents an employee-level agent config
-type EmployeeAgentConfigResponse struct {
-	ID             string                 `json:"id"`
-	AgentID        string                 `json:"agent_id"`
-	AgentName      string                 `json:"agent_name"`
-	ConfigOverride map[string]interface{} `json:"config_override"`
-	IsEnabled      bool                   `json:"is_enabled"`
 }
 
 // GetOrgAgentConfigs fetches organization-level agent configs
@@ -327,53 +193,6 @@ func (pc *PlatformClient) GetCurrentEmployee(ctx context.Context) (*EmployeeInfo
 	return &resp, nil
 }
 
-// ClaudeCodeSyncResponse represents the complete Claude Code configuration bundle
-type ClaudeCodeSyncResponse struct {
-	Agents     []AgentConfigSync     `json:"agents"`
-	Skills     []SkillConfigSync     `json:"skills"`
-	MCPServers []MCPServerConfigSync `json:"mcp_servers"`
-	Version    string                `json:"version"`
-	SyncedAt   string                `json:"synced_at"`
-}
-
-// AgentConfigSync represents an agent configuration in the sync response
-type AgentConfigSync struct {
-	ID        string                 `json:"id"`
-	Name      string                 `json:"name"`
-	Type      string                 `json:"type"`
-	Filename  string                 `json:"filename"`
-	Content   string                 `json:"content,omitempty"`
-	Config    map[string]interface{} `json:"config"`
-	Provider  string                 `json:"provider"`
-	IsEnabled bool                   `json:"is_enabled"`
-	Version   string                 `json:"version"`
-}
-
-// SkillConfigSync represents a skill configuration in the sync response
-type SkillConfigSync struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description,omitempty"`
-	Category     string                 `json:"category,omitempty"`
-	Version      string                 `json:"version"`
-	Files        []map[string]string    `json:"files,omitempty"`
-	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
-	IsEnabled    bool                   `json:"is_enabled"`
-}
-
-// MCPServerConfigSync represents an MCP server configuration in the sync response
-type MCPServerConfigSync struct {
-	ID              string                 `json:"id"`
-	Name            string                 `json:"name"`
-	Provider        string                 `json:"provider"`
-	Version         string                 `json:"version"`
-	Description     string                 `json:"description,omitempty"`
-	DockerImage     string                 `json:"docker_image"`
-	Config          map[string]interface{} `json:"config"`
-	RequiredEnvVars []string               `json:"required_env_vars,omitempty"`
-	IsEnabled       bool                   `json:"is_enabled"`
-}
-
 // GetClaudeCodeConfig fetches the complete Claude Code configuration bundle
 func (pc *PlatformClient) GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error) {
 	var resp ClaudeCodeSyncResponse
@@ -386,53 +205,6 @@ func (pc *PlatformClient) GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeS
 // ============================================================================
 // Skills API Methods
 // ============================================================================
-
-// Skill represents a skill from the catalog
-type Skill struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	Category     string                 `json:"category"`
-	Version      string                 `json:"version"`
-	Files        []SkillFile            `json:"files"`
-	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
-	IsActive     bool                   `json:"is_active"`
-	CreatedAt    *time.Time             `json:"created_at,omitempty"`
-	UpdatedAt    *time.Time             `json:"updated_at,omitempty"`
-}
-
-// SkillFile represents a file in a skill
-type SkillFile struct {
-	Path    string `json:"path"`
-	Content string `json:"content,omitempty"`
-}
-
-// EmployeeSkill represents an employee's assigned skill
-type EmployeeSkill struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	Category     string                 `json:"category"`
-	Version      string                 `json:"version"`
-	Files        []SkillFile            `json:"files"`
-	Dependencies map[string]interface{} `json:"dependencies,omitempty"`
-	Config       map[string]interface{} `json:"config,omitempty"`
-	IsActive     bool                   `json:"is_active"`
-	IsEnabled    bool                   `json:"is_enabled"`
-	InstalledAt  *time.Time             `json:"installed_at,omitempty"`
-}
-
-// ListSkillsResponse represents the response from list skills endpoint
-type ListSkillsResponse struct {
-	Skills []Skill `json:"skills"`
-	Total  int     `json:"total"`
-}
-
-// ListEmployeeSkillsResponse represents the response from list employee skills endpoint
-type ListEmployeeSkillsResponse struct {
-	Skills []EmployeeSkill `json:"skills"`
-	Total  int             `json:"total"`
-}
 
 // ListSkills fetches all available skills from the catalog
 func (pc *PlatformClient) ListSkills(ctx context.Context) (*ListSkillsResponse, error) {
@@ -472,25 +244,9 @@ func (pc *PlatformClient) GetEmployeeSkill(ctx context.Context, skillID string) 
 	return &skill, nil
 }
 
-// LogEntry represents a log entry to send to the API
-type LogEntry struct {
-	SessionID     string                 `json:"session_id,omitempty"`
-	AgentID       string                 `json:"agent_id,omitempty"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Content       string                 `json:"content,omitempty"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-}
-
-// CreateLogRequest represents a single log creation request
-type CreateLogRequest struct {
-	SessionID     *string                 `json:"session_id,omitempty"`
-	AgentID       *string                 `json:"agent_id,omitempty"`
-	EventType     string                  `json:"event_type"`
-	EventCategory string                  `json:"event_category"`
-	Content       *string                 `json:"content,omitempty"`
-	Payload       *map[string]interface{} `json:"payload,omitempty"`
-}
+// ============================================================================
+// Logging API Methods
+// ============================================================================
 
 // CreateLog sends a single log entry to the platform API
 func (pc *PlatformClient) CreateLog(ctx context.Context, entry LogEntry) error {
