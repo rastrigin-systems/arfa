@@ -1,10 +1,20 @@
 import { apiClient } from './client';
-import type {
-  Employee,
-  EmployeesParams,
-  EmployeesResponse,
-  UpdateEmployeeParams,
-} from './types';
+import { getErrorMessage } from './errors';
+import type { components } from './schema';
+import type { EmployeesParams, UpdateEmployeeParams } from './types';
+
+// Use schema types for API responses
+type SchemaEmployee = components['schemas']['Employee'];
+
+export interface EmployeesResponse {
+  employees: SchemaEmployee[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// Re-export for backwards compatibility
+export type Employee = SchemaEmployee;
 
 /**
  * Get paginated list of employees with optional filters
@@ -12,23 +22,21 @@ import type {
 export async function getEmployees(params: EmployeesParams): Promise<EmployeesResponse> {
   const { data, error } = await apiClient.GET('/employees', {
     params: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      query: params as any,
+      query: {
+        page: params.page,
+        per_page: params.limit,
+        status: params.status as 'active' | 'inactive' | 'suspended' | undefined,
+      },
     },
   });
 
   if (error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    throw new Error((error as any).message || 'Failed to fetch employees');
+    throw new Error(getErrorMessage(error, 'Failed to fetch employees'));
   }
 
-  // Transform API response to match our types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    employees: (data as any).employees || [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    total: (data as any).total || 0,
+    employees: data?.employees || [],
+    total: data?.total || 0,
     page: params.page,
     limit: params.limit,
   };

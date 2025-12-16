@@ -1,11 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateEmployee } from '../api/employees';
-import type {
-  EmployeesParams,
-  EmployeesResponse,
-  UpdateEmployeeParams,
-  Employee,
-} from '../api/types';
+import { updateEmployee, type Employee, type EmployeesResponse } from '../api/employees';
+import type { EmployeesParams, UpdateEmployeeParams } from '../api/types';
 
 /**
  * Hook to fetch employees list with filters and pagination

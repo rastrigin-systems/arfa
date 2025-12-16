@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getEmployees, updateEmployee } from './employees';
-import type { Employee } from './types';
+import { getEmployees, updateEmployee, type Employee } from './employees';
 
 // Mock API client
 vi.mock('./client', () => ({
@@ -21,12 +20,13 @@ describe('getEmployees', () => {
     const mockEmployees: Employee[] = [
       {
         id: 'emp-1',
+        org_id: 'org-1',
         email: 'john@example.com',
         full_name: 'John Smith',
         status: 'active',
-        role: { id: 'role-1', name: 'Admin' },
-        team: { id: 'team-1', name: 'Engineering' },
-        created_at: '2024-01-01T00:00:00Z',
+        role_id: 'role-1',
+        team_id: 'team-1',
+        team_name: 'Engineering',
       },
     ];
 
@@ -34,8 +34,6 @@ describe('getEmployees', () => {
       data: {
         employees: mockEmployees,
         total: 1,
-        page: 1,
-        limit: 10,
       },
       error: undefined,
       response: { ok: true } as Response,
@@ -45,57 +43,29 @@ describe('getEmployees', () => {
 
     expect(result.employees).toEqual(mockEmployees);
     expect(result.total).toBe(1);
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(10);
     expect(apiClient.GET).toHaveBeenCalledWith('/employees', {
       params: {
-        query: { page: 1, limit: 10 },
+        query: { page: 1, per_page: 10, status: undefined },
       },
     });
   });
 
-  it('should include search parameter', async () => {
+  it('should include status filter', async () => {
     const { apiClient } = await import('./client');
 
     vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { employees: [], total: 0, page: 1, limit: 10 },
+      data: { employees: [], total: 0 },
       error: undefined,
       response: { ok: true } as Response,
     });
 
-    await getEmployees({ page: 1, limit: 10, search: 'john' });
+    await getEmployees({ page: 1, limit: 10, status: 'active' });
 
     expect(apiClient.GET).toHaveBeenCalledWith('/employees', {
       params: {
-        query: { page: 1, limit: 10, search: 'john' },
-      },
-    });
-  });
-
-  it('should include filter parameters', async () => {
-    const { apiClient } = await import('./client');
-
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { employees: [], total: 0, page: 1, limit: 10 },
-      error: undefined,
-      response: { ok: true } as Response,
-    });
-
-    await getEmployees({
-      page: 1,
-      limit: 10,
-      team: 'team-1',
-      role: 'role-1',
-      status: 'active',
-    });
-
-    expect(apiClient.GET).toHaveBeenCalledWith('/employees', {
-      params: {
-        query: {
-          page: 1,
-          limit: 10,
-          team: 'team-1',
-          role: 'role-1',
-          status: 'active',
-        },
+        query: { page: 1, per_page: 10, status: 'active' },
       },
     });
   });
@@ -126,12 +96,13 @@ describe('updateEmployee', () => {
   it('should update employee team', async () => {
     const updatedEmployee: Employee = {
       id: 'emp-1',
+      org_id: 'org-1',
       email: 'john@example.com',
       full_name: 'John Smith',
       status: 'active',
-      role: { id: 'role-1', name: 'Admin' },
-      team: { id: 'team-2', name: 'Sales' },
-      created_at: '2024-01-01T00:00:00Z',
+      role_id: 'role-1',
+      team_id: 'team-2',
+      team_name: 'Sales',
     };
 
     mockFetch.mockResolvedValue({

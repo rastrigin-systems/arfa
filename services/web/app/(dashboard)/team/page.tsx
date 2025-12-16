@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Users, UserPlus, Mail, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useEmployees } from '@/lib/hooks/useEmployees';
 import { useInvitations } from '@/lib/hooks/useInvitations';
+import { useRoles } from '@/lib/hooks/useRoles';
 import { InviteEmployeeModal } from '@/components/team/InviteEmployeeModal';
 
 export default function TeamManagementPage() {
@@ -38,6 +39,16 @@ export default function TeamManagementPage() {
     isLoading: invitationsLoading,
     error: invitationsError,
   } = useInvitations({ page, limit: 10, status: 'pending' });
+
+  // Fetch roles for lookup
+  const { data: rolesData } = useRoles();
+
+  // Create role lookup map
+  const roleNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    rolesData?.forEach((role) => map.set(role.id, role.name));
+    return map;
+  }, [rolesData]);
 
   const totalEmployees = employeesData?.total || 0;
   const activeEmployees =
@@ -157,18 +168,22 @@ export default function TeamManagementPage() {
                           <TableCell className="font-medium">
                             <div>
                               <div>{employee.full_name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                Joined{' '}
-                                {new Date(employee.created_at).toLocaleDateString()}
-                              </div>
+                              {employee.created_at && (
+                                <div className="text-xs text-muted-foreground">
+                                  Joined{' '}
+                                  {new Date(employee.created_at).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>{employee.email}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{employee.role.name}</Badge>
+                            <Badge variant="outline">
+                              {roleNameById.get(employee.role_id) || 'Unknown'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            {employee.team ? employee.team.name : 'No team'}
+                            {employee.team_name || 'No team'}
                           </TableCell>
                           <TableCell>
                             <Badge
