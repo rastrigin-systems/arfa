@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import { EmployeeAgentOverridesTable, type EmployeeAgentOverride } from '@/components/agents/EmployeeAgentOverridesTable';
 import { ArrowLeft } from 'lucide-react';
 
@@ -30,13 +31,17 @@ export function EmployeeAgentOverridesClient({
   employee,
   agentOverrides,
 }: EmployeeAgentOverridesClientProps) {
+  const { toast } = useToast();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOverride, setSelectedOverride] = useState<EmployeeAgentOverride | null>(null);
 
-  const handleEdit = (override: EmployeeAgentOverride) => {
-    // TODO: Implement edit modal
-    console.log('Edit override:', override.id);
-    alert('Edit functionality coming soon');
+  const handleEdit = (_override: EmployeeAgentOverride) => {
+    // TODO: Implement edit modal when backend supports it
+    toast({
+      title: 'Not implemented',
+      description: 'Edit functionality is not yet available',
+      variant: 'destructive',
+    });
   };
 
   const handleDelete = (override: EmployeeAgentOverride) => {
@@ -44,16 +49,22 @@ export function EmployeeAgentOverridesClient({
     setShowDeleteModal(true);
   };
 
-  const handleToggleEnabled = async (override: EmployeeAgentOverride) => {
-    // TODO: Implement toggle enabled API call
-    console.log('Toggle enabled:', override.id);
-    alert('Toggle functionality coming soon');
+  const handleToggleEnabled = async (_override: EmployeeAgentOverride) => {
+    // TODO: Implement toggle enabled API call when backend supports it
+    toast({
+      title: 'Not implemented',
+      description: 'Toggle functionality is not yet available',
+      variant: 'destructive',
+    });
   };
 
   const handleConfirmDelete = async () => {
-    // TODO: Implement delete API call
-    console.log('Delete override:', selectedOverride?.id);
-    alert('Delete functionality coming soon');
+    // TODO: Implement delete API call when backend supports it
+    toast({
+      title: 'Not implemented',
+      description: 'Delete functionality is not yet available',
+      variant: 'destructive',
+    });
     setShowDeleteModal(false);
     setSelectedOverride(null);
   };

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ interface ExportMenuProps {
 }
 
 export function ExportMenu({ filters }: ExportMenuProps) {
+  const { toast } = useToast();
   const [format, setFormat] = useState<'json' | 'csv'>('json');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -58,9 +60,12 @@ export function ExportMenu({ filters }: ExportMenuProps) {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Export failed:', err);
-      alert('Failed to export logs. Please try again.');
+    } catch {
+      toast({
+        title: 'Export failed',
+        description: 'Failed to export logs. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsExporting(false);
     }

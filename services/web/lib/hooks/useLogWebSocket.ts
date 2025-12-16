@@ -41,7 +41,6 @@ export function useLogWebSocket(): UseLogWebSocketReturn {
       const ws = new WebSocket(`${WS_URL}/api/v1/logs/stream?token=${token}`);
 
       ws.onopen = () => {
-        console.log('[WebSocket] Connected to log stream');
         setConnected(true);
         setError(null);
       };
@@ -61,12 +60,10 @@ export function useLogWebSocket(): UseLogWebSocketReturn {
       };
 
       ws.onclose = () => {
-        console.log('[WebSocket] Disconnected from log stream');
         setConnected(false);
 
         // Attempt to reconnect after 5 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[WebSocket] Attempting to reconnect...');
           connect();
         }, 5000);
       };

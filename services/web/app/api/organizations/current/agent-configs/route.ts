@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 
 export async function GET() {
   const token = await getServerToken();
@@ -17,15 +18,16 @@ export async function GET() {
     });
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMessage = (error as any).error || 'Failed to fetch org agent configs';
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      return NextResponse.json(
+        { error: getErrorMessage(error, 'Failed to fetch org agent configs') },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }
@@ -49,15 +51,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMessage = (error as any).error || 'Failed to create org agent config';
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      return NextResponse.json(
+        { error: getErrorMessage(error, 'Failed to create org agent config') },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }

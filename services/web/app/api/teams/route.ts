@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/errors';
 
 export async function GET() {
   // Get token from httpOnly cookie
@@ -20,17 +21,16 @@ export async function GET() {
 
     if (error) {
       return NextResponse.json(
-        { error: 'Failed to fetch teams' },
+        { error: getErrorMessage(error, 'Failed to fetch teams') },
         { status: 500 }
       );
     }
 
-    // Return the teams array
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return NextResponse.json({ teams: (data as any)?.teams || [] });
+    // Return the teams array - data is typed as ListTeamsResponse
+    return NextResponse.json({ teams: data?.teams ?? [] });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: getErrorMessage(err, 'Unknown error') },
       { status: 500 }
     );
   }

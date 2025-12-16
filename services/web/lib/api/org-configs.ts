@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from './client';
+import { type ApiError, getErrorMessage } from './errors';
 import type { components } from './schema';
 
 // Re-export types from schema
@@ -16,13 +17,8 @@ export type CreateOrgAgentConfigRequest = components['schemas']['CreateOrgAgentC
 export type UpdateOrgAgentConfigRequest = components['schemas']['UpdateOrgAgentConfigRequest'];
 export type ListOrgAgentConfigsResponse = components['schemas']['ListOrgAgentConfigsResponse'];
 
-/**
- * API error response
- */
-export interface ApiError {
-  error: string;
-  message?: string;
-}
+// Re-export ApiError for backwards compatibility
+export type { ApiError };
 
 // =============================================================================
 // Client-side functions (for use in client components via Next.js API routes)
@@ -101,8 +97,7 @@ export async function listOrgAgentConfigs(): Promise<OrgAgentConfig[]> {
   const { data, error, response } = await apiClient.GET('/organizations/current/agent-configs');
 
   if (error) {
-    const err = error as ApiError;
-    throw new Error(err.message || err.error || `Failed to list org agent configs (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to list org agent configs (${response?.status})`));
   }
 
   return data?.configs || [];
@@ -118,8 +113,7 @@ export async function getOrgAgentConfig(configId: string): Promise<OrgAgentConfi
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to get org agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to get org agent config (${response?.status})`));
   }
 
   return data;
@@ -137,8 +131,7 @@ export async function createOrgAgentConfig(
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to create org agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to create org agent config (${response?.status})`));
   }
 
   return data;
@@ -158,8 +151,7 @@ export async function updateOrgAgentConfig(
   });
 
   if (error || !data) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to update org agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to update org agent config (${response?.status})`));
   }
 
   return data;
@@ -175,7 +167,6 @@ export async function deleteOrgAgentConfig(configId: string): Promise<void> {
   });
 
   if (error) {
-    const err = error as ApiError;
-    throw new Error(err?.message || err?.error || `Failed to delete org agent config (${response?.status})`);
+    throw new Error(getErrorMessage(error, `Failed to delete org agent config (${response?.status})`));
   }
 }
