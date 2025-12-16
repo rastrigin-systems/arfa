@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,66 +22,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ConfigEditorModal } from '@/components/agents/ConfigEditorModal';
-
-type Team = {
-  id: string;
-  name: string;
-  description?: string;
-};
-
-type OrgAgentConfig = {
-  id: string;
-  org_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-};
-
-type TeamAgentConfig = {
-  id: string;
-  team_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config_override: Record<string, unknown>;
-  is_enabled: boolean;
-  team_name?: string;
-};
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  provider: string;
-  llm_provider: string;
-  llm_model: string;
-  is_public: boolean;
-  capabilities?: string[];
-  default_config?: Record<string, unknown>;
-};
+import {
+  clientListTeamAgentConfigs,
+  clientCreateTeamAgentConfig,
+  clientDeleteTeamAgentConfig,
+  type TeamAgentConfig,
+} from '@/lib/api/team-configs';
+import type { OrgAgentConfig } from '@/lib/api/org-configs';
+import type { Agent, Team } from '@/lib/types';
 
 interface TeamAgentConfigsTabProps {
   orgConfigs: OrgAgentConfig[];
   agents: Agent[];
 }
 
+// Extended TeamAgentConfig with additional display fields
+type TeamAgentConfigWithDisplay = TeamAgentConfig & {
+  agent_name?: string;
+  agent_type?: string;
+  agent_provider?: string;
+  team_name?: string;
+};
+
 export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
-  const [teamConfigs, setTeamConfigs] = useState<TeamAgentConfig[]>([]);
+  const [teamConfigs, setTeamConfigs] = useState<TeamAgentConfigWithDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [editingConfig, setEditingConfig] = useState<TeamAgentConfig | null>(null);
+  const [editingConfig, setEditingConfig] = useState<TeamAgentConfigWithDisplay | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; config: TeamAgentConfigWithDisplay | null }>({
+    open: false,
+    config: null,
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch teams on mount using Next.js API route
   useEffect(() => {
@@ -91,8 +78,7 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
         if (!response.ok) throw new Error('Failed to fetch teams');
         const data = await response.json();
         setTeams(data?.teams || []);
-      } catch (error) {
-        console.error('Error fetching teams:', error);
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to load teams',
@@ -104,7 +90,7 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     fetchTeams();
   }, [toast]);
 
-  // Fetch team agent configs when team selection changes using Next.js API route
+  // Fetch team agent configs when team selection changes
   useEffect(() => {
     const fetchTeamConfigs = async () => {
       if (selectedTeamId === 'all') {
@@ -115,14 +101,19 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
-          credentials: 'include',
+        const configs = await clientListTeamAgentConfigs(selectedTeamId);
+        // Enrich with agent display info
+        const enrichedConfigs: TeamAgentConfigWithDisplay[] = configs.map((config) => {
+          const agent = agents.find((a) => a.id === config.agent_id);
+          return {
+            ...config,
+            agent_name: agent?.name,
+            agent_type: agent?.type,
+            agent_provider: agent?.provider,
+          };
         });
-        if (!response.ok) throw new Error('Failed to fetch team agent configs');
-        const data = await response.json();
-        setTeamConfigs(data?.configs || []);
-      } catch (error) {
-        console.error('Error fetching team configs:', error);
+        setTeamConfigs(enrichedConfigs);
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to load team agent configurations',
@@ -134,7 +125,7 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     };
 
     fetchTeamConfigs();
-  }, [selectedTeamId, toast]);
+  }, [selectedTeamId, agents, toast]);
 
   const handleAssignToTeam = async (orgConfigId: string) => {
     if (selectedTeamId === 'all') {
@@ -153,34 +144,29 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
 
     setIsAssigning(true);
     try {
-      // Use Next.js API route for auth forwarding
-      const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          agent_id: orgConfig.agent_id,
-          config_override: {}, // Start with empty override
-          is_enabled: true,
-        }),
+      await clientCreateTeamAgentConfig(selectedTeamId, {
+        agent_id: orgConfig.agent_id,
+        config_override: {},
+        is_enabled: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to assign agent to team');
-      }
 
       toast({
         title: 'Success',
         description: `${agent.name} assigned to team successfully`,
       });
 
-      // Refresh team configs using Next.js API route
-      const configsResponse = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
-        credentials: 'include',
+      // Refresh team configs
+      const configs = await clientListTeamAgentConfigs(selectedTeamId);
+      const enrichedConfigs: TeamAgentConfigWithDisplay[] = configs.map((config) => {
+        const a = agents.find((ag) => ag.id === config.agent_id);
+        return {
+          ...config,
+          agent_name: a?.name,
+          agent_type: a?.type,
+          agent_provider: a?.provider,
+        };
       });
-      const configsData = await configsResponse.json();
-      setTeamConfigs(configsData?.configs || []);
+      setTeamConfigs(enrichedConfigs);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
@@ -193,7 +179,7 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     }
   };
 
-  const handleEditTeamConfig = (config: TeamAgentConfig) => {
+  const handleEditTeamConfig = (config: TeamAgentConfigWithDisplay) => {
     const agent = agents.find((a) => a.id === config.agent_id);
     if (agent) {
       setSelectedAgent(agent);
@@ -202,29 +188,24 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
     }
   };
 
-  const handleDeleteTeamConfig = async (config: TeamAgentConfig) => {
-    if (!confirm(`Are you sure you want to remove ${config.agent_name} from this team?`)) {
-      return;
-    }
+  const handleDeleteTeamConfig = (config: TeamAgentConfigWithDisplay) => {
+    setDeleteConfirm({ open: true, config });
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteConfirm.config) return;
+
+    setIsDeleting(true);
     try {
-      // Use Next.js API route for auth forwarding
-      const response = await fetch(`/api/teams/${config.team_id}/agent-configs/${config.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete team agent configuration');
-      }
+      await clientDeleteTeamAgentConfig(deleteConfirm.config.team_id, deleteConfirm.config.id);
 
       toast({
         title: 'Success',
-        description: `${config.agent_name} removed from team successfully`,
+        description: `${deleteConfirm.config.agent_name} removed from team successfully`,
       });
 
-      // Refresh team configs
-      setTeamConfigs(teamConfigs.filter((c) => c.id !== config.id));
+      setTeamConfigs(teamConfigs.filter((c) => c.id !== deleteConfirm.config!.id));
+      setDeleteConfirm({ open: false, config: null });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
@@ -232,23 +213,31 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
         description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleModalSuccess = async () => {
-    // Refresh team configs after editing using Next.js API route
+    // Refresh team configs after editing
     if (selectedTeamId !== 'all') {
-      const response = await fetch(`/api/teams/${selectedTeamId}/agent-configs`, {
-        credentials: 'include',
+      const configs = await clientListTeamAgentConfigs(selectedTeamId);
+      const enrichedConfigs: TeamAgentConfigWithDisplay[] = configs.map((config) => {
+        const agent = agents.find((a) => a.id === config.agent_id);
+        return {
+          ...config,
+          agent_name: agent?.name,
+          agent_type: agent?.type,
+          agent_provider: agent?.provider,
+        };
       });
-      const data = await response.json();
-      setTeamConfigs(data?.configs || []);
+      setTeamConfigs(enrichedConfigs);
     }
     router.refresh();
   };
 
   // Get assigned agent IDs for selected team
-  const assignedAgentIds = new Set(teamConfigs.map((c) => c.agent_id));
+  const assignedAgentIds = useMemo(() => new Set(teamConfigs.map((c) => c.agent_id)), [teamConfigs]);
 
   return (
     <div className="space-y-6">
@@ -405,6 +394,31 @@ export function TeamAgentConfigsTab({ orgConfigs, agents }: TeamAgentConfigsTabP
           teamId={selectedTeamId !== 'all' ? selectedTeamId : undefined}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, config: null })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Agent from Team?</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to remove <strong>{deleteConfirm.config?.agent_name}</strong> from this team?
+            The team will inherit the organization-level configuration.
+          </DialogDescription>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm({ open: false, config: null })}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Removing...' : 'Remove'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

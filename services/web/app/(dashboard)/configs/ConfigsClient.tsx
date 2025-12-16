@@ -4,37 +4,25 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Plus, Search } from 'lucide-react';
 import { ConfigsTable } from '@/components/configs/ConfigsTable';
 import { CreateConfigModal } from '@/components/configs/CreateConfigModal';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-
-type Agent = {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  provider: string;
-  llm_provider: string;
-  llm_model: string;
-  is_public: boolean;
-  capabilities?: string[];
-  default_config?: Record<string, unknown>;
-};
-
-type OrgAgentConfig = {
-  id: string;
-  org_id: string;
-  agent_id: string;
-  agent_name?: string;
-  agent_type?: string;
-  agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
+import {
+  clientUpdateOrgAgentConfig,
+  clientDeleteOrgAgentConfig,
+  type OrgAgentConfig,
+} from '@/lib/api/org-configs';
+import type { Agent } from '@/lib/types';
 
 type ConfigWithLevel = OrgAgentConfig & {
   level: 'organization' | 'team' | 'employee';
@@ -55,6 +43,11 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<ConfigWithLevel | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; config: ConfigWithLevel | null }>({
+    open: false,
+    config: null,
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -121,18 +114,7 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
     const action = config.is_enabled ? 'disable' : 'enable';
 
     try {
-      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          is_enabled: !config.is_enabled,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} configuration`);
-      }
+      await clientUpdateOrgAgentConfig(config.id, { is_enabled: !config.is_enabled });
 
       // Update local state
       setOrgConfigs((prev) =>
@@ -160,28 +142,23 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
     setIsCreateModalOpen(true);
   };
 
-  const handleDelete = async (config: ConfigWithLevel) => {
+  const handleDelete = (config: ConfigWithLevel) => {
     if (config.level !== 'organization') {
       // TODO: Handle team and employee configs when available
       return;
     }
+    setDeleteConfirm({ open: true, config });
+  };
 
-    if (!confirm(`Are you sure you want to delete this configuration for ${config.agent_name}?`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteConfirm.config) return;
 
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/organizations/current/agent-configs/${config.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete configuration');
-      }
+      await clientDeleteOrgAgentConfig(deleteConfirm.config.id);
 
       // Remove from local state
-      setOrgConfigs((prev) => prev.filter((c) => c.id !== config.id));
+      setOrgConfigs((prev) => prev.filter((c) => c.id !== deleteConfirm.config!.id));
 
       toast({
         title: 'Success',
@@ -189,6 +166,7 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
         variant: 'success',
       });
 
+      setDeleteConfirm({ open: false, config: null });
       router.refresh();
     } catch (error) {
       toast({
@@ -196,6 +174,8 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
         description: error instanceof Error ? error.message : 'Failed to delete configuration',
         variant: 'destructive',
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -288,6 +268,31 @@ export function ConfigsClient({ initialAgents, initialOrgConfigs }: ConfigsClien
         }}
         editingConfig={editingConfig}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, config: null })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Configuration?</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete this configuration for{' '}
+            <strong>{deleteConfirm.config?.agent_name}</strong>? This action cannot be undone.
+          </DialogDescription>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm({ open: false, config: null })}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
