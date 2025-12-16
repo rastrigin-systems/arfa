@@ -1,4 +1,4 @@
-package cli
+package ui
 
 import (
 	"context"
@@ -44,30 +44,19 @@ func (ls *LogStreamer) SetVerbose(enabled bool) {
 	ls.verbose = enabled
 }
 
-// StreamLogEntry represents a log entry received from the WebSocket
-type StreamLogEntry struct {
-	SessionID     string                 `json:"session_id,omitempty"`
-	AgentID       string                 `json:"agent_id,omitempty"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Content       string                 `json:"content,omitempty"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-	Timestamp     time.Time              `json:"timestamp"`
-}
-
 // StreamLogs connects to the WebSocket endpoint and prints logs
 func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 	// Ensure authenticated
-	config, err := ls.configManager.Load()
+	cfg, err := ls.configManager.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	if config.Token == "" {
+	if cfg.Token == "" {
 		return fmt.Errorf("not authenticated. Run 'ubik login' first")
 	}
 
 	// Construct WebSocket URL
-	wsURL, err := url.Parse(config.PlatformURL)
+	wsURL, err := url.Parse(cfg.PlatformURL)
 	if err != nil {
 		return fmt.Errorf("invalid platform URL: %w", err)
 	}
@@ -82,7 +71,7 @@ func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 
 	// Set up WebSocket dialer with authentication header
 	headers := http.Header{}
-	headers.Add("Authorization", "Bearer "+config.Token)
+	headers.Add("Authorization", "Bearer "+cfg.Token)
 	dialer := websocket.DefaultDialer
 
 	conn, _, err := dialer.DialContext(ctx, wsURL.String(), headers)

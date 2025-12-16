@@ -13,6 +13,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/ui"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +58,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	}
 
 	// Initialize agent picker
-	picker := cli.NewAgentPicker(configManager)
+	picker := ui.NewAgentPicker(configManager)
 
 	// Select agent based on flags and defaults
 	var selectedAgent *api.AgentConfig
