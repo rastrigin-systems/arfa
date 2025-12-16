@@ -15,6 +15,7 @@ import {
   Server,
   ClipboardList,
   Shield,
+  Bug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -109,6 +110,11 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       href: '/logs',
       icon: <History className="h-4 w-4" />,
       label: 'Activity Logs',
+    },
+    {
+      href: '/debug',
+      icon: <Bug className="h-4 w-4" />,
+      label: 'Debug Logs',
     },
   ];
 
