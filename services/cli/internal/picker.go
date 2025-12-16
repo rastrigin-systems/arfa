@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/manifoldco/promptui"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // AgentPickerItem represents an agent in the picker list
@@ -19,11 +21,11 @@ type AgentPickerItem struct {
 
 // AgentPicker provides interactive agent selection
 type AgentPicker struct {
-	configManager *ConfigManager
+	configManager *config.Manager
 }
 
 // NewAgentPicker creates a new agent picker
-func NewAgentPicker(configManager *ConfigManager) *AgentPicker {
+func NewAgentPicker(configManager *config.Manager) *AgentPicker {
 	return &AgentPicker{
 		configManager: configManager,
 	}
@@ -32,7 +34,7 @@ func NewAgentPicker(configManager *ConfigManager) *AgentPicker {
 // SelectAgent shows an interactive picker and returns the selected agent
 // If saveAsDefault is true, the selection will be saved as the default agent
 // If forceInteractive is true, always show the picker even with a single agent
-func (p *AgentPicker) SelectAgent(agents []AgentConfig, saveAsDefault bool, forceInteractive bool) (*AgentConfig, error) {
+func (p *AgentPicker) SelectAgent(agents []api.AgentConfig, saveAsDefault bool, forceInteractive bool) (*api.AgentConfig, error) {
 	if len(agents) == 0 {
 		return nil, fmt.Errorf("no agents available")
 	}
@@ -118,7 +120,7 @@ func (p *AgentPicker) SelectAgent(agents []AgentConfig, saveAsDefault bool, forc
 	selectedItem := items[idx]
 
 	// Find the full agent config
-	var selectedAgent *AgentConfig
+	var selectedAgent *api.AgentConfig
 	for i := range agents {
 		if agents[i].AgentID == selectedItem.ID {
 			selectedAgent = &agents[i]

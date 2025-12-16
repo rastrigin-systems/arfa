@@ -1,4 +1,5 @@
-package cli
+// Package config handles local CLI configuration storage and retrieval.
+package config
 
 import (
 	"encoding/json"
@@ -11,7 +12,7 @@ import (
 // DefaultPlatformURL is the default platform API URL.
 const DefaultPlatformURL = "https://api.ubik.io"
 
-// Config represents the local CLI configuration stored in ~/.ubik/config.json
+// Config represents the local CLI configuration stored in ~/.ubik/config.json.
 type Config struct {
 	PlatformURL  string    `json:"platform_url"`
 	Token        string    `json:"token"`
@@ -21,13 +22,13 @@ type Config struct {
 	LastSync     time.Time `json:"last_sync"`
 }
 
-// ConfigManager handles local configuration storage and retrieval
-type ConfigManager struct {
+// Manager handles local configuration storage and retrieval.
+type Manager struct {
 	configPath string
 }
 
-// NewConfigManager creates a new ConfigManager with default path (~/.ubik/config.json)
-func NewConfigManager() (*ConfigManager, error) {
+// NewManager creates a new Manager with default path (~/.ubik/config.json).
+func NewManager() (*Manager, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
@@ -41,22 +42,22 @@ func NewConfigManager() (*ConfigManager, error) {
 		return nil, fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	return &ConfigManager{
+	return &Manager{
 		configPath: configPath,
 	}, nil
 }
 
-// NewConfigManagerWithPath creates a new ConfigManager with a custom config path.
+// NewManagerWithPath creates a new Manager with a custom config path.
 // Use this for testing or when you need a non-default config location.
-func NewConfigManagerWithPath(configPath string) *ConfigManager {
-	return &ConfigManager{
+func NewManagerWithPath(configPath string) *Manager {
+	return &Manager{
 		configPath: configPath,
 	}
 }
 
-// Load reads the config from disk
-func (cm *ConfigManager) Load() (*Config, error) {
-	data, err := os.ReadFile(cm.configPath)
+// Load reads the config from disk.
+func (m *Manager) Load() (*Config, error) {
+	data, err := os.ReadFile(m.configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Return empty config if file doesn't exist
@@ -73,23 +74,23 @@ func (cm *ConfigManager) Load() (*Config, error) {
 	return &config, nil
 }
 
-// Save writes the config to disk
-func (cm *ConfigManager) Save(config *Config) error {
+// Save writes the config to disk.
+func (m *Manager) Save(config *Config) error {
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(cm.configPath, data, 0600); err != nil {
+	if err := os.WriteFile(m.configPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	return nil
 }
 
-// IsAuthenticated checks if the user is authenticated
-func (cm *ConfigManager) IsAuthenticated() (bool, error) {
-	config, err := cm.Load()
+// IsAuthenticated checks if the user is authenticated.
+func (m *Manager) IsAuthenticated() (bool, error) {
+	config, err := m.Load()
 	if err != nil {
 		return false, err
 	}
@@ -97,9 +98,9 @@ func (cm *ConfigManager) IsAuthenticated() (bool, error) {
 	return config.Token != "" && config.EmployeeID != "", nil
 }
 
-// IsTokenValid checks if the stored token is valid (not expired)
-func (cm *ConfigManager) IsTokenValid() (bool, error) {
-	config, err := cm.Load()
+// IsTokenValid checks if the stored token is valid (not expired).
+func (m *Manager) IsTokenValid() (bool, error) {
+	config, err := m.Load()
 	if err != nil {
 		return false, err
 	}
@@ -118,9 +119,9 @@ func (cm *ConfigManager) IsTokenValid() (bool, error) {
 	return time.Now().Add(5 * time.Minute).Before(config.TokenExpires), nil
 }
 
-// Clear removes the config file (logout)
-func (cm *ConfigManager) Clear() error {
-	if err := os.Remove(cm.configPath); err != nil {
+// Clear removes the config file (logout).
+func (m *Manager) Clear() error {
+	if err := os.Remove(m.configPath); err != nil {
 		if os.IsNotExist(err) {
 			return nil // Already cleared
 		}
@@ -129,7 +130,7 @@ func (cm *ConfigManager) Clear() error {
 	return nil
 }
 
-// GetConfigPath returns the path to the config file
-func (cm *ConfigManager) GetConfigPath() string {
-	return cm.configPath
+// GetConfigPath returns the path to the config file.
+func (m *Manager) GetConfigPath() string {
+	return m.configPath
 }

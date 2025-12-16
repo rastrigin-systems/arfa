@@ -1,4 +1,4 @@
-package cli
+package config
 
 import (
 	"os"
@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConfigManager_SaveAndLoad(t *testing.T) {
+func TestManager_SaveAndLoad(t *testing.T) {
 	// Create temp directory for test
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
@@ -28,11 +28,11 @@ func TestConfigManager_SaveAndLoad(t *testing.T) {
 	}
 
 	// Save config
-	err := cm.Save(config)
+	err := m.Save(config)
 	require.NoError(t, err)
 
 	// Load config
-	loaded, err := cm.Load()
+	loaded, err := m.Load()
 	require.NoError(t, err)
 
 	// Verify
@@ -43,29 +43,29 @@ func TestConfigManager_SaveAndLoad(t *testing.T) {
 	// Note: Time precision may vary due to JSON marshaling
 }
 
-func TestConfigManager_LoadNonExistent(t *testing.T) {
+func TestManager_LoadNonExistent(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
 	// Load non-existent config should return empty config
-	loaded, err := cm.Load()
+	loaded, err := m.Load()
 	require.NoError(t, err)
 	assert.Equal(t, "", loaded.Token)
 	assert.Equal(t, "", loaded.EmployeeID)
 }
 
-func TestConfigManager_IsAuthenticated(t *testing.T) {
+func TestManager_IsAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
 	// Initially not authenticated
-	authenticated, err := cm.IsAuthenticated()
+	authenticated, err := m.IsAuthenticated()
 	require.NoError(t, err)
 	assert.False(t, authenticated)
 
@@ -75,19 +75,19 @@ func TestConfigManager_IsAuthenticated(t *testing.T) {
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
 	}
-	err = cm.Save(config)
+	err = m.Save(config)
 	require.NoError(t, err)
 
 	// Now should be authenticated
-	authenticated, err = cm.IsAuthenticated()
+	authenticated, err = m.IsAuthenticated()
 	require.NoError(t, err)
 	assert.True(t, authenticated)
 }
 
-func TestConfigManager_Clear(t *testing.T) {
+func TestManager_Clear(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
@@ -97,49 +97,49 @@ func TestConfigManager_Clear(t *testing.T) {
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
 	}
-	err := cm.Save(config)
+	err := m.Save(config)
 	require.NoError(t, err)
 
 	// Verify file exists
-	_, err = os.Stat(cm.configPath)
+	_, err = os.Stat(m.configPath)
 	require.NoError(t, err)
 
 	// Clear config
-	err = cm.Clear()
+	err = m.Clear()
 	require.NoError(t, err)
 
 	// Verify file is deleted
-	_, err = os.Stat(cm.configPath)
+	_, err = os.Stat(m.configPath)
 	assert.True(t, os.IsNotExist(err))
 
 	// Clear again should not error
-	err = cm.Clear()
+	err = m.Clear()
 	require.NoError(t, err)
 }
 
-func TestConfigManager_GetConfigPath(t *testing.T) {
+func TestManager_GetConfigPath(t *testing.T) {
 	tempDir := t.TempDir()
 	expectedPath := filepath.Join(tempDir, "config.json")
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: expectedPath,
 	}
 
-	assert.Equal(t, expectedPath, cm.GetConfigPath())
+	assert.Equal(t, expectedPath, m.GetConfigPath())
 }
 
-func TestNewConfigManager(t *testing.T) {
+func TestNewManager(t *testing.T) {
 	// Test with temp HOME
 	tempDir := t.TempDir()
 	oldHome := os.Getenv("HOME")
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", oldHome)
 
-	cm, err := NewConfigManager()
+	m, err := NewManager()
 	require.NoError(t, err)
-	assert.NotNil(t, cm)
-	assert.Contains(t, cm.configPath, ".ubik")
-	assert.Contains(t, cm.configPath, "config.json")
+	assert.NotNil(t, m)
+	assert.Contains(t, m.configPath, ".ubik")
+	assert.Contains(t, m.configPath, "config.json")
 
 	// Verify config directory was created
 	configDir := filepath.Join(tempDir, ".ubik")
@@ -148,16 +148,22 @@ func TestNewConfigManager(t *testing.T) {
 	assert.True(t, info.IsDir())
 }
 
-func TestConfigManager_IsTokenValid(t *testing.T) {
+func TestNewManagerWithPath(t *testing.T) {
+	customPath := "/tmp/custom/config.json"
+	m := NewManagerWithPath(customPath)
+	assert.Equal(t, customPath, m.configPath)
+}
+
+func TestManager_IsTokenValid(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
+	m := &Manager{
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
 	t.Run("no token", func(t *testing.T) {
 		// No config saved
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.False(t, valid)
 	})
@@ -169,11 +175,11 @@ func TestConfigManager_IsTokenValid(t *testing.T) {
 			Token:       "test-token",
 			EmployeeID:  "employee-id",
 		}
-		err := cm.Save(config)
+		err := m.Save(config)
 		require.NoError(t, err)
 
 		// Should be considered valid for backwards compatibility
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.True(t, valid)
 	})
@@ -186,11 +192,11 @@ func TestConfigManager_IsTokenValid(t *testing.T) {
 			TokenExpires: time.Now().Add(1 * time.Hour),
 			EmployeeID:   "employee-id",
 		}
-		err := cm.Save(config)
+		err := m.Save(config)
 		require.NoError(t, err)
 
 		// Should be valid
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.True(t, valid)
 	})
@@ -203,11 +209,11 @@ func TestConfigManager_IsTokenValid(t *testing.T) {
 			TokenExpires: time.Now().Add(-1 * time.Hour),
 			EmployeeID:   "employee-id",
 		}
-		err := cm.Save(config)
+		err := m.Save(config)
 		require.NoError(t, err)
 
 		// Should be invalid
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.False(t, valid)
 	})
@@ -220,11 +226,11 @@ func TestConfigManager_IsTokenValid(t *testing.T) {
 			TokenExpires: time.Now().Add(3 * time.Minute),
 			EmployeeID:   "employee-id",
 		}
-		err := cm.Save(config)
+		err := m.Save(config)
 		require.NoError(t, err)
 
 		// Should be invalid (within 5 minute buffer)
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.False(t, valid)
 	})
@@ -237,11 +243,11 @@ func TestConfigManager_IsTokenValid(t *testing.T) {
 			TokenExpires: time.Now().Add(10 * time.Minute),
 			EmployeeID:   "employee-id",
 		}
-		err := cm.Save(config)
+		err := m.Save(config)
 		require.NoError(t, err)
 
 		// Should be valid
-		valid, err := cm.IsTokenValid()
+		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.True(t, valid)
 	})

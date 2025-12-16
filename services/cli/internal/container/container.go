@@ -6,6 +6,9 @@ import (
 	"sync"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // Container manages dependencies for the CLI application.
@@ -18,9 +21,9 @@ type Container struct {
 	platformURL string
 
 	// Lazily initialized services
-	configManager *cli.ConfigManager
-	apiClient     *cli.APIClient
-	authService   *cli.AuthService
+	configManager *config.Manager
+	apiClient     *api.Client
+	authService   *auth.Service
 	syncService   *cli.SyncService
 	agentService  *cli.AgentService
 	skillsService *cli.SkillsService
@@ -56,32 +59,32 @@ func WithPlatformURL(url string) Option {
 	}
 }
 
-// WithConfigManager sets a pre-configured ConfigManager.
+// WithConfigManager sets a pre-configured config.Manager.
 // Use this for testing with mock implementations.
-func WithConfigManager(cm *cli.ConfigManager) Option {
+func WithConfigManager(cm *config.Manager) Option {
 	return func(c *Container) {
 		c.configManager = cm
 	}
 }
 
-// WithAPIClient sets a pre-configured APIClient.
+// WithAPIClient sets a pre-configured api.Client.
 // Use this for testing with mock implementations.
-func WithAPIClient(ac *cli.APIClient) Option {
+func WithAPIClient(ac *api.Client) Option {
 	return func(c *Container) {
 		c.apiClient = ac
 	}
 }
 
-// WithAuthService sets a pre-configured AuthService.
+// WithAuthService sets a pre-configured auth.Service.
 // Use this for testing with mock implementations.
-func WithAuthService(as *cli.AuthService) Option {
+func WithAuthService(as *auth.Service) Option {
 	return func(c *Container) {
 		c.authService = as
 	}
 }
 
-// ConfigManager returns the ConfigManager, creating it if necessary.
-func (c *Container) ConfigManager() (*cli.ConfigManager, error) {
+// ConfigManager returns the config.Manager, creating it if necessary.
+func (c *Container) ConfigManager() (*config.Manager, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -89,15 +92,15 @@ func (c *Container) ConfigManager() (*cli.ConfigManager, error) {
 		return c.configManager, nil
 	}
 
-	var cm *cli.ConfigManager
+	var cm *config.Manager
 	var err error
 
 	if c.configPath != "" {
 		// Use custom config path
-		cm = cli.NewConfigManagerWithPath(c.configPath)
+		cm = config.NewManagerWithPath(c.configPath)
 	} else {
 		// Use default config manager
-		cm, err = cli.NewConfigManager()
+		cm, err = config.NewManager()
 		if err != nil {
 			return nil, err
 		}
@@ -107,8 +110,8 @@ func (c *Container) ConfigManager() (*cli.ConfigManager, error) {
 	return c.configManager, nil
 }
 
-// APIClient returns the APIClient, creating it if necessary.
-func (c *Container) APIClient() (*cli.APIClient, error) {
+// APIClient returns the api.Client, creating it if necessary.
+func (c *Container) APIClient() (*api.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -118,15 +121,15 @@ func (c *Container) APIClient() (*cli.APIClient, error) {
 
 	platformURL := c.platformURL
 	if platformURL == "" {
-		platformURL = cli.DefaultPlatformURL
+		platformURL = config.DefaultPlatformURL
 	}
 
-	c.apiClient = cli.NewAPIClient(platformURL)
+	c.apiClient = api.NewClient(platformURL)
 	return c.apiClient, nil
 }
 
-// AuthService returns the AuthService, creating it if necessary.
-func (c *Container) AuthService() (*cli.AuthService, error) {
+// AuthService returns the auth.Service, creating it if necessary.
+func (c *Container) AuthService() (*auth.Service, error) {
 	c.mu.RLock()
 	if c.authService != nil {
 		c.mu.RUnlock()
@@ -157,7 +160,7 @@ func (c *Container) AuthService() (*cli.AuthService, error) {
 	}
 	c.mu.Lock()
 
-	c.authService = cli.NewAuthService(cm, ac)
+	c.authService = auth.NewService(cm, ac)
 	return c.authService, nil
 }
 

@@ -3,22 +3,23 @@ package cli
 import (
 	"context"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 )
 
 // LoggingAPIClientAdapter adapts the CLI APIClient to the logging APIClient interface
 type LoggingAPIClientAdapter struct {
-	client *APIClient
+	client *api.Client
 }
 
 // NewLoggingAPIClientAdapter creates a new adapter for the API client
-func NewLoggingAPIClientAdapter(client *APIClient) logging.APIClient {
+func NewLoggingAPIClientAdapter(client *api.Client) logging.APIClient {
 	return &LoggingAPIClientAdapter{client: client}
 }
 
 // CreateLog sends a single log entry to the API
 func (a *LoggingAPIClientAdapter) CreateLog(ctx context.Context, entry logging.LogEntry) error {
-	apiEntry := LogEntry{
+	apiEntry := api.LogEntry{
 		SessionID:     entry.SessionID,
 		AgentID:       entry.AgentID,
 		EventType:     entry.EventType,
@@ -32,9 +33,9 @@ func (a *LoggingAPIClientAdapter) CreateLog(ctx context.Context, entry logging.L
 
 // CreateLogBatch sends multiple log entries in a single request
 func (a *LoggingAPIClientAdapter) CreateLogBatch(ctx context.Context, entries []logging.LogEntry) error {
-	apiEntries := make([]LogEntry, len(entries))
+	apiEntries := make([]api.LogEntry, len(entries))
 	for i, entry := range entries {
-		apiEntries[i] = LogEntry{
+		apiEntries[i] = api.LogEntry{
 			SessionID:     entry.SessionID,
 			AgentID:       entry.AgentID,
 			EventType:     entry.EventType,

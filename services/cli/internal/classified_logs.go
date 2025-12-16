@@ -4,40 +4,21 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
-// APILogEntry represents a log entry from the API response
-type APILogEntry struct {
-	ID            string                 `json:"id"`
-	SessionID     string                 `json:"session_id"`
-	AgentID       string                 `json:"agent_id,omitempty"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Content       string                 `json:"content"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-}
-
-// APILogsResponse represents the paginated logs response from the API
-type APILogsResponse struct {
-	Logs       []APILogEntry `json:"logs"`
-	TotalCount int           `json:"total_count"`
-	Page       int           `json:"page"`
-	PerPage    int           `json:"per_page"`
-}
-
-// GetClassifiedLogs retrieves classified logs from the API using the provided APIClient.
-// The APIClient must have a valid token set.
-func GetClassifiedLogs(ctx context.Context, apiClient *APIClient, sessionID string) ([]types.ClassifiedLogEntry, error) {
+// GetClassifiedLogs retrieves classified logs from the API using the provided api.Client.
+// The api.Client must have a valid token set.
+func GetClassifiedLogs(ctx context.Context, apiClient *api.Client, sessionID string) ([]types.ClassifiedLogEntry, error) {
 	if apiClient == nil {
 		return nil, fmt.Errorf("API client is required")
 	}
 
-	// Fetch logs using the APIClient
-	params := GetLogsParams{
+	// Fetch logs using the api.Client
+	params := api.GetLogsParams{
 		EventCategory: "classified",
 		PerPage:       1000,
 	}
@@ -66,26 +47,26 @@ func GetClassifiedLogs(ctx context.Context, apiClient *APIClient, sessionID stri
 }
 
 // GetClassifiedLogsWithConfig retrieves classified logs using config for authentication.
-// This is a convenience function that creates an APIClient from the config.
-func GetClassifiedLogsWithConfig(configManager *ConfigManager, sessionID string) ([]types.ClassifiedLogEntry, error) {
-	config, err := configManager.Load()
+// This is a convenience function that creates an api.Client from the config.
+func GetClassifiedLogsWithConfig(configManager *config.Manager, sessionID string) ([]types.ClassifiedLogEntry, error) {
+	cfg, err := configManager.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	if config.Token == "" {
+	if cfg.Token == "" {
 		return nil, fmt.Errorf("not authenticated - please run 'ubik login' first")
 	}
 
-	// Create APIClient with config
-	apiClient := NewAPIClient(config.PlatformURL)
-	apiClient.SetToken(config.Token)
+	// Create api.Client with config
+	apiClient := api.NewClient(cfg.PlatformURL)
+	apiClient.SetToken(cfg.Token)
 
 	return GetClassifiedLogs(context.Background(), apiClient, sessionID)
 }
 
 // convertAPILogToClassified converts an API log entry to a ClassifiedLogEntry
-func convertAPILogToClassified(log APILogEntry) types.ClassifiedLogEntry {
+func convertAPILogToClassified(log api.LogEntryResponse) types.ClassifiedLogEntry {
 	entry := types.ClassifiedLogEntry{
 		ID:        log.ID,
 		SessionID: log.SessionID,

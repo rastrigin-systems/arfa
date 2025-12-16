@@ -1,5 +1,5 @@
-// Package cli contains API request/response types for the Ubik platform.
-package cli
+// Package api contains API request/response types for the Ubik platform.
+package api
 
 import "time"
 
@@ -34,7 +34,7 @@ type EmployeeInfo struct {
 	Email    string  `json:"email"`
 	FullName string  `json:"full_name"`
 	OrgID    string  `json:"org_id"`
-	TeamID   *string `json:"team_id"` // nullable
+	TeamID   *string `json:"team_id"`
 }
 
 // ============================================================================
@@ -49,10 +49,10 @@ type AgentConfigAPIResponse struct {
 	IsEnabled    bool                   `json:"is_enabled"`
 	Config       map[string]interface{} `json:"config"`
 	Provider     string                 `json:"provider"`
-	DockerImage  *string                `json:"docker_image"` // Docker image reference (nullable)
+	DockerImage  *string                `json:"docker_image"`
 	SyncToken    string                 `json:"sync_token"`
 	SystemPrompt string                 `json:"system_prompt"`
-	LastSyncedAt *string                `json:"last_synced_at"` // nullable timestamp
+	LastSyncedAt *string                `json:"last_synced_at"`
 }
 
 // AgentConfig represents a resolved agent configuration (internal use).
@@ -61,7 +61,7 @@ type AgentConfig struct {
 	AgentName     string                 `json:"agent_name"`
 	AgentType     string                 `json:"agent_type"`
 	Provider      string                 `json:"provider"`
-	DockerImage   string                 `json:"docker_image"` // Docker image reference
+	DockerImage   string                 `json:"docker_image"`
 	IsEnabled     bool                   `json:"is_enabled"`
 	Configuration map[string]interface{} `json:"configuration"`
 	MCPServers    []MCPServerConfig      `json:"mcp_servers"`
@@ -101,8 +101,6 @@ type TeamAgentConfigResponse struct {
 }
 
 // EmployeeAgentConfigResponse represents an employee-level agent config from the API.
-// Note: This is different from EmployeeAgentConfig in agents.go which includes
-// additional fields like EmployeeID, CreatedAt, UpdatedAt for local representation.
 type EmployeeAgentConfigResponse struct {
 	ID             string                 `json:"id"`
 	AgentID        string                 `json:"agent_id"`
@@ -120,13 +118,13 @@ type ClaudeTokenStatusResponse struct {
 	EmployeeID        string `json:"employee_id"`
 	HasPersonalToken  bool   `json:"has_personal_token"`
 	HasCompanyToken   bool   `json:"has_company_token"`
-	ActiveTokenSource string `json:"active_token_source"` // "personal", "company", or "none"
+	ActiveTokenSource string `json:"active_token_source"`
 }
 
 // EffectiveClaudeTokenResponse represents the effective token response.
 type EffectiveClaudeTokenResponse struct {
 	Token      string `json:"token"`
-	Source     string `json:"source"` // "personal" or "company"
+	Source     string `json:"source"`
 	OrgID      string `json:"org_id"`
 	OrgName    string `json:"org_name"`
 	EmployeeID string `json:"employee_id"`
@@ -256,4 +254,24 @@ type CreateLogRequest struct {
 	EventCategory string                  `json:"event_category"`
 	Content       *string                 `json:"content,omitempty"`
 	Payload       *map[string]interface{} `json:"payload,omitempty"`
+}
+
+// LogEntryResponse represents a log entry from the API response.
+type LogEntryResponse struct {
+	ID            string                 `json:"id"`
+	SessionID     string                 `json:"session_id"`
+	AgentID       string                 `json:"agent_id,omitempty"`
+	EventType     string                 `json:"event_type"`
+	EventCategory string                 `json:"event_category"`
+	Content       string                 `json:"content"`
+	Payload       map[string]interface{} `json:"payload,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
+}
+
+// LogsResponse represents the paginated logs response from the API.
+type LogsResponse struct {
+	Logs       []LogEntryResponse `json:"logs"`
+	TotalCount int                `json:"total_count"`
+	Page       int                `json:"page"`
+	PerPage    int                `json:"per_page"`
 }

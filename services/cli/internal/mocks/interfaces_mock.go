@@ -16,6 +16,8 @@ import (
 	reflect "reflect"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	api "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	config "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -101,10 +103,10 @@ func (mr *MockConfigManagerInterfaceMockRecorder) IsTokenValid() *gomock.Call {
 }
 
 // Load mocks base method.
-func (m *MockConfigManagerInterface) Load() (*cli.Config, error) {
+func (m *MockConfigManagerInterface) Load() (*config.Config, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Load")
-	ret0, _ := ret[0].(*cli.Config)
+	ret0, _ := ret[0].(*config.Config)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -116,17 +118,17 @@ func (mr *MockConfigManagerInterfaceMockRecorder) Load() *gomock.Call {
 }
 
 // Save mocks base method.
-func (m *MockConfigManagerInterface) Save(config *cli.Config) error {
+func (m *MockConfigManagerInterface) Save(cfg *config.Config) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", config)
+	ret := m.ctrl.Call(m, "Save", cfg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Save indicates an expected call of Save.
-func (mr *MockConfigManagerInterfaceMockRecorder) Save(config any) *gomock.Call {
+func (mr *MockConfigManagerInterfaceMockRecorder) Save(cfg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockConfigManagerInterface)(nil).Save), config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockConfigManagerInterface)(nil).Save), cfg)
 }
 
 // MockAPIClientInterface is a mock of APIClientInterface interface.
@@ -153,7 +155,7 @@ func (m *MockAPIClientInterface) EXPECT() *MockAPIClientInterfaceMockRecorder {
 }
 
 // CreateLog mocks base method.
-func (m *MockAPIClientInterface) CreateLog(ctx context.Context, entry cli.LogEntry) error {
+func (m *MockAPIClientInterface) CreateLog(ctx context.Context, entry api.LogEntry) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateLog", ctx, entry)
 	ret0, _ := ret[0].(error)
@@ -167,7 +169,7 @@ func (mr *MockAPIClientInterfaceMockRecorder) CreateLog(ctx, entry any) *gomock.
 }
 
 // CreateLogBatch mocks base method.
-func (m *MockAPIClientInterface) CreateLogBatch(ctx context.Context, entries []cli.LogEntry) error {
+func (m *MockAPIClientInterface) CreateLogBatch(ctx context.Context, entries []api.LogEntry) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateLogBatch", ctx, entries)
 	ret0, _ := ret[0].(error)
@@ -181,10 +183,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) CreateLogBatch(ctx, entries any) *
 }
 
 // GetClaudeCodeConfig mocks base method.
-func (m *MockAPIClientInterface) GetClaudeCodeConfig(ctx context.Context) (*cli.ClaudeCodeSyncResponse, error) {
+func (m *MockAPIClientInterface) GetClaudeCodeConfig(ctx context.Context) (*api.ClaudeCodeSyncResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClaudeCodeConfig", ctx)
-	ret0, _ := ret[0].(*cli.ClaudeCodeSyncResponse)
+	ret0, _ := ret[0].(*api.ClaudeCodeSyncResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -196,10 +198,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetClaudeCodeConfig(ctx any) *gomo
 }
 
 // GetClaudeTokenStatus mocks base method.
-func (m *MockAPIClientInterface) GetClaudeTokenStatus(ctx context.Context) (*cli.ClaudeTokenStatusResponse, error) {
+func (m *MockAPIClientInterface) GetClaudeTokenStatus(ctx context.Context) (*api.ClaudeTokenStatusResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClaudeTokenStatus", ctx)
-	ret0, _ := ret[0].(*cli.ClaudeTokenStatusResponse)
+	ret0, _ := ret[0].(*api.ClaudeTokenStatusResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -211,10 +213,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetClaudeTokenStatus(ctx any) *gom
 }
 
 // GetCurrentEmployee mocks base method.
-func (m *MockAPIClientInterface) GetCurrentEmployee(ctx context.Context) (*cli.EmployeeInfo, error) {
+func (m *MockAPIClientInterface) GetCurrentEmployee(ctx context.Context) (*api.EmployeeInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCurrentEmployee", ctx)
-	ret0, _ := ret[0].(*cli.EmployeeInfo)
+	ret0, _ := ret[0].(*api.EmployeeInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -241,10 +243,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEffectiveClaudeToken(ctx any) *
 }
 
 // GetEffectiveClaudeTokenInfo mocks base method.
-func (m *MockAPIClientInterface) GetEffectiveClaudeTokenInfo(ctx context.Context) (*cli.EffectiveClaudeTokenResponse, error) {
+func (m *MockAPIClientInterface) GetEffectiveClaudeTokenInfo(ctx context.Context) (*api.EffectiveClaudeTokenResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEffectiveClaudeTokenInfo", ctx)
-	ret0, _ := ret[0].(*cli.EffectiveClaudeTokenResponse)
+	ret0, _ := ret[0].(*api.EffectiveClaudeTokenResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -256,10 +258,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEffectiveClaudeTokenInfo(ctx an
 }
 
 // GetEmployeeAgentConfigs mocks base method.
-func (m *MockAPIClientInterface) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]cli.EmployeeAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]api.EmployeeAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeAgentConfigs", ctx, employeeID)
-	ret0, _ := ret[0].([]cli.EmployeeAgentConfigResponse)
+	ret0, _ := ret[0].([]api.EmployeeAgentConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -271,10 +273,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeAgentConfigs(ctx, emplo
 }
 
 // GetEmployeeInfo mocks base method.
-func (m *MockAPIClientInterface) GetEmployeeInfo(ctx context.Context, employeeID string) (*cli.EmployeeInfo, error) {
+func (m *MockAPIClientInterface) GetEmployeeInfo(ctx context.Context, employeeID string) (*api.EmployeeInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeInfo", ctx, employeeID)
-	ret0, _ := ret[0].(*cli.EmployeeInfo)
+	ret0, _ := ret[0].(*api.EmployeeInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -286,10 +288,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeInfo(ctx, employeeID an
 }
 
 // GetEmployeeSkill mocks base method.
-func (m *MockAPIClientInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*cli.EmployeeSkill, error) {
+func (m *MockAPIClientInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeSkill", ctx, skillID)
-	ret0, _ := ret[0].(*cli.EmployeeSkill)
+	ret0, _ := ret[0].(*api.EmployeeSkill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -301,10 +303,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeSkill(ctx, skillID any)
 }
 
 // GetLogs mocks base method.
-func (m *MockAPIClientInterface) GetLogs(ctx context.Context, params cli.GetLogsParams) (*cli.APILogsResponse, error) {
+func (m *MockAPIClientInterface) GetLogs(ctx context.Context, params api.GetLogsParams) (*api.LogsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLogs", ctx, params)
-	ret0, _ := ret[0].(*cli.APILogsResponse)
+	ret0, _ := ret[0].(*api.LogsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -316,10 +318,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetLogs(ctx, params any) *gomock.C
 }
 
 // GetMyResolvedAgentConfigs mocks base method.
-func (m *MockAPIClientInterface) GetMyResolvedAgentConfigs(ctx context.Context) ([]cli.AgentConfig, error) {
+func (m *MockAPIClientInterface) GetMyResolvedAgentConfigs(ctx context.Context) ([]api.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMyResolvedAgentConfigs", ctx)
-	ret0, _ := ret[0].([]cli.AgentConfig)
+	ret0, _ := ret[0].([]api.AgentConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -331,10 +333,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetMyResolvedAgentConfigs(ctx any)
 }
 
 // GetOrgAgentConfigs mocks base method.
-func (m *MockAPIClientInterface) GetOrgAgentConfigs(ctx context.Context) ([]cli.OrgAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetOrgAgentConfigs(ctx context.Context) ([]api.OrgAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrgAgentConfigs", ctx)
-	ret0, _ := ret[0].([]cli.OrgAgentConfigResponse)
+	ret0, _ := ret[0].([]api.OrgAgentConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -346,10 +348,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetOrgAgentConfigs(ctx any) *gomoc
 }
 
 // GetResolvedAgentConfigs mocks base method.
-func (m *MockAPIClientInterface) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]cli.AgentConfig, error) {
+func (m *MockAPIClientInterface) GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]api.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResolvedAgentConfigs", ctx, employeeID)
-	ret0, _ := ret[0].([]cli.AgentConfig)
+	ret0, _ := ret[0].([]api.AgentConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -361,10 +363,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetResolvedAgentConfigs(ctx, emplo
 }
 
 // GetSkill mocks base method.
-func (m *MockAPIClientInterface) GetSkill(ctx context.Context, skillID string) (*cli.Skill, error) {
+func (m *MockAPIClientInterface) GetSkill(ctx context.Context, skillID string) (*api.Skill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSkill", ctx, skillID)
-	ret0, _ := ret[0].(*cli.Skill)
+	ret0, _ := ret[0].(*api.Skill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -376,10 +378,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetSkill(ctx, skillID any) *gomock
 }
 
 // GetTeamAgentConfigs mocks base method.
-func (m *MockAPIClientInterface) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]cli.TeamAgentConfigResponse, error) {
+func (m *MockAPIClientInterface) GetTeamAgentConfigs(ctx context.Context, teamID string) ([]api.TeamAgentConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTeamAgentConfigs", ctx, teamID)
-	ret0, _ := ret[0].([]cli.TeamAgentConfigResponse)
+	ret0, _ := ret[0].([]api.TeamAgentConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -391,10 +393,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetTeamAgentConfigs(ctx, teamID an
 }
 
 // ListEmployeeSkills mocks base method.
-func (m *MockAPIClientInterface) ListEmployeeSkills(ctx context.Context) (*cli.ListEmployeeSkillsResponse, error) {
+func (m *MockAPIClientInterface) ListEmployeeSkills(ctx context.Context) (*api.ListEmployeeSkillsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListEmployeeSkills", ctx)
-	ret0, _ := ret[0].(*cli.ListEmployeeSkillsResponse)
+	ret0, _ := ret[0].(*api.ListEmployeeSkillsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -406,10 +408,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) ListEmployeeSkills(ctx any) *gomoc
 }
 
 // ListSkills mocks base method.
-func (m *MockAPIClientInterface) ListSkills(ctx context.Context) (*cli.ListSkillsResponse, error) {
+func (m *MockAPIClientInterface) ListSkills(ctx context.Context) (*api.ListSkillsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSkills", ctx)
-	ret0, _ := ret[0].(*cli.ListSkillsResponse)
+	ret0, _ := ret[0].(*api.ListSkillsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -421,10 +423,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) ListSkills(ctx any) *gomock.Call {
 }
 
 // Login mocks base method.
-func (m *MockAPIClientInterface) Login(ctx context.Context, email, password string) (*cli.LoginResponse, error) {
+func (m *MockAPIClientInterface) Login(ctx context.Context, email, password string) (*api.LoginResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, email, password)
-	ret0, _ := ret[0].(*cli.LoginResponse)
+	ret0, _ := ret[0].(*api.LoginResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -495,10 +497,10 @@ func (m *MockAuthServiceInterface) EXPECT() *MockAuthServiceInterfaceMockRecorde
 }
 
 // GetConfig mocks base method.
-func (m *MockAuthServiceInterface) GetConfig() (*cli.Config, error) {
+func (m *MockAuthServiceInterface) GetConfig() (*config.Config, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConfig")
-	ret0, _ := ret[0].(*cli.Config)
+	ret0, _ := ret[0].(*config.Config)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -567,10 +569,10 @@ func (mr *MockAuthServiceInterfaceMockRecorder) Logout() *gomock.Call {
 }
 
 // RequireAuth mocks base method.
-func (m *MockAuthServiceInterface) RequireAuth() (*cli.Config, error) {
+func (m *MockAuthServiceInterface) RequireAuth() (*config.Config, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequireAuth")
-	ret0, _ := ret[0].(*cli.Config)
+	ret0, _ := ret[0].(*config.Config)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -605,10 +607,10 @@ func (m *MockSyncServiceInterface) EXPECT() *MockSyncServiceInterfaceMockRecorde
 }
 
 // GetAgentConfig mocks base method.
-func (m *MockSyncServiceInterface) GetAgentConfig(idOrName string) (*cli.AgentConfig, error) {
+func (m *MockSyncServiceInterface) GetAgentConfig(idOrName string) (*api.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAgentConfig", idOrName)
-	ret0, _ := ret[0].(*cli.AgentConfig)
+	ret0, _ := ret[0].(*api.AgentConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -635,10 +637,10 @@ func (mr *MockSyncServiceInterfaceMockRecorder) GetContainerStatus(ctx any) *gom
 }
 
 // GetLocalAgentConfigs mocks base method.
-func (m *MockSyncServiceInterface) GetLocalAgentConfigs() ([]cli.AgentConfig, error) {
+func (m *MockSyncServiceInterface) GetLocalAgentConfigs() ([]api.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLocalAgentConfigs")
-	ret0, _ := ret[0].([]cli.AgentConfig)
+	ret0, _ := ret[0].([]api.AgentConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -784,10 +786,10 @@ func (mr *MockAgentServiceInterfaceMockRecorder) GetAgent(ctx, agentID any) *gom
 }
 
 // GetLocalAgents mocks base method.
-func (m *MockAgentServiceInterface) GetLocalAgents() ([]cli.AgentConfig, error) {
+func (m *MockAgentServiceInterface) GetLocalAgents() ([]api.AgentConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLocalAgents")
-	ret0, _ := ret[0].([]cli.AgentConfig)
+	ret0, _ := ret[0].([]api.AgentConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -866,10 +868,10 @@ func (m *MockSkillsServiceInterface) EXPECT() *MockSkillsServiceInterfaceMockRec
 }
 
 // GetEmployeeSkill mocks base method.
-func (m *MockSkillsServiceInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*cli.EmployeeSkill, error) {
+func (m *MockSkillsServiceInterface) GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeSkill", ctx, skillID)
-	ret0, _ := ret[0].(*cli.EmployeeSkill)
+	ret0, _ := ret[0].(*api.EmployeeSkill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -881,10 +883,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetEmployeeSkill(ctx, skillID 
 }
 
 // GetEmployeeSkillByName mocks base method.
-func (m *MockSkillsServiceInterface) GetEmployeeSkillByName(ctx context.Context, name string) (*cli.EmployeeSkill, error) {
+func (m *MockSkillsServiceInterface) GetEmployeeSkillByName(ctx context.Context, name string) (*api.EmployeeSkill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEmployeeSkillByName", ctx, name)
-	ret0, _ := ret[0].(*cli.EmployeeSkill)
+	ret0, _ := ret[0].(*api.EmployeeSkill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -926,10 +928,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetLocalSkills() *gomock.Call 
 }
 
 // GetSkill mocks base method.
-func (m *MockSkillsServiceInterface) GetSkill(ctx context.Context, skillID string) (*cli.Skill, error) {
+func (m *MockSkillsServiceInterface) GetSkill(ctx context.Context, skillID string) (*api.Skill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSkill", ctx, skillID)
-	ret0, _ := ret[0].(*cli.Skill)
+	ret0, _ := ret[0].(*api.Skill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -941,10 +943,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetSkill(ctx, skillID any) *go
 }
 
 // GetSkillByName mocks base method.
-func (m *MockSkillsServiceInterface) GetSkillByName(ctx context.Context, name string) (*cli.Skill, error) {
+func (m *MockSkillsServiceInterface) GetSkillByName(ctx context.Context, name string) (*api.Skill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSkillByName", ctx, name)
-	ret0, _ := ret[0].(*cli.Skill)
+	ret0, _ := ret[0].(*api.Skill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -956,10 +958,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) GetSkillByName(ctx, name any) 
 }
 
 // ListCatalogSkills mocks base method.
-func (m *MockSkillsServiceInterface) ListCatalogSkills(ctx context.Context) ([]cli.Skill, error) {
+func (m *MockSkillsServiceInterface) ListCatalogSkills(ctx context.Context) ([]api.Skill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListCatalogSkills", ctx)
-	ret0, _ := ret[0].([]cli.Skill)
+	ret0, _ := ret[0].([]api.Skill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -971,10 +973,10 @@ func (mr *MockSkillsServiceInterfaceMockRecorder) ListCatalogSkills(ctx any) *go
 }
 
 // ListEmployeeSkills mocks base method.
-func (m *MockSkillsServiceInterface) ListEmployeeSkills(ctx context.Context) ([]cli.EmployeeSkill, error) {
+func (m *MockSkillsServiceInterface) ListEmployeeSkills(ctx context.Context) ([]api.EmployeeSkill, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListEmployeeSkills", ctx)
-	ret0, _ := ret[0].([]cli.EmployeeSkill)
+	ret0, _ := ret[0].([]api.EmployeeSkill)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

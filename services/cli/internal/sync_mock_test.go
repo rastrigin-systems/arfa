@@ -7,6 +7,8 @@ import (
 	"time"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,13 +27,13 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 
 		ctx := context.Background()
 
-		config := &cli.Config{
+		cfg := &config.Config{
 			PlatformURL: "https://api.example.com",
 			Token:       "test-token",
 			EmployeeID:  "emp-123",
 		}
 
-		agentConfigs := []cli.AgentConfig{
+		agentConfigs := []api.AgentConfig{
 			{
 				AgentID:   "agent-1",
 				AgentName: "Claude Code",
@@ -42,7 +44,7 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 		}
 
 		// Set expectations
-		mockAuthService.EXPECT().RequireAuth().Return(config, nil)
+		mockAuthService.EXPECT().RequireAuth().Return(cfg, nil)
 		mockPlatformClient.EXPECT().GetMyResolvedAgentConfigs(ctx).Return(agentConfigs, nil)
 		// Save is called twice: once for agent configs, once for updating last sync
 		mockConfigManager.EXPECT().GetConfigPath().Return("/tmp/test/config.json").AnyTimes()
@@ -96,14 +98,14 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 
 		ctx := context.Background()
 
-		config := &cli.Config{
+		cfg := &config.Config{
 			PlatformURL: "https://api.example.com",
 			Token:       "test-token",
 			EmployeeID:  "emp-123",
 		}
 
 		// Set expectations - API call fails
-		mockAuthService.EXPECT().RequireAuth().Return(config, nil)
+		mockAuthService.EXPECT().RequireAuth().Return(cfg, nil)
 		mockPlatformClient.EXPECT().GetMyResolvedAgentConfigs(ctx).Return(nil, errors.New("network error"))
 
 		// Create service with mocks
@@ -128,15 +130,15 @@ func TestSyncService_Sync_WithMocks(t *testing.T) {
 
 		ctx := context.Background()
 
-		config := &cli.Config{
+		cfg := &config.Config{
 			PlatformURL: "https://api.example.com",
 			Token:       "test-token",
 			EmployeeID:  "emp-123",
 		}
 
 		// Set expectations - no configs returned
-		mockAuthService.EXPECT().RequireAuth().Return(config, nil)
-		mockPlatformClient.EXPECT().GetMyResolvedAgentConfigs(ctx).Return([]cli.AgentConfig{}, nil)
+		mockAuthService.EXPECT().RequireAuth().Return(cfg, nil)
+		mockPlatformClient.EXPECT().GetMyResolvedAgentConfigs(ctx).Return([]api.AgentConfig{}, nil)
 
 		// Create service with mocks
 		syncService := cli.NewSyncServiceWithInterfaces(mockConfigManager, mockPlatformClient, mockAuthService)

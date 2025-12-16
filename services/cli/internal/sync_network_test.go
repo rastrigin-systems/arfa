@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,8 +23,8 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Updated to use JWT-based /employees/me endpoint
 		if r.URL.Path == "/api/v1/employees/me/agent-configs/resolved" {
-			resp := ResolvedConfigsResponse{
-				Configs: []AgentConfigAPIResponse{
+			resp := api.ResolvedConfigsResponse{
+				Configs: []api.AgentConfigAPIResponse{
 					{
 						AgentID:   "agent-1",
 						AgentName: "Claude Code",
@@ -41,23 +44,21 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	defer server.Close()
 
 	// Setup config manager
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Save authentication config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL: server.URL,
 		Token:       "test-token",
 		EmployeeID:  "emp-123",
 	}
-	err := cm.Save(config)
+	err := cm.Save(cfg)
 	require.NoError(t, err)
 
 	// Setup auth service
-	pc := NewAPIClient(server.URL)
+	pc := api.NewClient(server.URL)
 	pc.SetToken("test-token")
-	authService := NewAuthService(cm, pc)
+	authService := auth.NewService(cm, pc)
 
 	// Setup sync service with HOME override
 	oldHome := os.Getenv("HOME")
@@ -79,12 +80,10 @@ func TestSyncService_Sync_Success(t *testing.T) {
 func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
 
 	// Sync should fail when not authenticated
@@ -103,8 +102,8 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Updated to use JWT-based /employees/me endpoint
 		if r.URL.Path == "/api/v1/employees/me/agent-configs/resolved" {
-			resp := ResolvedConfigsResponse{
-				Configs: []AgentConfigAPIResponse{},
+			resp := api.ResolvedConfigsResponse{
+				Configs: []api.AgentConfigAPIResponse{},
 				Total:   0,
 			}
 			w.Header().Set("Content-Type", "application/json")
@@ -116,23 +115,21 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	defer server.Close()
 
 	// Setup config manager
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Save authentication config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL: server.URL,
 		Token:       "test-token",
 		EmployeeID:  "emp-123",
 	}
-	err := cm.Save(config)
+	err := cm.Save(cfg)
 	require.NoError(t, err)
 
 	// Setup auth service
-	pc := NewAPIClient(server.URL)
+	pc := api.NewClient(server.URL)
 	pc.SetToken("test-token")
-	authService := NewAuthService(cm, pc)
+	authService := auth.NewService(cm, pc)
 
 	syncService := NewSyncService(cm, pc, authService)
 

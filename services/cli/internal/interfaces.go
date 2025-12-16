@@ -7,6 +7,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // ============================================================================
@@ -22,10 +25,10 @@ import (
 type ConfigManagerInterface interface {
 	// Load reads the configuration from disk.
 	// Returns an empty Config if the file doesn't exist.
-	Load() (*Config, error)
+	Load() (*config.Config, error)
 
 	// Save persists the configuration to disk.
-	Save(config *Config) error
+	Save(cfg *config.Config) error
 
 	// IsAuthenticated checks if the user has valid credentials stored.
 	// Returns true if both token and employee_id are present.
@@ -61,82 +64,82 @@ type APIClientInterface interface {
 	// -------------------------------------------------------------------------
 
 	// Login authenticates the user and returns a token.
-	Login(ctx context.Context, email, password string) (*LoginResponse, error)
+	Login(ctx context.Context, email, password string) (*api.LoginResponse, error)
 
 	// GetCurrentEmployee fetches information about the currently authenticated employee.
-	GetCurrentEmployee(ctx context.Context) (*EmployeeInfo, error)
+	GetCurrentEmployee(ctx context.Context) (*api.EmployeeInfo, error)
 
 	// GetEmployeeInfo gets information about a specific employee by ID.
-	GetEmployeeInfo(ctx context.Context, employeeID string) (*EmployeeInfo, error)
+	GetEmployeeInfo(ctx context.Context, employeeID string) (*api.EmployeeInfo, error)
 
 	// -------------------------------------------------------------------------
 	// Agent Configuration
 	// -------------------------------------------------------------------------
 
 	// GetResolvedAgentConfigs fetches resolved agent configurations for an employee.
-	GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]AgentConfig, error)
+	GetResolvedAgentConfigs(ctx context.Context, employeeID string) ([]api.AgentConfig, error)
 
 	// GetMyResolvedAgentConfigs fetches resolved agent configurations for the current employee.
 	// Uses JWT token to identify the employee.
-	GetMyResolvedAgentConfigs(ctx context.Context) ([]AgentConfig, error)
+	GetMyResolvedAgentConfigs(ctx context.Context) ([]api.AgentConfig, error)
 
 	// GetOrgAgentConfigs fetches organization-level agent configs.
-	GetOrgAgentConfigs(ctx context.Context) ([]OrgAgentConfigResponse, error)
+	GetOrgAgentConfigs(ctx context.Context) ([]api.OrgAgentConfigResponse, error)
 
 	// GetTeamAgentConfigs fetches team-level agent configs.
-	GetTeamAgentConfigs(ctx context.Context, teamID string) ([]TeamAgentConfigResponse, error)
+	GetTeamAgentConfigs(ctx context.Context, teamID string) ([]api.TeamAgentConfigResponse, error)
 
 	// GetEmployeeAgentConfigs fetches employee-level agent configs.
-	GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfigResponse, error)
+	GetEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]api.EmployeeAgentConfigResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Claude Token Management
 	// -------------------------------------------------------------------------
 
 	// GetClaudeTokenStatus fetches the Claude token status for the current employee.
-	GetClaudeTokenStatus(ctx context.Context) (*ClaudeTokenStatusResponse, error)
+	GetClaudeTokenStatus(ctx context.Context) (*api.ClaudeTokenStatusResponse, error)
 
 	// GetEffectiveClaudeToken fetches the effective Claude token value.
 	GetEffectiveClaudeToken(ctx context.Context) (string, error)
 
 	// GetEffectiveClaudeTokenInfo fetches the effective Claude token with full metadata.
-	GetEffectiveClaudeTokenInfo(ctx context.Context) (*EffectiveClaudeTokenResponse, error)
+	GetEffectiveClaudeTokenInfo(ctx context.Context) (*api.EffectiveClaudeTokenResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Sync
 	// -------------------------------------------------------------------------
 
 	// GetClaudeCodeConfig fetches the complete Claude Code configuration bundle.
-	GetClaudeCodeConfig(ctx context.Context) (*ClaudeCodeSyncResponse, error)
+	GetClaudeCodeConfig(ctx context.Context) (*api.ClaudeCodeSyncResponse, error)
 
 	// -------------------------------------------------------------------------
 	// Skills
 	// -------------------------------------------------------------------------
 
 	// ListSkills fetches all available skills from the catalog.
-	ListSkills(ctx context.Context) (*ListSkillsResponse, error)
+	ListSkills(ctx context.Context) (*api.ListSkillsResponse, error)
 
 	// GetSkill fetches details for a specific skill by ID.
-	GetSkill(ctx context.Context, skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*api.Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills(ctx context.Context) (*ListEmployeeSkillsResponse, error)
+	ListEmployeeSkills(ctx context.Context) (*api.ListEmployeeSkillsResponse, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the authenticated employee.
-	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error)
 
 	// -------------------------------------------------------------------------
 	// Logging
 	// -------------------------------------------------------------------------
 
 	// CreateLog sends a single log entry to the platform API.
-	CreateLog(ctx context.Context, entry LogEntry) error
+	CreateLog(ctx context.Context, entry api.LogEntry) error
 
 	// CreateLogBatch sends multiple log entries in a single request.
-	CreateLogBatch(ctx context.Context, entries []LogEntry) error
+	CreateLogBatch(ctx context.Context, entries []api.LogEntry) error
 
 	// GetLogs fetches logs from the API with optional filters.
-	GetLogs(ctx context.Context, params GetLogsParams) (*APILogsResponse, error)
+	GetLogs(ctx context.Context, params api.GetLogsParams) (*api.LogsResponse, error)
 }
 
 // ============================================================================
@@ -162,11 +165,11 @@ type AuthServiceInterface interface {
 	IsAuthenticated() (bool, error)
 
 	// GetConfig returns the current configuration.
-	GetConfig() (*Config, error)
+	GetConfig() (*config.Config, error)
 
 	// RequireAuth ensures user is authenticated and token is valid.
 	// Returns the current config with platform client configured.
-	RequireAuth() (*Config, error)
+	RequireAuth() (*config.Config, error)
 }
 
 // SyncServiceInterface defines the contract for configuration synchronization.
@@ -179,10 +182,10 @@ type SyncServiceInterface interface {
 	SyncClaudeCode(ctx context.Context, targetDir string) error
 
 	// GetLocalAgentConfigs loads agent configs from local storage.
-	GetLocalAgentConfigs() ([]AgentConfig, error)
+	GetLocalAgentConfigs() ([]api.AgentConfig, error)
 
 	// GetAgentConfig retrieves a specific agent config by ID or name.
-	GetAgentConfig(idOrName string) (*AgentConfig, error)
+	GetAgentConfig(idOrName string) (*api.AgentConfig, error)
 
 	// SetDockerClient sets the Docker client for container operations.
 	// Deprecated: Use SetContainerManager instead for better dependency injection.
@@ -221,29 +224,29 @@ type AgentServiceInterface interface {
 	CheckForUpdates(ctx context.Context, employeeID string) (bool, error)
 
 	// GetLocalAgents returns locally configured agents.
-	GetLocalAgents() ([]AgentConfig, error)
+	GetLocalAgents() ([]api.AgentConfig, error)
 }
 
 // SkillsServiceInterface defines the contract for skill management operations.
 // Implementations handle listing skills from catalog and local storage.
 type SkillsServiceInterface interface {
 	// ListCatalogSkills fetches all available skills from the platform catalog.
-	ListCatalogSkills(ctx context.Context) ([]Skill, error)
+	ListCatalogSkills(ctx context.Context) ([]api.Skill, error)
 
 	// GetSkill fetches details for a specific skill from the catalog.
-	GetSkill(ctx context.Context, skillID string) (*Skill, error)
+	GetSkill(ctx context.Context, skillID string) (*api.Skill, error)
 
 	// GetSkillByName fetches a skill by name (searches catalog).
-	GetSkillByName(ctx context.Context, name string) (*Skill, error)
+	GetSkillByName(ctx context.Context, name string) (*api.Skill, error)
 
 	// ListEmployeeSkills fetches skills assigned to the authenticated employee.
-	ListEmployeeSkills(ctx context.Context) ([]EmployeeSkill, error)
+	ListEmployeeSkills(ctx context.Context) ([]api.EmployeeSkill, error)
 
 	// GetEmployeeSkill fetches a specific skill assigned to the employee.
-	GetEmployeeSkill(ctx context.Context, skillID string) (*EmployeeSkill, error)
+	GetEmployeeSkill(ctx context.Context, skillID string) (*api.EmployeeSkill, error)
 
 	// GetEmployeeSkillByName fetches an employee skill by name.
-	GetEmployeeSkillByName(ctx context.Context, name string) (*EmployeeSkill, error)
+	GetEmployeeSkillByName(ctx context.Context, name string) (*api.EmployeeSkill, error)
 
 	// GetLocalSkills returns locally installed skills from .claude/skills/.
 	GetLocalSkills() ([]LocalSkillInfo, error)
@@ -360,9 +363,9 @@ type DockerNetworkConfig = network.NetworkingConfig
 // Compile-time interface implementation checks.
 // These ensure that the concrete types implement their respective interfaces.
 var (
-	_ ConfigManagerInterface    = (*ConfigManager)(nil)
-	_ APIClientInterface        = (*APIClient)(nil)
-	_ AuthServiceInterface      = (*AuthService)(nil)
+	_ ConfigManagerInterface    = (*config.Manager)(nil)
+	_ APIClientInterface        = (*api.Client)(nil)
+	_ AuthServiceInterface      = (*auth.Service)(nil)
 	_ SyncServiceInterface      = (*SyncService)(nil)
 	_ AgentServiceInterface     = (*AgentService)(nil)
 	_ SkillsServiceInterface    = (*SkillsService)(nil)

@@ -1,4 +1,5 @@
-package cli
+// Package auth handles authentication operations for the CLI.
+package auth
 
 import (
 	"bufio"
@@ -9,39 +10,41 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"golang.org/x/term"
 )
 
-// AuthService handles authentication operations
-type AuthService struct {
+// Service handles authentication operations.
+type Service struct {
 	configManager ConfigManagerInterface
 	apiClient     APIClientInterface
 }
 
-// NewAuthService creates a new AuthService with concrete types.
+// NewService creates a new Service with concrete types.
 // This is the primary constructor for production use.
-func NewAuthService(configManager *ConfigManager, apiClient *APIClient) *AuthService {
-	return &AuthService{
+func NewService(configManager *config.Manager, apiClient *api.Client) *Service {
+	return &Service{
 		configManager: configManager,
 		apiClient:     apiClient,
 	}
 }
 
-// NewAuthServiceWithInterfaces creates a new AuthService with interface types.
+// NewServiceWithInterfaces creates a new Service with interface types.
 // This constructor enables dependency injection for testing with mocks.
-func NewAuthServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface) *AuthService {
-	return &AuthService{
+func NewServiceWithInterfaces(configManager ConfigManagerInterface, apiClient APIClientInterface) *Service {
+	return &Service{
 		configManager: configManager,
 		apiClient:     apiClient,
 	}
 }
 
-// LoginInteractive performs interactive login
-func (as *AuthService) LoginInteractive(ctx context.Context) error {
+// LoginInteractive performs interactive login.
+func (s *Service) LoginInteractive(ctx context.Context) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	// Load existing config to get saved platform URL
-	savedConfig, _ := as.configManager.Load()
+	savedConfig, _ := s.configManager.Load()
 	defaultURL := "http://localhost:8080"
 	if savedConfig != nil && savedConfig.PlatformURL != "" {
 		defaultURL = savedConfig.PlatformURL
@@ -76,11 +79,11 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	}
 
 	// Update platform client URL
-	as.apiClient.SetBaseURL(platformURL)
+	s.apiClient.SetBaseURL(platformURL)
 
 	// Perform login
 	fmt.Println("\nAuthenticating...")
-	loginResp, err := as.apiClient.Login(ctx, email, password)
+	loginResp, err := s.apiClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -92,14 +95,14 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	}
 
 	// Save config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL:  platformURL,
 		Token:        loginResp.Token,
 		TokenExpires: expiresAt,
 		EmployeeID:   loginResp.Employee.ID,
 	}
 
-	if err := as.configManager.Save(config); err != nil {
+	if err := s.configManager.Save(cfg); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
 
@@ -109,13 +112,13 @@ func (as *AuthService) LoginInteractive(ctx context.Context) error {
 	return nil
 }
 
-// Login performs non-interactive login
-func (as *AuthService) Login(ctx context.Context, platformURL, email, password string) error {
+// Login performs non-interactive login.
+func (s *Service) Login(ctx context.Context, platformURL, email, password string) error {
 	// Update platform client URL
-	as.apiClient.SetBaseURL(platformURL)
+	s.apiClient.SetBaseURL(platformURL)
 
 	// Perform login
-	loginResp, err := as.apiClient.Login(ctx, email, password)
+	loginResp, err := s.apiClient.Login(ctx, email, password)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -127,42 +130,42 @@ func (as *AuthService) Login(ctx context.Context, platformURL, email, password s
 	}
 
 	// Save config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL:  platformURL,
 		Token:        loginResp.Token,
 		TokenExpires: expiresAt,
 		EmployeeID:   loginResp.Employee.ID,
 	}
 
-	if err := as.configManager.Save(config); err != nil {
+	if err := s.configManager.Save(cfg); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
 
 	return nil
 }
 
-// Logout removes stored credentials
-func (as *AuthService) Logout() error {
-	if err := as.configManager.Clear(); err != nil {
+// Logout removes stored credentials.
+func (s *Service) Logout() error {
+	if err := s.configManager.Clear(); err != nil {
 		return fmt.Errorf("failed to clear config: %w", err)
 	}
 	fmt.Println("✓ Logged out successfully")
 	return nil
 }
 
-// IsAuthenticated checks if user is authenticated
-func (as *AuthService) IsAuthenticated() (bool, error) {
-	return as.configManager.IsAuthenticated()
+// IsAuthenticated checks if user is authenticated.
+func (s *Service) IsAuthenticated() (bool, error) {
+	return s.configManager.IsAuthenticated()
 }
 
-// GetConfig returns the current config
-func (as *AuthService) GetConfig() (*Config, error) {
-	return as.configManager.Load()
+// GetConfig returns the current config.
+func (s *Service) GetConfig() (*config.Config, error) {
+	return s.configManager.Load()
 }
 
-// RequireAuth ensures user is authenticated, returns error if not
-func (as *AuthService) RequireAuth() (*Config, error) {
-	authenticated, err := as.IsAuthenticated()
+// RequireAuth ensures user is authenticated, returns error if not.
+func (s *Service) RequireAuth() (*config.Config, error) {
+	authenticated, err := s.IsAuthenticated()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check authentication: %w", err)
 	}
@@ -172,7 +175,7 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 	}
 
 	// Check if token is still valid (not expired)
-	tokenValid, err := as.configManager.IsTokenValid()
+	tokenValid, err := s.configManager.IsTokenValid()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check token validity: %w", err)
 	}
@@ -181,19 +184,19 @@ func (as *AuthService) RequireAuth() (*Config, error) {
 		return nil, fmt.Errorf("authentication token has expired. Please run 'ubik login' again")
 	}
 
-	config, err := as.GetConfig()
+	cfg, err := s.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Set token on platform client
-	as.apiClient.SetToken(config.Token)
-	as.apiClient.SetBaseURL(config.PlatformURL)
+	s.apiClient.SetToken(cfg.Token)
+	s.apiClient.SetBaseURL(cfg.PlatformURL)
 
-	return config, nil
+	return cfg, nil
 }
 
-// parseExpiresAt parses the expiration timestamp from the API
+// parseExpiresAt parses the expiration timestamp from the API.
 func parseExpiresAt(expiresAt string) (time.Time, error) {
 	if expiresAt == "" {
 		// If no expiration provided, default to 24 hours from now

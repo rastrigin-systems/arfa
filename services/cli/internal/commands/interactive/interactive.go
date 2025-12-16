@@ -7,6 +7,9 @@ import (
 	"time"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
 	"github.com/spf13/cobra"
@@ -25,13 +28,13 @@ func RunInteractiveMode(cmd *cobra.Command, args []string) error {
 
 func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFlag bool) error {
 	// Initialize services
-	configManager, err := cli.NewConfigManager()
+	configManager, err := config.NewManager()
 	if err != nil {
 		return fmt.Errorf("failed to create config manager: %w", err)
 	}
 
-	apiClient := cli.NewAPIClient("")
-	authService := cli.NewAuthService(configManager, apiClient)
+	apiClient := api.NewClient("")
+	authService := auth.NewService(configManager, apiClient)
 	syncService := cli.NewSyncService(configManager, apiClient, authService)
 
 	// Ensure authenticated
@@ -55,7 +58,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	picker := cli.NewAgentPicker(configManager)
 
 	// Select agent based on flags and defaults
-	var selectedAgent *cli.AgentConfig
+	var selectedAgent *api.AgentConfig
 
 	// Case 1: Explicit --agent flag (one-time override, no save)
 	if agentFlag != "" {
