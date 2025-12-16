@@ -3,18 +3,19 @@
 package container
 
 import (
-	"sync"
+	gosync "sync"
 
 	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
 
 // Container manages dependencies for the CLI application.
 // Services are lazily initialized on first access.
 type Container struct {
-	mu sync.RWMutex
+	mu gosync.RWMutex
 
 	// Configuration
 	configPath  string
@@ -24,7 +25,7 @@ type Container struct {
 	configManager *config.Manager
 	apiClient     *api.Client
 	authService   *auth.Service
-	syncService   *cli.SyncService
+	syncService   *sync.Service
 	agentService  *cli.AgentService
 	skillsService *cli.SkillsService
 	dockerClient  *cli.DockerClient
@@ -165,7 +166,7 @@ func (c *Container) AuthService() (*auth.Service, error) {
 }
 
 // SyncService returns the SyncService, creating it if necessary.
-func (c *Container) SyncService() (*cli.SyncService, error) {
+func (c *Container) SyncService() (*sync.Service, error) {
 	c.mu.RLock()
 	if c.syncService != nil {
 		c.mu.RUnlock()
@@ -201,7 +202,7 @@ func (c *Container) SyncService() (*cli.SyncService, error) {
 	}
 	c.mu.Lock()
 
-	c.syncService = cli.NewSyncService(cm, ac, as)
+	c.syncService = sync.NewService(cm, ac, as)
 	return c.syncService, nil
 }
 

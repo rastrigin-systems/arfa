@@ -1,4 +1,4 @@
-package cli
+package sync
 
 import (
 	"encoding/json"

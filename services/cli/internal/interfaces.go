@@ -10,6 +10,7 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 )
 
 // ============================================================================
@@ -176,7 +177,7 @@ type AuthServiceInterface interface {
 // Implementations handle fetching configs from platform and storing locally.
 type SyncServiceInterface interface {
 	// Sync fetches configs from platform and stores them locally.
-	Sync(ctx context.Context) (*SyncResult, error)
+	Sync(ctx context.Context) (*sync.Result, error)
 
 	// SyncClaudeCode fetches and installs complete Claude Code configuration to targetDir.
 	SyncClaudeCode(ctx context.Context, targetDir string) error
@@ -189,11 +190,11 @@ type SyncServiceInterface interface {
 
 	// SetDockerClient sets the Docker client for container operations.
 	// Deprecated: Use SetContainerManager instead for better dependency injection.
-	SetDockerClient(dockerClient *DockerClient)
+	SetDockerClient(dockerClient sync.DockerClientInterface)
 
 	// SetContainerManager sets the container manager directly.
 	// This is the preferred way to inject container management dependencies.
-	SetContainerManager(cm ContainerManagerInterface)
+	SetContainerManager(cm sync.ContainerManagerInterface)
 
 	// StartContainers starts Docker containers for synced agent configs.
 	StartContainers(ctx context.Context, workspacePath string, apiKey string) error
@@ -202,7 +203,7 @@ type SyncServiceInterface interface {
 	StopContainers(ctx context.Context) error
 
 	// GetContainerStatus returns the status of all containers.
-	GetContainerStatus(ctx context.Context) ([]ContainerInfo, error)
+	GetContainerStatus(ctx context.Context) ([]sync.ContainerInfo, error)
 }
 
 // AgentServiceInterface defines the contract for agent management operations.
@@ -366,7 +367,7 @@ var (
 	_ ConfigManagerInterface    = (*config.Manager)(nil)
 	_ APIClientInterface        = (*api.Client)(nil)
 	_ AuthServiceInterface      = (*auth.Service)(nil)
-	_ SyncServiceInterface      = (*SyncService)(nil)
+	_ SyncServiceInterface      = (*sync.Service)(nil)
 	_ AgentServiceInterface     = (*AgentService)(nil)
 	_ SkillsServiceInterface    = (*SkillsService)(nil)
 	_ DockerClientInterface     = (*DockerClient)(nil)

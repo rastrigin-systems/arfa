@@ -1,4 +1,4 @@
-package cli
+package sync
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSyncService_Sync_Success(t *testing.T) {
+func TestService_Sync_Success(t *testing.T) {
 	tempDir := t.TempDir()
 
 	// Setup mock platform server
@@ -65,7 +65,7 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", oldHome)
 
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Perform sync
 	ctx := context.Background()
@@ -77,14 +77,14 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	assert.Equal(t, "Claude Code", result.AgentConfigs[0].AgentName)
 }
 
-func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
+func TestService_Sync_NotAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
 	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	pc := api.NewClient("https://test.example.com")
 	authService := auth.NewService(cm, pc)
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Sync should fail when not authenticated
 	ctx := context.Background()
@@ -95,7 +95,7 @@ func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
 	assert.Contains(t, err.Error(), "not authenticated")
 }
 
-func TestSyncService_Sync_NoConfigs(t *testing.T) {
+func TestService_Sync_NoConfigs(t *testing.T) {
 	tempDir := t.TempDir()
 
 	// Setup mock platform server that returns empty configs
@@ -131,7 +131,7 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	pc.SetToken("test-token")
 	authService := auth.NewService(cm, pc)
 
-	syncService := NewSyncService(cm, pc, authService)
+	syncService := NewService(cm, pc, authService)
 
 	// Perform sync
 	ctx := context.Background()
