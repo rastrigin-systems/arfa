@@ -1,4 +1,4 @@
-package cli
+package auth
 
 import (
 	"context"
@@ -8,22 +8,24 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Helper function to create a mock login server
+// Helper function to create a mock login server.
 func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
-			var reqBody LoginRequest
+			var reqBody api.LoginRequest
 			json.NewDecoder(r.Body).Decode(&reqBody)
 
 			// Return success response
-			resp := LoginResponse{
+			resp := api.LoginResponse{
 				Token:     "test-token-abc123",
 				ExpiresAt: "2024-12-31T23:59:59Z",
-				Employee: LoginEmployeeInfo{
+				Employee: api.LoginEmployeeInfo{
 					ID:    "emp-123",
 					OrgID: "org-456",
 					Email: expectedEmail,
@@ -37,7 +39,7 @@ func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string)
 	}))
 }
 
-// Helper function to create a mock server that returns errors
+// Helper function to create a mock server that returns errors.
 func createMockLoginServerWithError(t *testing.T, statusCode int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
@@ -45,14 +47,12 @@ func createMockLoginServerWithError(t *testing.T, statusCode int) *httptest.Serv
 	}))
 }
 
-func TestAuthService_IsAuthenticated(t *testing.T) {
+func TestService_IsAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
 
 	// Initially not authenticated
 	authenticated, err := authService.IsAuthenticated()
@@ -60,12 +60,12 @@ func TestAuthService_IsAuthenticated(t *testing.T) {
 	assert.False(t, authenticated)
 
 	// Manually save config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL: "https://test.example.com",
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
 	}
-	err = cm.Save(config)
+	err = cm.Save(cfg)
 	require.NoError(t, err)
 
 	// Now should be authenticated
@@ -74,22 +74,20 @@ func TestAuthService_IsAuthenticated(t *testing.T) {
 	assert.True(t, authenticated)
 }
 
-func TestAuthService_Logout(t *testing.T) {
+func TestService_Logout(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
 
 	// Save config
-	config := &Config{
+	cfg := &config.Config{
 		PlatformURL: "https://test.example.com",
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
 	}
-	err := cm.Save(config)
+	err := cm.Save(cfg)
 	require.NoError(t, err)
 
 	// Logout
@@ -102,17 +100,15 @@ func TestAuthService_Logout(t *testing.T) {
 	assert.False(t, authenticated)
 }
 
-func TestAuthService_GetConfig(t *testing.T) {
+func TestService_GetConfig(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
 
 	// Save config
-	expectedConfig := &Config{
+	expectedConfig := &config.Config{
 		PlatformURL: "https://test.example.com",
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
@@ -121,40 +117,36 @@ func TestAuthService_GetConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get config
-	config, err := authService.GetConfig()
+	cfg, err := authService.GetConfig()
 	require.NoError(t, err)
-	assert.Equal(t, expectedConfig.PlatformURL, config.PlatformURL)
-	assert.Equal(t, expectedConfig.Token, config.Token)
-	assert.Equal(t, expectedConfig.EmployeeID, config.EmployeeID)
+	assert.Equal(t, expectedConfig.PlatformURL, cfg.PlatformURL)
+	assert.Equal(t, expectedConfig.Token, cfg.Token)
+	assert.Equal(t, expectedConfig.EmployeeID, cfg.EmployeeID)
 }
 
-func TestAuthService_RequireAuth_NotAuthenticated(t *testing.T) {
+func TestService_RequireAuth_NotAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
 
 	// RequireAuth should fail when not authenticated
-	config, err := authService.RequireAuth()
+	cfg, err := authService.RequireAuth()
 	assert.Error(t, err)
-	assert.Nil(t, config)
+	assert.Nil(t, cfg)
 	assert.Contains(t, err.Error(), "not authenticated")
 }
 
-func TestAuthService_RequireAuth_Authenticated(t *testing.T) {
+func TestService_RequireAuth_Authenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
-	pc := NewAPIClient("https://test.example.com")
-	authService := NewAuthService(cm, pc)
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
 
 	// Save config
-	expectedConfig := &Config{
+	expectedConfig := &config.Config{
 		PlatformURL: "https://test.example.com",
 		Token:       "test-token",
 		EmployeeID:  "employee-id",
@@ -163,29 +155,27 @@ func TestAuthService_RequireAuth_Authenticated(t *testing.T) {
 	require.NoError(t, err)
 
 	// RequireAuth should succeed
-	config, err := authService.RequireAuth()
+	cfg, err := authService.RequireAuth()
 	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, expectedConfig.Token, config.Token)
+	assert.NotNil(t, cfg)
+	assert.Equal(t, expectedConfig.Token, cfg.Token)
 
 	// Verify platform client was updated
-	assert.Equal(t, expectedConfig.Token, pc.token)
-	assert.Equal(t, expectedConfig.PlatformURL, pc.baseURL)
+	assert.Equal(t, expectedConfig.Token, pc.Token())
+	assert.Equal(t, expectedConfig.PlatformURL, pc.BaseURL())
 }
 
-func TestAuthService_Login_Success(t *testing.T) {
+func TestService_Login_Success(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Create mock server
 	server := createMockLoginServer(t, "test@example.com", "password123")
 	defer server.Close()
 
-	pc := NewAPIClient(server.URL)
-	authService := NewAuthService(cm, pc)
+	pc := api.NewClient(server.URL)
+	authService := NewService(cm, pc)
 
 	// Perform login
 	ctx := context.Background()
@@ -193,26 +183,24 @@ func TestAuthService_Login_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify config was saved
-	config, err := cm.Load()
+	cfg, err := cm.Load()
 	require.NoError(t, err)
-	assert.Equal(t, server.URL, config.PlatformURL)
-	assert.Equal(t, "test-token-abc123", config.Token)
-	assert.Equal(t, "emp-123", config.EmployeeID)
+	assert.Equal(t, server.URL, cfg.PlatformURL)
+	assert.Equal(t, "test-token-abc123", cfg.Token)
+	assert.Equal(t, "emp-123", cfg.EmployeeID)
 }
 
-func TestAuthService_Login_InvalidCredentials(t *testing.T) {
+func TestService_Login_InvalidCredentials(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Create mock server that returns 401
 	server := createMockLoginServerWithError(t, 401)
 	defer server.Close()
 
-	pc := NewAPIClient(server.URL)
-	authService := NewAuthService(cm, pc)
+	pc := api.NewClient(server.URL)
+	authService := NewService(cm, pc)
 
 	// Perform login - should fail
 	ctx := context.Background()
@@ -221,8 +209,50 @@ func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	assert.Contains(t, err.Error(), "authentication failed")
 
 	// Verify config was NOT saved (should return empty config)
-	config, err := cm.Load()
+	cfg, err := cm.Load()
 	require.NoError(t, err) // Load returns empty config, not error
-	assert.Empty(t, config.Token)
-	assert.Empty(t, config.EmployeeID)
+	assert.Empty(t, cfg.Token)
+	assert.Empty(t, cfg.EmployeeID)
+}
+
+func TestParseExpiresAt(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantErr   bool
+		checkFunc func(t *testing.T, result interface{})
+	}{
+		{
+			name:    "empty string defaults to 24 hours",
+			input:   "",
+			wantErr: false,
+		},
+		{
+			name:    "RFC3339 format",
+			input:   "2024-12-31T23:59:59Z",
+			wantErr: false,
+		},
+		{
+			name:    "RFC3339Nano format",
+			input:   "2024-12-31T23:59:59.123456789Z",
+			wantErr: false,
+		},
+		{
+			name:    "invalid format",
+			input:   "not-a-date",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseExpiresAt(tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.False(t, result.IsZero())
+			}
+		})
+	}
 }

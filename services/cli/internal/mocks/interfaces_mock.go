@@ -116,17 +116,17 @@ func (mr *MockConfigManagerInterfaceMockRecorder) Load() *gomock.Call {
 }
 
 // Save mocks base method.
-func (m *MockConfigManagerInterface) Save(config *cli.Config) error {
+func (m *MockConfigManagerInterface) Save(cfg *cli.Config) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", config)
+	ret := m.ctrl.Call(m, "Save", cfg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Save indicates an expected call of Save.
-func (mr *MockConfigManagerInterfaceMockRecorder) Save(config any) *gomock.Call {
+func (mr *MockConfigManagerInterfaceMockRecorder) Save(cfg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockConfigManagerInterface)(nil).Save), config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockConfigManagerInterface)(nil).Save), cfg)
 }
 
 // MockAPIClientInterface is a mock of APIClientInterface interface.
@@ -301,10 +301,10 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetEmployeeSkill(ctx, skillID any)
 }
 
 // GetLogs mocks base method.
-func (m *MockAPIClientInterface) GetLogs(ctx context.Context, params cli.GetLogsParams) (*cli.APILogsResponse, error) {
+func (m *MockAPIClientInterface) GetLogs(ctx context.Context, params cli.GetLogsParams) (*cli.LogsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLogs", ctx, params)
-	ret0, _ := ret[0].(*cli.APILogsResponse)
+	ret0, _ := ret[0].(*cli.LogsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

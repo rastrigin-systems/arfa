@@ -12,9 +12,7 @@ import (
 func TestSyncService_SetDockerClient(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -46,9 +44,7 @@ func TestSyncService_SetDockerClient(t *testing.T) {
 func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -63,9 +59,7 @@ func TestSyncService_StartContainers_NoDockerClient(t *testing.T) {
 func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -80,9 +74,7 @@ func TestSyncService_StopContainers_NoContainerManager(t *testing.T) {
 func TestSyncService_GetContainerStatus_NoContainerManager(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -113,9 +105,7 @@ func TestSyncService_StartContainers_NoConfigs(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -143,9 +133,7 @@ func TestSyncService_GetContainerStatus_WithDocker(t *testing.T) {
 
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -225,9 +213,7 @@ func TestSyncService_FullLifecycle_Integration(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	cm := &ConfigManager{
-		configPath: tempDir + "/config.json",
-	}
+	cm := NewConfigManagerWithPath(tempDir + "/config.json")
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)

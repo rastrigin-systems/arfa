@@ -1,7 +1,9 @@
 package container
 
 import (
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // TestContainer provides utilities for creating containers in tests.
@@ -13,21 +15,21 @@ func NewTestContainer(opts ...Option) *Container {
 	return New(opts...)
 }
 
-// WithMockConfigManager sets a ConfigManager for testing.
+// WithMockConfigManager sets a config.Manager for testing.
 // This allows injecting a mock or test implementation.
-func WithMockConfigManager(cm *cli.ConfigManager) Option {
+func WithMockConfigManager(cm *config.Manager) Option {
 	return WithConfigManager(cm)
 }
 
-// WithMockAPIClient sets an APIClient for testing.
+// WithMockAPIClient sets an api.Client for testing.
 // This allows injecting a mock or test implementation.
-func WithMockAPIClient(ac *cli.APIClient) Option {
+func WithMockAPIClient(ac *api.Client) Option {
 	return WithAPIClient(ac)
 }
 
-// WithMockAuthService sets an AuthService for testing.
+// WithMockAuthService sets an auth.Service for testing.
 // This allows injecting a mock or test implementation.
-func WithMockAuthService(as *cli.AuthService) Option {
+func WithMockAuthService(as *auth.Service) Option {
 	return WithAuthService(as)
 }
 
@@ -53,20 +55,20 @@ func (b *TestContainerBuilder) WithPlatformURL(url string) *TestContainerBuilder
 	return b
 }
 
-// WithConfigManager injects a ConfigManager for testing.
-func (b *TestContainerBuilder) WithConfigManager(cm *cli.ConfigManager) *TestContainerBuilder {
+// WithConfigManager injects a config.Manager for testing.
+func (b *TestContainerBuilder) WithConfigManager(cm *config.Manager) *TestContainerBuilder {
 	b.opts = append(b.opts, WithConfigManager(cm))
 	return b
 }
 
-// WithAPIClient injects an APIClient for testing.
-func (b *TestContainerBuilder) WithAPIClient(ac *cli.APIClient) *TestContainerBuilder {
+// WithAPIClient injects an api.Client for testing.
+func (b *TestContainerBuilder) WithAPIClient(ac *api.Client) *TestContainerBuilder {
 	b.opts = append(b.opts, WithAPIClient(ac))
 	return b
 }
 
-// WithAuthService injects an AuthService for testing.
-func (b *TestContainerBuilder) WithAuthService(as *cli.AuthService) *TestContainerBuilder {
+// WithAuthService injects an auth.Service for testing.
+func (b *TestContainerBuilder) WithAuthService(as *auth.Service) *TestContainerBuilder {
 	b.opts = append(b.opts, WithAuthService(as))
 	return b
 }

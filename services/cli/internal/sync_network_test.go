@@ -41,9 +41,7 @@ func TestSyncService_Sync_Success(t *testing.T) {
 	defer server.Close()
 
 	// Setup config manager
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Save authentication config
 	config := &Config{
@@ -79,9 +77,7 @@ func TestSyncService_Sync_Success(t *testing.T) {
 func TestSyncService_Sync_NotAuthenticated(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
@@ -116,9 +112,7 @@ func TestSyncService_Sync_NoConfigs(t *testing.T) {
 	defer server.Close()
 
 	// Setup config manager
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 
 	// Save authentication config
 	config := &Config{

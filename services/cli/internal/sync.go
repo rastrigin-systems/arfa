@@ -7,6 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 // SyncService handles config synchronization
@@ -20,7 +24,7 @@ type SyncService struct {
 
 // NewSyncService creates a new SyncService with concrete types.
 // This is the primary constructor for production use.
-func NewSyncService(configManager *ConfigManager, apiClient *APIClient, authService *AuthService) *SyncService {
+func NewSyncService(configManager *config.Manager, apiClient *api.Client, authService *auth.Service) *SyncService {
 	return &SyncService{
 		configManager: configManager,
 		apiClient:     apiClient,
@@ -55,7 +59,7 @@ func (ss *SyncService) SetContainerManager(cm ContainerManagerInterface) {
 
 // SyncResult represents the result of a sync operation
 type SyncResult struct {
-	AgentConfigs []AgentConfig
+	AgentConfigs []api.AgentConfig
 	UpdatedAt    time.Time
 }
 

@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 )
 
 func TestNew(t *testing.T) {
@@ -70,8 +71,8 @@ func TestContainer_WithPreConfiguredServices(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Pre-configure services
-	cm := cli.NewConfigManagerWithPath(configPath)
-	ac := cli.NewAPIClient("https://test.example.com")
+	cm := config.NewManagerWithPath(configPath)
+	ac := api.NewClient("https://test.example.com")
 
 	c := New(
 		WithConfigManager(cm),

@@ -12,9 +12,7 @@ import (
 func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -103,9 +101,7 @@ func TestSyncService_SaveAndGetLocalAgentConfigs(t *testing.T) {
 func TestSyncService_GetAgentConfig(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)
@@ -157,9 +153,7 @@ func TestSyncService_GetAgentConfig(t *testing.T) {
 func TestSyncService_GetLocalAgentConfigs_EmptyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 
-	cm := &ConfigManager{
-		configPath: filepath.Join(tempDir, "config.json"),
-	}
+	cm := NewConfigManagerWithPath(filepath.Join(tempDir, "config.json"))
 	pc := NewAPIClient("https://test.example.com")
 	authService := NewAuthService(cm, pc)
 	syncService := NewSyncService(cm, pc, authService)

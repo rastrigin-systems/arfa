@@ -16,7 +16,7 @@ func TestNewAgentPicker(t *testing.T) {
 
 	// Create config manager with temp dir
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 	if picker == nil {
@@ -36,7 +36,7 @@ func TestAgentPicker_GetDefaultAgent_NoConfig(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 	defaultAgent := picker.GetDefaultAgent()
@@ -55,7 +55,7 @@ func TestAgentPicker_GetDefaultAgent_WithConfig(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	// Save config with default agent
 	config := &Config{
@@ -82,7 +82,7 @@ func TestAgentPicker_ClearDefault(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	// Save config with default agent
 	config := &Config{
@@ -115,7 +115,7 @@ func TestAgentPicker_SelectAgent_NoAgents(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 
@@ -137,7 +137,7 @@ func TestAgentPicker_SelectAgent_NoEnabledAgents(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	picker := NewAgentPicker(configManager)
 
@@ -167,7 +167,7 @@ func TestAgentPicker_SelectAgent_SingleAgent(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.json")
-	configManager := &ConfigManager{configPath: configPath}
+	configManager := NewConfigManagerWithPath(configPath)
 
 	// Save empty config
 	if err := configManager.Save(&Config{}); err != nil {

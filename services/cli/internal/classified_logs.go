@@ -4,30 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 )
 
-// APILogEntry represents a log entry from the API response
-type APILogEntry struct {
-	ID            string                 `json:"id"`
-	SessionID     string                 `json:"session_id"`
-	AgentID       string                 `json:"agent_id,omitempty"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Content       string                 `json:"content"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-}
-
-// APILogsResponse represents the paginated logs response from the API
-type APILogsResponse struct {
-	Logs       []APILogEntry `json:"logs"`
-	TotalCount int           `json:"total_count"`
-	Page       int           `json:"page"`
-	PerPage    int           `json:"per_page"`
-}
+// Note: APILogEntry and APILogsResponse are now defined as type aliases in types_api.go
 
 // GetClassifiedLogs retrieves classified logs from the API using the provided APIClient.
 // The APIClient must have a valid token set.

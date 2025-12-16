@@ -418,9 +418,7 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	defer server.Close()
 
 	// Create services with real types
-	configManager := &ConfigManager{
-		configPath: filepath.Join(homeDir, ".ubik", "config.json"),
-	}
+	configManager := NewConfigManagerWithPath(filepath.Join(homeDir, ".ubik", "config.json"))
 
 	// Save test config
 	testConfig := &Config{
@@ -432,10 +430,7 @@ func TestSyncService_SyncClaudeCode_Integration(t *testing.T) {
 	apiClient := NewAPIClient(server.URL)
 	apiClient.SetToken("test-token")
 
-	authService := &AuthService{
-		configManager: configManager,
-		apiClient:     apiClient,
-	}
+	authService := NewAuthService(configManager, apiClient)
 
 	syncService := NewSyncService(configManager, apiClient, authService)
 

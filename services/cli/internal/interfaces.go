@@ -25,7 +25,7 @@ type ConfigManagerInterface interface {
 	Load() (*Config, error)
 
 	// Save persists the configuration to disk.
-	Save(config *Config) error
+	Save(cfg *Config) error
 
 	// IsAuthenticated checks if the user has valid credentials stored.
 	// Returns true if both token and employee_id are present.
@@ -136,7 +136,7 @@ type APIClientInterface interface {
 	CreateLogBatch(ctx context.Context, entries []LogEntry) error
 
 	// GetLogs fetches logs from the API with optional filters.
-	GetLogs(ctx context.Context, params GetLogsParams) (*APILogsResponse, error)
+	GetLogs(ctx context.Context, params GetLogsParams) (*LogsResponse, error)
 }
 
 // ============================================================================

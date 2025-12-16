@@ -71,7 +71,7 @@ type CreateEmployeeAgentConfigRequest struct {
 // ListAgents fetches all available agents from the platform
 func (as *AgentService) ListAgents(ctx context.Context) ([]Agent, error) {
 	var resp ListAgentsResponse
-	if err := as.client.doRequest(ctx, "GET", "/agents", nil, &resp); err != nil {
+	if err := as.client.DoRequest(ctx, "GET", "/agents", nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list agents: %w", err)
 	}
 	return resp.Agents, nil
@@ -81,7 +81,7 @@ func (as *AgentService) ListAgents(ctx context.Context) ([]Agent, error) {
 func (as *AgentService) GetAgent(ctx context.Context, agentID string) (*Agent, error) {
 	var agent Agent
 	endpoint := fmt.Sprintf("/agents/%s", agentID)
-	if err := as.client.doRequest(ctx, "GET", endpoint, nil, &agent); err != nil {
+	if err := as.client.DoRequest(ctx, "GET", endpoint, nil, &agent); err != nil {
 		return nil, fmt.Errorf("failed to get agent: %w", err)
 	}
 	return &agent, nil
@@ -91,7 +91,7 @@ func (as *AgentService) GetAgent(ctx context.Context, agentID string) (*Agent, e
 func (as *AgentService) ListEmployeeAgentConfigs(ctx context.Context, employeeID string) ([]EmployeeAgentConfig, error) {
 	var resp ListEmployeeAgentConfigsResponse
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := as.client.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := as.client.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list employee agent configs: %w", err)
 	}
 	return resp.AgentConfigs, nil
@@ -106,7 +106,7 @@ func (as *AgentService) RequestAgent(ctx context.Context, employeeID, agentID st
 	}
 
 	endpoint := fmt.Sprintf("/employees/%s/agent-configs", employeeID)
-	if err := as.client.doRequest(ctx, "POST", endpoint, reqBody, nil); err != nil {
+	if err := as.client.DoRequest(ctx, "POST", endpoint, reqBody, nil); err != nil {
 		return fmt.Errorf("failed to request agent: %w", err)
 	}
 
