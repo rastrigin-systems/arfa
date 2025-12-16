@@ -403,4 +403,3 @@ func (c *APIClient) doRequest(ctx context.Context, method, path string, body int
 
 	return nil
 }
-
