@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getRoles } from '../api/roles';
-import type { Role } from '../api/types';
+import { getRoles, type Role } from '../api/roles';
 
 /**
  * Hook to fetch list of all roles

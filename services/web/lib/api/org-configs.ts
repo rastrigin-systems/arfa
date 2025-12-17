@@ -40,7 +40,7 @@ export async function clientCreateOrgAgentConfig(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to create org agent config');
+    throw new Error(getErrorMessage(errorData, 'Failed to create org agent config'));
   }
 
   return response.json();
@@ -63,7 +63,7 @@ export async function clientUpdateOrgAgentConfig(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to update org agent config');
+    throw new Error(getErrorMessage(errorData, 'Failed to update org agent config'));
   }
 
   return response.json();
@@ -81,7 +81,7 @@ export async function clientDeleteOrgAgentConfig(configId: string): Promise<void
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to delete org agent config');
+    throw new Error(getErrorMessage(errorData, 'Failed to delete org agent config'));
   }
 }
 

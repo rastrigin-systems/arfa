@@ -1,4 +1,11 @@
-import type { Team } from './types';
+import { getErrorMessage } from './errors';
+import type { components } from './schema';
+
+// Use schema types for API responses
+type SchemaTeam = components['schemas']['Team'];
+
+// Re-export for backwards compatibility
+export type Team = SchemaTeam;
 
 /**
  * Get list of all teams in the organization
@@ -10,7 +17,8 @@ export async function getTeams(): Promise<Team[]> {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch teams');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch teams'));
   }
 
   const data = await response.json();

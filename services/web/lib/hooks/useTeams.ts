@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getTeams } from '../api/teams';
-import type { Team } from '../api/types';
+import { getTeams, type Team } from '../api/teams';
 
 /**
  * Hook to fetch list of all teams
