@@ -8,80 +8,17 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 import { ConfigurationHierarchy } from '@/components/employees/ConfigurationHierarchy';
-
-type Employee = {
-  readonly id: string;
-  org_id: string;
-  team_id?: string | null;
-  readonly team_name?: string | null;
-  role_id: string;
-  email: string;
-  full_name: string;
-  status: 'active' | 'suspended' | 'inactive';
-  preferences?: Record<string, unknown>;
-  readonly has_personal_claude_token?: boolean;
-  readonly last_login_at?: string | null;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type AgentConfig = {
-  readonly id: string;
-  employee_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config_override: Record<string, unknown>;
-  override_reason?: string | null;
-  is_enabled: boolean;
-  sync_token?: string | null;
-  readonly last_synced_at?: string | null;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type OrgAgentConfig = {
-  readonly id: string;
-  org_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config: Record<string, unknown>;
-  is_enabled: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type TeamAgentConfig = {
-  readonly id: string;
-  team_id: string;
-  agent_id: string;
-  readonly agent_name?: string;
-  readonly agent_type?: string;
-  readonly agent_provider?: string;
-  config_override: Record<string, unknown>;
-  is_enabled: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
-};
-
-type ResolvedAgentConfig = {
-  agent_id: string;
-  agent_name: string;
-  agent_type: string;
-  provider: string;
-  config: Record<string, unknown>;
-  system_prompt?: string;
-  is_enabled: boolean;
-  sync_token?: string | null;
-  last_synced_at?: string | null;
-};
+import type {
+  Employee,
+  EmployeeAgentConfig,
+  OrgAgentConfig,
+  TeamAgentConfig,
+  ResolvedAgentConfig,
+} from '@/lib/types';
 
 type EmployeeDetailClientProps = {
   employee: Employee;
-  agentConfigs: AgentConfig[];
+  agentConfigs: EmployeeAgentConfig[];
   orgConfigs: OrgAgentConfig[];
   teamConfigs: TeamAgentConfig[];
   resolvedConfigs: ResolvedAgentConfig[];

@@ -4,16 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Trash2, Users } from 'lucide-react';
-
-type Role = {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  employee_count?: number;
-  created_at: string;
-  updated_at: string;
-};
+import type { Role } from '@/lib/types';
 
 type RoleCardProps = {
   role: Role;
@@ -28,7 +19,7 @@ export function RoleCard({ role, onEdit, onDelete }: RoleCardProps) {
         <CardTitle className="flex items-center justify-between">
           <span className="truncate">{role.name}</span>
           <Badge variant="secondary" className="ml-2">
-            {role.permissions.length} {role.permissions.length === 1 ? 'permission' : 'permissions'}
+            {(role.permissions?.length ?? 0)} {(role.permissions?.length ?? 0) === 1 ? 'permission' : 'permissions'}
           </Badge>
         </CardTitle>
         <CardDescription className="line-clamp-2">

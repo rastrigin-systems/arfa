@@ -10,16 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-type Role = {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  employee_count?: number;
-  created_at: string;
-  updated_at: string;
-};
+import type { Role } from '@/lib/types';
 
 type DeleteRoleDialogProps = {
   isOpen: boolean;

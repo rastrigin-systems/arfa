@@ -14,16 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-
-type Role = {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  employee_count?: number;
-  created_at: string;
-  updated_at: string;
-};
+import type { Role } from '@/lib/types';
 
 type EditRoleModalProps = {
   isOpen: boolean;
@@ -54,16 +45,16 @@ const AVAILABLE_PERMISSIONS = [
 
 export function EditRoleModal({ isOpen, onClose, onEdit, role }: EditRoleModalProps) {
   const [name, setName] = useState(role.name);
-  const [description, setDescription] = useState(role.description);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(role.permissions);
+  const [description, setDescription] = useState(role.description ?? '');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(role.permissions ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update form when role changes
   useEffect(() => {
     setName(role.name);
-    setDescription(role.description);
-    setSelectedPermissions(role.permissions);
+    setDescription(role.description ?? '');
+    setSelectedPermissions(role.permissions ?? []);
   }, [role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,7 +138,7 @@ export function EditRoleModal({ isOpen, onClose, onEdit, role }: EditRoleModalPr
             <Textarea
               id="description"
               placeholder="Describe the purpose of this role..."
-              value={description}
+              value={description ?? ''}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />

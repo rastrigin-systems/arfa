@@ -9,16 +9,7 @@ import { CreateRoleModal } from './components/CreateRoleModal';
 import { EditRoleModal } from './components/EditRoleModal';
 import { DeleteRoleDialog } from './components/DeleteRoleDialog';
 import { useToast } from '@/components/ui/use-toast';
-
-type Role = {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  employee_count?: number;
-  created_at: string;
-  updated_at: string;
-};
+import type { Role } from '@/lib/types';
 
 type RolesClientProps = {
   initialRoles: Role[];
@@ -49,7 +40,6 @@ export function RolesClient({ initialRoles }: RolesClientProps) {
         permissions: data.permissions,
         employee_count: 0,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
 
       setRoles([...roles, newRole]);
@@ -79,7 +69,6 @@ export function RolesClient({ initialRoles }: RolesClientProps) {
         name: data.name,
         description: data.description,
         permissions: data.permissions,
-        updated_at: new Date().toISOString(),
       };
 
       setRoles(roles.map((r) => (r.id === editingRole.id ? updatedRole : r)));
