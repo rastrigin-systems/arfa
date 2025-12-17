@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useTeams } from '@/lib/hooks/useTeams';
 import { useEmployees } from '@/lib/hooks/useEmployees';
-import type { Agent } from '@/lib/types';
+import type { Agent, AgentConfig } from '@/lib/types';
 
 type ConfigWithLevel = {
   id: string;
@@ -20,7 +20,7 @@ type ConfigWithLevel = {
   agent_id: string;
   agent_name?: string;
   agent_type?: string;
-  config: Record<string, unknown>;
+  config: AgentConfig;
   is_enabled: boolean;
   level: 'organization' | 'team' | 'employee';
   assigned_to: string;
@@ -103,7 +103,7 @@ export function CreateConfigModal({ agents, open, onOpenChange, onSuccess, editi
     }
 
     // Validate JSON
-    let config: Record<string, unknown>;
+    let config: AgentConfig;
     try {
       config = JSON.parse(configJson);
     } catch {

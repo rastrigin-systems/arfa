@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type { AgentConfig } from '@/lib/types';
 
 type ConfigWithLevel = {
   id: string;
@@ -18,7 +19,7 @@ type ConfigWithLevel = {
   agent_id: string;
   agent_name?: string;
   agent_type?: string;
-  config: Record<string, unknown>;
+  config: AgentConfig;
   is_enabled: boolean;
   level: 'organization' | 'team' | 'employee';
   assigned_to: string;
@@ -44,7 +45,7 @@ function LevelIcon({ level }: { level: string }) {
   }
 }
 
-function ConfigPreview({ config }: { config: Record<string, unknown> }) {
+function ConfigPreview({ config }: { config: AgentConfig }) {
   const entries = Object.entries(config).slice(0, 3);
   if (entries.length === 0) {
     return <span className="text-muted-foreground">No configuration</span>;

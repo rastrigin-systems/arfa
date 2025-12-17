@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { EmployeeAgentOverridesTable, type EmployeeAgentOverride } from '@/components/agents/EmployeeAgentOverridesTable';
 import { ArrowLeft } from 'lucide-react';
+import type { EmployeePreferences } from '@/lib/types';
 
 type Employee = {
   readonly id: string;
@@ -17,7 +18,7 @@ type Employee = {
   email: string;
   full_name: string;
   status: 'active' | 'suspended' | 'inactive';
-  preferences?: Record<string, unknown>;
+  preferences?: EmployeePreferences;
   readonly created_at?: string;
   readonly updated_at?: string;
 };
