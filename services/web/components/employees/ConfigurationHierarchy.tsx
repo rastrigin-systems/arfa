@@ -6,19 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronDown, ChevronRight, Building2, Users, User, CheckCircle2, ArrowUp } from 'lucide-react';
-import type { OrgAgentConfig, TeamAgentConfig, EmployeeAgentConfig } from '@/lib/types';
-
-type ResolvedAgentConfig = {
-  agent_id: string;
-  agent_name: string;
-  agent_type: string;
-  provider: string;
-  config: Record<string, unknown>;
-  system_prompt?: string;
-  is_enabled: boolean;
-  sync_token?: string | null;
-  last_synced_at?: string | null;
-};
+import type { OrgAgentConfig, TeamAgentConfig, EmployeeAgentConfig, ResolvedAgentConfig, AgentConfig } from '@/lib/types';
 
 type ConfigurationHierarchyProps = {
   orgConfigs: OrgAgentConfig[];
@@ -29,7 +17,7 @@ type ConfigurationHierarchyProps = {
   employeeName: string;
 };
 
-function getConfigPreview(config: Record<string, unknown>, maxKeys = 3): string {
+function getConfigPreview(config: AgentConfig, maxKeys = 3): string {
   const entries = Object.entries(config).slice(0, maxKeys);
   return entries.map(([key, value]) => {
     const displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
@@ -94,7 +82,7 @@ type ViewConfigModalProps = {
   onOpenChange: (open: boolean) => void;
   agentName: string;
   level: string;
-  config: Record<string, unknown>;
+  config: AgentConfig;
   isEnabled: boolean;
   updatedAt?: string | null;
 };

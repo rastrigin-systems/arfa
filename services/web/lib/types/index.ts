@@ -25,3 +25,6 @@ export type Role = components['schemas']['Role'];
 
 // Organization types
 export type Organization = components['schemas']['Organization'];
+
+// Configuration types (flexible JSON-compatible types for agent configs)
+export type { AgentConfig, AgentConfigValue, EmployeePreferences } from './configs';

@@ -23,6 +23,7 @@ import {
   filterEmployeesByStatus,
   searchEmployees,
 } from '../fixtures/mockData';
+import type { AgentConfig, EmployeePreferences } from '@/lib/types';
 
 const API_BASE = 'http://localhost:8080/api/v1';
 
@@ -134,7 +135,7 @@ export const handlers = [
       role_id: string;
       email: string;
       full_name: string;
-      preferences?: Record<string, unknown>;
+      preferences?: EmployeePreferences;
     };
 
     // Create new employee with mock data
@@ -301,7 +302,7 @@ export const handlers = [
     const body = (await request.json()) as {
       agent_id: string;
       is_enabled?: boolean;
-      config: Record<string, unknown>;
+      config: AgentConfig;
     };
 
     const agent = mockAgents.find((a) => a.id === body.agent_id);

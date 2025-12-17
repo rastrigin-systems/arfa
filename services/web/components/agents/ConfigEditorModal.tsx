@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import type { Agent } from '@/lib/types';
+import type { Agent, AgentConfig } from '@/lib/types';
 
 // Dynamically import Monaco Editor to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
@@ -14,7 +14,7 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false 
 type ExistingConfig = {
   id: string;
   agent_id: string;
-  config: Record<string, unknown>;
+  config: AgentConfig;
   is_enabled: boolean;
 };
 
@@ -41,7 +41,7 @@ export function ConfigEditorModal({ agent, existingConfig, open, onOpenChange, o
 
   const handleSubmit = async () => {
     // Validate JSON
-    let parsedConfig: Record<string, unknown>;
+    let parsedConfig: AgentConfig;
     try {
       parsedConfig = JSON.parse(configValue);
     } catch {

@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Power, PowerOff } from 'lucide-react';
+import type { AgentConfig } from '@/lib/types';
 
 export type EmployeeAgentOverride = {
   id: string;
@@ -11,14 +12,14 @@ export type EmployeeAgentOverride = {
   agent_name?: string;
   agent_type?: string;
   agent_provider?: string;
-  config_override: Record<string, unknown>;
+  config_override: AgentConfig;
   override_reason?: string;
   is_enabled: boolean;
   created_at?: string;
   updated_at?: string;
   updated_by?: string;
-  org_config?: Record<string, unknown>;
-  team_config?: Record<string, unknown>;
+  org_config?: AgentConfig;
+  team_config?: AgentConfig;
 };
 
 type EmployeeAgentOverridesTableProps = {
