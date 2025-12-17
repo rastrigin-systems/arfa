@@ -12,23 +12,20 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"golang.org/x/term"
 )
 
 // Runner manages native process execution for agents
 type Runner struct {
-	cmd               *exec.Cmd
-	pty               *os.File
-	workspace         string
-	proxyPort         int
-	certPath          string
-	sessionID         string
-	agentID           string
-	stopped           bool
-	mu                sync.Mutex
-	controlClient     *httpproxy.ControlClient
-	sessionRegistered bool
+	cmd       *exec.Cmd
+	pty       *os.File
+	workspace string
+	proxyPort int
+	certPath  string
+	sessionID string
+	agentID   string
+	stopped   bool
+	mu        sync.Mutex
 }
 
 // NewRunner creates a new native runner instance
@@ -162,25 +159,6 @@ func (r *Runner) Start(ctx context.Context, config RunnerConfig) error {
 
 // Run executes the agent and handles I/O proxying
 func (r *Runner) Run(ctx context.Context, config RunnerConfig, stdin io.Reader, stdout, stderr io.Writer) error {
-	// Try to register with security gateway for session-specific proxy
-	sessionResp, err := r.RegisterWithSecurityGateway(config)
-	if err != nil {
-		// Security gateway not running - this is optional for now
-		// In the future, we may want to make this required (fail-closed)
-		fmt.Fprintf(stderr, "Note: Security gateway not available (%v)\n", err)
-	} else {
-		// Session registered - keep using main proxy port (8082)
-		// Note: Per-session ports are allocated but not listened on yet
-		// The session is tracked in the daemon's session manager for log correlation
-		if sessionResp.CertPath != "" {
-			config.CertPath = sessionResp.CertPath
-		}
-		fmt.Fprintf(stderr, "✓ Session registered: %s\n", sessionResp.SessionID)
-	}
-
-	// Ensure we unregister when done
-	defer r.UnregisterFromSecurityGateway()
-
 	// Start the process
 	if err := r.Start(ctx, config); err != nil {
 		return err
@@ -359,43 +337,4 @@ func (r *Runner) PID() int {
 		return 0
 	}
 	return r.cmd.Process.Pid
-}
-
-// RegisterWithSecurityGateway registers the session with the proxy daemon
-// and returns the allocated port for this session's proxy
-func (r *Runner) RegisterWithSecurityGateway(config RunnerConfig) (*httpproxy.ControlSessionResponse, error) {
-	// Get control client
-	client, err := httpproxy.NewDefaultControlClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create control client: %w", err)
-	}
-	r.controlClient = client
-
-	// Register session with JWT token for authentication
-	// The daemon will validate the token and extract employee_id/org_id from claims
-	resp, err := client.RegisterSession(httpproxy.RegisterSessionRequest{
-		SessionID:  config.SessionID,
-		Token:      config.Token, // JWT token - daemon validates and extracts claims
-		EmployeeID: config.EmployeeID,
-		AgentID:    config.AgentID,
-		AgentName:  config.AgentName,
-		Workspace:  config.Workspace,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to register session: %w", err)
-	}
-
-	r.sessionRegistered = true
-	return resp, nil
-}
-
-// UnregisterFromSecurityGateway unregisters the session from the proxy daemon
-func (r *Runner) UnregisterFromSecurityGateway() error {
-	if !r.sessionRegistered || r.controlClient == nil {
-		return nil
-	}
-
-	err := r.controlClient.UnregisterSession(r.sessionID)
-	r.sessionRegistered = false
-	return err
 }

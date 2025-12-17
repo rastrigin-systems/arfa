@@ -50,8 +50,6 @@ type RunnerConfig struct {
 	ProxyPort   int
 	CertPath    string
 	SessionID   string
-	Token       string            // JWT token for proxy authentication
-	EmployeeID  string            // Employee ID (for backward compatibility, prefer Token)
 	Environment map[string]string // Additional env vars from agent config
 }
 

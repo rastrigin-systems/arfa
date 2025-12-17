@@ -2,11 +2,9 @@ package status
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/spf13/cobra"
 )
 
@@ -79,29 +77,6 @@ func NewStatusCommand(c *container.Container) *cobra.Command {
 					if len(ac.MCPServers) > 0 {
 						fmt.Printf("    MCP Servers: %d\n", len(ac.MCPServers))
 					}
-				}
-			}
-
-			// Show proxy daemon status
-			fmt.Println()
-			daemon, err := httpproxy.NewProxyDaemon()
-			if err != nil {
-				fmt.Printf("Proxy Daemon: (failed to check: %v)\n", err)
-				return nil
-			}
-
-			if !daemon.IsRunning() {
-				fmt.Println("Proxy Daemon: Not running")
-				fmt.Println("\nRun 'ubik' to start an interactive session (proxy auto-starts)")
-			} else {
-				state, err := daemon.GetState()
-				if err != nil {
-					fmt.Printf("Proxy Daemon: Running (failed to get details: %v)\n", err)
-				} else {
-					fmt.Println("Proxy Daemon: Running")
-					fmt.Printf("  Port:   %d\n", state.Port)
-					fmt.Printf("  PID:    %d\n", state.PID)
-					fmt.Printf("  Uptime: %s\n", time.Since(state.StartTime).Round(time.Second))
 				}
 			}
 

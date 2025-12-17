@@ -10,8 +10,8 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/httpproxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/proxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/ui"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/workspace"
@@ -154,20 +154,6 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		defer logger.Close()
 	}
 
-	// Ensure proxy daemon is running (auto-start if needed)
-	proxyDaemon, err := httpproxy.NewProxyDaemon()
-	if err != nil {
-		return fmt.Errorf("failed to create proxy daemon: %w", err)
-	}
-
-	proxyState, err := proxyDaemon.EnsureRunning(httpproxy.DefaultProxyPort)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: failed to start proxy daemon: %v\n", err)
-		// Continue without proxy - logging will still work for CLI I/O
-	} else {
-		fmt.Printf("✓ Proxy: localhost:%d\n", proxyState.Port)
-	}
-
 	// Start logging session
 	var sessionID string
 	if logger != nil {
@@ -175,6 +161,20 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		sid := logger.StartSession()
 		sessionID = sid.String()
 		fmt.Printf("✓ Session: %s\n", sessionID)
+	}
+
+	// Start in-process proxy for LLM API logging
+	var inProxy *proxy.Proxy
+	if logger != nil {
+		inProxy = proxy.New(logger)
+		inProxy.SetSession(sessionID, selectedAgent.AgentID)
+		if err := inProxy.Start(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to start proxy: %v\n", err)
+			// Continue without proxy - logging will still work
+		} else {
+			defer inProxy.Stop()
+			fmt.Printf("✓ Proxy: localhost:%d\n", inProxy.GetPort())
+		}
 	}
 
 	// Workspace selection
@@ -233,16 +233,9 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	// Configure native runner
 	var proxyPort int
 	var certPath string
-	if proxyState != nil {
-		proxyPort = proxyState.Port
-		certPath = proxyState.CertPath
-	}
-
-	// Get config for JWT token (needed for proxy session registration)
-	cliConfig, _ := configManager.Load()
-	var jwtToken string
-	if cliConfig != nil {
-		jwtToken = cliConfig.Token
+	if inProxy != nil {
+		proxyPort = inProxy.GetPort()
+		certPath = inProxy.GetCertPath()
 	}
 
 	runnerConfig := docker.RunnerConfig{
@@ -253,7 +246,6 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		ProxyPort: proxyPort,
 		CertPath:  certPath,
 		SessionID: sessionID,
-		Token:     jwtToken, // Pass JWT token for proxy authentication
 	}
 
 	// Start interactive session
