@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getTeams } from './teams';
-import type { Team } from './types';
+import { getTeams, type Team } from './teams';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -13,9 +12,9 @@ describe('getTeams', () => {
 
   it('should fetch teams list', async () => {
     const mockTeams: Team[] = [
-      { id: 'team-1', name: 'Engineering', description: 'Engineering team' },
-      { id: 'team-2', name: 'Sales', description: 'Sales team' },
-      { id: 'team-3', name: 'Design', description: 'Design team' },
+      { id: 'team-1', org_id: 'org-1', name: 'Engineering', description: 'Engineering team' },
+      { id: 'team-2', org_id: 'org-1', name: 'Sales', description: 'Sales team' },
+      { id: 'team-3', org_id: 'org-1', name: 'Design', description: 'Design team' },
     ];
 
     mockFetch.mockResolvedValue({
@@ -33,6 +32,7 @@ describe('getTeams', () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
+      json: () => Promise.resolve({}),
     });
 
     await expect(getTeams())

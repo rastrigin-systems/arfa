@@ -1,4 +1,11 @@
-import type { Role } from './types';
+import { getErrorMessage } from './errors';
+import type { components } from './schema';
+
+// Use schema types for API responses
+type SchemaRole = components['schemas']['Role'];
+
+// Re-export for backwards compatibility
+export type Role = SchemaRole;
 
 /**
  * Get list of all roles in the organization
@@ -10,7 +17,8 @@ export async function getRoles(): Promise<Role[]> {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch roles');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(getErrorMessage(errorData, 'Failed to fetch roles'));
   }
 
   const data = await response.json();

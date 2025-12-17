@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getRoles } from './roles';
-import type { Role } from './types';
+import { getRoles, type Role } from './roles';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -33,6 +32,7 @@ describe('getRoles', () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
+      json: () => Promise.resolve({}),
     });
 
     await expect(getRoles())

@@ -58,8 +58,8 @@ export async function updateEmployee(
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to update employee');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(getErrorMessage(errorData, 'Failed to update employee'));
   }
 
   return response.json();
