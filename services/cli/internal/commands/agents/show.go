@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	cli "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
+	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
@@ -90,7 +90,7 @@ or ID (e.g., "a1111111-1111-1111-1111-111111111111").`,
 }
 
 // fetchAgentCascade fetches configuration from all levels for the specified agent
-func fetchAgentCascade(agentName string, configMgr cli.ConfigManagerInterface, client cli.APIClientInterface) (*AgentConfigCascade, error) {
+func fetchAgentCascade(agentName string, configMgr config.ManagerInterface, client api.ClientInterface) (*AgentConfigCascade, error) {
 	// Load config
 	cfg, err := configMgr.Load()
 	if err != nil {
