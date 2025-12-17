@@ -2,7 +2,6 @@ package logging
 
 import (
 	"context"
-	"io"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,7 +62,8 @@ type APIClient interface {
 	CreateLogBatch(ctx context.Context, entries []LogEntry) error
 }
 
-// Logger manages I/O capture and log transmission
+// Logger manages log transmission to the platform API.
+// This is a simplified interface focused on event logging.
 type Logger interface {
 	// StartSession begins a new logging session and returns the session ID
 	StartSession() uuid.UUID
@@ -73,24 +73,6 @@ type Logger interface {
 
 	// SetAgentID sets the agent ID for all subsequent log entries
 	SetAgentID(agentID string)
-
-	// InterceptStdout wraps stdout to capture output
-	InterceptStdout(original io.Writer) io.Writer
-
-	// InterceptStderr wraps stderr to capture errors
-	InterceptStderr(original io.Writer) io.Writer
-
-	// InterceptStdin wraps stdin to capture input
-	InterceptStdin(original io.Reader) io.Reader
-
-	// LogInput logs user input
-	LogInput(content string, metadata map[string]interface{})
-
-	// LogOutput logs agent output
-	LogOutput(content string, metadata map[string]interface{})
-
-	// LogError logs error output
-	LogError(content string, metadata map[string]interface{})
 
 	// LogEvent logs a custom event
 	LogEvent(eventType, category, content string, metadata map[string]interface{})

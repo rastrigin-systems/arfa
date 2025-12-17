@@ -7,7 +7,6 @@ import (
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/config"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/interactive"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/logs"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/proxy"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/skills"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/status"
 	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/sync"
@@ -60,11 +59,6 @@ Examples:
 	rootCmd.AddCommand(agents.NewAgentsCommand(c))
 	rootCmd.AddCommand(skills.NewSkillsCommand(c))
 	rootCmd.AddCommand(logs.NewLogsCommand(c))
-	rootCmd.AddCommand(proxy.NewProxyCommand(c))
-
-	// Legacy top-level commands (aliases for proxy start/stop)
-	rootCmd.AddCommand(proxy.NewStartCommand(c))
-	rootCmd.AddCommand(proxy.NewStopCommand(c))
 
 	return rootCmd
 }

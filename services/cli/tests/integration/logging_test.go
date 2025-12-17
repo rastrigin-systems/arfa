@@ -44,10 +44,10 @@ func TestLoggingEndToEnd(t *testing.T) {
 	sessionID := logger.StartSession()
 	t.Logf("Started session: %s", sessionID)
 
-	// Log some I/O events
-	logger.LogInput("user types command", map[string]interface{}{"command": "ls -la"})
-	logger.LogOutput("agent responds", map[string]interface{}{"response": "file listing"})
-	logger.LogError("some warning", map[string]interface{}{"level": "warning"})
+	// Log some events
+	logger.LogEvent("test_input", "cli", "user types command", map[string]interface{}{"command": "ls -la"})
+	logger.LogEvent("test_output", "cli", "agent responds", map[string]interface{}{"response": "file listing"})
+	logger.LogEvent("test_error", "cli", "some warning", map[string]interface{}{"level": "warning"})
 
 	// End session
 	logger.EndSession()
@@ -96,20 +96,20 @@ func TestLoggingEndToEnd(t *testing.T) {
 			if log.EventCategory != "session" {
 				t.Errorf("Expected session_end to have category 'session', got %s", log.EventCategory)
 			}
-		case "input":
+		case "test_input":
 			foundInput = true
 			if log.EventCategory != "cli" {
-				t.Errorf("Expected input to have category 'cli', got %s", log.EventCategory)
+				t.Errorf("Expected test_input to have category 'cli', got %s", log.EventCategory)
 			}
-		case "output":
+		case "test_output":
 			foundOutput = true
 			if log.EventCategory != "cli" {
-				t.Errorf("Expected output to have category 'cli', got %s", log.EventCategory)
+				t.Errorf("Expected test_output to have category 'cli', got %s", log.EventCategory)
 			}
-		case "error":
+		case "test_error":
 			foundError = true
 			if log.EventCategory != "cli" {
-				t.Errorf("Expected error to have category 'cli', got %s", log.EventCategory)
+				t.Errorf("Expected test_error to have category 'cli', got %s", log.EventCategory)
 			}
 		}
 	}
@@ -121,13 +121,13 @@ func TestLoggingEndToEnd(t *testing.T) {
 		t.Error("Expected to find session_end event")
 	}
 	if !foundInput {
-		t.Error("Expected to find input event")
+		t.Error("Expected to find test_input event")
 	}
 	if !foundOutput {
-		t.Error("Expected to find output event")
+		t.Error("Expected to find test_output event")
 	}
 	if !foundError {
-		t.Error("Expected to find error event")
+		t.Error("Expected to find test_error event")
 	}
 }
 
@@ -160,7 +160,7 @@ func TestLoggingBatching(t *testing.T) {
 
 	// Log exactly BatchSize entries to trigger batch send
 	for i := 0; i < 5; i++ {
-		logger.LogInput("test input", map[string]interface{}{"index": i})
+		logger.LogEvent("test_event", "cli", "test input", map[string]interface{}{"index": i})
 	}
 
 	// Wait for batch to be sent
@@ -203,7 +203,7 @@ func TestLoggingOfflineQueue(t *testing.T) {
 
 	// Log some entries
 	for i := 0; i < 5; i++ {
-		logger.LogInput("test input", map[string]interface{}{"index": i})
+		logger.LogEvent("test_event", "cli", "test input", map[string]interface{}{"index": i})
 	}
 
 	// Flush to trigger send

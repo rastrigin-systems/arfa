@@ -4,22 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 )
-
-var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
-
-func stripANSI(str string) string {
-	return ansiRegex.ReplaceAllString(str, "")
-}
 
 // loggerImpl implements the Logger interface
 type loggerImpl struct {
@@ -126,47 +118,6 @@ func (l *loggerImpl) EndSession() {
 		"end_time":         time.Now(),
 		"duration_seconds": duration.Seconds(),
 	})
-}
-
-// InterceptStdout wraps stdout to capture output
-func (l *loggerImpl) InterceptStdout(original io.Writer) io.Writer {
-	return &captureWriter{
-		original:  original,
-		logger:    l,
-		eventType: "output",
-	}
-}
-
-// InterceptStderr wraps stderr to capture errors
-func (l *loggerImpl) InterceptStderr(original io.Writer) io.Writer {
-	return &captureWriter{
-		original:  original,
-		logger:    l,
-		eventType: "error",
-	}
-}
-
-// InterceptStdin wraps stdin to capture input
-func (l *loggerImpl) InterceptStdin(original io.Reader) io.Reader {
-	return &captureReader{
-		original: original,
-		logger:   l,
-	}
-}
-
-// LogInput logs user input
-func (l *loggerImpl) LogInput(content string, metadata map[string]interface{}) {
-	l.LogEvent("input", "cli", content, metadata)
-}
-
-// LogOutput logs agent output
-func (l *loggerImpl) LogOutput(content string, metadata map[string]interface{}) {
-	l.LogEvent("output", "cli", content, metadata)
-}
-
-// LogError logs error output
-func (l *loggerImpl) LogError(content string, metadata map[string]interface{}) {
-	l.LogEvent("error", "cli", content, metadata)
 }
 
 // LogEvent logs a custom event
@@ -427,123 +378,4 @@ func (l *loggerImpl) processQueueFile(filename string) {
 
 	// Success, delete file
 	os.Remove(filename)
-}
-
-// captureWriter wraps an io.Writer to capture output
-type captureWriter struct {
-	original    io.Writer
-	logger      *loggerImpl
-	eventType   string
-	buffer      []byte
-	recentLines []string // Buffer for deduplication
-}
-
-func (cw *captureWriter) Write(p []byte) (n int, err error) {
-	// Write to original stream first
-	n, err = cw.original.Write(p)
-
-	// Capture for logging (only if successful)
-	if err == nil && len(p) > 0 {
-		// Buffer the data
-		cw.buffer = append(cw.buffer, p[:n]...)
-
-		// Log complete lines
-		for {
-			idx := indexByte(cw.buffer, '\n')
-			if idx == -1 {
-				break
-			}
-
-			line := string(cw.buffer[:idx])
-			cw.buffer = cw.buffer[idx+1:]
-
-			// Log the line
-			cleanLine := stripANSI(line)
-
-			// Window-based deduplication: check if line exists in recent history
-			isDuplicate := false
-			for _, recent := range cw.recentLines {
-				if cleanLine == recent {
-					isDuplicate = true
-					break
-				}
-			}
-
-			if isDuplicate {
-				continue
-			}
-
-			// Add to history and maintain window size (10 lines)
-			cw.recentLines = append(cw.recentLines, cleanLine)
-			if len(cw.recentLines) > 10 {
-				cw.recentLines = cw.recentLines[1:]
-			}
-
-			if cw.eventType == "output" {
-				cw.logger.LogOutput(cleanLine, nil)
-			} else if cw.eventType == "error" {
-				cw.logger.LogError(cleanLine, nil)
-			}
-		}
-	}
-
-	return n, err
-}
-
-// captureReader wraps an io.Writer to capture input
-type captureReader struct {
-	original io.Reader
-	logger   *loggerImpl
-	buffer   []byte
-}
-
-func (cr *captureReader) Read(p []byte) (n int, err error) {
-	n, err = cr.original.Read(p)
-
-	// Capture for logging (only if successful)
-	if err == nil && n > 0 {
-		// Append read bytes to buffer
-		cr.buffer = append(cr.buffer, p[:n]...)
-
-		// Process buffer for newlines
-		for {
-			// Check for \r (Enter in raw mode) or \n
-			idx := indexByte(cr.buffer, '\r')
-			if idx == -1 {
-				idx = indexByte(cr.buffer, '\n')
-			}
-
-			if idx == -1 {
-				break
-			}
-
-			// Extract line including the delimiter
-			// In raw mode, we might want to trim the \r for the log
-			line := string(cr.buffer[:idx])
-			cr.buffer = cr.buffer[idx+1:] // Advance past delimiter
-
-			// Log the input line if it's not empty (e.g. just Enter)
-			if len(line) > 0 {
-				cr.logger.LogInput(stripANSI(line), nil)
-			}
-		}
-
-		// Safety: if buffer gets too big without newline, flush it
-		if len(cr.buffer) > 1024 {
-			cr.logger.LogInput(stripANSI(string(cr.buffer)), nil)
-			cr.buffer = cr.buffer[:0]
-		}
-	}
-
-	return n, err
-}
-
-// indexByte finds the first occurrence of byte c in slice s
-func indexByte(s []byte, c byte) int {
-	for i, b := range s {
-		if b == c {
-			return i
-		}
-	}
-	return -1
 }

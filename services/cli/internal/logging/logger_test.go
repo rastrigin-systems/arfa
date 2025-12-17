@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -137,8 +137,8 @@ func TestSessionTracking(t *testing.T) {
 	assert.True(t, foundEnd, "should have session_end event")
 }
 
-// TestStdinCapture tests capturing stdin
-func TestStdinCapture(t *testing.T) {
+// TestLogEvent tests the LogEvent method
+func TestLogEvent(t *testing.T) {
 	config := &Config{
 		Enabled:       true,
 		BatchSize:     100,
@@ -157,95 +157,30 @@ func TestStdinCapture(t *testing.T) {
 
 	sessionID := logger.StartSession()
 
-	// Create stdin interceptor
-	originalStdin := strings.NewReader("test input\nanother line\n")
-	interceptedStdin := logger.InterceptStdin(originalStdin)
-
-	// Read from intercepted stream
-	buf := make([]byte, 1024)
-	n, err := interceptedStdin.Read(buf)
-	require.NoError(t, err)
-	assert.Greater(t, n, 0)
+	// Log a custom event
+	logger.LogEvent("api_request", "proxy", "POST https://api.anthropic.com", map[string]interface{}{
+		"method": "POST",
+		"url":    "https://api.anthropic.com/v1/messages",
+	})
 
 	// Force flush
 	logger.Flush()
 	time.Sleep(200 * time.Millisecond)
 
-	// Verify logs captured
+	// Verify log captured
 	mockAPI.mu.Lock()
 	defer mockAPI.mu.Unlock()
 
-	var foundInput bool
+	var foundEvent bool
 	for _, log := range mockAPI.logs {
-		if log.EventType == "input" {
-			foundInput = true
+		if log.EventType == "api_request" && log.EventCategory == "proxy" {
+			foundEvent = true
 			assert.Equal(t, sessionID.String(), log.SessionID)
+			assert.Equal(t, "POST https://api.anthropic.com", log.Content)
 		}
 	}
 
-	assert.True(t, foundInput, "should capture stdin")
-}
-
-// TestIOCapture tests capturing stdin/stdout/stderr
-func TestIOCapture(t *testing.T) {
-	config := &Config{
-		Enabled:       true,
-		BatchSize:     100,
-		BatchInterval: 5 * time.Second,
-		QueueDir:      t.TempDir(),
-	}
-
-	mockAPI := &mockAPIClient{
-		logs: make([]LogEntry, 0),
-	}
-
-	logger, err := NewLogger(config, mockAPI)
-	require.NoError(t, err)
-	require.NotNil(t, logger)
-	defer logger.Close()
-
-	sessionID := logger.StartSession()
-
-	// Create intercepted writers
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-
-	interceptedStdout := logger.InterceptStdout(stdout)
-	interceptedStderr := logger.InterceptStderr(stderr)
-
-	// Write to intercepted streams (with newlines to trigger logging)
-	testOutput := "test output message"
-	testError := "test error message"
-
-	interceptedStdout.Write([]byte(testOutput + "\n"))
-	interceptedStderr.Write([]byte(testError + "\n"))
-
-	// Verify original streams received data
-	assert.Contains(t, stdout.String(), testOutput)
-	assert.Contains(t, stderr.String(), testError)
-
-	// Force flush
-	logger.Flush()
-	time.Sleep(200 * time.Millisecond)
-
-	// Verify logs captured
-	mockAPI.mu.Lock()
-	defer mockAPI.mu.Unlock()
-
-	var foundOutput, foundError bool
-	for _, log := range mockAPI.logs {
-		if log.EventType == "output" && strings.Contains(log.Content, testOutput) {
-			foundOutput = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
-		}
-		if log.EventType == "error" && strings.Contains(log.Content, testError) {
-			foundError = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
-		}
-	}
-
-	assert.True(t, foundOutput, "should capture stdout")
-	assert.True(t, foundError, "should capture stderr")
+	assert.True(t, foundEvent, "should capture custom event")
 }
 
 // TestBatchSending tests batching behavior
@@ -270,7 +205,7 @@ func TestBatchSending(t *testing.T) {
 
 	// Log exactly batch size entries
 	for i := 0; i < 5; i++ {
-		logger.LogInput("test input", map[string]interface{}{"index": i})
+		logger.LogEvent("test_event", "test", "test content", map[string]interface{}{"index": i})
 	}
 
 	// Wait for batch to be sent
@@ -280,13 +215,13 @@ func TestBatchSending(t *testing.T) {
 	logCount := len(mockAPI.logs)
 	mockAPI.mu.Unlock()
 
-	// Should have session_start + 5 inputs = 6 total
+	// Should have session_start + 5 events = 6 total
 	assert.GreaterOrEqual(t, logCount, 5, "should have sent batch")
 
 	// Verify session ID in all logs
 	mockAPI.mu.Lock()
 	for _, log := range mockAPI.logs {
-		if log.EventType == "input" {
+		if log.EventType == "test_event" {
 			assert.Equal(t, sessionID.String(), log.SessionID)
 		}
 	}
@@ -316,8 +251,8 @@ func TestOfflineQueue(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, logger)
 
-	_ = logger.StartSession() // session ID
-	logger.LogInput("test input", nil)
+	_ = logger.StartSession()
+	logger.LogEvent("test_event", "test", "test content", nil)
 	logger.EndSession()
 
 	// Flush to trigger send (which will fail after retries)
@@ -383,7 +318,7 @@ func TestRetryWithBackoff(t *testing.T) {
 	defer logger.Close()
 
 	logger.StartSession()
-	logger.LogInput("test retry", nil)
+	logger.LogEvent("test_event", "test", "test retry", nil)
 
 	// Flush to trigger send
 	logger.Flush()
@@ -423,7 +358,7 @@ func TestConcurrentLogging(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(id int) {
 			for j := 0; j < 5; j++ {
-				logger.LogInput("concurrent test", map[string]interface{}{
+				logger.LogEvent("test_event", "test", "concurrent test", map[string]interface{}{
 					"goroutine": id,
 					"iteration": j,
 				})
@@ -444,7 +379,7 @@ func TestConcurrentLogging(t *testing.T) {
 	logCount := len(mockAPI.logs)
 	mockAPI.mu.Unlock()
 
-	// Should have session_start + 50 inputs
+	// Should have session_start + 50 events
 	assert.GreaterOrEqual(t, logCount, 50, "should handle concurrent logging")
 }
 
@@ -466,7 +401,7 @@ func TestLoggerClose(t *testing.T) {
 	require.NotNil(t, logger)
 
 	logger.StartSession()
-	logger.LogInput("test before close", nil)
+	logger.LogEvent("test_event", "test", "test before close", nil)
 
 	// Close should flush pending logs
 	logger.Close()
@@ -502,7 +437,7 @@ func TestQueuePersistence(t *testing.T) {
 	require.NotNil(t, logger1)
 
 	logger1.StartSession()
-	logger1.LogInput("persisted message", nil)
+	logger1.LogEvent("test_event", "test", "persisted message", nil)
 	logger1.Flush()
 	// Wait for retries: 50ms + 100ms + queue = ~300ms
 	time.Sleep(400 * time.Millisecond)
@@ -533,13 +468,53 @@ func TestQueuePersistence(t *testing.T) {
 
 	var foundPersisted bool
 	for _, log := range mockAPI2.logs {
-		if log.EventType == "input" && strings.Contains(log.Content, "persisted message") {
+		if log.EventType == "test_event" && strings.Contains(log.Content, "persisted message") {
 			foundPersisted = true
 			break
 		}
 	}
 
 	assert.True(t, foundPersisted, "persisted log should be sent after restart")
+}
+
+// TestSetAgentID tests setting agent ID
+func TestSetAgentID(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	logger.StartSession()
+	logger.SetAgentID("test-agent-123")
+
+	logger.LogEvent("test_event", "test", "test content", nil)
+
+	logger.Flush()
+	time.Sleep(200 * time.Millisecond)
+
+	mockAPI.mu.Lock()
+	defer mockAPI.mu.Unlock()
+
+	var foundWithAgent bool
+	for _, log := range mockAPI.logs {
+		if log.EventType == "test_event" && log.AgentID == "test-agent-123" {
+			foundWithAgent = true
+			break
+		}
+	}
+
+	assert.True(t, foundWithAgent, "log should have agent ID")
 }
 
 // Mock API client for testing
@@ -578,4 +553,269 @@ func (m *mockAPIClient) CreateLogBatch(ctx context.Context, entries []LogEntry) 
 		}
 	}
 	return nil
+}
+
+// TestLogClassified tests the LogClassified method
+func TestLogClassified(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	sessionID := logger.StartSession()
+	logger.SetAgentID("test-agent")
+
+	// Log a classified entry
+	entry := types.ClassifiedLogEntry{
+		EntryType:    types.LogTypeUserPrompt,
+		Provider:     types.LogProviderAnthropic,
+		Model:        "claude-3-opus",
+		Content:      "Hello, Claude!",
+		TokensInput:  10,
+		TokensOutput: 0,
+	}
+
+	logger.LogClassified(entry)
+
+	// Force flush
+	logger.Flush()
+	time.Sleep(200 * time.Millisecond)
+
+	// Verify classified log was captured
+	mockAPI.mu.Lock()
+	defer mockAPI.mu.Unlock()
+
+	var foundClassified bool
+	for _, log := range mockAPI.logs {
+		if log.EventType == string(types.LogTypeUserPrompt) && log.EventCategory == "classified" {
+			foundClassified = true
+			assert.Equal(t, sessionID.String(), log.SessionID)
+			assert.Equal(t, "test-agent", log.AgentID)
+			assert.Equal(t, "Hello, Claude!", log.Content)
+			// Check payload
+			if log.Payload != nil {
+				assert.Equal(t, "anthropic", log.Payload["provider"])
+				assert.Equal(t, "claude-3-opus", log.Payload["model"])
+			}
+			break
+		}
+	}
+
+	assert.True(t, foundClassified, "should capture classified log entry")
+}
+
+// TestLogClassifiedWithToolUse tests classified logging with tool use
+func TestLogClassifiedWithToolUse(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	logger.StartSession()
+	logger.SetAgentID("test-agent")
+
+	// Log a tool use entry
+	entry := types.ClassifiedLogEntry{
+		EntryType:  types.LogTypeToolCall,
+		Provider:   types.LogProviderAnthropic,
+		Model:      "claude-3-opus",
+		ToolName:   "read_file",
+		ToolID:     "tool_123",
+		ToolInput:  map[string]interface{}{"path": "/tmp/test.txt"},
+		ToolOutput: "file contents here",
+	}
+
+	logger.LogClassified(entry)
+
+	logger.Flush()
+	time.Sleep(200 * time.Millisecond)
+
+	mockAPI.mu.Lock()
+	defer mockAPI.mu.Unlock()
+
+	var foundTool bool
+	for _, log := range mockAPI.logs {
+		if log.EventType == string(types.LogTypeToolCall) {
+			foundTool = true
+			if log.Payload != nil {
+				assert.Equal(t, "read_file", log.Payload["tool_name"])
+				assert.Equal(t, "tool_123", log.Payload["tool_id"])
+			}
+			break
+		}
+	}
+
+	assert.True(t, foundTool, "should capture tool use log entry")
+}
+
+// TestGetClassifiedLogs tests the GetClassifiedLogs method
+func TestGetClassifiedLogs(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	logger.StartSession()
+	logger.SetAgentID("test-agent")
+
+	// Log multiple classified entries
+	entries := []types.ClassifiedLogEntry{
+		{
+			EntryType: types.LogTypeUserPrompt,
+			Provider:  types.LogProviderAnthropic,
+			Content:   "Message 1",
+		},
+		{
+			EntryType: types.LogTypeAIText,
+			Provider:  types.LogProviderAnthropic,
+			Content:   "Message 2",
+		},
+		{
+			EntryType: types.LogTypeToolCall,
+			Provider:  types.LogProviderAnthropic,
+			ToolName:  "bash",
+		},
+	}
+
+	for _, entry := range entries {
+		logger.LogClassified(entry)
+	}
+
+	// Get classified logs
+	logs := logger.GetClassifiedLogs()
+
+	assert.Equal(t, 3, len(logs), "should have 3 classified logs")
+
+	// Verify they are copies (modifying shouldn't affect original)
+	if len(logs) > 0 {
+		logs[0].Content = "modified"
+		originalLogs := logger.GetClassifiedLogs()
+		assert.NotEqual(t, "modified", originalLogs[0].Content, "should return copies")
+	}
+}
+
+// TestLogClassifiedWithError tests classified logging with error message
+func TestLogClassifiedWithError(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	logger.StartSession()
+
+	// Log an error entry
+	entry := types.ClassifiedLogEntry{
+		EntryType:    types.LogTypeToolResult,
+		Provider:     types.LogProviderAnthropic,
+		ErrorMessage: "Tool execution failed: permission denied",
+	}
+
+	logger.LogClassified(entry)
+
+	logger.Flush()
+	time.Sleep(200 * time.Millisecond)
+
+	mockAPI.mu.Lock()
+	defer mockAPI.mu.Unlock()
+
+	var foundError bool
+	for _, log := range mockAPI.logs {
+		if log.EventType == string(types.LogTypeToolResult) {
+			foundError = true
+			assert.Equal(t, "Tool execution failed: permission denied", log.Content)
+			break
+		}
+	}
+
+	assert.True(t, foundError, "should capture error log entry")
+}
+
+// TestLogEventWithSessionOverride tests session ID override in metadata
+func TestLogEventWithSessionOverride(t *testing.T) {
+	config := &Config{
+		Enabled:       true,
+		BatchSize:     100,
+		BatchInterval: 5 * time.Second,
+		QueueDir:      t.TempDir(),
+	}
+
+	mockAPI := &mockAPIClient{
+		logs: make([]LogEntry, 0),
+	}
+
+	logger, err := NewLogger(config, mockAPI)
+	require.NoError(t, err)
+	require.NotNil(t, logger)
+	defer logger.Close()
+
+	logger.StartSession() // This creates a session ID
+	logger.SetAgentID("original-agent")
+
+	// Log event with overridden session and agent ID
+	logger.LogEvent("test_event", "test", "content", map[string]interface{}{
+		"session_id": "override-session-123",
+		"agent_id":   "override-agent-456",
+	})
+
+	logger.Flush()
+	time.Sleep(200 * time.Millisecond)
+
+	mockAPI.mu.Lock()
+	defer mockAPI.mu.Unlock()
+
+	var found bool
+	for _, log := range mockAPI.logs {
+		if log.EventType == "test_event" {
+			found = true
+			assert.Equal(t, "override-session-123", log.SessionID)
+			assert.Equal(t, "override-agent-456", log.AgentID)
+			break
+		}
+	}
+
+	assert.True(t, found, "should find event with overridden session")
 }
