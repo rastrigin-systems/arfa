@@ -1,54 +1,16 @@
-// Shared types for API responses
+/**
+ * Client-side request parameter types for API calls.
+ *
+ * For entity types (Employee, Role, Team, etc.), import from:
+ * - @/lib/types for centralized schema-based types
+ * - Respective API modules (employees.ts, roles.ts, etc.) for backwards compatibility
+ *
+ * For invitation-related types, import from @/lib/api/invitations
+ */
 
-export interface Employee {
-  id: string;
-  email: string;
-  full_name: string;
-  status: 'active' | 'inactive' | 'suspended';
-  role: {
-    id: string;
-    name: string;
-  };
-  team: {
-    id: string;
-    name: string;
-  } | null;
-  created_at: string;
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-export interface Invitation {
-  id: string;
-  email: string;
-  role: {
-    id: string;
-    name: string;
-  };
-  team: {
-    id: string;
-    name: string;
-  } | null;
-  inviter: {
-    id: string;
-    full_name: string;
-    email: string;
-  };
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
-  expires_at: string;
-  created_at: string;
-}
-
+/**
+ * Parameters for fetching employees list
+ */
 export interface EmployeesParams {
   page: number;
   limit: number;
@@ -58,43 +20,9 @@ export interface EmployeesParams {
   status?: string;
 }
 
-export interface EmployeesResponse {
-  employees: Employee[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface InvitationsParams {
-  page: number;
-  limit: number;
-  status?: 'pending' | 'accepted' | 'expired' | 'cancelled';
-}
-
-export interface InvitationsResponse {
-  invitations: Invitation[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface CreateInvitationParams {
-  email: string;
-  role_id: string;
-  team_id?: string;
-  message?: string;
-}
-
-export interface CreateInvitationResponse {
-  invitation: {
-    id: string;
-    email: string;
-    token: string;
-    invitation_url: string;
-    expires_at: string;
-  };
-}
-
+/**
+ * Parameters for updating an employee
+ */
 export interface UpdateEmployeeParams {
   team_id?: string;
   role_id?: string;
