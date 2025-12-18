@@ -3,8 +3,8 @@ package status
 import (
 	"fmt"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/docker"
 	"github.com/spf13/cobra"
 )
 

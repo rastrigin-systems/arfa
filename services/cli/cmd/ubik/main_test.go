@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
 )
 
 // TestLoggerInitialization tests that the logger is initialized correctly

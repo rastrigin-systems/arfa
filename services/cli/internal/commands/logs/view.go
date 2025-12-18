@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logparser"
 	"github.com/spf13/cobra"
 )
 

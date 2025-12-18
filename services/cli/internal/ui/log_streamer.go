@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 )
 
 // LogStreamer handles WebSocket connection and log streaming

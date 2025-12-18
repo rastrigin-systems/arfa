@@ -322,7 +322,7 @@ $ make test-cli
 [22 more tests]
 ...
 PASS
-ok  	github.com/sergeirastrigin/ubik-enterprise/internal/cli	0.329s
+ok  	github.com/rastrigin-systems/ubik-enterprise/internal/cli	0.329s
 
 ✅ 24/24 unit tests passing
 ⏭️  18 integration tests skipped (run without -short to include)

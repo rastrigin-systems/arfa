@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

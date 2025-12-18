@@ -138,41 +138,41 @@ use (
 ### API Server Module (services/api/go.mod)
 
 ```go
-module github.com/sergeirastrigin/ubik-enterprise/services/api
+module github.com/rastrigin-systems/ubik-enterprise/services/api
 
 go 1.24.5
 
 require (
-    github.com/sergeirastrigin/ubik-enterprise/pkg/types v0.0.0
+    github.com/rastrigin-systems/ubik-enterprise/pkg/types v0.0.0
     github.com/go-chi/chi/v5 v5.0.11
     github.com/jackc/pgx/v5 v5.5.3
     // ... API-specific dependencies
 )
 
-replace github.com/sergeirastrigin/ubik-enterprise/pkg/types => ../../pkg/types
+replace github.com/rastrigin-systems/ubik-enterprise/pkg/types => ../../pkg/types
 ```
 
 ### CLI Module (services/cli/go.mod)
 
 ```go
-module github.com/sergeirastrigin/ubik-enterprise/services/cli
+module github.com/rastrigin-systems/ubik-enterprise/services/cli
 
 go 1.24.5
 
 require (
-    github.com/sergeirastrigin/ubik-enterprise/pkg/types v0.0.0
+    github.com/rastrigin-systems/ubik-enterprise/pkg/types v0.0.0
     github.com/spf13/cobra v1.10.1
     github.com/docker/docker v28.5.1+incompatible
     // ... CLI-specific dependencies
 )
 
-replace github.com/sergeirastrigin/ubik-enterprise/pkg/types => ../../pkg/types
+replace github.com/rastrigin-systems/ubik-enterprise/pkg/types => ../../pkg/types
 ```
 
 ### Shared Types (pkg/types/go.mod)
 
 ```go
-module github.com/sergeirastrigin/ubik-enterprise/pkg/types
+module github.com/rastrigin-systems/ubik-enterprise/pkg/types
 
 go 1.24.5
 
@@ -186,25 +186,25 @@ require (
 ### Before
 ```go
 import (
-    "github.com/sergeirastrigin/ubik-enterprise/internal/auth"
-    "github.com/sergeirastrigin/ubik-enterprise/generated/api"
+    "github.com/rastrigin-systems/ubik-enterprise/internal/auth"
+    "github.com/rastrigin-systems/ubik-enterprise/generated/api"
 )
 ```
 
 ### After (API)
 ```go
 import (
-    "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
-    "github.com/sergeirastrigin/ubik-enterprise/generated/api"
-    "github.com/sergeirastrigin/ubik-enterprise/pkg/types"
+    "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+    "github.com/rastrigin-systems/ubik-enterprise/generated/api"
+    "github.com/rastrigin-systems/ubik-enterprise/pkg/types"
 )
 ```
 
 ### After (CLI)
 ```go
 import (
-    "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
-    "github.com/sergeirastrigin/ubik-enterprise/pkg/types"
+    "github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+    "github.com/rastrigin-systems/ubik-enterprise/pkg/types"
 )
 ```
 

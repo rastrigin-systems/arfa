@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 )
 
 type SubscriptionsHandler struct {

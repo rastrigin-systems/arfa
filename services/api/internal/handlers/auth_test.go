@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
 )
 
 // TestLogin_Success is our first test - it defines the EXPECTED behavior

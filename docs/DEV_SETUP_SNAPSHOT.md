@@ -64,13 +64,13 @@ This document captures the **current development configuration** used to build U
 **Parallel Development via Git Worktrees:**
 ```bash
 # Agent 1 works in:
-/Users/sergeirastrigin/Projects/ubik-enterprise (main branch)
+/Users/rastrigin-systems/Projects/ubik-enterprise (main branch)
 
 # Agent 2 works in:
-/Users/sergeirastrigin/Projects/ubik-issue-123 (issue-123 branch)
+/Users/rastrigin-systems/Projects/ubik-issue-123 (issue-123 branch)
 
 # Agent 3 works in:
-/Users/sergeirastrigin/Projects/ubik-issue-234 (issue-234 branch)
+/Users/rastrigin-systems/Projects/ubik-issue-234 (issue-234 branch)
 ```
 
 **GitHub Projects Integration:**

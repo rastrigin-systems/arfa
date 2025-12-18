@@ -422,7 +422,7 @@ The CLI is released independently from the API service:
 
 - `github.com/spf13/cobra` - CLI framework
 - `github.com/docker/docker` - Docker SDK
-- `github.com/sergeirastrigin/ubik-enterprise/pkg/types` - Shared types
+- `github.com/rastrigin-systems/ubik-enterprise/pkg/types` - Shared types
 
 ### Development Dependencies
 

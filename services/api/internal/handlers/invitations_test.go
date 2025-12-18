@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
-	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
+	authmiddleware "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
 )
 
 // ============================================================================

@@ -5,13 +5,13 @@ package container
 import (
 	gosync "sync"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/agent"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/docker"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/skill"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/agent"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/docker"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/skill"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/sync"
 )
 
 // Container manages dependencies for the CLI application.

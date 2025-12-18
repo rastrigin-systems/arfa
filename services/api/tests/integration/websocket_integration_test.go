@@ -16,13 +16,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
-	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
-	ws "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/tests/testutil"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	authmiddleware "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
+	ws "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/websocket"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/tests/testutil"
 )
 
 func TestWebSocketIntegration(t *testing.T) {

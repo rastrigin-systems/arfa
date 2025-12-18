@@ -13,9 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	api "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	config "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
-	sync "github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/sync"
+	api "github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	config "github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	sync "github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/sync"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -11,10 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
-	authpkg "github.com/sergeirastrigin/ubik-enterprise/services/api/pkg/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+	authpkg "github.com/rastrigin-systems/ubik-enterprise/services/api/pkg/auth"
 )
 
 // AuthHandler handles authentication-related requests

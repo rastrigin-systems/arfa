@@ -12,7 +12,7 @@ This package contains common domain types that are shared between:
 ## Usage
 
 ```go
-import "github.com/sergeirastrigin/ubik-enterprise/pkg/types"
+import "github.com/rastrigin-systems/ubik-enterprise/pkg/types"
 
 func example() {
     agent := types.Agent{

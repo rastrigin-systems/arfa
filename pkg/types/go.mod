@@ -1,7 +1,5 @@
-module github.com/sergeirastrigin/ubik-enterprise/pkg/types
+module github.com/rastrigin-systems/ubik-enterprise/pkg/types
 
 go 1.24.5
 
-require (
-	github.com/google/uuid v1.6.0
-)
+require github.com/google/uuid v1.6.0

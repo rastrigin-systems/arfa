@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 )
 
 // Context key for role name
