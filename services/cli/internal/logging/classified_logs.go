@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 )
 
 // GetClassifiedLogs retrieves classified logs from the API using the provided api.Client.

@@ -1412,7 +1412,7 @@ The github-project-manager uses these labels:
 10. **Clean Up Workspace (After PR Merged):**
    ```bash
    # Return to main repo
-   cd /Users/sergeirastrigin/Projects/ubik-enterprise
+   cd /Users/rastrigin-systems/Projects/ubik-enterprise
 
    # Remove worktree
    git worktree remove ../ubik-issue-234
@@ -1631,7 +1631,7 @@ fi
 # ═══════════════════════════════════════════════════════
 
 # 19. Return to main repo
-cd /Users/sergeirastrigin/Projects/ubik-enterprise
+cd /Users/rastrigin-systems/Projects/ubik-enterprise
 
 # 20. Remove worktree
 git worktree remove ../ubik-issue-${ISSUE_NUM}
@@ -1688,7 +1688,7 @@ Agent 2 (in ../ubik-issue-235):
 ├── Branch: feature/235-cost-dashboard
 └── Status: Integrating with API
 
-Agent 3 (in /Users/sergeirastrigin/Projects/ubik-enterprise):
+Agent 3 (in /Users/rastrigin-systems/Projects/ubik-enterprise):
 ├── Working on: "Review and plan next sprint"
 ├── Branch: main
 └── Status: Consulting product-strategist
@@ -3096,7 +3096,7 @@ The github-project-manager uses these labels:
 9. **Clean Up Workspace (After PR Merged):**
    ```bash
    # Return to main repo
-   cd /Users/sergeirastrigin/Projects/ubik-enterprise
+   cd /Users/rastrigin-systems/Projects/ubik-enterprise
 
    # Remove worktree
    git worktree remove ../ubik-issue-123
@@ -3255,7 +3255,7 @@ fi
 # ═══════════════════════════════════════════════════════
 
 # 17. Return to main repo
-cd /Users/sergeirastrigin/Projects/ubik-enterprise
+cd /Users/rastrigin-systems/Projects/ubik-enterprise
 
 # 18. Remove worktree
 git worktree remove ../ubik-issue-${ISSUE_NUM}
@@ -3312,7 +3312,7 @@ Agent 2 (in ../ubik-issue-124):
 ├── Branch: feature/124-add-cost-tracking
 └── Status: Implementing handlers
 
-Agent 3 (in /Users/sergeirastrigin/Projects/ubik-enterprise):
+Agent 3 (in /Users/rastrigin-systems/Projects/ubik-enterprise):
 ├── Working on: "Review and plan next sprint"
 ├── Branch: main
 └── Status: Consulting product-strategist
@@ -4817,10 +4817,10 @@ Before making ANY recommendations:
 1. **Query Current Backlog**:
    ```bash
    # List all projects
-   gh project list --owner sergeirastrigin
+   gh project list --owner rastrigin-systems
 
    # View project items (replace PROJECT_NUMBER with actual number)
-   gh project item-list PROJECT_NUMBER --owner sergeirastrigin
+   gh project item-list PROJECT_NUMBER --owner rastrigin-systems
 
    # List open issues with labels and status
    gh issue list --state open --json number,title,labels,state,assignees,milestone
@@ -4859,10 +4859,10 @@ Before making ANY recommendations:
 4. **Sync with Project Board**:
    ```bash
    # Move issue to specific column in project
-   gh project item-add PROJECT_NUMBER --owner sergeirastrigin --url ISSUE_URL
+   gh project item-add PROJECT_NUMBER --owner rastrigin-systems --url ISSUE_URL
 
    # View project status
-   gh project view PROJECT_NUMBER --owner sergeirastrigin
+   gh project view PROJECT_NUMBER --owner rastrigin-systems
    ```
 
 5. **Track Dependencies**:

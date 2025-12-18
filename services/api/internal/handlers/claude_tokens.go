@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 )
 
 // ClaudeTokensHandler handles Claude API token management requests

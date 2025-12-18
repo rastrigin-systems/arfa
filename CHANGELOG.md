@@ -231,4 +231,4 @@ Built with ❤️ using Claude Code and TDD best practices.
 
 ---
 
-**[Full Changelog](https://github.com/sergeirastrigin/ubik-enterprise/compare/v0.1.0...v0.2.0)**
+**[Full Changelog](https://github.com/rastrigin-systems/ubik-enterprise/compare/v0.1.0...v0.2.0)**

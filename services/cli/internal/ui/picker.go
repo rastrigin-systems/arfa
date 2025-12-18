@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/manifoldco/promptui"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 )
 
 // AgentPicker provides interactive agent selection

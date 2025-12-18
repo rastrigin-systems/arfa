@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logging"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
 )
 
 // TestLoggingEndToEnd tests the complete logging flow from initialization to close

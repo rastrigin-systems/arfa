@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	mock_db "github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	mock_db "github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"

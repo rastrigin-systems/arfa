@@ -90,10 +90,10 @@ Before making ANY recommendations:
 1. **Query Current Backlog**:
    ```bash
    # List all projects
-   gh project list --owner sergeirastrigin
+   gh project list --owner rastrigin-systems
 
    # View project items (replace PROJECT_NUMBER with actual number)
-   gh project item-list PROJECT_NUMBER --owner sergeirastrigin
+   gh project item-list PROJECT_NUMBER --owner rastrigin-systems
 
    # List open issues with labels and status
    gh issue list --state open --json number,title,labels,state,assignees,milestone
@@ -132,10 +132,10 @@ Before making ANY recommendations:
 4. **Sync with Project Board**:
    ```bash
    # Move issue to specific column in project
-   gh project item-add PROJECT_NUMBER --owner sergeirastrigin --url ISSUE_URL
+   gh project item-add PROJECT_NUMBER --owner rastrigin-systems --url ISSUE_URL
 
    # View project status
-   gh project view PROJECT_NUMBER --owner sergeirastrigin
+   gh project view PROJECT_NUMBER --owner rastrigin-systems
    ```
 
 5. **Track Dependencies**:

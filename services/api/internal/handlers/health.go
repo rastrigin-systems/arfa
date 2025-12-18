@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
 )
 
 // HealthHandler handles health check requests

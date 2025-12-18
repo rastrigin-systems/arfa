@@ -12,7 +12,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 )
 
 // SetupTestDB creates a PostgreSQL testcontainer and returns a connection with db.Queries

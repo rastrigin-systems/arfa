@@ -1,17 +1,17 @@
 package commands
 
 import (
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/agents"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/cleanup"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/config"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/interactive"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/logs"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/skills"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/status"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/sync"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/update"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/agents"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/cleanup"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/interactive"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/logs"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/skills"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/status"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/sync"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/update"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 

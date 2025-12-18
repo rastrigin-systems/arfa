@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands/sync"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/sync"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

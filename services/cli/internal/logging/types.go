@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
 )
 
 // Config holds logging configuration

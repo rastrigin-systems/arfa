@@ -337,7 +337,7 @@ ls -la tests/
 
 ```bash
 # See what imports root module
-rg "github.com/sergeirastrigin/ubik-enterprise\"" --type go
+rg "github.com/rastrigin-systems/ubik-enterprise\"" --type go
 
 # If nothing imports root module, consider removing
 # But KEEP go.work!

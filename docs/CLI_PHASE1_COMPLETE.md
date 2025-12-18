@@ -225,7 +225,7 @@ $ go test ./internal/cli/... -v
 --- PASS: TestSyncService_GetLocalAgentConfigs_EmptyDirectory (0.00s)
 
 PASS
-ok  	github.com/sergeirastrigin/ubik-enterprise/internal/cli	0.463s
+ok  	github.com/rastrigin-systems/ubik-enterprise/internal/cli	0.463s
 
 ✅ 13/13 tests passing
 ```

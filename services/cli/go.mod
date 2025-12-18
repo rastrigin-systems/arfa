@@ -1,4 +1,4 @@
-module github.com/sergeirastrigin/ubik-enterprise/services/cli
+module github.com/rastrigin-systems/ubik-enterprise/services/cli
 
 go 1.24.5
 
@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/manifoldco/promptui v0.9.0
-	github.com/sergeirastrigin/ubik-enterprise/pkg/types v0.0.0-00010101000000-000000000000
+	github.com/rastrigin-systems/ubik-enterprise/pkg/types v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
@@ -49,7 +49,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
@@ -57,4 +57,4 @@ require (
 	gotest.tools/v3 v3.5.2 // indirect
 )
 
-replace github.com/sergeirastrigin/ubik-enterprise/pkg/types => ../../pkg/types
+replace github.com/rastrigin-systems/ubik-enterprise/pkg/types => ../../pkg/types

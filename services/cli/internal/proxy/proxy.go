@@ -30,8 +30,8 @@ import (
 	"time"
 
 	"github.com/elazarl/goproxy"
-	"github.com/sergeirastrigin/ubik-enterprise/pkg/types"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logparser"
 )
 
 const (

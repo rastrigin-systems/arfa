@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/tests/testutil"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/tests/testutil"
 )
 
 // ============================================================================

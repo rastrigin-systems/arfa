@@ -3,8 +3,8 @@ package ui
 import (
 	"context"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/api"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 )
 
 // ConfigManagerInterface defines what the picker needs from config management

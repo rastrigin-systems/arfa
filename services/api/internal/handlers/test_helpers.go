@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
 )
 
 // SetOrgIDInContext is a test helper to set org_id in context

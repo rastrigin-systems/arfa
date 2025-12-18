@@ -496,7 +496,7 @@ build-all:
 **Rationale:**
 - **Single Source of Truth:** DB schema and API spec are platform-level
 - **Avoid Duplication:** Multiple services need same generated code (API types, DB models)
-- **Go Workspace:** Services import via `github.com/sergeirastrigin/ubik-enterprise/generated`
+- **Go Workspace:** Services import via `github.com/rastrigin-systems/ubik-enterprise/generated`
 - **Clear Boundary:** `generated/` is never committed, always regenerated
 
 **Why not per-service?**

@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/time/rate"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/auth"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
 )
 
 const (

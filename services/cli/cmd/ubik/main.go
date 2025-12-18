@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/commands"
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 )
 
 var version = "v0.2.0-dev"

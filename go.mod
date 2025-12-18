@@ -1,4 +1,4 @@
-module github.com/sergeirastrigin/ubik-enterprise
+module github.com/rastrigin-systems/ubik-enterprise
 
 go 1.24.5
 

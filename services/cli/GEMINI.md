@@ -305,10 +305,10 @@ cat ~/.ubik/config.json
 ### 5. Import Errors
 ```bash
 # ❌ NEVER import generated code
-import "github.com/sergeirastrigin/ubik-enterprise/generated/db"  # NO!
+import "github.com/rastrigin-systems/ubik-enterprise/generated/db"  # NO!
 
 # ✅ Only import pkg/types
-import "github.com/sergeirastrigin/ubik-enterprise/pkg/types"  # YES!
+import "github.com/rastrigin-systems/ubik-enterprise/pkg/types"  # YES!
 ```
 
 **See [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) for debugging strategies.**

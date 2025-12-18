@@ -435,9 +435,9 @@ interface AgentsPageState {
 
 ## Related Documentation
 
-- [services/web/CLAUDE.md](/Users/sergeirastrigin/Projects/ubik-enterprise/services/web/CLAUDE.md) - Web UI development guide
-- [docs/DATABASE.md](/Users/sergeirastrigin/Projects/ubik-enterprise/docs/DATABASE.md) - Database schema
-- [platform/api-spec/spec.yaml](/Users/sergeirastrigin/Projects/ubik-enterprise/platform/api-spec/spec.yaml) - API specification
+- [services/web/CLAUDE.md](/Users/rastrigin-systems/Projects/ubik-enterprise/services/web/CLAUDE.md) - Web UI development guide
+- [docs/DATABASE.md](/Users/rastrigin-systems/Projects/ubik-enterprise/docs/DATABASE.md) - Database schema
+- [platform/api-spec/spec.yaml](/Users/rastrigin-systems/Projects/ubik-enterprise/platform/api-spec/spec.yaml) - API specification
 
 ---
 

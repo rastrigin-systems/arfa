@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	mockdb "github.com/sergeirastrigin/ubik-enterprise/generated/mocks"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	mockdb "github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
 )
 
 // TestGetClaudeCodeSync_Success tests successful sync with all resources

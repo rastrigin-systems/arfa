@@ -14,12 +14,12 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/api"
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/handlers"
-	authmiddleware "github.com/sergeirastrigin/ubik-enterprise/services/api/internal/middleware"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/websocket"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	authmiddleware "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/websocket"
 )
 
 func main() {

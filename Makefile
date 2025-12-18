@@ -188,7 +188,7 @@ generate-setup:
 	@echo "📦 Setting up generated module..."
 	@mkdir -p $(GENERATED_DIR)
 	@if [ ! -f $(GENERATED_DIR)/go.mod ]; then \
-		echo 'module github.com/sergeirastrigin/ubik-enterprise/generated' > $(GENERATED_DIR)/go.mod; \
+		echo 'module github.com/rastrigin-systems/ubik-enterprise/generated' > $(GENERATED_DIR)/go.mod; \
 		echo '' >> $(GENERATED_DIR)/go.mod; \
 		echo 'go 1.24.5' >> $(GENERATED_DIR)/go.mod; \
 		echo '' >> $(GENERATED_DIR)/go.mod; \

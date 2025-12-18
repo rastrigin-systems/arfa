@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sergeirastrigin/ubik-enterprise/generated/db"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/internal/service"
-	"github.com/sergeirastrigin/ubik-enterprise/services/api/tests/testutil"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
+	"github.com/rastrigin-systems/ubik-enterprise/services/api/tests/testutil"
 )
 
 // TestLoggingService_CreateLog_Integration tests creating I/O logs in real database

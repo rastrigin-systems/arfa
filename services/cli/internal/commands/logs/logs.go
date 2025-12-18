@@ -1,7 +1,7 @@
 package logs
 
 import (
-	"github.com/sergeirastrigin/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
