@@ -1,5 +1,4 @@
-// Package handlers provides handler implementations for the Control Service pipeline.
-package handlers
+package control
 
 import (
 	"bytes"
@@ -7,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/control"
 )
 
 // sensitiveHeaders are headers that should be redacted in logs.
@@ -22,18 +19,18 @@ var sensitiveHeaders = map[string]bool{
 	"proxy-authorization": true,
 }
 
-// Queue defines the interface for enqueueing log entries.
-type Queue interface {
-	Enqueue(entry control.LogEntry) error
+// LoggerQueue defines the interface for enqueueing log entries.
+type LoggerQueue interface {
+	Enqueue(entry LogEntry) error
 }
 
 // LoggerHandler captures request/response data and writes to a queue.
 type LoggerHandler struct {
-	queue Queue
+	queue LoggerQueue
 }
 
 // NewLoggerHandler creates a new logger handler.
-func NewLoggerHandler(queue Queue) *LoggerHandler {
+func NewLoggerHandler(queue LoggerQueue) *LoggerHandler {
 	return &LoggerHandler{
 		queue: queue,
 	}
@@ -51,7 +48,7 @@ func (h *LoggerHandler) Priority() int {
 }
 
 // HandleRequest logs an outgoing API request.
-func (h *LoggerHandler) HandleRequest(ctx *control.HandlerContext, req *http.Request) control.Result {
+func (h *LoggerHandler) HandleRequest(ctx *HandlerContext, req *http.Request) Result {
 	// Read and restore body
 	var bodyStr string
 	if req.Body != nil {
@@ -63,7 +60,7 @@ func (h *LoggerHandler) HandleRequest(ctx *control.HandlerContext, req *http.Req
 		}
 	}
 
-	entry := control.LogEntry{
+	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
 		SessionID:     ctx.SessionID,
@@ -86,11 +83,11 @@ func (h *LoggerHandler) HandleRequest(ctx *control.HandlerContext, req *http.Req
 	// Enqueue is non-blocking (writes to disk)
 	_ = h.queue.Enqueue(entry)
 
-	return control.ContinueResult()
+	return ContinueResult()
 }
 
 // HandleResponse logs an incoming API response.
-func (h *LoggerHandler) HandleResponse(ctx *control.HandlerContext, res *http.Response) control.Result {
+func (h *LoggerHandler) HandleResponse(ctx *HandlerContext, res *http.Response) Result {
 	// Read and restore body
 	var bodyStr string
 	if res.Body != nil {
@@ -102,7 +99,7 @@ func (h *LoggerHandler) HandleResponse(ctx *control.HandlerContext, res *http.Re
 		}
 	}
 
-	entry := control.LogEntry{
+	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
 		SessionID:     ctx.SessionID,
@@ -128,7 +125,7 @@ func (h *LoggerHandler) HandleResponse(ctx *control.HandlerContext, res *http.Re
 	// Enqueue is non-blocking (writes to disk)
 	_ = h.queue.Enqueue(entry)
 
-	return control.ContinueResult()
+	return ContinueResult()
 }
 
 // redactHeaders returns a copy of headers with sensitive values redacted.
