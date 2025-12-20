@@ -8,9 +8,11 @@ import { useAgents } from '@/lib/hooks/useAgents';
 
 interface LogFiltersProps {
   filters: {
+    session_id?: string;
     employee_id?: string;
     agent_id?: string;
     event_type?: string;
+    event_category?: string;
     start_date?: string;
     end_date?: string;
     search?: string;
@@ -116,8 +118,52 @@ export function LogFilters({ filters, onChange }: LogFiltersProps) {
             <SelectItem value="error">Error</SelectItem>
             <SelectItem value="session_start">Session Start</SelectItem>
             <SelectItem value="session_end">Session End</SelectItem>
+            <SelectItem value="agent.installed">Agent Installed</SelectItem>
+            <SelectItem value="mcp.configured">MCP Configured</SelectItem>
+            <SelectItem value="config.synced">Config Synced</SelectItem>
+            <SelectItem value="api_request">API Request</SelectItem>
+            <SelectItem value="api_response">API Response</SelectItem>
+            <SelectItem value="user_prompt">User Prompt</SelectItem>
+            <SelectItem value="ai_text">AI Text</SelectItem>
+            <SelectItem value="tool_call">Tool Call</SelectItem>
+            <SelectItem value="tool_result">Tool Result</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Event Category */}
+      <div className="space-y-2">
+        <Label htmlFor="event-category">Event Category</Label>
+        <Select
+          value={filters.event_category || 'all'}
+          onValueChange={(value) => onChange({ event_category: value === 'all' ? undefined : value })}
+        >
+          <SelectTrigger id="event-category">
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="io">I/O</SelectItem>
+            <SelectItem value="agent">Agent</SelectItem>
+            <SelectItem value="mcp">MCP</SelectItem>
+            <SelectItem value="auth">Auth</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="proxy">Proxy</SelectItem>
+            <SelectItem value="classified">Classified</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Session ID */}
+      <div className="space-y-2">
+        <Label htmlFor="session-id">Session ID</Label>
+        <Input
+          id="session-id"
+          type="text"
+          placeholder="Filter by session..."
+          value={filters.session_id || ''}
+          onChange={(e) => onChange({ session_id: e.target.value || undefined })}
+        />
       </div>
     </div>
   );

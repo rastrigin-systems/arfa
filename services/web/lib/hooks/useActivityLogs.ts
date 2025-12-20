@@ -11,8 +11,8 @@ type LogFilters = {
   start_date?: string;
   end_date?: string;
   search?: string;
-  limit?: number;
-  offset?: number;
+  page?: number;
+  per_page?: number;
 };
 
 export interface UseActivityLogsReturn {
@@ -42,8 +42,8 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
       if (filters.event_category) params.append('event_category', filters.event_category);
       if (filters.start_date) params.append('start_date', filters.start_date);
       if (filters.end_date) params.append('end_date', filters.end_date);
-      params.append('limit', String(filters.limit || 100));
-      params.append('offset', String(filters.offset || 0));
+      params.append('page', String(filters.page || 1));
+      params.append('per_page', String(filters.per_page || 100));
 
       // Call Next.js API route instead of backend directly
       const response = await fetch(`/api/logs?${params.toString()}`);
@@ -67,8 +67,8 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
     filters.event_category,
     filters.start_date,
     filters.end_date,
-    filters.limit,
-    filters.offset,
+    filters.page,
+    filters.per_page,
   ]);
 
   useEffect(() => {

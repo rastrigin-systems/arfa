@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/lib/auth';
 import { apiClient } from '@/lib/api/client';
 
-type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced';
-type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin';
+type EventType = 'input' | 'output' | 'error' | 'session_start' | 'session_end' | 'agent.installed' | 'mcp.configured' | 'config.synced' | 'user_prompt' | 'ai_text' | 'tool_call' | 'tool_result' | 'api_request' | 'api_response';
+type EventCategory = 'io' | 'agent' | 'mcp' | 'auth' | 'admin' | 'classified' | 'proxy';
 
 export async function GET(request: NextRequest) {
   // Get token from httpOnly cookie
@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
   const event_category = (searchParams.get('event_category') as EventCategory) || undefined;
   const start_date = searchParams.get('start_date') || undefined;
   const end_date = searchParams.get('end_date') || undefined;
-  const limit = parseInt(searchParams.get('limit') || '100', 10);
-  const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const per_page = parseInt(searchParams.get('per_page') || '100', 10);
 
   try {
     // Call backend API with Authorization header
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
           event_category,
           start_date,
           end_date,
-          limit,
-          offset,
+          page,
+          per_page,
         },
       },
       headers: {
