@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -270,10 +271,13 @@ func TestDiskQueue_BatchSize_LimitedToConfig(t *testing.T) {
 		MaxBatchSize:  2, // Only 2 at a time
 	}
 
+	var mu sync.Mutex
 	var batchSizes []int
 	uploader := &mockUploader{
 		uploadFunc: func(entries []LogEntry) error {
+			mu.Lock()
 			batchSizes = append(batchSizes, len(entries))
+			mu.Unlock()
 			return nil
 		},
 	}
@@ -300,10 +304,17 @@ func TestDiskQueue_BatchSize_LimitedToConfig(t *testing.T) {
 
 	go q.StartWorker(ctx)
 
-	time.Sleep(300 * time.Millisecond)
+	// Wait for worker to finish
+	<-ctx.Done()
+	time.Sleep(50 * time.Millisecond) // Allow final flush to complete
 
 	// Should have uploaded in batches of 2 or less
-	for _, size := range batchSizes {
+	mu.Lock()
+	sizes := make([]int, len(batchSizes))
+	copy(sizes, batchSizes)
+	mu.Unlock()
+
+	for _, size := range sizes {
 		assert.LessOrEqual(t, size, 2)
 	}
 }
