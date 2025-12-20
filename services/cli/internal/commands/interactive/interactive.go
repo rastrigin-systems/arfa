@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/control"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/docker"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/proxy"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/sync"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/ui"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/workspace"
@@ -134,46 +134,62 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		fmt.Printf("✓ MCP Servers: %d\n", len(selectedAgent.MCPServers))
 	}
 
-	// Initialize logger (silently fails if disabled or opt-out)
-	loggerConfig := &logging.Config{
-		Enabled:       true,
-		BatchSize:     100,
-		BatchInterval: 5 * time.Second,
-		MaxRetries:    5,
-		RetryBackoff:  1 * time.Second,
+	// Get employee ID from config (stored during login)
+	var employeeID string
+	if cfg, _ := configManager.Load(); cfg != nil {
+		employeeID = cfg.EmployeeID
 	}
-	loggingClient := logging.NewAPIClientAdapter(apiClient)
-	logger, err := logging.NewLogger(loggerConfig, loggingClient)
+
+	// Get queue directory for log storage
+	home, err := os.UserHomeDir()
 	if err != nil {
-		// Log error but continue - logging is optional
-		fmt.Fprintf(os.Stderr, "Warning: failed to initialize logging: %v\n", err)
+		return fmt.Errorf("failed to get home directory: %w", err)
 	}
+	queueDir := filepath.Join(home, ".ubik", "log_queue")
 
-	// Ensure logger is closed on exit
-	if logger != nil {
-		defer logger.Close()
-	}
-
-	// Start logging session
+	// Initialize Control Service with API uploader
+	var controlSvc *control.Service
+	var controlProxy *control.ControlledProxy
 	var sessionID string
-	if logger != nil {
-		logger.SetAgentID(selectedAgent.AgentID)
-		sid := logger.StartSession()
-		sessionID = sid.String()
-		fmt.Printf("✓ Session: %s\n", sessionID)
+
+	// Check for opt-out via environment variable
+	if os.Getenv("UBIK_NO_LOGGING") == "" {
+		// Create API uploader for the Control Service
+		cliAPIClient := control.NewCLIAPIClient(apiClient)
+		uploader := control.NewAPIUploader(cliAPIClient, employeeID, "")
+
+		// Create Control Service
+		controlSvc, err = control.NewService(control.ServiceConfig{
+			EmployeeID:    employeeID,
+			OrgID:         "", // TODO: Add OrgID to config when available
+			AgentID:       selectedAgent.AgentID,
+			QueueDir:      queueDir,
+			FlushInterval: 5 * time.Second,
+			MaxBatchSize:  10,
+			Uploader:      uploader,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to initialize control service: %v\n", err)
+		}
 	}
 
-	// Start in-process proxy for LLM API logging
-	var inProxy *proxy.Proxy
-	if logger != nil {
-		inProxy = proxy.New(logger)
-		inProxy.SetSession(sessionID, selectedAgent.AgentID)
-		if err := inProxy.Start(); err != nil {
+	// Start Control Service and Proxy if enabled
+	if controlSvc != nil {
+		sessionID = controlSvc.SessionID()
+		fmt.Printf("✓ Session: %s\n", sessionID)
+
+		// Start background worker for log uploads
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go controlSvc.Start(ctx)
+
+		// Start controlled proxy for HTTPS interception
+		controlProxy = control.NewControlledProxy(controlSvc)
+		if err := controlProxy.Start(); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to start proxy: %v\n", err)
-			// Continue without proxy - logging will still work
 		} else {
-			defer inProxy.Stop()
-			fmt.Printf("✓ Proxy: localhost:%d\n", inProxy.GetPort())
+			defer controlProxy.Stop()
+			fmt.Printf("✓ Proxy: localhost:%d\n", controlProxy.GetPort())
 		}
 	}
 
@@ -233,9 +249,9 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	// Configure native runner
 	var proxyPort int
 	var certPath string
-	if inProxy != nil {
-		proxyPort = inProxy.GetPort()
-		certPath = inProxy.GetCertPath()
+	if controlProxy != nil {
+		proxyPort = controlProxy.GetPort()
+		certPath = controlProxy.GetCertPath()
 	}
 
 	runnerConfig := docker.RunnerConfig{
@@ -256,17 +272,14 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	fmt.Println()
 
 	// Run agent natively
-	ctx := context.Background()
+	runCtx := context.Background()
 	runner := docker.NewRunner()
 	startTime := time.Now()
 
-	err = runner.Run(ctx, runnerConfig, os.Stdin, os.Stdout, os.Stderr)
+	err = runner.Run(runCtx, runnerConfig, os.Stdin, os.Stdout, os.Stderr)
 
-	// End logging session
-	if logger != nil {
-		logger.EndSession()
-		logger.Flush()
-	}
+	// Note: Control Service handles log flushing automatically
+	// via context cancellation when deferred cancel() is called
 
 	// Display session summary
 	duration := time.Since(startTime).Round(time.Second)
