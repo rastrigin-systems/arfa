@@ -11,16 +11,16 @@ import (
 
 // testHandler is a configurable mock handler for testing
 type testHandler struct {
-	name           string
-	priority       int
-	onRequest      func(ctx *HandlerContext, req *http.Request) Result
-	onResponse     func(ctx *HandlerContext, res *http.Response) Result
-	requestCalls   int
-	responseCalls  int
+	name          string
+	priority      int
+	onRequest     func(ctx *HandlerContext, req *http.Request) Result
+	onResponse    func(ctx *HandlerContext, res *http.Response) Result
+	requestCalls  int
+	responseCalls int
 }
 
-func (h *testHandler) Name() string   { return h.name }
-func (h *testHandler) Priority() int  { return h.priority }
+func (h *testHandler) Name() string  { return h.name }
+func (h *testHandler) Priority() int { return h.priority }
 
 func (h *testHandler) HandleRequest(ctx *HandlerContext, req *http.Request) Result {
 	h.requestCalls++

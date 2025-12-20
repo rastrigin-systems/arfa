@@ -20,9 +20,9 @@ type LogEntry struct {
 	AgentID    string `json:"agent_id"`
 
 	// Event metadata
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category,omitempty"`
-	Timestamp     time.Time              `json:"timestamp"`
+	EventType     string    `json:"event_type"`
+	EventCategory string    `json:"event_category,omitempty"`
+	Timestamp     time.Time `json:"timestamp"`
 
 	// Content
 	Payload map[string]interface{} `json:"payload,omitempty"`

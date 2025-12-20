@@ -79,12 +79,12 @@ func TestResult_WithModifiedRequest(t *testing.T) {
 
 // Mock handler for testing interface compliance
 type mockHandler struct {
-	name            string
-	priority        int
-	requestResult   Result
-	responseResult  Result
-	requestCalled   bool
-	responseCalled  bool
+	name           string
+	priority       int
+	requestResult  Result
+	responseResult Result
+	requestCalled  bool
+	responseCalled bool
 }
 
 func (m *mockHandler) Name() string {
