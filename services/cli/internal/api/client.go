@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Client handles HTTP API communication with the platform server.
@@ -267,16 +269,24 @@ func (c *Client) GetMyToolPolicies(ctx context.Context) (*EmployeeToolPoliciesRe
 // ============================================================================
 
 // CreateLog sends a single log entry to the platform API.
+// isValidUUID checks if a string is a valid UUID.
+func isValidUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
+}
+
 func (c *Client) CreateLog(ctx context.Context, entry LogEntry) error {
 	req := CreateLogRequest{
 		EventType:     entry.EventType,
 		EventCategory: entry.EventCategory,
 	}
 
-	if entry.SessionID != "" {
+	// Only include session_id and agent_id if they are valid UUIDs
+	// The API validates these as UUID format
+	if entry.SessionID != "" && isValidUUID(entry.SessionID) {
 		req.SessionID = &entry.SessionID
 	}
-	if entry.AgentID != "" {
+	if entry.AgentID != "" && isValidUUID(entry.AgentID) {
 		req.AgentID = &entry.AgentID
 	}
 	if entry.Content != "" {
