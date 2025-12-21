@@ -168,12 +168,12 @@ func (h *PolicyHandler) isBlocked(toolName string) (string, bool) {
 // pendingBlock tracks tool_use blocks that need condition evaluation.
 // We buffer events until we have enough input to evaluate conditions.
 type pendingBlock struct {
-	index           int
-	toolName        string
-	startEvent      string // The original content_block_start event
-	startData       string // The original data for content_block_start
-	deltaEvents     []string
-	inputJSON       strings.Builder // Accumulated JSON input from deltas
+	index       int
+	toolName    string
+	startEvent  string // The original content_block_start event
+	startData   string // The original data for content_block_start
+	deltaEvents []string
+	inputJSON   strings.Builder // Accumulated JSON input from deltas
 }
 
 // hasConditionalPolicies checks if a tool has policies with conditions.
@@ -350,7 +350,7 @@ func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
 
 	var currentEvent string
 	var currentData string
-	var blockedIndices = make(map[int]string)    // index -> reason (unconditionally blocked)
+	var blockedIndices = make(map[int]string)       // index -> reason (unconditionally blocked)
 	var pendingBlocks = make(map[int]*pendingBlock) // index -> pending block (needs condition evaluation)
 	wasModified := false
 
