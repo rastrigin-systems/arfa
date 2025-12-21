@@ -29,6 +29,22 @@ Run `make` to see available commands (from services/cli/ or repository root).
 
 ---
 
+## Critical: Pre-Commit Checks
+
+**ALWAYS run these before committing Go files:**
+
+```bash
+# 1. Run go vet (required)
+go vet ./...
+
+# 2. Run tests
+go test ./... -count=1
+```
+
+❌ **NEVER commit without running `go vet`** - this catches common bugs and issues.
+
+---
+
 ## Architecture
 
 ### Design Decisions
