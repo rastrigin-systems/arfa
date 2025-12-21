@@ -8,31 +8,131 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
 )
 
-// PolicyHandler blocks tool calls based on a deny list.
-// MVP: Hardcoded deny list, parses SSE stream, replaces blocked tools with error text.
+// PolicyHandler blocks tool calls based on policies loaded from cache.
+// Policies are synced via `ubik sync` and stored in ~/.ubik/policies.json.
 type PolicyHandler struct {
 	// denyList contains tool names that should be blocked.
-	// For MVP, this is hardcoded. Later: loaded from ~/.ubik/policies.json
+	// Built from policies loaded from ~/.ubik/policies.json
 	denyList map[string]string // tool name -> reason
+
+	// globPatterns contains tool name patterns that end with %
+	// These match tools that start with the pattern prefix
+	globPatterns map[string]string // pattern prefix -> reason
 }
 
-// NewPolicyHandler creates a new PolicyHandler with a hardcoded deny list for testing.
+// policyCacheFile represents the cached policies structure.
+type policyCacheFile struct {
+	Policies []api.ToolPolicy `json:"policies"`
+	Version  int              `json:"version"`
+	SyncedAt string           `json:"synced_at"`
+}
+
+// NewPolicyHandler creates a new PolicyHandler that loads policies from cache.
+// If cache is unavailable or empty, no tools are blocked.
 func NewPolicyHandler() *PolicyHandler {
-	return &PolicyHandler{
-		denyList: map[string]string{
-			// Uncomment tools to block for testing:
-			// "Bash":  "Shell commands are blocked by organization policy",
-			// "Write": "File writes are blocked by organization policy",
-		},
+	h := &PolicyHandler{
+		denyList:     make(map[string]string),
+		globPatterns: make(map[string]string),
 	}
+	h.loadFromCache()
+	return h
 }
 
 // NewPolicyHandlerWithDenyList creates a PolicyHandler with a custom deny list.
+// Used for testing.
 func NewPolicyHandlerWithDenyList(denyList map[string]string) *PolicyHandler {
-	return &PolicyHandler{denyList: denyList}
+	return &PolicyHandler{
+		denyList:     denyList,
+		globPatterns: make(map[string]string),
+	}
+}
+
+// NewPolicyHandlerWithPolicies creates a PolicyHandler with a list of policies.
+// Used for testing with full policy objects.
+func NewPolicyHandlerWithPolicies(policies []api.ToolPolicy) *PolicyHandler {
+	h := &PolicyHandler{
+		denyList:     make(map[string]string),
+		globPatterns: make(map[string]string),
+	}
+	h.buildDenyList(policies)
+	return h
+}
+
+// loadFromCache loads policies from ~/.ubik/policies.json
+func (h *PolicyHandler) loadFromCache() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return // Silently fail - no policies blocked
+	}
+
+	policiesPath := filepath.Join(homeDir, ".ubik", "policies.json")
+	data, err := os.ReadFile(policiesPath)
+	if err != nil {
+		return // File doesn't exist or can't be read - no policies blocked
+	}
+
+	var cache policyCacheFile
+	if err := json.Unmarshal(data, &cache); err != nil {
+		return // Invalid JSON - no policies blocked
+	}
+
+	h.buildDenyList(cache.Policies)
+}
+
+// buildDenyList converts policies to the internal deny list format.
+// Only policies with action="deny" are added.
+func (h *PolicyHandler) buildDenyList(policies []api.ToolPolicy) {
+	for _, policy := range policies {
+		if policy.Action != api.ToolPolicyActionDeny {
+			continue // Skip audit-only policies
+		}
+
+		reason := "Tool blocked by organization policy"
+		if policy.Reason != nil && *policy.Reason != "" {
+			reason = *policy.Reason
+		}
+
+		toolName := policy.ToolName
+
+		// Handle glob patterns (e.g., "mcp__gcloud__%")
+		if strings.HasSuffix(toolName, "%") {
+			prefix := strings.TrimSuffix(toolName, "%")
+			h.globPatterns[prefix] = reason
+		} else {
+			// Exact match - store in both original case and lowercase
+			h.denyList[toolName] = reason
+			h.denyList[strings.ToLower(toolName)] = reason
+		}
+	}
+}
+
+// isBlocked checks if a tool should be blocked, returning the reason if so.
+func (h *PolicyHandler) isBlocked(toolName string) (string, bool) {
+	// Check exact match first (case-sensitive)
+	if reason, ok := h.denyList[toolName]; ok {
+		return reason, true
+	}
+
+	// Check lowercase match
+	if reason, ok := h.denyList[strings.ToLower(toolName)]; ok {
+		return reason, true
+	}
+
+	// Check glob patterns
+	for prefix, reason := range h.globPatterns {
+		if strings.HasPrefix(toolName, prefix) || strings.HasPrefix(strings.ToLower(toolName), strings.ToLower(prefix)) {
+			return reason, true
+		}
+	}
+
+	return "", false
 }
 
 // Name returns the handler name.
@@ -102,7 +202,7 @@ type sseContentBlockStart struct {
 
 // processSSEStream parses SSE events and replaces blocked tool_use blocks with error text.
 func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
-	if len(h.denyList) == 0 {
+	if len(h.denyList) == 0 && len(h.globPatterns) == 0 {
 		return data, false
 	}
 
@@ -133,19 +233,12 @@ func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
 				if err := json.Unmarshal([]byte(currentData), &block); err == nil {
 					if block.ContentBlock.Type == "tool_use" {
 						toolName := block.ContentBlock.Name
-						if reason, blocked := h.denyList[strings.ToLower(toolName)]; blocked {
+						if reason, blocked := h.isBlocked(toolName); blocked {
 							// Block this tool - remember the index
 							blockedIndices[block.Index] = reason
 							wasModified = true
 
 							// Write replacement text block instead
-							h.writeBlockedEvent(&output, block.Index, toolName, reason)
-							shouldWrite = false
-						}
-						// Also check original case
-						if reason, blocked := h.denyList[toolName]; blocked {
-							blockedIndices[block.Index] = reason
-							wasModified = true
 							h.writeBlockedEvent(&output, block.Index, toolName, reason)
 							shouldWrite = false
 						}

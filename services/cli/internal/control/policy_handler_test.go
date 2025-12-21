@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -204,7 +205,13 @@ data: {"type":"message_stop"}
 }
 
 func TestPolicyHandler_EmptyDenyList(t *testing.T) {
-	h := NewPolicyHandler() // Empty deny list
+	// Override HOME to temp dir to ensure no policies are loaded from cache
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	h := NewPolicyHandler() // Should have empty deny list (no cache file)
 	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
 
 	sseStream := `event: content_block_start
@@ -233,7 +240,7 @@ data: {"type":"content_block_stop","index":0}
 }
 
 func TestProcessSSEStream_NoBlocking(t *testing.T) {
-	h := &PolicyHandler{denyList: map[string]string{}}
+	h := &PolicyHandler{denyList: map[string]string{}, globPatterns: map[string]string{}}
 
 	input := []byte(`event: test
 data: {"foo":"bar"}
@@ -247,7 +254,7 @@ data: {"foo":"bar"}
 }
 
 func TestProcessSSEStream_BlockBash(t *testing.T) {
-	h := &PolicyHandler{denyList: map[string]string{"Bash": "no shell"}}
+	h := &PolicyHandler{denyList: map[string]string{"Bash": "no shell"}, globPatterns: map[string]string{}}
 
 	input := []byte(`event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t1","name":"Bash","input":{}}}
@@ -296,4 +303,146 @@ func TestWriteBlockedEvent(t *testing.T) {
 	assert.Contains(t, output, `"type":"text"`)
 	assert.Contains(t, output, `"type":"text_delta"`)
 	assert.Contains(t, output, "TOOL BLOCKED")
+}
+
+func TestPolicyHandler_LoadFromCache(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create a policies.json file
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
+			{"tool_name": "Write", "action": "deny", "reason": "Writes blocked"}
+		],
+		"version": 12345,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	// Create handler - should load from cache
+	h := NewPolicyHandler()
+
+	// Test that Bash is blocked
+	reason, blocked := h.isBlocked("Bash")
+	assert.True(t, blocked)
+	assert.Equal(t, "Shell blocked", reason)
+
+	// Test that Write is blocked
+	reason, blocked = h.isBlocked("Write")
+	assert.True(t, blocked)
+	assert.Equal(t, "Writes blocked", reason)
+
+	// Test that other tools are not blocked
+	_, blocked = h.isBlocked("Read")
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_GlobPattern(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create a policies.json file with a glob pattern
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{"tool_name": "mcp__gcloud__%", "action": "deny", "reason": "GCloud MCP blocked"}
+		],
+		"version": 12345,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	// Create handler - should load from cache
+	h := NewPolicyHandler()
+
+	// Test that mcp__gcloud__run_gcloud_command is blocked (matches pattern)
+	reason, blocked := h.isBlocked("mcp__gcloud__run_gcloud_command")
+	assert.True(t, blocked)
+	assert.Equal(t, "GCloud MCP blocked", reason)
+
+	// Test that mcp__gcloud__list_instances is also blocked
+	reason, blocked = h.isBlocked("mcp__gcloud__list_instances")
+	assert.True(t, blocked)
+
+	// Test that other MCP tools are not blocked
+	_, blocked = h.isBlocked("mcp__filesystem__read_file")
+	assert.False(t, blocked)
+
+	// Test that plain Bash is not blocked
+	_, blocked = h.isBlocked("Bash")
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_SkipsAuditPolicies(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create a policies.json file with both deny and audit policies
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
+			{"tool_name": "Write", "action": "audit", "reason": "Writes audited"}
+		],
+		"version": 12345,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	// Create handler - should only load deny policies
+	h := NewPolicyHandler()
+
+	// Bash should be blocked (deny)
+	_, blocked := h.isBlocked("Bash")
+	assert.True(t, blocked)
+
+	// Write should NOT be blocked (audit only)
+	_, blocked = h.isBlocked("Write")
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_CaseInsensitive(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create a policies.json file
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"}
+		],
+		"version": 12345,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Test case variations
+	_, blocked := h.isBlocked("Bash")
+	assert.True(t, blocked, "exact case should be blocked")
+
+	_, blocked = h.isBlocked("bash")
+	assert.True(t, blocked, "lowercase should be blocked")
+
+	_, blocked = h.isBlocked("BASH")
+	assert.True(t, blocked, "uppercase should be blocked")
 }
