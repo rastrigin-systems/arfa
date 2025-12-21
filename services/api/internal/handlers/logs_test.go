@@ -174,14 +174,14 @@ func TestListLogs_Success(t *testing.T) {
 		},
 	}
 
-	// Expect database query
+	// Expect database query with filtered method
 	mockDB.EXPECT().
-		ListActivityLogs(gomock.Any(), gomock.Any()).
+		ListActivityLogsFiltered(gomock.Any(), gomock.Any()).
 		Return(logs, nil)
 
-	// Expect count query
+	// Expect count query with filtered method
 	mockDB.EXPECT().
-		CountActivityLogs(gomock.Any(), orgID).
+		CountActivityLogsFiltered(gomock.Any(), gomock.Any()).
 		Return(int64(2), nil)
 
 	handler := handlers.NewLogsHandler(mockDB, nil)
@@ -215,10 +215,21 @@ func TestListLogs_WithSessionFilter(t *testing.T) {
 	orgID := uuid.New()
 	sessionID := uuid.New()
 
-	// Expect database query with session filter
+	// Expect database query with session filter using filtered method
 	mockDB.EXPECT().
-		GetLogsBySession(gomock.Any(), pgtype.UUID{Bytes: sessionID, Valid: true}).
-		Return([]db.ActivityLog{}, nil)
+		ListActivityLogsFiltered(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.ListActivityLogsFilteredParams) ([]db.ActivityLog, error) {
+			// Verify session_id is set
+			assert.Equal(t, orgID, params.OrgID)
+			assert.True(t, params.SessionID.Valid)
+			assert.Equal(t, sessionID, uuid.UUID(params.SessionID.Bytes))
+			return []db.ActivityLog{}, nil
+		})
+
+	// Expect count query
+	mockDB.EXPECT().
+		CountActivityLogsFiltered(gomock.Any(), gomock.Any()).
+		Return(int64(0), nil)
 
 	handler := handlers.NewLogsHandler(mockDB, nil)
 
@@ -237,7 +248,7 @@ func TestListLogs_WithSessionFilter(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-func TestListLogs_DefaultToCurrentEmployeeWhenFilterOmitted(t *testing.T) {
+func TestListLogs_WithEmployeeFilter(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -259,27 +270,34 @@ func TestListLogs_DefaultToCurrentEmployeeWhenFilterOmitted(t *testing.T) {
 		},
 	}
 
-	// Expect database query with current employee ID
+	// Expect database query with employee_id filter
 	mockDB.EXPECT().
-		GetLogsByEmployee(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, params db.GetLogsByEmployeeParams) ([]db.ActivityLog, error) {
-			// Verify that employee_id from context is used
+		ListActivityLogsFiltered(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.ListActivityLogsFilteredParams) ([]db.ActivityLog, error) {
+			// Verify that employee_id filter is applied
 			assert.Equal(t, orgID, params.OrgID)
-			assert.Equal(t, pgtype.UUID{Bytes: employeeID, Valid: true}, params.EmployeeID)
+			assert.True(t, params.EmployeeID.Valid)
+			assert.Equal(t, employeeID, uuid.UUID(params.EmployeeID.Bytes))
 			return logs, nil
 		})
 
+	// Expect count query
+	mockDB.EXPECT().
+		CountActivityLogsFiltered(gomock.Any(), gomock.Any()).
+		Return(int64(1), nil)
+
 	handler := handlers.NewLogsHandler(mockDB, nil)
 
-	// Create request WITHOUT employee_id parameter
-	req := httptest.NewRequest(http.MethodGet, "/logs?page=1&per_page=20", nil)
+	// Create request with employee_id parameter
+	req := httptest.NewRequest(http.MethodGet, "/logs?page=1&per_page=20&employee_id="+employeeID.String(), nil)
 	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
-	req = req.WithContext(handlers.SetEmployeeIDInContext(req.Context(), employeeID))
 
 	rec := httptest.NewRecorder()
 
-	// Call handler
-	handler.ListLogs(rec, req, api.ListLogsParams{})
+	// Call handler with employee filter
+	handler.ListLogs(rec, req, api.ListLogsParams{
+		EmployeeId: &employeeID,
+	})
 
 	// Verify response
 	assert.Equal(t, http.StatusOK, rec.Code)
