@@ -1371,6 +1371,62 @@ components:
           type: integer
           example: 3
 
+    # Tool Policies
+    ToolPolicy:
+      type: object
+      required:
+        - tool_name
+        - action
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tool_name:
+          type: string
+          description: Tool name or pattern to match (e.g., "Bash", "mcp__playwright__%", "*")
+          example: "Bash"
+        conditions:
+          type: object
+          nullable: true
+          description: Optional conditions for param-based blocking
+          example: {"any": [{"param_path": "command", "operator": "contains", "value": "rm -rf"}]}
+        action:
+          type: string
+          enum: [deny, audit]
+          description: Action to take when tool matches
+          example: "deny"
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason shown to agent
+          example: "Shell commands are blocked by organization policy"
+        scope:
+          type: string
+          enum: [organization, team, employee]
+          description: Level at which this policy is defined
+          example: "organization"
+
+    EmployeeToolPoliciesResponse:
+      type: object
+      required:
+        - policies
+        - version
+        - synced_at
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolPolicy'
+        version:
+          type: integer
+          description: Policy version for cache invalidation
+          example: 42
+        synced_at:
+          type: string
+          format: date-time
+          description: Server timestamp for cache freshness checking
+
     # Pagination
     PaginationMeta:
       type: object
@@ -3821,6 +3877,32 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Skill not found or not installed for employee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Employee Tool Policies
+  # ============================================================================
+  /employees/me/tool-policies:
+    get:
+      tags:
+        - policies
+      summary: Get employee's resolved tool policies
+      description: |
+        Get all tool policies that apply to the authenticated employee.
+        Includes org-level, team-level, and employee-specific policies.
+        Used by CLI to cache policies locally for tool blocking.
+      operationId: getEmployeeToolPolicies
+      responses:
+        '200':
+          description: Employee's resolved tool policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeToolPoliciesResponse'
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:
