@@ -134,3 +134,11 @@ func (s *Service) SetUploader(uploader Uploader) {
 		uploader: uploader,
 	}
 }
+
+// EnablePolicyBlocking registers a PolicyHandler with the given deny list.
+// This enables blocking of specific tools based on organization policies.
+// Example: denyList := map[string]string{"Bash": "Shell commands blocked"}
+func (s *Service) EnablePolicyBlocking(denyList map[string]string) {
+	handler := NewPolicyHandlerWithDenyList(denyList)
+	s.pipeline.Register(handler)
+}

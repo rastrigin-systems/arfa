@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
@@ -170,6 +171,24 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to initialize control service: %v\n", err)
+		}
+
+		// MVP: Enable policy blocking if UBIK_BLOCK_TOOLS is set
+		// Example: UBIK_BLOCK_TOOLS="Bash:Shell blocked,Write:File writes blocked"
+		if blockTools := os.Getenv("UBIK_BLOCK_TOOLS"); blockTools != "" && controlSvc != nil {
+			denyList := make(map[string]string)
+			for _, entry := range strings.Split(blockTools, ",") {
+				parts := strings.SplitN(entry, ":", 2)
+				if len(parts) == 2 {
+					denyList[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+				} else if len(parts) == 1 {
+					denyList[strings.TrimSpace(parts[0])] = "Blocked by organization policy"
+				}
+			}
+			if len(denyList) > 0 {
+				controlSvc.EnablePolicyBlocking(denyList)
+				fmt.Printf("✓ Policy blocking enabled: %v\n", denyList)
+			}
 		}
 	}
 
