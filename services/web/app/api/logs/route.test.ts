@@ -48,8 +48,8 @@ describe('GET /api/logs', () => {
     url.searchParams.set('event_category', 'io');
     url.searchParams.set('start_date', '2024-01-01');
     url.searchParams.set('end_date', '2024-12-31');
-    url.searchParams.set('limit', '50');
-    url.searchParams.set('offset', '10');
+    url.searchParams.set('page', '2');
+    url.searchParams.set('per_page', '50');
 
     const request = new NextRequest(url);
 
@@ -67,8 +67,8 @@ describe('GET /api/logs', () => {
           event_category: 'io',
           start_date: '2024-01-01',
           end_date: '2024-12-31',
-          limit: 50,
-          offset: 10,
+          page: 2,
+          per_page: 50,
         },
       },
       headers: {
@@ -179,8 +179,8 @@ describe('GET /api/logs', () => {
           event_category: undefined,
           start_date: undefined,
           end_date: undefined,
-          limit: 100,
-          offset: 0,
+          page: 1,
+          per_page: 100,
         },
       },
       headers: {
@@ -189,7 +189,7 @@ describe('GET /api/logs', () => {
     });
   });
 
-  it('converts string limit and offset to numbers', async () => {
+  it('converts string page and per_page to numbers', async () => {
     // Arrange
     vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
     vi.mocked(apiClient.GET).mockResolvedValue({
@@ -199,8 +199,8 @@ describe('GET /api/logs', () => {
     });
 
     const url = new URL('http://localhost:3000/api/logs');
-    url.searchParams.set('limit', '25');
-    url.searchParams.set('offset', '5');
+    url.searchParams.set('page', '3');
+    url.searchParams.set('per_page', '25');
     const request = new NextRequest(url);
 
     // Act
@@ -210,8 +210,8 @@ describe('GET /api/logs', () => {
     expect(apiClient.GET).toHaveBeenCalledWith('/logs', {
       params: {
         query: expect.objectContaining({
-          limit: 25,
-          offset: 5,
+          page: 3,
+          per_page: 25,
         }),
       },
       headers: expect.any(Object),
