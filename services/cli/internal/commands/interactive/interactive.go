@@ -153,42 +153,42 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	var controlProxy *control.ControlledProxy
 	var sessionID string
 
-	// Check for opt-out via environment variable
+	// Create uploader only if logging is enabled
+	var uploader control.Uploader
 	if os.Getenv("UBIK_NO_LOGGING") == "" {
-		// Create API uploader for the Control Service
 		cliAPIClient := control.NewCLIAPIClient(apiClient)
-		uploader := control.NewAPIUploader(cliAPIClient, employeeID, "")
+		uploader = control.NewAPIUploader(cliAPIClient, employeeID, "")
+	}
 
-		// Create Control Service
-		controlSvc, err = control.NewService(control.ServiceConfig{
-			EmployeeID:    employeeID,
-			OrgID:         "", // TODO: Add OrgID to config when available
-			AgentID:       selectedAgent.AgentID,
-			QueueDir:      queueDir,
-			FlushInterval: 5 * time.Second,
-			MaxBatchSize:  10,
-			Uploader:      uploader,
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to initialize control service: %v\n", err)
+	// Always create Control Service (for policy blocking), but uploader may be nil
+	controlSvc, err = control.NewService(control.ServiceConfig{
+		EmployeeID:    employeeID,
+		OrgID:         "", // TODO: Add OrgID to config when available
+		AgentID:       selectedAgent.AgentID,
+		QueueDir:      queueDir,
+		FlushInterval: 5 * time.Second,
+		MaxBatchSize:  10,
+		Uploader:      uploader, // nil when UBIK_NO_LOGGING is set
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to initialize control service: %v\n", err)
+	}
+
+	// MVP: Enable additional policy blocking if UBIK_BLOCK_TOOLS is set
+	// Example: UBIK_BLOCK_TOOLS="Bash:Shell blocked,Write:File writes blocked"
+	if blockTools := os.Getenv("UBIK_BLOCK_TOOLS"); blockTools != "" && controlSvc != nil {
+		denyList := make(map[string]string)
+		for _, entry := range strings.Split(blockTools, ",") {
+			parts := strings.SplitN(entry, ":", 2)
+			if len(parts) == 2 {
+				denyList[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+			} else if len(parts) == 1 {
+				denyList[strings.TrimSpace(parts[0])] = "Blocked by organization policy"
+			}
 		}
-
-		// MVP: Enable policy blocking if UBIK_BLOCK_TOOLS is set
-		// Example: UBIK_BLOCK_TOOLS="Bash:Shell blocked,Write:File writes blocked"
-		if blockTools := os.Getenv("UBIK_BLOCK_TOOLS"); blockTools != "" && controlSvc != nil {
-			denyList := make(map[string]string)
-			for _, entry := range strings.Split(blockTools, ",") {
-				parts := strings.SplitN(entry, ":", 2)
-				if len(parts) == 2 {
-					denyList[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-				} else if len(parts) == 1 {
-					denyList[strings.TrimSpace(parts[0])] = "Blocked by organization policy"
-				}
-			}
-			if len(denyList) > 0 {
-				controlSvc.EnablePolicyBlocking(denyList)
-				fmt.Printf("✓ Policy blocking enabled: %v\n", denyList)
-			}
+		if len(denyList) > 0 {
+			controlSvc.EnablePolicyBlocking(denyList)
+			fmt.Printf("✓ Policy blocking enabled: %v\n", denyList)
 		}
 	}
 

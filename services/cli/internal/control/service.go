@@ -67,6 +67,10 @@ func NewService(config ServiceConfig) (*Service, error) {
 	loggerHandler := NewLoggerHandler(queue)
 	pipeline.Register(loggerHandler)
 
+	// Register policy handler (loads policies from ~/.ubik/policies.json)
+	policyHandler := NewPolicyHandler()
+	pipeline.Register(policyHandler)
+
 	return &Service{
 		config:    config,
 		sessionID: sessionID,
