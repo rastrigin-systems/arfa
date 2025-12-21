@@ -16,6 +16,8 @@ Self-contained Go CLI that allows employees to sync AI agent configurations from
 - Interactive mode (user-friendly interface)
 - Agent management (list, inspect configured agents)
 - Activity logging (track CLI usage)
+- **Control Service** - HTTPS proxy for LLM API interception, logging, and policy enforcement
+- **Tool Blocking** (in progress) - Block tool calls based on org policies. See [TOOL_BLOCKING_DESIGN.md](../../docs/TOOL_BLOCKING_DESIGN.md)
 
 **Architecture principle:** Self-contained module with minimal dependencies. NO database code, NO generated API code. Only depends on `pkg/types` for shared data structures.
 
@@ -542,5 +544,6 @@ make build-all
 - [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview
 - [../../docs/TESTING.md](../../docs/TESTING.md) - Testing guide
 - [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow
+- [../../docs/TOOL_BLOCKING_DESIGN.md](../../docs/TOOL_BLOCKING_DESIGN.md) - Tool blocking architecture (in progress)
 - [../api/CLAUDE.md](../api/CLAUDE.md) - API development
 - [../web/CLAUDE.md](../web/CLAUDE.md) - Web UI development
