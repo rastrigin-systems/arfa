@@ -171,3 +171,135 @@ func TestService_GetLocalAgentConfigs_EmptyDirectory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, configs)
 }
+
+func TestService_SaveAndGetLocalToolPolicies(t *testing.T) {
+	tempDir := t.TempDir()
+
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
+	syncService := NewService(cm, pc, authService)
+
+	// Override home directory for testing
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create test tool policies
+	reason1 := "Shell commands are blocked for security"
+	reason2 := "File writes need review"
+	orgScope := api.ToolPolicyScopeOrganization
+	teamScope := api.ToolPolicyScopeTeam
+
+	policiesResp := &api.EmployeeToolPoliciesResponse{
+		Policies: []api.ToolPolicy{
+			{
+				ID:       "policy-1",
+				ToolName: "Bash",
+				Action:   api.ToolPolicyActionDeny,
+				Reason:   &reason1,
+				Scope:    &orgScope,
+			},
+			{
+				ID:       "policy-2",
+				ToolName: "Write",
+				Action:   api.ToolPolicyActionAudit,
+				Reason:   &reason2,
+				Scope:    &teamScope,
+			},
+		},
+		Version:  12345,
+		SyncedAt: "2024-01-15T10:30:00Z",
+	}
+
+	// Save policies
+	err := syncService.saveToolPolicies(policiesResp)
+	require.NoError(t, err)
+
+	// Verify file was created
+	policiesPath := filepath.Join(tempDir, ".ubik", "policies.json")
+	_, err = os.Stat(policiesPath)
+	require.NoError(t, err)
+
+	// Get local policies
+	loadedPolicies, err := syncService.GetLocalToolPolicies()
+	require.NoError(t, err)
+	assert.Len(t, loadedPolicies, 2)
+
+	// Verify loaded policies match
+	assert.Equal(t, "Bash", loadedPolicies[0].ToolName)
+	assert.Equal(t, api.ToolPolicyActionDeny, loadedPolicies[0].Action)
+	assert.Equal(t, "Shell commands are blocked for security", *loadedPolicies[0].Reason)
+
+	assert.Equal(t, "Write", loadedPolicies[1].ToolName)
+	assert.Equal(t, api.ToolPolicyActionAudit, loadedPolicies[1].Action)
+}
+
+func TestService_GetLocalToolPolicies_EmptyDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
+	syncService := NewService(cm, pc, authService)
+
+	// Override home directory for testing
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Get policies when file doesn't exist
+	policies, err := syncService.GetLocalToolPolicies()
+	require.NoError(t, err)
+	assert.Empty(t, policies)
+}
+
+func TestService_GetLocalToolPolicies_WithConditions(t *testing.T) {
+	tempDir := t.TempDir()
+
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := auth.NewService(cm, pc)
+	syncService := NewService(cm, pc, authService)
+
+	// Override home directory for testing
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	// Create test policy with conditions
+	employeeScope := api.ToolPolicyScopeEmployee
+	reason := "Dangerous commands blocked"
+	policiesResp := &api.EmployeeToolPoliciesResponse{
+		Policies: []api.ToolPolicy{
+			{
+				ID:       "policy-1",
+				ToolName: "Bash",
+				Action:   api.ToolPolicyActionDeny,
+				Reason:   &reason,
+				Scope:    &employeeScope,
+				Conditions: map[string]interface{}{
+					"command": map[string]interface{}{
+						"pattern": "rm -rf.*",
+					},
+				},
+			},
+		},
+		Version:  67890,
+		SyncedAt: "2024-01-15T11:00:00Z",
+	}
+
+	// Save policies
+	err := syncService.saveToolPolicies(policiesResp)
+	require.NoError(t, err)
+
+	// Get local policies
+	loadedPolicies, err := syncService.GetLocalToolPolicies()
+	require.NoError(t, err)
+	assert.Len(t, loadedPolicies, 1)
+
+	// Verify conditions were preserved
+	policy := loadedPolicies[0]
+	assert.NotNil(t, policy.Conditions)
+	assert.NotNil(t, policy.Conditions["command"])
+}

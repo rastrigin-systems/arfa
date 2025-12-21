@@ -275,3 +275,41 @@ type LogsResponse struct {
 	Page       int                `json:"page"`
 	PerPage    int                `json:"per_page"`
 }
+
+// ============================================================================
+// Tool Policy Types
+// ============================================================================
+
+// ToolPolicyScope indicates the level at which a policy is applied.
+type ToolPolicyScope string
+
+const (
+	ToolPolicyScopeOrganization ToolPolicyScope = "organization"
+	ToolPolicyScopeTeam         ToolPolicyScope = "team"
+	ToolPolicyScopeEmployee     ToolPolicyScope = "employee"
+)
+
+// ToolPolicyAction indicates what happens when a policy matches.
+type ToolPolicyAction string
+
+const (
+	ToolPolicyActionDeny  ToolPolicyAction = "deny"
+	ToolPolicyActionAudit ToolPolicyAction = "audit"
+)
+
+// ToolPolicy represents a policy that controls tool access for an employee.
+type ToolPolicy struct {
+	ID         string                 `json:"id,omitempty"`
+	ToolName   string                 `json:"tool_name"`
+	Action     ToolPolicyAction       `json:"action"`
+	Reason     *string                `json:"reason,omitempty"`
+	Conditions map[string]interface{} `json:"conditions,omitempty"`
+	Scope      *ToolPolicyScope       `json:"scope,omitempty"`
+}
+
+// EmployeeToolPoliciesResponse represents the response from GET /employees/me/tool-policies.
+type EmployeeToolPoliciesResponse struct {
+	Policies []ToolPolicy `json:"policies"`
+	Version  int          `json:"version"`
+	SyncedAt string       `json:"synced_at"`
+}

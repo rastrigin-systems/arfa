@@ -29,6 +29,7 @@ type APIClientInterface interface {
 	GetMyResolvedAgentConfigs(ctx context.Context) ([]api.AgentConfig, error)
 	GetClaudeCodeConfig(ctx context.Context) (*api.ClaudeCodeSyncResponse, error)
 	GetEffectiveClaudeToken(ctx context.Context) (string, error)
+	GetMyToolPolicies(ctx context.Context) (*api.EmployeeToolPoliciesResponse, error)
 }
 
 // AuthServiceInterface defines what sync needs from auth.Service
@@ -105,6 +106,9 @@ type ServiceInterface interface {
 
 	// GetAgentConfig retrieves a specific agent config by ID or name.
 	GetAgentConfig(idOrName string) (*api.AgentConfig, error)
+
+	// GetLocalToolPolicies loads tool policies from local storage (~/.ubik/policies.json).
+	GetLocalToolPolicies() ([]api.ToolPolicy, error)
 
 	// SetDockerClient sets the Docker client for container operations.
 	// Deprecated: Use SetContainerManager instead for better dependency injection.

@@ -23,6 +23,7 @@ import (
 type MockConfigManagerInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockConfigManagerInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockConfigManagerInterfaceMockRecorder is the mock recorder for MockConfigManagerInterface.
@@ -133,6 +134,7 @@ func (mr *MockConfigManagerInterfaceMockRecorder) Save(cfg any) *gomock.Call {
 type MockAPIClientInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIClientInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIClientInterfaceMockRecorder is the mock recorder for MockAPIClientInterface.
@@ -197,10 +199,26 @@ func (mr *MockAPIClientInterfaceMockRecorder) GetMyResolvedAgentConfigs(ctx any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyResolvedAgentConfigs", reflect.TypeOf((*MockAPIClientInterface)(nil).GetMyResolvedAgentConfigs), ctx)
 }
 
+// GetMyToolPolicies mocks base method.
+func (m *MockAPIClientInterface) GetMyToolPolicies(ctx context.Context) (*api.EmployeeToolPoliciesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMyToolPolicies", ctx)
+	ret0, _ := ret[0].(*api.EmployeeToolPoliciesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMyToolPolicies indicates an expected call of GetMyToolPolicies.
+func (mr *MockAPIClientInterfaceMockRecorder) GetMyToolPolicies(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyToolPolicies", reflect.TypeOf((*MockAPIClientInterface)(nil).GetMyToolPolicies), ctx)
+}
+
 // MockAuthServiceInterface is a mock of AuthServiceInterface interface.
 type MockAuthServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockAuthServiceInterfaceMockRecorder is the mock recorder for MockAuthServiceInterface.
@@ -239,6 +257,7 @@ func (mr *MockAuthServiceInterfaceMockRecorder) RequireAuth() *gomock.Call {
 type MockDockerClientInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockDockerClientInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockDockerClientInterfaceMockRecorder is the mock recorder for MockDockerClientInterface.
@@ -291,6 +310,7 @@ func (mr *MockDockerClientInterfaceMockRecorder) Ping(ctx any) *gomock.Call {
 type MockContainerManagerInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockContainerManagerInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockContainerManagerInterfaceMockRecorder is the mock recorder for MockContainerManagerInterface.
@@ -387,6 +407,7 @@ func (mr *MockContainerManagerInterfaceMockRecorder) StopContainers(ctx any) *go
 type MockServiceInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockServiceInterfaceMockRecorder is the mock recorder for MockServiceInterface.
@@ -449,6 +470,21 @@ func (m *MockServiceInterface) GetLocalAgentConfigs() ([]api.AgentConfig, error)
 func (mr *MockServiceInterfaceMockRecorder) GetLocalAgentConfigs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocalAgentConfigs", reflect.TypeOf((*MockServiceInterface)(nil).GetLocalAgentConfigs))
+}
+
+// GetLocalToolPolicies mocks base method.
+func (m *MockServiceInterface) GetLocalToolPolicies() ([]api.ToolPolicy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLocalToolPolicies")
+	ret0, _ := ret[0].([]api.ToolPolicy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLocalToolPolicies indicates an expected call of GetLocalToolPolicies.
+func (mr *MockServiceInterfaceMockRecorder) GetLocalToolPolicies() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocalToolPolicies", reflect.TypeOf((*MockServiceInterface)(nil).GetLocalToolPolicies))
 }
 
 // SetContainerManager mocks base method.
