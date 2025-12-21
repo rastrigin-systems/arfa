@@ -1,84 +1,58 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, Fragment } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Clock } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Pagination } from '@/components/ui/pagination';
+import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import type { components } from '@/lib/api/schema';
 
 type ActivityLog = components['schemas']['ActivityLog'];
+type PaginationMeta = components['schemas']['PaginationMeta'];
 
 interface LogListProps {
   logs: ActivityLog[];
+  pagination: PaginationMeta | null;
+  onPageChange: (page: number) => void;
+  newLogIds?: Set<string>;
 }
 
-interface SessionGroup {
-  session_id: string;
-  logs: ActivityLog[];
-  start_time: string;
-  end_time?: string;
-  duration?: number;
-}
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  input: 'bg-blue-500',
+  output: 'bg-green-500',
+  error: 'bg-red-500',
+  session_start: 'bg-purple-500',
+  session_end: 'bg-gray-500',
+  user_prompt: 'bg-blue-400',
+  ai_text: 'bg-green-400',
+  tool_call: 'bg-orange-500',
+  tool_result: 'bg-orange-400',
+  api_request: 'bg-indigo-500',
+  api_response: 'bg-indigo-400',
+  'agent.installed': 'bg-teal-500',
+  'mcp.configured': 'bg-cyan-500',
+  'config.synced': 'bg-emerald-500',
+};
 
-export function LogList({ logs }: LogListProps) {
-  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
+export function LogList({ logs, pagination, onPageChange, newLogIds }: LogListProps) {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Group logs by session and collect standalone logs
-  const { sessionGroups, standaloneLogs } = useMemo(() => {
-    const groups = new Map<string, SessionGroup>();
-    const standalone: ActivityLog[] = [];
-
-    logs.forEach((log) => {
-      // Handle standalone logs (no session)
-      if (!log.session_id) {
-        standalone.push(log);
-        return;
-      }
-
-      if (!groups.has(log.session_id)) {
-        groups.set(log.session_id, {
-          session_id: log.session_id,
-          logs: [],
-          start_time: log.created_at,
-        });
-      }
-
-      const group = groups.get(log.session_id)!;
-      group.logs.push(log);
-
-      // Update end time and duration
-      if (log.event_type === 'session_end') {
-        group.end_time = log.created_at;
-        const start = new Date(group.start_time).getTime();
-        const end = new Date(log.created_at).getTime();
-        group.duration = Math.floor((end - start) / 1000); // seconds
-      }
-    });
-
-    // Sort by most recent first
-    const sortedGroups = Array.from(groups.values()).sort(
-      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-    );
-
-    // Sort standalone logs by most recent first
-    const sortedStandalone = standalone.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    return {
-      sessionGroups: sortedGroups,
-      standaloneLogs: sortedStandalone,
-    };
-  }, [logs]);
-
-  const toggleSession = (sessionId: string) => {
-    setExpandedSessions((prev) => {
+  const toggleRow = (logId: string) => {
+    setExpandedRows((prev) => {
       const next = new Set(prev);
-      if (next.has(sessionId)) {
-        next.delete(sessionId);
+      if (next.has(logId)) {
+        next.delete(logId);
       } else {
-        next.add(sessionId);
+        next.add(logId);
       }
       return next;
     });
@@ -86,174 +60,209 @@ export function LogList({ logs }: LogListProps) {
 
   if (logs.length === 0) {
     return (
-      <Card className="p-12 text-center">
-        <p className="text-muted-foreground">No logs found</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Try adjusting your filters or wait for new activity
-        </p>
+      <Card className="p-12 text-center border-dashed">
+        <div className="flex flex-col items-center gap-2">
+          <Sparkles className="h-8 w-8 text-muted-foreground" />
+          <p className="text-muted-foreground">No logs found</p>
+          <p className="text-sm text-muted-foreground">
+            Try adjusting your filters or wait for new activity
+          </p>
+        </div>
       </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Render session groups */}
-      {sessionGroups.map((session) => (
-        <SessionCard
-          key={session.session_id}
-          session={session}
-          expanded={expandedSessions.has(session.session_id)}
-          onToggle={() => toggleSession(session.session_id)}
-        />
-      ))}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-44">Time</TableHead>
+                <TableHead className="w-32">Event Type</TableHead>
+                <TableHead className="w-28">Category</TableHead>
+                <TableHead className="w-24">Session</TableHead>
+                <TableHead>Content</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logs.map((log) => (
+                <LogRow
+                  key={log.id}
+                  log={log}
+                  expanded={expandedRows.has(log.id)}
+                  onToggle={() => toggleRow(log.id)}
+                  isNew={newLogIds?.has(log.id)}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
-      {/* Render standalone logs */}
-      {standaloneLogs.map((log) => (
-        <Card key={log.id} className="p-4">
-          <LogEntry log={log} />
-        </Card>
-      ))}
+      {pagination && pagination.total_pages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {(pagination.page - 1) * pagination.per_page + 1} -{' '}
+            {Math.min(pagination.page * pagination.per_page, pagination.total)} of{' '}
+            {pagination.total} logs
+          </p>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.total_pages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-interface SessionCardProps {
-  session: SessionGroup;
+interface LogRowProps {
+  log: ActivityLog;
   expanded: boolean;
   onToggle: () => void;
+  isNew?: boolean;
 }
 
-function SessionCard({ session, expanded, onToggle }: SessionCardProps) {
+function LogRow({ log, expanded, onToggle, isNew }: LogRowProps) {
+  const hasExpandableContent =
+    (log.content && log.content.length > 50) ||
+    (log.payload && Object.keys(log.payload).length > 0);
+
+  const eventTypeColor = EVENT_TYPE_COLORS[log.event_type] || 'bg-gray-400';
+
   return (
-    <Card className="overflow-hidden">
-      {/* Session Header */}
-      <div
-        className="p-4 bg-muted/50 flex items-center justify-between cursor-pointer hover:bg-muted"
-        onClick={onToggle}
+    <Fragment>
+      <TableRow
+        className={`cursor-pointer ${isNew ? 'bg-green-50 dark:bg-green-950/20' : ''}`}
+        onClick={hasExpandableContent ? onToggle : undefined}
       >
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-6 w-6">
-            {expanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-sm">
-                Session: {session.session_id.slice(0, 8)}
-              </span>
-              {session.duration && (
-                <Badge variant="outline">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {formatDuration(session.duration)}
-                </Badge>
+        <TableCell className="p-2">
+          {hasExpandableContent && (
+            <Button variant="ghost" size="icon" className="h-6 w-6">
+              {expanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
               )}
-            </div>
+            </Button>
+          )}
+        </TableCell>
 
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{new Date(session.start_time).toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
+        <TableCell className="font-mono text-sm">
+          {formatDateTime(log.created_at)}
+        </TableCell>
 
-        <Badge>{session.logs.length} events</Badge>
-      </div>
-
-      {/* Session Logs */}
-      {expanded && (
-        <div className="divide-y">
-          {session.logs.map((log) => (
-            <LogEntry key={log.id} log={log} />
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-interface LogEntryProps {
-  log: ActivityLog;
-}
-
-function LogEntry({ log }: LogEntryProps) {
-  const [expanded, setExpanded] = useState(false);
-
-  const eventTypeColor = {
-    input: 'bg-blue-500',
-    output: 'bg-green-500',
-    error: 'bg-red-500',
-    session_start: 'bg-purple-500',
-    session_end: 'bg-gray-500',
-  }[log.event_type as string] || 'bg-gray-400';
-
-  return (
-    <div className="p-4 hover:bg-muted/50 transition-colors">
-      <div className="flex items-start gap-3">
-        <div className={`mt-1 h-2 w-2 rounded-full ${eventTypeColor}`} />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium">{formatTime(log.created_at)}</span>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${eventTypeColor}`} />
             <Badge variant="outline" className="text-xs">
               {log.event_type}
             </Badge>
-            {log.event_category && (
-              <Badge variant="secondary" className="text-xs">
-                {log.event_category}
-              </Badge>
-            )}
           </div>
+        </TableCell>
 
-          {log.content && (
-            <>
-              <div
-                className={`text-sm ${
-                  expanded ? '' : 'line-clamp-2'
-                } cursor-pointer`}
-                onClick={() => setExpanded(!expanded)}
-              >
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs">
-                  {log.content}
-                </pre>
-              </div>
-              {log.content.length > 100 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-auto p-0 text-xs"
-                  onClick={() => setExpanded(!expanded)}
-                >
-                  {expanded ? 'Show less' : 'Show more'}
-                </Button>
-              )}
-            </>
+        <TableCell>
+          {log.event_category && (
+            <Badge variant="secondary" className="text-xs">
+              {log.event_category}
+            </Badge>
           )}
+        </TableCell>
 
-          {log.payload && Object.keys(log.payload).length > 0 && (
-            <details className="mt-2">
-              <summary className="text-xs text-muted-foreground cursor-pointer">
-                Payload
-              </summary>
-              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
-                {JSON.stringify(log.payload, null, 2)}
-              </pre>
-            </details>
+        <TableCell>
+          {log.session_id ? (
+            <span className="font-mono text-xs text-muted-foreground">
+              {log.session_id.slice(0, 8)}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </TableCell>
+
+        <TableCell className="max-w-md">
+          <p className="text-sm truncate">
+            {log.content || (
+              <span className="text-muted-foreground italic">No content</span>
+            )}
+          </p>
+        </TableCell>
+      </TableRow>
+
+      {expanded && hasExpandableContent && (
+        <TableRow className="bg-muted/30 hover:bg-muted/30">
+          <TableCell colSpan={6} className="p-4">
+            <ExpandedLogContent log={log} />
+          </TableCell>
+        </TableRow>
+      )}
+    </Fragment>
+  );
+}
+
+function ExpandedLogContent({ log }: { log: ActivityLog }) {
+  const [showFullContent, setShowFullContent] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      {log.content && (
+        <div>
+          <h4 className="text-sm font-medium mb-2">Content</h4>
+          <div
+            className={`bg-background rounded-md p-3 ${
+              !showFullContent && log.content.length > 500
+                ? 'max-h-40 overflow-hidden'
+                : ''
+            }`}
+          >
+            <pre className="text-sm whitespace-pre-wrap break-words font-mono">
+              {log.content}
+            </pre>
+          </div>
+          {log.content.length > 500 && (
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-1 h-auto p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFullContent(!showFullContent);
+              }}
+            >
+              {showFullContent ? 'Show less' : 'Show more'}
+            </Button>
           )}
         </div>
+      )}
+
+      {log.payload && Object.keys(log.payload).length > 0 && (
+        <div>
+          <h4 className="text-sm font-medium mb-2">Payload</h4>
+          <pre className="text-xs bg-background p-3 rounded-md overflow-x-auto font-mono">
+            {JSON.stringify(log.payload, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      <div className="flex gap-4 text-xs text-muted-foreground">
+        {log.employee_id && <span>Employee: {log.employee_id.slice(0, 8)}</span>}
+        {log.agent_id && <span>Agent: {log.agent_id.slice(0, 8)}</span>}
+        {log.session_id && <span>Session: {log.session_id}</span>}
       </div>
     </div>
   );
 }
 
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
-}
-
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString();
+function formatDateTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
