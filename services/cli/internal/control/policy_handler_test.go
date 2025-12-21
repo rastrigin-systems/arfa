@@ -247,7 +247,8 @@ data: {"foo":"bar"}
 
 `)
 
-	output, modified := h.processSSEStream(input)
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	output, modified := h.processSSEStream(ctx, input)
 
 	assert.False(t, modified)
 	assert.Equal(t, input, output)
@@ -267,7 +268,8 @@ data: {"type":"content_block_stop","index":0}
 
 `)
 
-	output, modified := h.processSSEStream(input)
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	output, modified := h.processSSEStream(ctx, input)
 
 	assert.True(t, modified)
 
@@ -685,7 +687,8 @@ data: {"type":"message_stop"}
 
 `
 
-	output, modified := h.processSSEStream([]byte(sseStream))
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	output, modified := h.processSSEStream(ctx, []byte(sseStream))
 
 	assert.True(t, modified, "Stream should be modified when condition matches")
 	outputStr := string(output)
@@ -746,7 +749,8 @@ data: {"type":"message_stop"}
 
 `
 
-	output, modified := h.processSSEStream([]byte(sseStream))
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	output, modified := h.processSSEStream(ctx, []byte(sseStream))
 
 	assert.False(t, modified, "Stream should not be modified when condition doesn't match")
 	outputStr := string(output)
