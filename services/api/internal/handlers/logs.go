@@ -165,37 +165,7 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 		return
 	}
 
-	// Handle session filter if provided
-	if params.SessionId != nil {
-		logs, err := h.loggingService.GetLogsBySession(ctx, *params.SessionId)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
-			return
-		}
-
-		// Convert to API response
-		apiLogs := make([]api.ActivityLog, 0, len(logs))
-		for _, log := range logs {
-			apiLogs = append(apiLogs, dbLogToAPI(log))
-		}
-
-		response := api.ListLogsResponse{
-			Logs: apiLogs,
-			Pagination: api.PaginationMeta{
-				Total:      len(apiLogs),
-				Page:       1,
-				PerPage:    100,
-				TotalPages: 1,
-			},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// Default list with pagination
+	// Default pagination
 	limit := int32(20)
 	offset := int32(0)
 
@@ -206,48 +176,61 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 		offset = (int32(*params.Page) - 1) * limit
 	}
 
-	// When employee_id is not provided in params, default to current user from JWT
-	// This allows regular employees to see their own logs without passing employee_id
-	var logs []db.ActivityLog
-	var total int64
+	// Build filter params
+	filterParams := db.ListActivityLogsFilteredParams{
+		OrgID:       orgID,
+		QueryLimit:  limit,
+		QueryOffset: offset,
+	}
 
-	// Check if we should filter by employee
-	employeeID, errEmp := GetEmployeeID(ctx)
-	useEmployeeFilter := (errEmp == nil && employeeID != uuid.Nil)
+	// Apply optional filters
+	if params.EmployeeId != nil {
+		filterParams.EmployeeID = pgtype.UUID{Bytes: uuid.UUID(*params.EmployeeId), Valid: true}
+	}
+	if params.SessionId != nil {
+		filterParams.SessionID = pgtype.UUID{Bytes: uuid.UUID(*params.SessionId), Valid: true}
+	}
+	if params.AgentId != nil {
+		filterParams.AgentID = pgtype.UUID{Bytes: uuid.UUID(*params.AgentId), Valid: true}
+	}
+	if params.EventType != nil {
+		eventType := string(*params.EventType)
+		filterParams.EventType = &eventType
+	}
+	if params.EventCategory != nil {
+		eventCategory := string(*params.EventCategory)
+		filterParams.EventCategory = &eventCategory
+	}
+	if params.StartDate != nil {
+		filterParams.StartDate = pgtype.Timestamp{Time: *params.StartDate, Valid: true}
+	}
+	if params.EndDate != nil {
+		filterParams.EndDate = pgtype.Timestamp{Time: *params.EndDate, Valid: true}
+	}
 
-	if useEmployeeFilter {
-		// Filter by current employee
-		logs, err = h.db.GetLogsByEmployee(ctx, db.GetLogsByEmployeeParams{
-			OrgID:       orgID,
-			EmployeeID:  pgtype.UUID{Bytes: employeeID, Valid: true},
-			QueryLimit:  limit,
-			QueryOffset: offset,
-		})
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
-			return
-		}
+	// Fetch logs with filters
+	logs, err := h.db.ListActivityLogsFiltered(ctx, filterParams)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
+		return
+	}
 
-		// For now, use count of returned logs (TODO: add CountLogsByEmployee query)
-		total = int64(len(logs))
-	} else {
-		// No employee filter - list all org logs (admin view)
-		logs, err = h.db.ListActivityLogs(ctx, db.ListActivityLogsParams{
-			OrgID:  orgID,
-			Limit:  limit,
-			Offset: offset,
-		})
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to fetch logs")
-			return
-		}
+	// Build count params (same filters, no pagination)
+	countParams := db.CountActivityLogsFilteredParams{
+		OrgID:         orgID,
+		EmployeeID:    filterParams.EmployeeID,
+		SessionID:     filterParams.SessionID,
+		AgentID:       filterParams.AgentID,
+		EventType:     filterParams.EventType,
+		EventCategory: filterParams.EventCategory,
+		StartDate:     filterParams.StartDate,
+		EndDate:       filterParams.EndDate,
+	}
 
-		// Get total count
-		total, err = h.db.CountActivityLogs(ctx, orgID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to count logs")
-			return
-		}
+	total, err := h.db.CountActivityLogsFiltered(ctx, countParams)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to count logs")
+		return
 	}
 
 	// Convert to API response
