@@ -102,7 +102,7 @@ describe('GET /api/logs', () => {
     );
   });
 
-  it('returns backend response data', async () => {
+  it('returns backend response data with pagination', async () => {
     // Arrange
     const mockLogs = [
       {
@@ -115,10 +115,16 @@ describe('GET /api/logs', () => {
         data: { message: 'test' },
       },
     ];
+    const mockPagination = {
+      total: 100,
+      page: 1,
+      per_page: 20,
+      total_pages: 5,
+    };
 
     vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
     vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: mockLogs },
+      data: { logs: mockLogs, pagination: mockPagination },
       error: undefined,
       response: new Response(),
     });
@@ -131,7 +137,7 @@ describe('GET /api/logs', () => {
 
     // Assert
     expect(response.status).toBe(200);
-    expect(data).toEqual({ logs: mockLogs });
+    expect(data).toEqual({ logs: mockLogs, pagination: mockPagination });
   });
 
   it('handles backend API errors', async () => {
@@ -154,7 +160,7 @@ describe('GET /api/logs', () => {
     expect(data).toEqual({ error: 'Internal server error' });
   });
 
-  it('handles undefined query parameters', async () => {
+  it('handles undefined query parameters with default pagination', async () => {
     // Arrange
     vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
     vi.mocked(apiClient.GET).mockResolvedValue({
@@ -180,7 +186,7 @@ describe('GET /api/logs', () => {
           start_date: undefined,
           end_date: undefined,
           page: 1,
-          per_page: 100,
+          per_page: 20,
         },
       },
       headers: {

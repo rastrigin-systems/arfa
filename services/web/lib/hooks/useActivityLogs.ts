@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import type { components } from '@/lib/api/schema';
 
 type ActivityLog = components['schemas']['ActivityLog'];
+type PaginationMeta = components['schemas']['PaginationMeta'];
+
 type LogFilters = {
   session_id?: string;
   employee_id?: string;
@@ -17,6 +19,7 @@ type LogFilters = {
 
 export interface UseActivityLogsReturn {
   logs: ActivityLog[] | null;
+  pagination: PaginationMeta | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
@@ -24,6 +27,7 @@ export interface UseActivityLogsReturn {
 
 export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn {
   const [logs, setLogs] = useState<ActivityLog[] | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -43,7 +47,7 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
       if (filters.start_date) params.append('start_date', filters.start_date);
       if (filters.end_date) params.append('end_date', filters.end_date);
       params.append('page', String(filters.page || 1));
-      params.append('per_page', String(filters.per_page || 100));
+      params.append('per_page', String(filters.per_page || 20));
 
       // Call Next.js API route instead of backend directly
       const response = await fetch(`/api/logs?${params.toString()}`);
@@ -54,6 +58,7 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
 
       const data = await response.json();
       setLogs(data?.logs || []);
+      setPagination(data?.pagination || null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -77,6 +82,7 @@ export function useActivityLogs(filters: LogFilters = {}): UseActivityLogsReturn
 
   return {
     logs,
+    pagination,
     isLoading,
     error,
     refetch: fetchLogs,

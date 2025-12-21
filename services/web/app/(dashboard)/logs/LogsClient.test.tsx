@@ -7,6 +7,7 @@ import { LogsClient } from './LogsClient';
 vi.mock('@/lib/hooks/useActivityLogs', () => ({
   useActivityLogs: vi.fn(() => ({
     logs: [],
+    pagination: { total: 0, page: 1, per_page: 20, total_pages: 0 },
     isLoading: false,
     error: null,
     refetch: vi.fn(),
@@ -37,10 +38,18 @@ vi.mock('@/lib/hooks/useLogWebSocket', () => ({
 // Mock components
 interface LogListProps {
   logs: unknown[];
+  pagination: unknown;
+  onPageChange: (page: number) => void;
+  newLogIds?: Set<string>;
 }
 
 vi.mock('@/components/logs/LogList', () => ({
-  LogList: ({ logs }: LogListProps) => <div data-testid="log-list">LogList: {logs.length} logs</div>,
+  LogList: ({ logs, pagination, onPageChange }: LogListProps) => (
+    <div data-testid="log-list">
+      LogList: {logs.length} logs, Page {(pagination as { page: number })?.page || 1}
+      <button onClick={() => onPageChange(2)}>Next Page</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/logs/ExportMenu', () => ({
@@ -94,8 +103,10 @@ describe('LogsClient', () => {
     expect(searchInput).toHaveValue('');
   });
 
-  // These tests are skipped because they require dynamic mock updates
-  // which are difficult to implement without require()
-  // The functionality is covered by integration tests
+  it('should render LogList with pagination props', () => {
+    render(<LogsClient />);
 
+    expect(screen.getByTestId('log-list')).toBeInTheDocument();
+    expect(screen.getByText(/Page 1/)).toBeInTheDocument();
+  });
 });
