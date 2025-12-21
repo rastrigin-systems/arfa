@@ -34,14 +34,17 @@ Run `make` to see available commands (from services/cli/ or repository root).
 **ALWAYS run these before committing Go files:**
 
 ```bash
-# 1. Run go vet (required)
+# 1. Format code (required)
+gofmt -w .
+
+# 2. Run go vet (required)
 go vet ./...
 
-# 2. Run tests
+# 3. Run tests
 go test ./... -count=1
 ```
 
-❌ **NEVER commit without running `go vet`** - this catches common bugs and issues.
+❌ **NEVER commit without running `gofmt` and `go vet`** - CI will fail.
 
 ---
 
