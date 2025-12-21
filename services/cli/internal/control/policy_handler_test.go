@@ -446,3 +446,445 @@ func TestPolicyHandler_CaseInsensitive(t *testing.T) {
 	_, blocked = h.isBlocked("BASH")
 	assert.True(t, blocked, "uppercase should be blocked")
 }
+
+func TestPolicyHandler_ConditionalPolicy_HasConditions(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	// Policy with conditions - block Bash only when command contains "rm -rf"
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Destructive commands blocked",
+				"conditions": {
+					"command": "rm\\s+-rf"
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Bash should NOT be unconditionally blocked
+	_, blocked := h.isBlocked("Bash")
+	assert.False(t, blocked, "Bash should not be unconditionally blocked")
+
+	// But it should have conditional policies
+	assert.True(t, h.hasConditionalPolicies("Bash"))
+	assert.True(t, h.hasConditionalPolicies("bash")) // case-insensitive
+}
+
+func TestPolicyHandler_EvaluateConditions_RegexMatch(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Destructive commands blocked",
+				"conditions": {
+					"command": "rm\\s+-rf"
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Should block when condition matches
+	reason, blocked := h.evaluateConditions("Bash", `{"command": "rm -rf /"}`)
+	assert.True(t, blocked)
+	assert.Equal(t, "Destructive commands blocked", reason)
+
+	// Should allow when condition doesn't match
+	_, blocked = h.evaluateConditions("Bash", `{"command": "ls -la"}`)
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_EvaluateConditions_ContainsOperator(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Password access blocked",
+				"conditions": {
+					"command": {"contains": "/etc/passwd"}
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Should block when contains matches
+	reason, blocked := h.evaluateConditions("Bash", `{"command": "cat /etc/passwd"}`)
+	assert.True(t, blocked)
+	assert.Equal(t, "Password access blocked", reason)
+
+	// Should allow when doesn't contain
+	_, blocked = h.evaluateConditions("Bash", `{"command": "cat /etc/hosts"}`)
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_EvaluateConditions_EqualsOperator(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Write",
+				"action": "deny",
+				"reason": "Cannot write to .env",
+				"conditions": {
+					"file_path": {"equals": ".env"}
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Should block exact match
+	reason, blocked := h.evaluateConditions("Write", `{"file_path": ".env"}`)
+	assert.True(t, blocked)
+	assert.Equal(t, "Cannot write to .env", reason)
+
+	// Should allow non-match
+	_, blocked = h.evaluateConditions("Write", `{"file_path": ".env.example"}`)
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_EvaluateConditions_MultipleConditions(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	// Policy requires ALL conditions to match
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Root access with force flag blocked",
+				"conditions": {
+					"command": {"contains": "sudo"},
+					"dangerouslyDisableSandbox": {"equals": "true"}
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Should block when ALL conditions match
+	reason, blocked := h.evaluateConditions("Bash", `{"command": "sudo rm -rf /", "dangerouslyDisableSandbox": "true"}`)
+	assert.True(t, blocked)
+	assert.Equal(t, "Root access with force flag blocked", reason)
+
+	// Should allow when only one condition matches
+	_, blocked = h.evaluateConditions("Bash", `{"command": "sudo rm -rf /", "dangerouslyDisableSandbox": "false"}`)
+	assert.False(t, blocked)
+
+	_, blocked = h.evaluateConditions("Bash", `{"command": "ls", "dangerouslyDisableSandbox": "true"}`)
+	assert.False(t, blocked)
+}
+
+func TestPolicyHandler_ProcessSSEStream_ConditionalBlock(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Dangerous command",
+				"conditions": {
+					"command": "rm\\s+-rf"
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// SSE stream with Bash tool using dangerous command
+	sseStream := `event: message_start
+data: {"type":"message_start","message":{"id":"msg_1"}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Bash","input":{}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"command\":"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"rm -rf /\"}"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+`
+
+	output, modified := h.processSSEStream([]byte(sseStream))
+
+	assert.True(t, modified, "Stream should be modified when condition matches")
+	outputStr := string(output)
+
+	// Should NOT have the tool_use
+	assert.NotContains(t, outputStr, `"type":"tool_use"`)
+
+	// Should have the blocked message
+	assert.Contains(t, outputStr, "TOOL BLOCKED")
+	assert.Contains(t, outputStr, "Dangerous command")
+}
+
+func TestPolicyHandler_ProcessSSEStream_ConditionalAllow(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Dangerous command",
+				"conditions": {
+					"command": "rm\\s+-rf"
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// SSE stream with Bash tool using safe command
+	sseStream := `event: message_start
+data: {"type":"message_start","message":{"id":"msg_1"}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Bash","input":{}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"command\":"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"ls -la\"}"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+`
+
+	output, modified := h.processSSEStream([]byte(sseStream))
+
+	assert.False(t, modified, "Stream should not be modified when condition doesn't match")
+	outputStr := string(output)
+
+	// Should have the original tool_use
+	assert.Contains(t, outputStr, `"type":"tool_use"`)
+	assert.Contains(t, outputStr, `"name":"Bash"`)
+
+	// Should NOT have blocked message
+	assert.NotContains(t, outputStr, "TOOL BLOCKED")
+}
+
+func TestPolicyHandler_MixedUnconditionalAndConditional(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	// One unconditional block, one conditional
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Write",
+				"action": "deny",
+				"reason": "Write blocked unconditionally"
+			},
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Dangerous command",
+				"conditions": {
+					"command": "rm\\s+-rf"
+				}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Write should be unconditionally blocked
+	reason, blocked := h.isBlocked("Write")
+	assert.True(t, blocked)
+	assert.Equal(t, "Write blocked unconditionally", reason)
+
+	// Bash should NOT be unconditionally blocked
+	_, blocked = h.isBlocked("Bash")
+	assert.False(t, blocked)
+
+	// But Bash has conditional policies
+	assert.True(t, h.hasConditionalPolicies("Bash"))
+	assert.False(t, h.hasConditionalPolicies("Write"))
+}
+
+func TestPolicyHandler_MatchesPattern_ValidRegex(t *testing.T) {
+	h := &PolicyHandler{}
+
+	// Simple patterns
+	assert.True(t, h.matchesPattern("rm -rf /", "rm\\s+-rf"))
+	assert.False(t, h.matchesPattern("rm-rf /", "rm\\s+-rf"))
+
+	// Complex patterns
+	assert.True(t, h.matchesPattern("/etc/passwd", ".*/passwd$"))
+	assert.False(t, h.matchesPattern("/etc/shadow", ".*/passwd$"))
+
+	// Case sensitivity
+	assert.True(t, h.matchesPattern("DELETE FROM", "DELETE"))
+	assert.False(t, h.matchesPattern("delete from", "DELETE"))
+}
+
+func TestPolicyHandler_MatchesPattern_InvalidRegex(t *testing.T) {
+	h := &PolicyHandler{}
+
+	// Invalid regex should not match (fail open)
+	assert.False(t, h.matchesPattern("anything", "[invalid(regex"))
+}
+
+func TestPolicyHandler_EvaluateConditions_InvalidJSON(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Blocked",
+				"conditions": {"command": ".*"}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Invalid JSON should fail open (not block)
+	_, blocked := h.evaluateConditions("Bash", "not valid json")
+	assert.False(t, blocked, "Invalid JSON should not trigger block")
+}
+
+func TestPolicyHandler_EvaluateConditions_MissingParam(t *testing.T) {
+	tempDir := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", originalHome)
+
+	ubikDir := tempDir + "/.ubik"
+	os.MkdirAll(ubikDir, 0700)
+
+	cacheContent := `{
+		"policies": [
+			{
+				"tool_name": "Bash",
+				"action": "deny",
+				"reason": "Blocked",
+				"conditions": {"command": ".*", "other_param": "value"}
+			}
+		],
+		"version": 1,
+		"synced_at": "2024-01-15T10:00:00Z"
+	}`
+	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+
+	h := NewPolicyHandler()
+
+	// Missing required param should not match (all conditions must match)
+	_, blocked := h.evaluateConditions("Bash", `{"command": "ls"}`)
+	assert.False(t, blocked, "Missing param should not trigger block")
+}
