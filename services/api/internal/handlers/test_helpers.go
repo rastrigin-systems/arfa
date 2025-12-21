@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
 )
 
@@ -16,6 +17,11 @@ func SetOrgIDInContext(ctx context.Context, orgID uuid.UUID) context.Context {
 // SetEmployeeIDInContext is a test helper to set employee_id in context
 func SetEmployeeIDInContext(ctx context.Context, employeeID uuid.UUID) context.Context {
 	return middleware.SetEmployeeIDForTest(ctx, employeeID)
+}
+
+// SetSessionDataInContext is a test helper to set session_data in context
+func SetSessionDataInContext(ctx context.Context, sessionData *db.GetSessionWithEmployeeRow) context.Context {
+	return middleware.SetSessionDataForTest(ctx, sessionData)
 }
 
 // GetOrgID wraps middleware.GetOrgID for convenience

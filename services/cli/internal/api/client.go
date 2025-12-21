@@ -248,6 +248,21 @@ func (c *Client) GetEmployeeSkill(ctx context.Context, skillID string) (*Employe
 }
 
 // ============================================================================
+// Tool Policies
+// ============================================================================
+
+// GetMyToolPolicies fetches tool policies applicable to the current employee.
+// Uses JWT-based /employees/me/tool-policies endpoint.
+func (c *Client) GetMyToolPolicies(ctx context.Context) (*EmployeeToolPoliciesResponse, error) {
+	var resp EmployeeToolPoliciesResponse
+	endpoint := "/employees/me/tool-policies"
+	if err := c.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get tool policies: %w", err)
+	}
+	return &resp, nil
+}
+
+// ============================================================================
 // Logging
 // ============================================================================
 

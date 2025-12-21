@@ -71,6 +71,7 @@ func main() {
 	mcpServersHandler := handlers.NewMCPServersHandler(queries)
 	syncHandler := handlers.NewSyncHandler(queries)
 	skillsHandler := handlers.NewSkillsHandler(queries)
+	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
 
 	// Email service (MockEmailService for development)
 	emailService := service.NewMockEmailService()
@@ -275,6 +276,11 @@ func main() {
 			r.Route("/employees/me/skills", func(r chi.Router) {
 				r.Get("/", skillsHandler.ListEmployeeSkills)
 				r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
+			})
+
+			// Employee tool policies routes
+			r.Route("/employees/me/tool-policies", func(r chi.Router) {
+				r.Get("/", toolPoliciesHandler.GetEmployeeToolPolicies)
 			})
 
 			// Sync routes

@@ -383,6 +383,43 @@ CREATE TABLE usage_records (
 );
 
 -- ============================================================================
+-- TOOL POLICIES (LLM Tool Blocking)
+-- ============================================================================
+
+-- Policies for blocking or auditing LLM tool usage (Bash, Read, Write, etc.)
+-- Follows AWS IAM model: explicit deny always wins, no overrides possible
+CREATE TABLE tool_policies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
+
+    -- What to match
+    tool_name VARCHAR(255) NOT NULL,  -- "Bash", "Read", "mcp__playwright__%", "*"
+
+    -- Conditions (optional, for param-based blocking - Phase 3)
+    conditions JSONB,  -- {"any": [{"param_path": "command", "operator": "contains", "value": "rm -rf"}]}
+
+    -- Action
+    action VARCHAR(20) NOT NULL DEFAULT 'deny' CHECK (action IN ('deny', 'audit')),
+    reason TEXT,  -- Human-readable explanation shown to agent
+
+    -- Metadata
+    created_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    -- At least one scope must be set (org-wide if only org_id is set)
+    CONSTRAINT tool_policies_has_org CHECK (org_id IS NOT NULL)
+);
+
+-- Index for efficient policy lookups during sync
+CREATE INDEX idx_tool_policies_org_id ON tool_policies(org_id);
+CREATE INDEX idx_tool_policies_team_id ON tool_policies(team_id) WHERE team_id IS NOT NULL;
+CREATE INDEX idx_tool_policies_employee_id ON tool_policies(employee_id) WHERE employee_id IS NOT NULL;
+CREATE INDEX idx_tool_policies_lookup ON tool_policies(org_id, team_id, employee_id, tool_name);
+
+-- ============================================================================
 -- INDEXES
 -- ============================================================================
 

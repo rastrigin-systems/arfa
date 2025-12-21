@@ -164,3 +164,8 @@ func SetOrgIDForTest(ctx context.Context, orgID uuid.UUID) context.Context {
 func SetEmployeeIDForTest(ctx context.Context, employeeID uuid.UUID) context.Context {
 	return context.WithValue(ctx, employeeIDKey, employeeID)
 }
+
+// SetSessionDataForTest sets session_data in context (for testing only)
+func SetSessionDataForTest(ctx context.Context, sessionData *db.GetSessionWithEmployeeRow) context.Context {
+	return context.WithValue(ctx, sessionDataKey, sessionData)
+}

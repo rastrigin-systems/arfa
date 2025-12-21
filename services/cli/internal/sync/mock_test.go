@@ -42,9 +42,22 @@ func TestService_Sync_WithMocks(t *testing.T) {
 			},
 		}
 
+		toolPolicies := &api.EmployeeToolPoliciesResponse{
+			Policies: []api.ToolPolicy{
+				{
+					ID:       "policy-1",
+					ToolName: "Bash",
+					Action:   api.ToolPolicyActionDeny,
+				},
+			},
+			Version:  12345,
+			SyncedAt: "2024-01-15T10:00:00Z",
+		}
+
 		// Set expectations
 		mockAuthService.EXPECT().RequireAuth().Return(cfg, nil)
 		mockPlatformClient.EXPECT().GetMyResolvedAgentConfigs(ctx).Return(agentConfigs, nil)
+		mockPlatformClient.EXPECT().GetMyToolPolicies(ctx).Return(toolPolicies, nil)
 		// Save is called twice: once for agent configs, once for updating last sync
 		mockConfigManager.EXPECT().GetConfigPath().Return("/tmp/test/config.json").AnyTimes()
 		mockConfigManager.EXPECT().Save(gomock.Any()).Return(nil)
@@ -60,6 +73,8 @@ func TestService_Sync_WithMocks(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Len(t, result.AgentConfigs, 1)
 		assert.Equal(t, "Claude Code", result.AgentConfigs[0].AgentName)
+		assert.Len(t, result.ToolPolicies, 1)
+		assert.Equal(t, "Bash", result.ToolPolicies[0].ToolName)
 	})
 
 	t.Run("failure - not authenticated", func(t *testing.T) {

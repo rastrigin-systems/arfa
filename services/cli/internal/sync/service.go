@@ -57,6 +57,7 @@ func (s *Service) SetContainerManager(cm ContainerManagerInterface) {
 // Result represents the result of a sync operation
 type Result struct {
 	AgentConfigs []api.AgentConfig
+	ToolPolicies []api.ToolPolicy
 	UpdatedAt    time.Time
 }
 
@@ -116,8 +117,27 @@ func (s *Service) Sync(ctx context.Context) (*Result, error) {
 		}
 	}
 
+	// Fetch tool policies
+	fmt.Println("✓ Fetching tool policies...")
+	policiesResp, err := s.apiClient.GetMyToolPolicies(ctx)
+	if err != nil {
+		// Non-fatal: log warning and continue with empty policies
+		fmt.Printf("⚠ Warning: Could not fetch tool policies: %v\n", err)
+		policiesResp = &api.EmployeeToolPoliciesResponse{
+			Policies: []api.ToolPolicy{},
+		}
+	} else {
+		// Save policies to local storage
+		if err := s.saveToolPolicies(policiesResp); err != nil {
+			fmt.Printf("⚠ Warning: Failed to save tool policies: %v\n", err)
+		} else {
+			fmt.Printf("✓ Synced %d tool policies\n", len(policiesResp.Policies))
+		}
+	}
+
 	return &Result{
 		AgentConfigs: agentConfigs,
+		ToolPolicies: policiesResp.Policies,
 		UpdatedAt:    time.Now(),
 	}, nil
 }
@@ -196,6 +216,71 @@ func (s *Service) SyncClaudeCode(ctx context.Context, targetDir string) error {
 	fmt.Println("✅ Claude Code ready! Run 'claude' to start.")
 
 	return nil
+}
+
+// policyCacheFile stores the cached tool policies response
+type policyCacheFile struct {
+	Policies []api.ToolPolicy `json:"policies"`
+	Version  int              `json:"version"`
+	SyncedAt string           `json:"synced_at"`
+}
+
+// saveToolPolicies saves tool policies to ~/.ubik/policies.json
+func (s *Service) saveToolPolicies(resp *api.EmployeeToolPoliciesResponse) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	ubikDir := filepath.Join(homeDir, ".ubik")
+	if err := os.MkdirAll(ubikDir, 0700); err != nil {
+		return fmt.Errorf("failed to create .ubik directory: %w", err)
+	}
+
+	cache := policyCacheFile{
+		Policies: resp.Policies,
+		Version:  resp.Version,
+		SyncedAt: resp.SyncedAt,
+	}
+
+	data, err := json.MarshalIndent(cache, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal policies: %w", err)
+	}
+
+	policiesPath := filepath.Join(ubikDir, "policies.json")
+	if err := os.WriteFile(policiesPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write policies file: %w", err)
+	}
+
+	return nil
+}
+
+// GetLocalToolPolicies loads tool policies from local storage (~/.ubik/policies.json)
+func (s *Service) GetLocalToolPolicies() ([]api.ToolPolicy, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	policiesPath := filepath.Join(homeDir, ".ubik", "policies.json")
+
+	// If file doesn't exist, return empty list
+	if _, err := os.Stat(policiesPath); os.IsNotExist(err) {
+		return []api.ToolPolicy{}, nil
+	}
+
+	data, err := os.ReadFile(policiesPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policies file: %w", err)
+	}
+
+	var cache policyCacheFile
+	if err := json.Unmarshal(data, &cache); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal policies: %w", err)
+	}
+
+	return cache.Policies, nil
 }
 
 // agentMetadata stores metadata about an agent (separate from config)
