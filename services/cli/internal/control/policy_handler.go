@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
 )
@@ -31,6 +32,9 @@ type PolicyHandler struct {
 	// conditionalPolicies contains policies with conditions that need parameter evaluation.
 	// Key is tool name (lowercase), value is list of policies with conditions.
 	conditionalPolicies map[string][]conditionalPolicy
+
+	// queue is optional - if set, blocked tools are logged as tool_call events
+	queue LoggerQueue
 }
 
 // conditionalPolicy represents a policy with conditions to evaluate against tool input.
@@ -170,6 +174,7 @@ func (h *PolicyHandler) isBlocked(toolName string) (string, bool) {
 type pendingBlock struct {
 	index       int
 	toolName    string
+	toolID      string // Tool use ID for logging
 	startEvent  string // The original content_block_start event
 	startData   string // The original data for content_block_start
 	deltaEvents []string
@@ -272,6 +277,37 @@ func (h *PolicyHandler) matchesPattern(s, pattern string) bool {
 	return re.MatchString(s)
 }
 
+// SetQueue sets the logger queue for logging blocked tool calls.
+func (h *PolicyHandler) SetQueue(queue LoggerQueue) {
+	h.queue = queue
+}
+
+// logBlockedTool logs a blocked tool call if a queue is configured.
+func (h *PolicyHandler) logBlockedTool(ctx *HandlerContext, toolName, toolID, reason string, toolInput map[string]interface{}) {
+	if h.queue == nil {
+		return
+	}
+
+	entry := LogEntry{
+		EmployeeID:    ctx.EmployeeID,
+		OrgID:         ctx.OrgID,
+		SessionID:     ctx.SessionID,
+		AgentID:       ctx.AgentID,
+		EventType:     "tool_call",
+		EventCategory: "classified",
+		Timestamp:     time.Now(),
+		Payload: map[string]interface{}{
+			"tool_name":    toolName,
+			"tool_id":      toolID,
+			"tool_input":   toolInput,
+			"blocked":      true,
+			"block_reason": reason,
+		},
+	}
+
+	_ = h.queue.Enqueue(entry)
+}
+
 // Name returns the handler name.
 func (h *PolicyHandler) Name() string {
 	return "PolicyHandler"
@@ -307,7 +343,7 @@ func (h *PolicyHandler) HandleResponse(ctx *HandlerContext, res *http.Response) 
 	}
 
 	// Parse and potentially modify the SSE stream
-	modified, wasModified := h.processSSEStream(bodyBytes)
+	modified, wasModified := h.processSSEStream(ctx, bodyBytes)
 
 	// Always restore body (we consumed it by reading)
 	// Return ModifiedResponse so pipeline passes restored body to next handler
@@ -339,7 +375,7 @@ type sseContentBlockStart struct {
 
 // processSSEStream parses SSE events and replaces blocked tool_use blocks with error text.
 // For tools with conditional policies, we buffer events until we have the full input.
-func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
+func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]byte, bool) {
 	if len(h.denyList) == 0 && len(h.globPatterns) == 0 && len(h.conditionalPolicies) == 0 {
 		return data, false
 	}
@@ -372,18 +408,22 @@ func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
 				if err := json.Unmarshal([]byte(currentData), &block); err == nil {
 					if block.ContentBlock.Type == "tool_use" {
 						toolName := block.ContentBlock.Name
+						toolID := block.ContentBlock.ID
 
 						// Check unconditional block first
 						if reason, blocked := h.isBlocked(toolName); blocked {
 							blockedIndices[block.Index] = reason
 							wasModified = true
 							h.writeBlockedEvent(&output, block.Index, toolName, reason)
+							// Log blocked tool (no input available for unconditional blocks)
+							h.logBlockedTool(ctx, toolName, toolID, reason, nil)
 							shouldWrite = false
 						} else if h.hasConditionalPolicies(toolName) {
 							// Tool has conditional policies - buffer for evaluation
 							pendingBlocks[block.Index] = &pendingBlock{
 								index:      block.Index,
 								toolName:   toolName,
+								toolID:     toolID,
 								startEvent: currentEvent,
 								startData:  currentData,
 							}
@@ -429,6 +469,10 @@ func (h *PolicyHandler) processSSEStream(data []byte) ([]byte, bool) {
 							// Condition matched - block this tool
 							wasModified = true
 							h.writeBlockedEvent(&output, pending.index, pending.toolName, reason)
+							// Log blocked tool with parsed input
+							var toolInput map[string]interface{}
+							json.Unmarshal([]byte(input), &toolInput)
+							h.logBlockedTool(ctx, pending.toolName, pending.toolID, reason, toolInput)
 						} else {
 							// No conditions matched - flush buffered events
 							output.WriteString("event: ")

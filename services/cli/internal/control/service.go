@@ -69,7 +69,12 @@ func NewService(config ServiceConfig) (*Service, error) {
 
 	// Register policy handler (loads policies from ~/.ubik/policies.json)
 	policyHandler := NewPolicyHandler()
+	policyHandler.SetQueue(queue) // Enable logging of blocked tools
 	pipeline.Register(policyHandler)
+
+	// Register tool call logger (extracts and logs tool_use events)
+	toolCallLogger := NewToolCallLoggerHandler(queue)
+	pipeline.Register(toolCallLogger)
 
 	return &Service{
 		config:    config,
