@@ -7,6 +7,7 @@ import (
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/config"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/interactive"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/logs"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/policies"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/skills"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/status"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/sync"
@@ -59,6 +60,7 @@ Examples:
 	rootCmd.AddCommand(agents.NewAgentsCommand(c))
 	rootCmd.AddCommand(skills.NewSkillsCommand(c))
 	rootCmd.AddCommand(logs.NewLogsCommand(c))
+	rootCmd.AddCommand(policies.NewPoliciesCommand(c))
 
 	return rootCmd
 }
