@@ -100,6 +100,7 @@ func (s *Service) LoginInteractive(ctx context.Context) error {
 		Token:        loginResp.Token,
 		TokenExpires: expiresAt,
 		EmployeeID:   loginResp.Employee.ID,
+		OrgID:        loginResp.Employee.OrgID,
 	}
 
 	if err := s.configManager.Save(cfg); err != nil {
@@ -135,6 +136,7 @@ func (s *Service) Login(ctx context.Context, platformURL, email, password string
 		Token:        loginResp.Token,
 		TokenExpires: expiresAt,
 		EmployeeID:   loginResp.Employee.ID,
+		OrgID:        loginResp.Employee.OrgID,
 	}
 
 	if err := s.configManager.Save(cfg); err != nil {
