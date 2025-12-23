@@ -313,3 +313,61 @@ type EmployeeToolPoliciesResponse struct {
 	Version  int          `json:"version"`
 	SyncedAt string       `json:"synced_at"`
 }
+
+// ============================================================================
+// Webhook Types
+// ============================================================================
+
+// WebhookDestination represents a webhook destination for log export.
+type WebhookDestination struct {
+	ID          string            `json:"id"`
+	OrgID       string            `json:"org_id,omitempty"`
+	Name        string            `json:"name"`
+	URL         string            `json:"url"`
+	AuthType    string            `json:"auth_type"`
+	AuthConfig  map[string]string `json:"auth_config,omitempty"`
+	EventTypes  []string          `json:"event_types"`
+	EventFilter map[string]string `json:"event_filter,omitempty"`
+	Enabled     bool              `json:"enabled"`
+	BatchSize   int               `json:"batch_size"`
+	TimeoutMs   int               `json:"timeout_ms"`
+	RetryMax    int               `json:"retry_max"`
+	CreatedBy   string            `json:"created_by,omitempty"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
+}
+
+// CreateWebhookRequest represents the request body for creating a webhook.
+type CreateWebhookRequest struct {
+	Name        string            `json:"name"`
+	URL         string            `json:"url"`
+	AuthType    string            `json:"auth_type,omitempty"`
+	AuthConfig  map[string]string `json:"auth_config,omitempty"`
+	EventTypes  []string          `json:"event_types,omitempty"`
+	EventFilter map[string]string `json:"event_filter,omitempty"`
+	Enabled     *bool             `json:"enabled,omitempty"`
+}
+
+// UpdateWebhookRequest represents the request body for updating a webhook.
+type UpdateWebhookRequest struct {
+	Name        *string           `json:"name,omitempty"`
+	URL         *string           `json:"url,omitempty"`
+	AuthType    *string           `json:"auth_type,omitempty"`
+	AuthConfig  map[string]string `json:"auth_config,omitempty"`
+	EventTypes  []string          `json:"event_types,omitempty"`
+	EventFilter map[string]string `json:"event_filter,omitempty"`
+	Enabled     *bool             `json:"enabled,omitempty"`
+}
+
+// ListWebhooksResponse represents the response from listing webhooks.
+type ListWebhooksResponse struct {
+	Destinations []WebhookDestination `json:"destinations"`
+}
+
+// WebhookTestResult represents the result of testing a webhook.
+type WebhookTestResult struct {
+	Success        bool   `json:"success"`
+	ResponseStatus int    `json:"response_status"`
+	ResponseTimeMs int    `json:"response_time_ms"`
+	ErrorMessage   string `json:"error_message,omitempty"`
+}

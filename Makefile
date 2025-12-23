@@ -1,4 +1,4 @@
-.PHONY: help install-tools install-hooks install-cli uninstall-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli test-web test-web-e2e dev dev-api dev-web dev-all run-server build build-cli build-server build-web clean
+.PHONY: help install-tools install-hooks install-cli uninstall-cli rebuild-cli db-up db-down db-reset db-seed generate-erd generate-api generate-db generate-mocks generate check-drift test test-unit test-integration test-coverage test-cli test-web test-web-e2e dev dev-api dev-web dev-all run-server build build-cli build-server build-web clean
 
 # Default target
 help:
@@ -40,6 +40,7 @@ help:
 	@echo "  make build-web       Build Next.js production bundle"
 	@echo "  make install-cli     Install ubik CLI to /usr/local/bin (requires sudo)"
 	@echo "  make uninstall-cli   Uninstall ubik CLI from /usr/local/bin (requires sudo)"
+	@echo "  make rebuild-cli     Clean, rebuild and install CLI as 'ubik'"
 	@echo "  make clean           Clean generated files and build artifacts"
 
 # Configuration
@@ -373,6 +374,14 @@ install-cli:
 uninstall-cli:
 	@echo "🗑️  Uninstalling ubik CLI..."
 	cd services/cli && $(MAKE) uninstall
+
+rebuild-cli:
+	@echo "🔄 Rebuilding ubik CLI..."
+	rm -f bin/ubik-cli
+	cd services/cli && $(MAKE) build
+	sudo ln -sf $(PWD)/bin/ubik-cli /usr/local/bin/ubik
+	@echo "✅ ubik CLI rebuilt and installed"
+	@ubik version 2>/dev/null || true
 
 # Cleanup
 clean:

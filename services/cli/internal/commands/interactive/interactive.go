@@ -135,10 +135,11 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 		fmt.Printf("✓ MCP Servers: %d\n", len(selectedAgent.MCPServers))
 	}
 
-	// Get employee ID from config (stored during login)
-	var employeeID string
+	// Get employee ID and org ID from config (stored during login)
+	var employeeID, orgID string
 	if cfg, _ := configManager.Load(); cfg != nil {
 		employeeID = cfg.EmployeeID
+		orgID = cfg.OrgID
 	}
 
 	// Get queue directory for log storage
@@ -163,7 +164,7 @@ func runInteractiveMode(workspaceFlag, agentFlag string, pickFlag, setDefaultFla
 	// Always create Control Service (for policy blocking), but uploader may be nil
 	controlSvc, err = control.NewService(control.ServiceConfig{
 		EmployeeID:    employeeID,
-		OrgID:         "", // TODO: Add OrgID to config when available
+		OrgID:         orgID,
 		AgentID:       selectedAgent.AgentID,
 		QueueDir:      queueDir,
 		FlushInterval: 5 * time.Second,

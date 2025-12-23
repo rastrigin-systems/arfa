@@ -348,6 +348,67 @@ func (c *Client) GetLogs(ctx context.Context, params GetLogsParams) (*LogsRespon
 }
 
 // ============================================================================
+// Webhooks
+// ============================================================================
+
+// ListWebhooks fetches all webhook destinations for the organization.
+func (c *Client) ListWebhooks(ctx context.Context) (*ListWebhooksResponse, error) {
+	var resp ListWebhooksResponse
+	if err := c.DoRequest(ctx, "GET", "/webhooks", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list webhooks: %w", err)
+	}
+	return &resp, nil
+}
+
+// CreateWebhook creates a new webhook destination.
+func (c *Client) CreateWebhook(ctx context.Context, req CreateWebhookRequest) (*WebhookDestination, error) {
+	var resp WebhookDestination
+	if err := c.DoRequest(ctx, "POST", "/webhooks", req, &resp); err != nil {
+		return nil, fmt.Errorf("failed to create webhook: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetWebhook fetches a specific webhook by ID.
+func (c *Client) GetWebhook(ctx context.Context, id string) (*WebhookDestination, error) {
+	var resp WebhookDestination
+	endpoint := fmt.Sprintf("/webhooks/%s", id)
+	if err := c.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get webhook: %w", err)
+	}
+	return &resp, nil
+}
+
+// UpdateWebhook updates an existing webhook.
+func (c *Client) UpdateWebhook(ctx context.Context, id string, req UpdateWebhookRequest) (*WebhookDestination, error) {
+	var resp WebhookDestination
+	endpoint := fmt.Sprintf("/webhooks/%s", id)
+	if err := c.DoRequest(ctx, "PATCH", endpoint, req, &resp); err != nil {
+		return nil, fmt.Errorf("failed to update webhook: %w", err)
+	}
+	return &resp, nil
+}
+
+// DeleteWebhook deletes a webhook by ID.
+func (c *Client) DeleteWebhook(ctx context.Context, id string) error {
+	endpoint := fmt.Sprintf("/webhooks/%s", id)
+	if err := c.DoRequest(ctx, "DELETE", endpoint, nil, nil); err != nil {
+		return fmt.Errorf("failed to delete webhook: %w", err)
+	}
+	return nil
+}
+
+// TestWebhook tests a webhook by sending a test event.
+func (c *Client) TestWebhook(ctx context.Context, id string) (*WebhookTestResult, error) {
+	var resp WebhookTestResult
+	endpoint := fmt.Sprintf("/webhooks/%s/test", id)
+	if err := c.DoRequest(ctx, "POST", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to test webhook: %w", err)
+	}
+	return &resp, nil
+}
+
+// ============================================================================
 // Internal Helpers
 // ============================================================================
 

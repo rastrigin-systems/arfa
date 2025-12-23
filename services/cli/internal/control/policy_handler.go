@@ -387,6 +387,7 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 	var currentEvent string
 	var currentData string
 	var blockedIndices = make(map[int]string)       // index -> reason (unconditionally blocked)
+	var blockedBlocks = make(map[int]*pendingBlock) // index -> blocked block (for capturing input for logging)
 	var pendingBlocks = make(map[int]*pendingBlock) // index -> pending block (needs condition evaluation)
 	wasModified := false
 
@@ -415,8 +416,12 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 							blockedIndices[block.Index] = reason
 							wasModified = true
 							h.writeBlockedEvent(&output, block.Index, toolName, reason)
-							// Log blocked tool (no input available for unconditional blocks)
-							h.logBlockedTool(ctx, toolName, toolID, reason, nil)
+							// Buffer for logging with full input at content_block_stop
+							blockedBlocks[block.Index] = &pendingBlock{
+								index:    block.Index,
+								toolName: toolName,
+								toolID:   toolID,
+							}
 							shouldWrite = false
 						} else if h.hasConditionalPolicies(toolName) {
 							// Tool has conditional policies - buffer for evaluation
@@ -441,7 +446,11 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 					} `json:"delta"`
 				}
 				if err := json.Unmarshal([]byte(currentData), &delta); err == nil {
-					if _, blocked := blockedIndices[delta.Index]; blocked {
+					if blocked, ok := blockedBlocks[delta.Index]; ok {
+						// Capture input for blocked tools (for logging)
+						if delta.Delta.Type == "input_json_delta" {
+							blocked.inputJSON.WriteString(delta.Delta.PartialJSON)
+						}
 						shouldWrite = false // Skip deltas for blocked tools
 					} else if pending, ok := pendingBlocks[delta.Index]; ok {
 						// Buffer this delta for later evaluation
@@ -460,7 +469,14 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 					Index int `json:"index"`
 				}
 				if err := json.Unmarshal([]byte(currentData), &stop); err == nil {
-					if _, blocked := blockedIndices[stop.Index]; blocked {
+					if blocked, ok := blockedBlocks[stop.Index]; ok {
+						// Log blocked tool with captured input
+						reason := blockedIndices[stop.Index]
+						input := blocked.inputJSON.String()
+						var toolInput map[string]interface{}
+						json.Unmarshal([]byte(input), &toolInput)
+						h.logBlockedTool(ctx, blocked.toolName, blocked.toolID, reason, toolInput)
+						delete(blockedBlocks, stop.Index)
 						shouldWrite = false // Skip stop for blocked tools (we already wrote it)
 					} else if pending, ok := pendingBlocks[stop.Index]; ok {
 						// Evaluate conditions against accumulated input

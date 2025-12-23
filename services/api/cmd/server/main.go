@@ -72,6 +72,7 @@ func main() {
 	syncHandler := handlers.NewSyncHandler(queries)
 	skillsHandler := handlers.NewSkillsHandler(queries)
 	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
+	webhooksHandler := handlers.NewWebhooksHandler(queries)
 
 	// Email service (MockEmailService for development)
 	emailService := service.NewMockEmailService()
@@ -318,6 +319,19 @@ func main() {
 				r.Get("/stream", wsHandler.ServeHTTP)
 			})
 
+			// Webhook destination routes
+			r.Route("/webhooks", func(r chi.Router) {
+				r.Get("/", webhooksHandler.ListWebhookDestinations)
+				r.Post("/", webhooksHandler.CreateWebhookDestination)
+				r.Route("/{webhookId}", func(r chi.Router) {
+					r.Get("/", webhooksHandler.GetWebhookDestination)
+					r.Patch("/", webhooksHandler.UpdateWebhookDestination)
+					r.Delete("/", webhooksHandler.DeleteWebhookDestination)
+					r.Post("/test", webhooksHandler.TestWebhookDestination)
+					r.Get("/deliveries", webhooksHandler.ListWebhookDeliveries)
+				})
+			})
+
 			// Subscription routes
 			r.Route("/organizations/current/subscription", func(r chi.Router) {
 				r.Get("/", subscriptionsHandler.GetCurrentSubscription)
@@ -350,6 +364,11 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// Start webhook forwarder worker (processes every 10 seconds)
+	webhookForwarderCtx, webhookForwarderCancel := context.WithCancel(context.Background())
+	webhookForwarder := service.NewWebhookForwarder(queries)
+	go webhookForwarder.StartForwarderWorker(webhookForwarderCtx, 10*time.Second)
+
 	// Start server in goroutine
 	go func() {
 		log.Printf("🚀 API Server starting on http://localhost:%s", port)
@@ -372,6 +391,9 @@ func main() {
 	<-quit
 
 	log.Println("🛑 Shutting down server...")
+
+	// Stop webhook forwarder
+	webhookForwarderCancel()
 
 	// Create shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

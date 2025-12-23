@@ -118,6 +118,9 @@ func (h *ToolCallLoggerHandler) extractAndLogToolCalls(ctx *HandlerContext, data
 
 // processSSEEvent handles a single SSE event during parsing.
 func (h *ToolCallLoggerHandler) processSSEEvent(event, data string, pendingCalls map[int]*pendingToolCall, ctx *HandlerContext) {
+	// Clean up data - Anthropic SSE sometimes has trailing whitespace and extra braces
+	data = cleanSSEData(data)
+
 	switch event {
 	case "content_block_start":
 		var block struct {
@@ -223,4 +226,55 @@ func (h *ToolCallLoggerHandler) LogBlockedToolCall(ctx *HandlerContext, toolName
 	}
 
 	_ = h.queue.Enqueue(entry)
+}
+
+// cleanSSEData removes trailing garbage from SSE data lines.
+// Anthropic's SSE stream sometimes includes trailing whitespace and extra braces.
+func cleanSSEData(data string) string {
+	if len(data) == 0 {
+		return data
+	}
+
+	// Find valid JSON by balancing braces, accounting for strings
+	openBraces := 0
+	lastValidPos := -1
+	inString := false
+	escaped := false
+
+	for i, c := range data {
+		if escaped {
+			escaped = false
+			continue
+		}
+
+		if c == '\\' && inString {
+			escaped = true
+			continue
+		}
+
+		if c == '"' {
+			inString = !inString
+			continue
+		}
+
+		if inString {
+			continue
+		}
+
+		switch c {
+		case '{':
+			openBraces++
+		case '}':
+			openBraces--
+			if openBraces == 0 {
+				lastValidPos = i + 1
+			}
+		}
+	}
+
+	if lastValidPos > 0 && lastValidPos < len(data) {
+		return data[:lastValidPos]
+	}
+
+	return data
 }

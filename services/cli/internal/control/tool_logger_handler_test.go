@@ -305,3 +305,101 @@ data: {"type":"content_block_stop","index":0}
 	result := h.HandleResponse(ctx, res)
 	assert.Equal(t, ActionContinue, result.Action)
 }
+
+func TestCleanSSEData(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "clean JSON",
+			input:    `{"type":"test"}`,
+			expected: `{"type":"test"}`,
+		},
+		{
+			name:     "trailing whitespace and brace",
+			input:    `{"type":"test"}       }`,
+			expected: `{"type":"test"}`,
+		},
+		{
+			name:     "multiple trailing braces",
+			input:    `{"nested":{"value":1}}            }`,
+			expected: `{"nested":{"value":1}}`,
+		},
+		{
+			name:     "empty input",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "no trailing garbage",
+			input:    `{"content_block":{"type":"tool_use","id":"123"}}`,
+			expected: `{"content_block":{"type":"tool_use","id":"123"}}`,
+		},
+		{
+			name:     "real anthropic format",
+			input:    `{"type":"content_block_start","index":4,"content_block":{"type":"tool_use","id":"toolu_01","name":"Glob","input":{},"caller":{"type":"direct"}}}       }`,
+			expected: `{"type":"content_block_start","index":4,"content_block":{"type":"tool_use","id":"toolu_01","name":"Glob","input":{},"caller":{"type":"direct"}}}`,
+		},
+		{
+			name:     "braces in string values",
+			input:    `{"partial_json":"{\"key\":\"value\"}"}       }`,
+			expected: `{"partial_json":"{\"key\":\"value\"}"}`,
+		},
+		{
+			name:     "escaped quotes in string",
+			input:    `{"text":"He said \"hello\""}   }`,
+			expected: `{"text":"He said \"hello\""}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := cleanSSEData(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestToolCallLoggerHandler_HandleResponse_TrailingGarbage(t *testing.T) {
+	queue := &mockToolLoggerQueue{}
+	h := NewToolCallLoggerHandler(queue)
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+
+	// SSE stream with trailing garbage (real Anthropic format)
+	sseStream := `event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_123","name":"Glob","input":{}}}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"pattern\":"}}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"**/go.mod\"}"}}       }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+`
+
+	res := &http.Response{
+		StatusCode: 200,
+		Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
+		Body:       io.NopCloser(bytes.NewReader([]byte(sseStream))),
+	}
+
+	result := h.HandleResponse(ctx, res)
+
+	assert.Equal(t, ActionContinue, result.Action)
+
+	entries := queue.Entries()
+	require.Len(t, entries, 1, "Should parse tool call despite trailing garbage")
+
+	entry := entries[0]
+	assert.Equal(t, "tool_call", entry.EventType)
+	assert.Equal(t, "Glob", entry.Payload["tool_name"])
+	assert.Equal(t, "toolu_123", entry.Payload["tool_id"])
+
+	toolInput := entry.Payload["tool_input"].(map[string]interface{})
+	assert.Equal(t, "**/go.mod", toolInput["pattern"])
+}

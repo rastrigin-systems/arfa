@@ -18,6 +18,7 @@ type Config struct {
 	Token        string    `json:"token"`
 	TokenExpires time.Time `json:"token_expires"`
 	EmployeeID   string    `json:"employee_id"`
+	OrgID        string    `json:"org_id"`
 	DefaultAgent string    `json:"default_agent"`
 	LastSync     time.Time `json:"last_sync"`
 }
