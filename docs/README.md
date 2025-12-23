@@ -11,7 +11,7 @@
 | [public.employees](public.employees.md) | 14 |  | BASE TABLE |
 | [public.sessions](public.sessions.md) | 7 |  | BASE TABLE |
 | [public.password_reset_tokens](public.password_reset_tokens.md) | 6 |  | BASE TABLE |
-| [public.agents](public.agents.md) | 12 |  | BASE TABLE |
+| [public.agents](public.agents.md) | 13 |  | BASE TABLE |
 | [public.tools](public.tools.md) | 8 |  | BASE TABLE |
 | [public.policies](public.policies.md) | 7 |  | BASE TABLE |
 | [public.agent_tools](public.agent_tools.md) | 4 |  | BASE TABLE |
@@ -30,6 +30,9 @@
 | [public.invitations](public.invitations.md) | 13 |  | BASE TABLE |
 | [public.activity_logs](public.activity_logs.md) | 10 |  | BASE TABLE |
 | [public.usage_records](public.usage_records.md) | 12 |  | BASE TABLE |
+| [public.tool_policies](public.tool_policies.md) | 11 |  | BASE TABLE |
+| [public.webhook_destinations](public.webhook_destinations.md) | 17 |  | BASE TABLE |
+| [public.webhook_deliveries](public.webhook_deliveries.md) | 12 |  | BASE TABLE |
 | [public.v_employee_agents](public.v_employee_agents.md) | 12 | Complete view of employee agent configurations with catalog details | VIEW |
 | [public.v_employee_mcps](public.v_employee_mcps.md) | 11 | Complete view of employee MCP configurations with catalog details | VIEW |
 | [public.v_pending_approvals](public.v_pending_approvals.md) | 10 | Pending approval requests with full requester context | VIEW |
@@ -134,6 +137,14 @@ erDiagram
 "public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
+"public.tool_policies" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.tool_policies" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
+"public.tool_policies" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
+"public.tool_policies" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.webhook_destinations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
+"public.webhook_destinations" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
+"public.webhook_deliveries" }o--|| "public.activity_logs" : "FOREIGN KEY (log_id) REFERENCES activity_logs(id) ON DELETE CASCADE"
+"public.webhook_deliveries" }o--|| "public.webhook_destinations" : "FOREIGN KEY (destination_id) REFERENCES webhook_destinations(id) ON DELETE CASCADE"
 
 "public.organizations" {
   uuid id
@@ -214,6 +225,7 @@ erDiagram
   varchar_100_ type
   text description
   varchar_100_ provider
+  varchar_255_ docker_image
   jsonb default_config
   jsonb capabilities
   varchar_50_ llm_provider
@@ -396,6 +408,52 @@ erDiagram
   jsonb metadata
   varchar_20_ token_source
   timestamp_without_time_zone created_at
+}
+"public.tool_policies" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid employee_id FK
+  varchar_255_ tool_name
+  jsonb conditions
+  varchar_20_ action
+  text reason
+  uuid created_by FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.webhook_destinations" {
+  uuid id
+  uuid org_id FK
+  varchar_100_ name
+  text url
+  varchar_50_ auth_type
+  jsonb auth_config
+  text__ event_types
+  jsonb event_filter
+  boolean enabled
+  integer batch_size
+  integer timeout_ms
+  integer retry_max
+  integer retry_backoff_ms
+  varchar_255_ signing_secret
+  uuid created_by FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.webhook_deliveries" {
+  uuid id
+  uuid destination_id FK
+  uuid log_id FK
+  varchar_50_ status
+  integer attempts
+  timestamp_without_time_zone last_attempt_at
+  timestamp_without_time_zone next_retry_at
+  integer response_status
+  text response_body
+  text error_message
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone delivered_at
 }
 "public.v_employee_agents" {
   uuid id
