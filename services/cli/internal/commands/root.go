@@ -12,6 +12,7 @@ import (
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/status"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/sync"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/update"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/webhooks"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
@@ -61,6 +62,7 @@ Examples:
 	rootCmd.AddCommand(skills.NewSkillsCommand(c))
 	rootCmd.AddCommand(logs.NewLogsCommand(c))
 	rootCmd.AddCommand(policies.NewPoliciesCommand(c))
+	rootCmd.AddCommand(webhooks.NewWebhooksCommand(c))
 
 	return rootCmd
 }
