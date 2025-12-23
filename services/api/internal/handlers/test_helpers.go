@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
 	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
@@ -27,4 +28,9 @@ func SetSessionDataInContext(ctx context.Context, sessionData *db.GetSessionWith
 // GetOrgID wraps middleware.GetOrgID for convenience
 func GetOrgID(ctx context.Context) (uuid.UUID, error) {
 	return middleware.GetOrgID(ctx)
+}
+
+// WithChiContext is a test helper to add chi route context to a context
+func WithChiContext(ctx context.Context, chiCtx *chi.Context) context.Context {
+	return context.WithValue(ctx, chi.RouteCtxKey, chiCtx)
 }

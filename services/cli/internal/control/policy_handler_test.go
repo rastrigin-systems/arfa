@@ -892,3 +892,89 @@ func TestPolicyHandler_EvaluateConditions_MissingParam(t *testing.T) {
 	_, blocked := h.evaluateConditions("Bash", `{"command": "ls"}`)
 	assert.False(t, blocked, "Missing param should not trigger block")
 }
+
+// TestPolicyHandler_UnconditionalBlockCapturesInput verifies that unconditionally
+// blocked tools still capture the tool input for logging purposes.
+func TestPolicyHandler_UnconditionalBlockCapturesInput(t *testing.T) {
+	// Create a mock queue to capture logged entries
+	mockQueue := &mockLogQueue{entries: []LogEntry{}}
+
+	h := NewPolicyHandlerWithDenyList(map[string]string{
+		"Bash": "Shell commands are blocked",
+	})
+	h.SetQueue(mockQueue)
+
+	// SSE stream with Bash tool - should be blocked but input captured
+	sseStream := `event: message_start
+data: {"type":"message_start","message":{"id":"msg_1"}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_123","name":"Bash","input":{}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"command\":"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"rm -rf /\"}"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+`
+
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	output, modified := h.processSSEStream(ctx, []byte(sseStream))
+
+	assert.True(t, modified, "Stream should be modified when tool is blocked")
+
+	// Output should contain blocked message
+	outputStr := string(output)
+	assert.Contains(t, outputStr, "TOOL BLOCKED")
+	assert.Contains(t, outputStr, "Shell commands are blocked")
+
+	// Verify the logged entry contains the captured input
+	require.Len(t, mockQueue.entries, 1, "Should have logged one entry")
+	entry := mockQueue.entries[0]
+
+	assert.Equal(t, "tool_call", entry.EventType)
+	assert.Equal(t, "classified", entry.EventCategory)
+	assert.Equal(t, true, entry.Payload["blocked"])
+	assert.Equal(t, "Bash", entry.Payload["tool_name"])
+	assert.Equal(t, "toolu_123", entry.Payload["tool_id"])
+	assert.Equal(t, "Shell commands are blocked", entry.Payload["block_reason"])
+
+	// Verify tool_input was captured (the key fix!)
+	toolInput, ok := entry.Payload["tool_input"].(map[string]interface{})
+	require.True(t, ok, "tool_input should be a map")
+	assert.Equal(t, "rm -rf /", toolInput["command"], "Should capture the dangerous command")
+}
+
+// mockLogQueue implements a simple queue for testing
+type mockLogQueue struct {
+	entries []LogEntry
+}
+
+func (q *mockLogQueue) Enqueue(entry LogEntry) error {
+	q.entries = append(q.entries, entry)
+	return nil
+}
+
+func (q *mockLogQueue) Dequeue() (LogEntry, error) {
+	if len(q.entries) == 0 {
+		return LogEntry{}, nil
+	}
+	entry := q.entries[0]
+	q.entries = q.entries[1:]
+	return entry, nil
+}
+
+func (q *mockLogQueue) Len() int {
+	return len(q.entries)
+}
+
+func (q *mockLogQueue) Close() error {
+	return nil
+}
