@@ -72,6 +72,7 @@ func main() {
 	syncHandler := handlers.NewSyncHandler(queries)
 	skillsHandler := handlers.NewSkillsHandler(queries)
 	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
+	webhooksHandler := handlers.NewWebhooksHandler(queries)
 
 	// Email service (MockEmailService for development)
 	emailService := service.NewMockEmailService()
@@ -316,6 +317,19 @@ func main() {
 				// Format: WS /api/v1/logs/stream?session_id=xxx&employee_id=xxx&agent_id=xxx
 				// Auth: JWT token required in Authorization header
 				r.Get("/stream", wsHandler.ServeHTTP)
+			})
+
+			// Webhook destination routes
+			r.Route("/webhooks", func(r chi.Router) {
+				r.Get("/", webhooksHandler.ListWebhookDestinations)
+				r.Post("/", webhooksHandler.CreateWebhookDestination)
+				r.Route("/{webhookId}", func(r chi.Router) {
+					r.Get("/", webhooksHandler.GetWebhookDestination)
+					r.Patch("/", webhooksHandler.UpdateWebhookDestination)
+					r.Delete("/", webhooksHandler.DeleteWebhookDestination)
+					r.Post("/test", webhooksHandler.TestWebhookDestination)
+					r.Get("/deliveries", webhooksHandler.ListWebhookDeliveries)
+				})
 			})
 
 			// Subscription routes

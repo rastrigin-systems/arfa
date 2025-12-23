@@ -255,9 +255,9 @@ func (h *ClaudeTokensHandler) GetEffectiveClaudeToken(w http.ResponseWriter, r *
 	var source api.EffectiveClaudeTokenResponseSource
 	switch tokenInfo.Source {
 	case "personal":
-		source = api.EffectiveClaudeTokenResponseSourcePersonal
+		source = api.Personal
 	case "company":
-		source = api.EffectiveClaudeTokenResponseSourceCompany
+		source = api.Company
 	default:
 		writeError(w, http.StatusNotFound, "No token available")
 		return
