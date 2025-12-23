@@ -364,6 +364,11 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// Start webhook forwarder worker (processes every 10 seconds)
+	webhookForwarderCtx, webhookForwarderCancel := context.WithCancel(context.Background())
+	webhookForwarder := service.NewWebhookForwarder(queries)
+	go webhookForwarder.StartForwarderWorker(webhookForwarderCtx, 10*time.Second)
+
 	// Start server in goroutine
 	go func() {
 		log.Printf("🚀 API Server starting on http://localhost:%s", port)
@@ -386,6 +391,9 @@ func main() {
 	<-quit
 
 	log.Println("🛑 Shutting down server...")
+
+	// Stop webhook forwarder
+	webhookForwarderCancel()
 
 	// Create shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

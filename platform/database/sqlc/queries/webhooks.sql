@@ -193,14 +193,15 @@ WHERE id = $1;
 
 -- name: MarkDeliveryFailed :exec
 -- Mark a delivery as failed (will retry)
+-- $1 = id, $2 = response_status, $3 = response_body, $4 = error_message, $5 = max_retries, $6 = next_retry_at
 UPDATE webhook_deliveries SET
-    status = CASE WHEN attempts + 1 >= $4 THEN 'dead' ELSE 'failed' END,
+    status = CASE WHEN attempts + 1 >= $5 THEN 'dead' ELSE 'failed' END,
     attempts = attempts + 1,
     last_attempt_at = NOW(),
-    next_retry_at = NOW() + ($5 * POWER(2, attempts))::interval,
+    next_retry_at = $6,
     response_status = $2,
     response_body = $3,
-    error_message = $6
+    error_message = $4
 WHERE id = $1;
 
 -- name: ListDeliveriesByDestination :many

@@ -1,3 +1,19 @@
+-- name: GetActivityLog :one
+-- Get a single activity log by ID
+SELECT
+    id,
+    org_id,
+    employee_id,
+    session_id,
+    agent_id,
+    event_type,
+    event_category,
+    content,
+    payload,
+    created_at
+FROM activity_logs
+WHERE id = $1;
+
 -- name: ListActivityLogs :many
 -- List recent activity logs for an organization with pagination
 SELECT
