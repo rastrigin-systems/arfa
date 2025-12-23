@@ -1970,6 +1970,221 @@ components:
         pagination:
           $ref: '#/components/schemas/PaginationMeta'
 
+    # ==========================================================================
+    # Webhook Schemas
+    # ==========================================================================
+    WebhookDestination:
+      type: object
+      required:
+        - id
+        - name
+        - url
+        - auth_type
+        - enabled
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+        auth_type:
+          type: string
+          enum: [none, bearer, header, basic]
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [tool_call, api_request, api_response, policy_violation]
+        event_filter:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        timeout_ms:
+          type: integer
+        retry_max:
+          type: integer
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateWebhookDestinationRequest:
+      type: object
+      required:
+        - name
+        - url
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+        auth_type:
+          type: string
+          enum: [none, bearer, header, basic]
+          default: none
+        auth_config:
+          type: object
+          description: |
+            Authentication config based on auth_type:
+            - bearer: { "token": "xxx" }
+            - header: { "name": "X-Api-Key", "value": "xxx" }
+            - basic: { "username": "xxx", "password": "xxx" }
+          additionalProperties: true
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [tool_call, api_request, api_response, policy_violation]
+        event_filter:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+          default: true
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        timeout_ms:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+        retry_max:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 3
+
+    UpdateWebhookDestinationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+        auth_type:
+          type: string
+          enum: [none, bearer, header, basic]
+        auth_config:
+          type: object
+          additionalProperties: true
+        event_types:
+          type: array
+          items:
+            type: string
+        event_filter:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+        batch_size:
+          type: integer
+        timeout_ms:
+          type: integer
+        retry_max:
+          type: integer
+
+    ListWebhookDestinationsResponse:
+      type: object
+      required:
+        - destinations
+      properties:
+        destinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDestination'
+
+    WebhookDelivery:
+      type: object
+      required:
+        - id
+        - destination_id
+        - log_id
+        - status
+        - attempts
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        destination_id:
+          type: string
+          format: uuid
+        log_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, delivered, failed, dead]
+        attempts:
+          type: integer
+        last_attempt_at:
+          type: string
+          format: date-time
+        next_retry_at:
+          type: string
+          format: date-time
+        response_status:
+          type: integer
+        response_body:
+          type: string
+        error_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+
+    ListWebhookDeliveriesResponse:
+      type: object
+      required:
+        - deliveries
+        - pagination
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDelivery'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    WebhookTestResult:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        response_status:
+          type: integer
+        response_time_ms:
+          type: integer
+        error:
+          type: string
+
   parameters:
     EmployeeId:
       name: employee_id
@@ -4217,6 +4432,219 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Webhook Endpoints
+  # ============================================================================
+  /webhooks:
+    get:
+      tags:
+        - webhooks
+      summary: List webhook destinations
+      description: List all webhook destinations for the organization
+      operationId: listWebhookDestinations
+      responses:
+        '200':
+          description: List of webhook destinations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWebhookDestinationsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - webhooks
+      summary: Create webhook destination
+      description: Create a new webhook destination. Requires admin or manager role.
+      operationId: createWebhookDestination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookDestinationRequest'
+      responses:
+        '201':
+          description: Webhook destination created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDestination'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /webhooks/{webhookId}:
+    parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - webhooks
+      summary: Get webhook destination
+      operationId: getWebhookDestination
+      responses:
+        '200':
+          description: Webhook destination details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDestination'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - webhooks
+      summary: Update webhook destination
+      description: Update webhook destination. Requires admin or manager role.
+      operationId: updateWebhookDestination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookDestinationRequest'
+      responses:
+        '200':
+          description: Webhook destination updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDestination'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - webhooks
+      summary: Delete webhook destination
+      description: Delete webhook destination. Requires admin or manager role.
+      operationId: deleteWebhookDestination
+      responses:
+        '204':
+          description: Webhook destination deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /webhooks/{webhookId}/test:
+    parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - webhooks
+      summary: Test webhook destination
+      description: Send a test event to verify webhook configuration
+      operationId: testWebhookDestination
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookTestResult'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /webhooks/{webhookId}/deliveries:
+    parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - webhooks
+      summary: List webhook deliveries
+      description: Get delivery history for a webhook destination
+      operationId: listWebhookDeliveries
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, delivered, failed, dead]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of deliveries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWebhookDeliveriesResponse'
+        '404':
+          description: Not found
           content:
             application/json:
               schema:

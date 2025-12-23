@@ -420,6 +420,81 @@ CREATE INDEX idx_tool_policies_employee_id ON tool_policies(employee_id) WHERE e
 CREATE INDEX idx_tool_policies_lookup ON tool_policies(org_id, team_id, employee_id, tool_name);
 
 -- ============================================================================
+-- WEBHOOK DESTINATIONS
+-- ============================================================================
+
+-- Webhook destination configuration for forwarding events to external systems
+CREATE TABLE webhook_destinations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+
+    -- Destination config
+    name VARCHAR(100) NOT NULL,
+    url TEXT NOT NULL,
+
+    -- Authentication
+    auth_type VARCHAR(50) NOT NULL DEFAULT 'none' CHECK (auth_type IN ('none', 'bearer', 'header', 'basic')),
+    auth_config JSONB DEFAULT '{}',  -- Encrypted: {"token": "xxx"} or {"header": "X-Api-Key", "value": "xxx"}
+
+    -- Event filtering
+    event_types TEXT[] DEFAULT '{}',  -- Empty = all, or specific: ['tool_call', 'policy_violation']
+    event_filter JSONB DEFAULT '{}',  -- {"blocked": true} = only blocked events
+
+    -- Delivery settings
+    enabled BOOLEAN NOT NULL DEFAULT true,
+    batch_size INT NOT NULL DEFAULT 1 CHECK (batch_size >= 1 AND batch_size <= 100),
+    timeout_ms INT NOT NULL DEFAULT 5000 CHECK (timeout_ms >= 1000 AND timeout_ms <= 30000),
+    retry_max INT NOT NULL DEFAULT 3 CHECK (retry_max >= 0 AND retry_max <= 10),
+    retry_backoff_ms INT NOT NULL DEFAULT 1000 CHECK (retry_backoff_ms >= 100),
+
+    -- Security
+    signing_secret VARCHAR(255),  -- For X-Ubik-Signature header (HMAC)
+
+    -- Metadata
+    created_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    -- Unique name per org
+    UNIQUE(org_id, name)
+);
+
+-- Track delivery status for each log entry sent to a webhook
+CREATE TABLE webhook_deliveries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    destination_id UUID NOT NULL REFERENCES webhook_destinations(id) ON DELETE CASCADE,
+    log_id UUID NOT NULL REFERENCES activity_logs(id) ON DELETE CASCADE,
+
+    -- Delivery status
+    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'delivered', 'failed', 'dead')),
+    attempts INT NOT NULL DEFAULT 0,
+    last_attempt_at TIMESTAMP,
+    next_retry_at TIMESTAMP,
+
+    -- Response info
+    response_status INT,
+    response_body TEXT,  -- First 1000 chars
+    error_message TEXT,
+
+    -- Timing
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    delivered_at TIMESTAMP,
+
+    -- One delivery record per destination/log pair
+    UNIQUE(destination_id, log_id)
+);
+
+-- Indexes for webhook destinations
+CREATE INDEX idx_webhook_destinations_org_id ON webhook_destinations(org_id);
+CREATE INDEX idx_webhook_destinations_enabled ON webhook_destinations(org_id, enabled) WHERE enabled = true;
+
+-- Indexes for webhook deliveries (critical for forwarder performance)
+CREATE INDEX idx_webhook_deliveries_pending ON webhook_deliveries(status, next_retry_at)
+    WHERE status IN ('pending', 'failed');
+CREATE INDEX idx_webhook_deliveries_destination ON webhook_deliveries(destination_id);
+CREATE INDEX idx_webhook_deliveries_log ON webhook_deliveries(log_id);
+
+-- ============================================================================
 -- INDEXES
 -- ============================================================================
 
@@ -493,6 +568,8 @@ ALTER TABLE employee_mcp_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhook_destinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
 
 -- Example RLS policy (requires app to set current_setting('app.current_org_id'))
 -- CREATE POLICY org_isolation ON employees
