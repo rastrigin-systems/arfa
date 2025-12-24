@@ -17,8 +17,7 @@ func TestNewService(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -33,8 +32,7 @@ func TestService_SessionID_Generated(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc1, _ := NewService(config)
@@ -49,8 +47,7 @@ func TestService_HandlerContext(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -60,7 +57,9 @@ func TestService_HandlerContext(t *testing.T) {
 
 	assert.Equal(t, "emp-123", ctx.EmployeeID)
 	assert.Equal(t, "org-456", ctx.OrgID)
-	assert.Equal(t, "agent-abc", ctx.AgentID)
+	// ClientName/ClientVersion are empty until client detection happens
+	assert.Empty(t, ctx.ClientName)
+	assert.Empty(t, ctx.ClientVersion)
 	assert.Equal(t, svc.SessionID(), ctx.SessionID)
 }
 
@@ -69,8 +68,7 @@ func TestService_Pipeline(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -96,8 +94,7 @@ func TestService_RegisterHandler(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -123,8 +120,7 @@ func TestService_HandleRequest(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -142,8 +138,7 @@ func TestService_HandleResponse(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -164,8 +159,7 @@ func TestService_HandleRequest_WritesToQueue(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -185,8 +179,7 @@ func TestService_HandleResponse_WritesToQueue(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -209,7 +202,6 @@ func TestService_Start_StartsWorker(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID:    "emp-123",
 		OrgID:         "org-456",
-		AgentID:       "agent-abc",
 		QueueDir:      dir,
 		FlushInterval: 50 * time.Millisecond,
 	}
@@ -236,8 +228,7 @@ func TestService_Stop_GracefulShutdown(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -266,8 +257,7 @@ func TestServiceConfig_Defaults(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
-		QueueDir:   dir,
+				QueueDir:   dir,
 		// No FlushInterval or MaxBatchSize set
 	}
 

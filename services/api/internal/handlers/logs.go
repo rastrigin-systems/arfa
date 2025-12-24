@@ -75,8 +75,11 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	if req.SessionId != nil {
 		entry.SessionID = *req.SessionId
 	}
-	if req.AgentId != nil {
-		entry.AgentID = *req.AgentId
+	if req.ClientName != nil {
+		entry.ClientName = *req.ClientName
+	}
+	if req.ClientVersion != nil {
+		entry.ClientVersion = *req.ClientVersion
 	}
 	if req.Content != nil {
 		entry.Content = *req.Content
@@ -111,8 +114,11 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 		if req.SessionId != nil {
 			wsMsg.SessionID = *req.SessionId
 		}
-		if req.AgentId != nil {
-			wsMsg.AgentID = *req.AgentId
+		if req.ClientName != nil {
+			wsMsg.ClientName = *req.ClientName
+		}
+		if req.ClientVersion != nil {
+			wsMsg.ClientVersion = *req.ClientVersion
 		}
 		if req.Content != nil {
 			wsMsg.Content = *req.Content
@@ -139,8 +145,11 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	if req.SessionId != nil {
 		response.SessionId = req.SessionId
 	}
-	if req.AgentId != nil {
-		response.AgentId = req.AgentId
+	if req.ClientName != nil {
+		response.ClientName = req.ClientName
+	}
+	if req.ClientVersion != nil {
+		response.ClientVersion = req.ClientVersion
 	}
 	if req.Content != nil {
 		response.Content = req.Content
@@ -190,8 +199,9 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 	if params.SessionId != nil {
 		filterParams.SessionID = pgtype.UUID{Bytes: uuid.UUID(*params.SessionId), Valid: true}
 	}
-	if params.AgentId != nil {
-		filterParams.AgentID = pgtype.UUID{Bytes: uuid.UUID(*params.AgentId), Valid: true}
+	if params.ClientName != nil {
+		clientName := string(*params.ClientName)
+		filterParams.ClientName = &clientName
 	}
 	if params.EventType != nil {
 		eventType := string(*params.EventType)
@@ -220,7 +230,7 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 		OrgID:         orgID,
 		EmployeeID:    filterParams.EmployeeID,
 		SessionID:     filterParams.SessionID,
-		AgentID:       filterParams.AgentID,
+		ClientName:    filterParams.ClientName,
 		EventType:     filterParams.EventType,
 		EventCategory: filterParams.EventCategory,
 		StartDate:     filterParams.StartDate,
@@ -299,10 +309,11 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 		apiLog.SessionId = &sessAPIID
 	}
 
-	if log.AgentID.Valid {
-		agentID := uuid.UUID(log.AgentID.Bytes)
-		agentAPIID := openapi_types.UUID(agentID)
-		apiLog.AgentId = &agentAPIID
+	if log.ClientName != nil {
+		apiLog.ClientName = log.ClientName
+	}
+	if log.ClientVersion != nil {
+		apiLog.ClientVersion = log.ClientVersion
 	}
 
 	if log.Content != nil {

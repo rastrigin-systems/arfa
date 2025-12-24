@@ -2,7 +2,6 @@
 INSERT INTO usage_records (
     org_id,
     employee_id,
-    agent_config_id,
     resource_type,
     quantity,
     cost_usd,
@@ -10,7 +9,7 @@ INSERT INTO usage_records (
     period_end,
     metadata
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: GetUsageRecordsByEmployee :many

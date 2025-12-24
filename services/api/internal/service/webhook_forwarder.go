@@ -34,7 +34,8 @@ type WebhookPayload struct {
 	OrgID         uuid.UUID              `json:"org_id"`
 	EmployeeID    *uuid.UUID             `json:"employee_id,omitempty"`
 	SessionID     *uuid.UUID             `json:"session_id,omitempty"`
-	AgentID       *uuid.UUID             `json:"agent_id,omitempty"`
+	ClientName    string                 `json:"client_name,omitempty"`
+	ClientVersion string                 `json:"client_version,omitempty"`
 	Content       string                 `json:"content"`
 	Payload       map[string]interface{} `json:"payload,omitempty"`
 }
@@ -300,9 +301,11 @@ func (wf *WebhookForwarder) buildPayload(logEntry db.ActivityLog) WebhookPayload
 		id := logEntry.SessionID.Bytes
 		payload.SessionID = (*uuid.UUID)(&id)
 	}
-	if logEntry.AgentID.Valid {
-		id := logEntry.AgentID.Bytes
-		payload.AgentID = (*uuid.UUID)(&id)
+	if logEntry.ClientName != nil {
+		payload.ClientName = *logEntry.ClientName
+	}
+	if logEntry.ClientVersion != nil {
+		payload.ClientVersion = *logEntry.ClientVersion
 	}
 
 	// Parse JSON payload if present

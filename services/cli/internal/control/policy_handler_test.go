@@ -24,7 +24,7 @@ func TestPolicyHandler_Priority(t *testing.T) {
 
 func TestPolicyHandler_HandleRequest(t *testing.T) {
 	h := NewPolicyHandler()
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := h.HandleRequest(ctx, req)
@@ -35,7 +35,7 @@ func TestPolicyHandler_HandleRequest(t *testing.T) {
 
 func TestPolicyHandler_HandleResponse_NonSSE(t *testing.T) {
 	h := NewPolicyHandlerWithDenyList(map[string]string{"Bash": "blocked"})
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	body := `{"type":"message","content":[{"type":"text","text":"Hello"}]}`
 	res := &http.Response{
@@ -53,7 +53,7 @@ func TestPolicyHandler_HandleResponse_NonSSE(t *testing.T) {
 func TestPolicyHandler_HandleResponse_AllowedTool(t *testing.T) {
 	// Block Bash, but allow Read
 	h := NewPolicyHandlerWithDenyList(map[string]string{"Bash": "blocked"})
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	// SSE stream with Read tool (not blocked)
 	sseStream := `event: message_start
@@ -94,7 +94,7 @@ func TestPolicyHandler_HandleResponse_BlockedTool(t *testing.T) {
 	h := NewPolicyHandlerWithDenyList(map[string]string{
 		"Bash": "Shell commands are blocked by organization policy",
 	})
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	// SSE stream with Bash tool (blocked)
 	sseStream := `event: message_start
@@ -144,7 +144,7 @@ func TestPolicyHandler_HandleResponse_MixedBlocks(t *testing.T) {
 	h := NewPolicyHandlerWithDenyList(map[string]string{
 		"Bash": "blocked",
 	})
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	// SSE stream with text block, then Bash (blocked), then Read (allowed)
 	sseStream := `event: message_start
@@ -212,7 +212,7 @@ func TestPolicyHandler_EmptyDenyList(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	h := NewPolicyHandler() // Should have empty deny list (no cache file)
-	ctx := NewHandlerContext("emp-1", "org-1", "sess-1", "agent-1")
+	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Bash","input":{}}}
@@ -247,7 +247,7 @@ data: {"foo":"bar"}
 
 `)
 
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 	output, modified := h.processSSEStream(ctx, input)
 
 	assert.False(t, modified)
@@ -268,7 +268,7 @@ data: {"type":"content_block_stop","index":0}
 
 `)
 
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 	output, modified := h.processSSEStream(ctx, input)
 
 	assert.True(t, modified)
@@ -687,7 +687,7 @@ data: {"type":"message_stop"}
 
 `
 
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 	output, modified := h.processSSEStream(ctx, []byte(sseStream))
 
 	assert.True(t, modified, "Stream should be modified when condition matches")
@@ -749,7 +749,7 @@ data: {"type":"message_stop"}
 
 `
 
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 	output, modified := h.processSSEStream(ctx, []byte(sseStream))
 
 	assert.False(t, modified, "Stream should not be modified when condition doesn't match")
@@ -925,7 +925,7 @@ data: {"type":"message_stop"}
 
 `
 
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 	output, modified := h.processSSEStream(ctx, []byte(sseStream))
 
 	assert.True(t, modified, "Stream should be modified when tool is blocked")

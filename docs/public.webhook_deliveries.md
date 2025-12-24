@@ -85,7 +85,8 @@ erDiagram
   uuid org_id FK
   uuid employee_id FK
   uuid session_id
-  uuid agent_id FK
+  varchar_100_ client_name
+  varchar_50_ client_version
   varchar_100_ event_type
   varchar_50_ event_category
   text content

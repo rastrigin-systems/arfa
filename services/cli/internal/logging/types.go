@@ -34,8 +34,11 @@ type LogEntry struct {
 	// SessionID identifies the CLI session
 	SessionID string `json:"session_id,omitempty"`
 
-	// AgentID identifies the agent (optional)
-	AgentID string `json:"agent_id,omitempty"`
+	// ClientName identifies the AI client (detected from User-Agent)
+	ClientName string `json:"client_name,omitempty"`
+
+	// ClientVersion is the version of the AI client
+	ClientVersion string `json:"client_version,omitempty"`
 
 	// EventType specifies the type of event
 	EventType string `json:"event_type"`
@@ -71,8 +74,8 @@ type Logger interface {
 	// EndSession marks the end of the current session
 	EndSession()
 
-	// SetAgentID sets the agent ID for all subsequent log entries
-	SetAgentID(agentID string)
+	// SetClient sets the client name and version for all subsequent log entries
+	SetClient(clientName, clientVersion string)
 
 	// LogEvent logs a custom event
 	LogEvent(eventType, category, content string, metadata map[string]interface{})

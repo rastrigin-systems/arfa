@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.agent_policies](public.agent_policies.md) [public.team_policies](public.team_policies.md) [public.employee_policies](public.employee_policies.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.team_policies](public.team_policies.md) [public.employee_policies](public.employee_policies.md) |  |  |
 | name | varchar(100) |  | false |  |  |  |
 | type | varchar(50) |  | false |  |  |  |
 | rules | jsonb |  | false |  |  |  |
@@ -39,7 +39,6 @@
 ```mermaid
 erDiagram
 
-"public.agent_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
 "public.team_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
 "public.employee_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
 
@@ -51,11 +50,6 @@ erDiagram
   varchar_20_ severity
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-}
-"public.agent_policies" {
-  uuid agent_id FK
-  uuid policy_id FK
-  timestamp_without_time_zone created_at
 }
 "public.team_policies" {
   uuid id

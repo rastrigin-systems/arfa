@@ -74,22 +74,32 @@ type HandlerContext struct {
 	// SessionID groups related requests within a CLI session.
 	SessionID string
 
-	// AgentID identifies which AI agent (claude-code, cursor, etc.) is being used.
-	AgentID string
+	// ClientName identifies the AI client (e.g., "claude-code", "cursor", "continue").
+	// Detected from User-Agent headers.
+	ClientName string
+
+	// ClientVersion is the version of the AI client (e.g., "1.0.25").
+	// Detected from User-Agent headers.
+	ClientVersion string
 
 	// Metadata allows handlers to pass data to downstream handlers.
 	Metadata map[string]interface{}
 }
 
 // NewHandlerContext creates a new HandlerContext with the required ownership fields.
-func NewHandlerContext(employeeID, orgID, sessionID, agentID string) *HandlerContext {
+func NewHandlerContext(employeeID, orgID, sessionID string) *HandlerContext {
 	return &HandlerContext{
 		EmployeeID: employeeID,
 		OrgID:      orgID,
 		SessionID:  sessionID,
-		AgentID:    agentID,
 		Metadata:   make(map[string]interface{}),
 	}
+}
+
+// SetClient updates the client detection fields from a ClientInfo.
+func (ctx *HandlerContext) SetClient(info ClientInfo) {
+	ctx.ClientName = info.Name
+	ctx.ClientVersion = info.Version
 }
 
 // Handler defines the interface for processing requests and responses.

@@ -25,10 +25,9 @@ func NewOrganizationsHandler(database db.Querier) *OrganizationsHandler {
 
 // Request/Response types (since not in OpenAPI spec yet)
 type UpdateOrganizationRequest struct {
-	Name                 *string                 `json:"name,omitempty"`
-	Settings             *map[string]interface{} `json:"settings,omitempty"`
-	MaxEmployees         *int32                  `json:"max_employees,omitempty"`
-	MaxAgentsPerEmployee *int32                  `json:"max_agents_per_employee,omitempty"`
+	Name         *string                 `json:"name,omitempty"`
+	Settings     *map[string]interface{} `json:"settings,omitempty"`
+	MaxEmployees *int32                  `json:"max_employees,omitempty"`
 }
 
 // GetCurrentOrganization handles GET /organizations/current
@@ -101,17 +100,11 @@ func (h *OrganizationsHandler) UpdateCurrentOrganization(w http.ResponseWriter, 
 		maxEmployees = *req.MaxEmployees
 	}
 
-	maxAgentsPerEmployee := int32(0)
-	if req.MaxAgentsPerEmployee != nil {
-		maxAgentsPerEmployee = *req.MaxAgentsPerEmployee
-	}
-
 	params := db.UpdateOrganizationParams{
-		ID:                   orgID,
-		Name:                 name,
-		Settings:             settingsJSON,
-		MaxEmployees:         maxEmployees,
-		MaxAgentsPerEmployee: maxAgentsPerEmployee,
+		ID:           orgID,
+		Name:         name,
+		Settings:     settingsJSON,
+		MaxEmployees: maxEmployees,
 	}
 
 	// Update organization in database
@@ -154,17 +147,15 @@ func dbOrganizationToAPI(org db.Organization) api.Organization {
 
 	// Convert int32 to *int
 	maxEmployees := int(org.MaxEmployees)
-	maxAgentsPerEmployee := int(org.MaxAgentsPerEmployee)
 
 	return api.Organization{
-		Id:                   &orgIDUUID,
-		Name:                 org.Name,
-		Slug:                 org.Slug,
-		Plan:                 api.OrganizationPlan(org.Plan),
-		Settings:             &settings,
-		MaxEmployees:         &maxEmployees,
-		MaxAgentsPerEmployee: &maxAgentsPerEmployee,
-		CreatedAt:            createdAt,
-		UpdatedAt:            updatedAt,
+		Id:           &orgIDUUID,
+		Name:         org.Name,
+		Slug:         org.Slug,
+		Plan:         api.OrganizationPlan(org.Plan),
+		Settings:     &settings,
+		MaxEmployees: &maxEmployees,
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
 	}
 }

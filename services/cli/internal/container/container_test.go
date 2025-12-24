@@ -108,44 +108,6 @@ func TestContainer_AuthService(t *testing.T) {
 	assert.Same(t, as, as2)
 }
 
-func TestContainer_SyncService(t *testing.T) {
-	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.json")
-
-	c := New(
-		WithConfigPath(configPath),
-		WithPlatformURL("https://test.example.com"),
-	)
-
-	ss, err := c.SyncService()
-	require.NoError(t, err)
-	assert.NotNil(t, ss)
-
-	// Second call should return same instance
-	ss2, err := c.SyncService()
-	require.NoError(t, err)
-	assert.Same(t, ss, ss2)
-}
-
-func TestContainer_AgentService(t *testing.T) {
-	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.json")
-
-	c := New(
-		WithConfigPath(configPath),
-		WithPlatformURL("https://test.example.com"),
-	)
-
-	as, err := c.AgentService()
-	require.NoError(t, err)
-	assert.NotNil(t, as)
-
-	// Second call should return same instance
-	as2, err := c.AgentService()
-	require.NoError(t, err)
-	assert.Same(t, as, as2)
-}
-
 func TestContainer_SkillsService(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.json")

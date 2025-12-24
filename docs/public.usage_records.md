@@ -9,7 +9,6 @@
 | id | uuid | uuid_generate_v4() | false |  |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | employee_id | uuid |  | true |  | [public.employees](public.employees.md) |  |
-| agent_config_id | uuid |  | true |  | [public.employee_agent_configs](public.employee_agent_configs.md) |  |
 | resource_type | varchar(50) |  | false |  |  |  |
 | quantity | bigint |  | false |  |  |  |
 | cost_usd | numeric(10,4) |  | false |  |  |  |
@@ -26,7 +25,6 @@
 | usage_records_token_source_check | CHECK | CHECK (((token_source)::text = ANY ((ARRAY['company'::character varying, 'personal'::character varying])::text[]))) |
 | usage_records_org_id_fkey | FOREIGN KEY | FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE |
 | usage_records_employee_id_fkey | FOREIGN KEY | FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL |
-| usage_records_agent_config_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL |
 | usage_records_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
@@ -36,7 +34,6 @@
 | usage_records_pkey | CREATE UNIQUE INDEX usage_records_pkey ON public.usage_records USING btree (id) |
 | idx_usage_records_org_id | CREATE INDEX idx_usage_records_org_id ON public.usage_records USING btree (org_id) |
 | idx_usage_records_employee_id | CREATE INDEX idx_usage_records_employee_id ON public.usage_records USING btree (employee_id) |
-| idx_usage_records_agent_config_id | CREATE INDEX idx_usage_records_agent_config_id ON public.usage_records USING btree (agent_config_id) |
 | idx_usage_records_period | CREATE INDEX idx_usage_records_period ON public.usage_records USING btree (period_start, period_end) |
 
 ## Relations
@@ -46,13 +43,11 @@ erDiagram
 
 "public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-"public.usage_records" }o--o| "public.employee_agent_configs" : "FOREIGN KEY (agent_config_id) REFERENCES employee_agent_configs(id) ON DELETE SET NULL"
 
 "public.usage_records" {
   uuid id
   uuid org_id FK
   uuid employee_id FK
-  uuid agent_config_id FK
   varchar_50_ resource_type
   bigint quantity
   numeric_10_4_ cost_usd
@@ -69,7 +64,6 @@ erDiagram
   varchar_50_ plan
   jsonb settings
   integer max_employees
-  integer max_agents_per_employee
   text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -89,17 +83,6 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
-}
-"public.employee_agent_configs" {
-  uuid id
-  uuid employee_id FK
-  uuid agent_id FK
-  jsonb config_override
-  boolean is_enabled
-  varchar_255_ sync_token
-  timestamp_without_time_zone last_synced_at
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
 }
 ```
 

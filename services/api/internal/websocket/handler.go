@@ -154,13 +154,9 @@ func parseSubscriptionFilters(r *http.Request) (ClientFilters, error) {
 		filters.EmployeeID = employeeID
 	}
 
-	// Parse agent_id
-	if agentIDStr := r.URL.Query().Get("agent_id"); agentIDStr != "" {
-		agentID, err := uuid.Parse(agentIDStr)
-		if err != nil {
-			return filters, fmt.Errorf("invalid agent_id: %w", err)
-		}
-		filters.AgentID = agentID
+	// Parse client_name
+	if clientName := r.URL.Query().Get("client_name"); clientName != "" {
+		filters.ClientName = clientName
 	}
 
 	return filters, nil

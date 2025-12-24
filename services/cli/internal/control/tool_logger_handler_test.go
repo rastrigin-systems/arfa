@@ -42,7 +42,7 @@ func TestNewToolCallLoggerHandler(t *testing.T) {
 func TestToolCallLoggerHandler_HandleRequest_Noop(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 	result := h.HandleRequest(ctx, req)
@@ -54,7 +54,7 @@ func TestToolCallLoggerHandler_HandleRequest_Noop(t *testing.T) {
 func TestToolCallLoggerHandler_HandleResponse_NonSSE(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	res := &http.Response{
 		StatusCode: 200,
@@ -71,7 +71,7 @@ func TestToolCallLoggerHandler_HandleResponse_NonSSE(t *testing.T) {
 func TestToolCallLoggerHandler_HandleResponse_SingleToolCall(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_123","name":"Read","input":{}}}
@@ -106,7 +106,8 @@ data: {"type":"content_block_stop","index":0}
 	assert.Equal(t, "emp-1", entry.EmployeeID)
 	assert.Equal(t, "org-1", entry.OrgID)
 	assert.Equal(t, "sess-1", entry.SessionID)
-	assert.Equal(t, "agent-1", entry.AgentID)
+	assert.Equal(t, "claude-code", entry.ClientName)
+	assert.Equal(t, "1.0.25", entry.ClientVersion)
 
 	assert.Equal(t, "Read", entry.Payload["tool_name"])
 	assert.Equal(t, "toolu_123", entry.Payload["tool_id"])
@@ -119,7 +120,7 @@ data: {"type":"content_block_stop","index":0}
 func TestToolCallLoggerHandler_HandleResponse_MultipleToolCalls(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Read","input":{}}}
@@ -166,7 +167,7 @@ data: {"type":"content_block_stop","index":1}
 func TestToolCallLoggerHandler_HandleResponse_TextBlockIgnored(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
@@ -194,7 +195,7 @@ data: {"type":"content_block_stop","index":0}
 func TestToolCallLoggerHandler_HandleResponse_EmptyInput(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"GetTime","input":{}}}
@@ -225,7 +226,7 @@ data: {"type":"content_block_stop","index":0}
 func TestToolCallLoggerHandler_HandleResponse_InvalidJSON(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Bash","input":{}}}
@@ -259,7 +260,7 @@ data: {"type":"content_block_stop","index":0}
 func TestToolCallLoggerHandler_HandleResponse_BodyRestored(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	originalBody := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Read","input":{}}}
@@ -285,7 +286,7 @@ data: {"type":"content_block_stop","index":0}
 
 func TestToolCallLoggerHandler_NilQueue(t *testing.T) {
 	h := NewToolCallLoggerHandler(nil)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	sseStream := `event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"Read","input":{}}}
@@ -365,7 +366,7 @@ func TestCleanSSEData(t *testing.T) {
 func TestToolCallLoggerHandler_HandleResponse_TrailingGarbage(t *testing.T) {
 	queue := &mockToolLoggerQueue{}
 	h := NewToolCallLoggerHandler(queue)
-	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", AgentID: "agent-1"}
+	ctx := &HandlerContext{EmployeeID: "emp-1", OrgID: "org-1", SessionID: "sess-1", ClientName: "claude-code", ClientVersion: "1.0.25"}
 
 	// SSE stream with trailing garbage (real Anthropic format)
 	sseStream := `event: content_block_start

@@ -1,560 +1,316 @@
-# CLI Client Development Guide
+# CLI Development Guide
 
-**You are working on the Ubik CLI** - the command-line interface for employee configuration sync.
+**You are working on the Ubik CLI** - the AI Agent Security Proxy for enterprise environments.
 
 ---
 
 ## Quick Context
 
 **What is this service?**
-Self-contained Go CLI that allows employees to sync AI agent configurations from the Ubik Enterprise platform to their local development machines.
+Self-contained Go CLI that provides an HTTPS proxy for intercepting, logging, and enforcing policies on AI agent (Claude Code, Cursor, Windsurf) API traffic.
 
 **Key capabilities:**
-- Secure authentication (login/logout with JWT)
-- Configuration sync (download agent configs)
-- Docker integration (manage server containers)
-- Interactive mode (user-friendly interface)
-- Agent management (list, inspect configured agents)
-- Activity logging (track CLI usage)
-- **Control Service** - HTTPS proxy for LLM API interception, logging, and policy enforcement
-- **Tool Blocking** (in progress) - Block tool calls based on org policies. See [TOOL_BLOCKING_DESIGN.md](../../docs/TOOL_BLOCKING_DESIGN.md)
+- **Security Proxy** - MITM proxy for LLM API traffic interception
+- **Activity Logging** - Log all AI agent tool calls and API requests
+- **Policy Enforcement** - Block dangerous tool calls based on org policies
+- **Client Detection** - Auto-detect AI client from User-Agent headers
+- **Enterprise Deployment** - PAC file setup for transparent routing
 
 **Architecture principle:** Self-contained module with minimal dependencies. NO database code, NO generated API code. Only depends on `pkg/types` for shared data structures.
 
 ---
 
-## Essential Commands
+## CLI Commands
 
-Run `make` to see available commands (from services/cli/ or repository root).
+### Core Commands
+
+```bash
+# Start the proxy (default action)
+ubik                      # Same as 'ubik proxy start'
+ubik proxy start          # Start HTTPS proxy on localhost:8082
+
+# Authentication
+ubik login                # Authenticate with platform
+ubik logout               # Clear credentials
+
+# Monitoring
+ubik logs stream          # Stream real-time activity logs
+ubik policies list        # View active security policies
+```
+
+### Setup Commands
+
+```bash
+# For CI pipelines - output env vars
+eval $(ubik proxy env)              # Set HTTPS_PROXY, SSL_CERT_FILE
+ubik proxy env --format=github      # GitHub Actions format
+
+# For local/enterprise - permanent system config
+sudo ubik setup system              # Install PAC file + auto-start
+ubik setup status                   # Check setup status
+sudo ubik setup uninstall           # Remove system config
+```
+
+### Proxy Commands
+
+```bash
+ubik proxy start          # Start proxy (foreground)
+ubik proxy stop           # Stop proxy
+ubik proxy status         # Check if running
+ubik proxy health         # Health check
+ubik proxy env            # Output environment variables
+```
 
 ---
 
-## Critical: Pre-Commit Checks
+## Deployment Modes
 
-**ALWAYS run these before committing Go files:**
+### 1. CI Pipelines (Temporary)
 
-```bash
-# 1. Format code (required)
-gofmt -w .
+```yaml
+# GitHub Actions
+- name: Setup Ubik
+  run: |
+    ubik proxy start --background
+    ubik proxy env --format=github >> $GITHUB_ENV
 
-# 2. Run go vet (required)
-go vet ./...
-
-# 3. Run tests
-go test ./... -count=1
+- name: Run AI Agent
+  run: claude "fix the tests"
 ```
 
-❌ **NEVER commit without running `gofmt` and `go vet`** - CI will fail.
+```bash
+# Generic CI
+ubik proxy start --background
+eval $(ubik proxy env)
+claude "fix the bug"
+```
+
+### 2. Local Development (Per-Session)
+
+```bash
+# Terminal 1: Start proxy
+ubik proxy start
+
+# Terminal 2: Configure shell and run agent
+eval $(ubik proxy env)
+claude
+```
+
+### 3. Enterprise (Permanent via PAC)
+
+```bash
+# One-time admin setup (requires sudo)
+sudo ubik setup system
+
+# Creates:
+# - PAC file routing only LLM domains through proxy
+# - CA certificate in system trust store
+# - Auto-start daemon (launchd/systemd)
+
+# Employees just run their AI agents normally
+claude  # Transparently proxied
+```
+
+**Proxied domains (via PAC):**
+- `api.anthropic.com`
+- `api.openai.com`
+- `generativelanguage.googleapis.com`
+
+All other traffic goes direct - no performance impact.
 
 ---
 
 ## Architecture
 
-### Design Decisions
+### Control Service Pipeline
 
-**Self-Contained Module:**
-- Separate Go module from main workspace
-- Minimal dependencies (no DB drivers, no generated code)
-- Small binary size (~10MB vs ~25MB for API)
-- Faster build times
+```
+Request → ClientDetector → PolicyHandler → LoggerHandler → Forward to LLM API
+                ↓                ↓               ↓
+         Detect client     Check policies    Log to queue
+         from User-Agent   Block if needed   Upload async
+```
 
-**What CLI Depends On:**
-- ✅ `pkg/types` - Shared data structures
-- ✅ `github.com/docker/docker` - Docker SDK
-- ✅ `github.com/spf13/cobra` - CLI framework
-- ❌ `generated/db` - NO database code
-- ❌ `generated/api` - NO generated API code
-- ❌ PostgreSQL drivers - NO direct DB access
+**Handlers (priority order):**
+1. `ClientDetectorHandler` (200) - Detect client from User-Agent
+2. `PolicyHandler` (110) - Enforce tool blocking policies
+3. `LoggerHandler` (100) - Log requests/responses
 
 ### Directory Structure
 
 ```
 services/cli/
-├── cmd/ubik/main.go    # CLI entry point, creates DI container
-├── internal/           # Implementation (not importable)
-│   ├── commands/       # Command implementations (use container)
-│   │   ├── root.go     # Root command, distributes container
-│   │   ├── auth/       # Auth commands (login, logout)
-│   │   ├── agents/     # Agent commands (list, info, show)
-│   │   ├── sync/       # Sync command
-│   │   └── ...         # Other command groups
-│   ├── container/      # Dependency injection container
-│   │   └── container.go
-│   ├── mocks/          # Generated gomock interfaces
-│   │   └── interfaces_mock.go
-│   ├── interfaces.go   # Service interface definitions
-│   ├── types_api.go    # API request/response types (auth, agent, sync, skill, log)
-│   ├── auth.go         # AuthService implementation
-│   ├── sync.go         # SyncService implementation
-│   ├── agents.go       # AgentService implementation
-│   ├── docker.go       # DockerClient implementation
-│   ├── container_manager.go  # ContainerManager (Docker containers)
-│   ├── config.go       # ConfigManager implementation
-│   ├── platform.go     # PlatformClient (HTTP API client only)
-│   ├── proxy.go        # ProxyService implementation
-│   ├── native_runner.go # NativeRunner for agent processes
-│   └── ...             # Other implementations
+├── cmd/ubik/main.go          # CLI entry point
+├── internal/
+│   ├── commands/             # Cobra command implementations
+│   │   ├── root.go           # Root command
+│   │   ├── auth/             # login, logout
+│   │   ├── proxy/            # start, stop, status, env
+│   │   ├── setup/            # system, status, uninstall
+│   │   ├── logs/             # stream, view
+│   │   └── policies/         # list
+│   ├── control/              # Control service (core proxy logic)
+│   │   ├── service.go        # Main service coordinator
+│   │   ├── pipeline.go       # Handler pipeline
+│   │   ├── handler.go        # Handler interface + context
+│   │   ├── client_detector.go      # User-Agent parsing
+│   │   ├── client_detector_handler.go
+│   │   ├── policy_handler.go       # Policy enforcement
+│   │   ├── logger_handler.go       # Request/response logging
+│   │   ├── tool_logger_handler.go  # Tool call logging
+│   │   ├── queue.go          # Disk-based log queue
+│   │   ├── uploader.go       # Async log upload
+│   │   └── proxy.go          # goproxy wrapper
+│   ├── proxy/                # Simplified MITM proxy
+│   ├── logging/              # Legacy logging (being replaced)
+│   ├── logparser/            # Anthropic API response parser
+│   ├── api/                  # Platform API client
+│   ├── auth/                 # Authentication service
+│   ├── config/               # Local config management
+│   └── container/            # DI container
 └── tests/
-    ├── integration/    # Integration tests
-    └── e2e/           # End-to-end tests
+    └── integration/          # Integration tests
 ```
 
-### Type Organization
+### Key Data Types
 
-**API types (`types_api.go`)** - All request/response types for platform API:
-- Authentication: `LoginRequest`, `LoginResponse`, `LoginEmployeeInfo`, `EmployeeInfo`
-- Agent configs: `AgentConfig`, `AgentConfigAPIResponse`, `MCPServerConfig`, etc.
-- Sync types: `ClaudeCodeSyncResponse`, `AgentConfigSync`, `SkillConfigSync`, `MCPServerConfigSync`
-- Token types: `ClaudeTokenStatusResponse`, `EffectiveClaudeTokenResponse`
-- Skill types: `Skill`, `SkillFile`, `EmployeeSkill`, `ListSkillsResponse`
-- Log types: `LogEntry`, `CreateLogRequest`
-
-**Platform client (`platform.go`)** - HTTP API client methods only, no type definitions.
-
-### Dependency Injection Architecture
-
-**The CLI uses a DI container pattern for clean, testable code:**
-
+**HandlerContext** - Passed through pipeline:
 ```go
-// main.go - Create container and pass to root command
-func main() {
-    c := container.New()
-    defer c.Close()
-    commands.NewRootCommand(version, c).Execute()
-}
-
-// Command receives container and gets services from it
-func NewLoginCommand(c *container.Container) *cobra.Command {
-    return &cobra.Command{
-        RunE: func(cmd *cobra.Command, args []string) error {
-            authService, err := c.AuthService()
-            if err != nil {
-                return err
-            }
-            return authService.Login(ctx, url, email, password)
-        },
-    }
+type HandlerContext struct {
+    EmployeeID    string
+    OrgID         string
+    SessionID     string
+    ClientName    string    // e.g., "claude-code"
+    ClientVersion string    // e.g., "1.0.25"
+    Metadata      map[string]interface{}
 }
 ```
 
-**Key interfaces** (defined in `internal/interfaces.go`):
-- `ConfigManagerInterface` - Local config (~/.ubik/config.json)
-- `PlatformClientInterface` - HTTP API communication
-- `AuthServiceInterface` - Authentication operations
-- `SyncServiceInterface` - Configuration sync
-- `AgentServiceInterface` - Agent management
-- `DockerClientInterface` - Docker SDK wrapper
-- `ContainerManagerInterface` - Container lifecycle
-
-### Request Flow
-
-```
-CLI Command → Cobra → Internal Package → HTTP Request → API Server
-                           ↓
-                     Local Config (~/.ubik/)
-                           ↓
-                     Docker Container Management
+**LogEntry** - Queued for upload:
+```go
+type LogEntry struct {
+    EmployeeID    string
+    OrgID         string
+    SessionID     string
+    ClientName    string
+    ClientVersion string
+    EventType     string    // "api_request", "tool_call", etc.
+    EventCategory string    // "proxy", "classified"
+    Timestamp     time.Time
+    Payload       map[string]interface{}
+}
 ```
 
 ---
 
-## Testing Strategy
-
-**CRITICAL: ALWAYS follow strict TDD (Test-Driven Development)**
-
-### TDD Workflow (Mandatory)
-1. ✅ Write failing test FIRST
-2. ✅ Implement minimal code to pass test
-3. ✅ Refactor with tests passing
-4. ❌ NEVER write implementation before tests
-
-### Test Types
-
-**Unit Tests** (`internal/*_test.go`):
-- Test individual functions
-- Mock HTTP client, Docker SDK, filesystem
-- Fast execution (<1s)
-- Target: 85%+ coverage
-
-**Integration Tests** (`tests/integration/`):
-- Test CLI + API interaction
-- May use test containers
-- Test file operations
-- Slower execution (~5-10s)
-
-**E2E Tests** (`tests/e2e/`):
-- Test complete user workflows
-- Require running API server
-- Test Docker container management
-- Slowest execution (~10-30s)
-
-### Running Tests
+## Essential Commands
 
 ```bash
-# Fast feedback loop
-make test-unit          # ~1 second
+# Build and test
+go build ./...
+go test ./... -count=1
 
-# Full test suite
-make test               # ~10-20 seconds
+# Format (required before commit)
+gofmt -w .
+go vet ./...
 
-# Integration tests
-make test-integration   # ~5-10 seconds
-
-# E2E tests (requires API)
-make test-e2e          # ~10-30 seconds
-
-# Coverage report
-make coverage          # Opens HTML report
+# Run locally
+go run ./cmd/ubik proxy start
 ```
-
-### Test Patterns
-
-**Mocking HTTP client:**
-```go
-func TestLogin(t *testing.T) {
-    // Setup mock server
-    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        json.NewEncoder(w).Encode(types.LoginResponse{Token: "test-token"})
-    }))
-    defer server.Close()
-
-    // Test login
-    auth := NewAuthClient(server.URL)
-    token, err := auth.Login("user@example.com", "password")
-
-    assert.NoError(t, err)
-    assert.Equal(t, "test-token", token)
-}
-```
-
-**Using gomock for service tests:**
-```go
-func TestAuthService_RequireAuth(t *testing.T) {
-    ctrl := gomock.NewController(t)
-    defer ctrl.Finish()
-
-    mockConfigManager := mocks.NewMockConfigManagerInterface(ctrl)
-    mockPlatformClient := mocks.NewMockPlatformClientInterface(ctrl)
-
-    // Set expectations
-    mockConfigManager.EXPECT().IsAuthenticated().Return(true, nil)
-    mockConfigManager.EXPECT().IsTokenValid().Return(true, nil)
-    mockConfigManager.EXPECT().Load().Return(&Config{Token: "test"}, nil)
-    mockPlatformClient.EXPECT().SetToken("test")
-    mockPlatformClient.EXPECT().SetBaseURL(gomock.Any())
-
-    // Create service with interface-based constructor
-    authService := NewAuthServiceWithInterfaces(mockConfigManager, mockPlatformClient)
-
-    // Test
-    config, err := authService.RequireAuth()
-    require.NoError(t, err)
-    assert.Equal(t, "test", config.Token)
-}
-```
-
-**Regenerating mocks:**
-```bash
-# From services/cli directory
-make mocks
-
-# Or directly
-go generate ./internal/mocks/...
-```
-
-**See [../../docs/TESTING.md](../../docs/TESTING.md) for complete testing guide.**
 
 ---
 
-## Common Tasks
-
-### Adding New Command
-
-1. **Create command file accepting container:**
-   ```go
-   // internal/commands/myfeature/myfeature.go
-   func NewMyFeatureCommand(c *container.Container) *cobra.Command {
-       return &cobra.Command{
-           Use:   "myfeature",
-           Short: "My new feature",
-           RunE: func(cmd *cobra.Command, args []string) error {
-               // Get services from container
-               authService, err := c.AuthService()
-               if err != nil {
-                   return fmt.Errorf("failed to get auth service: %w", err)
-               }
-
-               // Use services
-               config, err := authService.RequireAuth()
-               if err != nil {
-                   return err
-               }
-
-               // Implement feature logic
-               return nil
-           },
-       }
-   }
-   ```
-
-2. **Register command in root.go:**
-   ```go
-   // internal/commands/root.go
-   rootCmd.AddCommand(myfeature.NewMyFeatureCommand(c))
-   ```
-
-3. **Write tests with mocks:**
-   ```go
-   // internal/commands/myfeature/myfeature_test.go
-   func TestMyFeatureCommand(t *testing.T) {
-       ctrl := gomock.NewController(t)
-       defer ctrl.Finish()
-
-       mockAuth := mocks.NewMockAuthServiceInterface(ctrl)
-       mockAuth.EXPECT().RequireAuth().Return(&Config{}, nil)
-
-       c := container.New(container.WithAuthService(mockAuth))
-       cmd := NewMyFeatureCommand(c)
-       // Execute and assert
-   }
-   ```
-
-### Adding Docker Integration
-
-1. **Write tests with mock Docker client:**
-   ```go
-   func TestDockerOperation(t *testing.T) {
-       mockDocker := setupMockDocker(t)
-       // Test Docker operations
-   }
-   ```
-
-2. **Implement using Docker SDK:**
-   ```go
-   // internal/docker.go
-   func (d *DockerClient) PullImage(image string) error {
-       // Use docker.Client API
-   }
-   ```
-
-3. **Handle errors gracefully:**
-   ```go
-   if err != nil {
-       return fmt.Errorf("failed to pull image %s: %w", image, err)
-   }
-   ```
-
-### Configuration Management
+## Configuration
 
 **Local config location:** `~/.ubik/`
 
-**Structure:**
 ```
 ~/.ubik/
-├── config.json          # CLI configuration
-├── auth.json           # Auth tokens (chmod 600)
-├── agents/             # Synced agent configs
-│   ├── claude-code/
-│   │   ├── config.json
-│   │   └── mcps/
-│   └── cursor/
-└── logs/               # Activity logs
+├── config.json           # CLI configuration (API URL, credentials)
+├── certs/
+│   ├── ubik-ca.pem       # CA certificate (trust this)
+│   └── ubik-ca-key.pem   # CA private key
+├── proxy.pac             # PAC file (created by setup system)
+├── log_queue/            # Pending log uploads
+└── logs/                 # Daemon logs
 ```
 
-**Reading config:**
-```go
-config, err := config.Load(config.DefaultConfigDir())
-```
+---
 
-**Saving config:**
-```go
-err := config.Save(config.DefaultConfigDir(), cfg)
+## Client Detection
+
+The proxy auto-detects AI clients from User-Agent headers:
+
+| Client | User-Agent Pattern | Detected As |
+|--------|-------------------|-------------|
+| Claude Code | `claude-code/1.0.25` | `claude-code` |
+| Cursor | `Cursor/0.43.0` | `cursor` |
+| Continue | `Continue/1.0.0` | `continue` |
+| Windsurf | `Windsurf/1.0.0` | `windsurf` |
+| Aider | `aider/0.50.0` | `aider` |
+| GitHub Copilot | `GithubCopilot/1.0` | `copilot` |
+
+Detection happens in `ClientDetectorHandler` at the start of the pipeline.
+
+---
+
+## Testing
+
+```bash
+# Unit tests (fast)
+go test ./internal/control/... -count=1
+
+# All tests
+go test ./... -count=1
+
+# Integration tests
+go test ./tests/integration/... -count=1
+
+# With coverage
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
 ```
 
 ---
 
 ## Common Pitfalls
 
-### 1. Stale CLI Binary
+### 1. Stale Binary
 ```bash
-# ❌ Testing with old binary
-ubik sync
-
-# ✅ Rebuild and reinstall
-make clean && make build && make install
-ubik sync
+# ✅ Rebuild before testing
+go build ./... && go run ./cmd/ubik proxy start
 ```
 
-### 2. Cache Issues
+### 2. Certificate Not Trusted
 ```bash
-# ✅ Clear CLI cache
-rm -rf ~/.ubik/
+# ✅ Check if cert exists
+ls ~/.ubik/certs/ubik-ca.pem
 
-# ✅ Clear test cache
-go clean -testcache
+# ✅ Start proxy once to generate cert
+ubik proxy start
+
+# ✅ Trust cert (macOS)
+sudo security add-trusted-cert -d -r trustRoot \
+  -k /Library/Keychains/System.keychain ~/.ubik/certs/ubik-ca.pem
 ```
 
-### 3. Docker Not Running
+### 3. Port Already in Use
 ```bash
-# ✅ Check Docker
-docker ps
+# ✅ Check what's using 8082
+lsof -i :8082
 
-# ✅ Start Docker Desktop (macOS)
-open -a Docker
+# Proxy will auto-try 8082-8091
 ```
 
-### 4. API Connection Issues
+### 4. Proxy Not Working
 ```bash
-# ✅ Verify API is running
-curl http://localhost:8080/api/v1/health
+# ✅ Verify proxy is running
+curl -x http://127.0.0.1:8082 https://api.anthropic.com/v1/messages
 
-# ✅ Check API URL in config
-cat ~/.ubik/config.json
+# ✅ Check env vars
+echo $HTTPS_PROXY
+echo $SSL_CERT_FILE
 ```
-
-### 5. Import Errors
-```bash
-# ❌ NEVER import generated code
-import "github.com/rastrigin-systems/ubik-enterprise/generated/db"  # NO!
-
-# ✅ Only import pkg/types
-import "github.com/rastrigin-systems/ubik-enterprise/pkg/types"  # YES!
-```
-
-**See [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) for debugging strategies.**
-
----
-
-## Docker Integration
-
-### Container Naming Convention
-```
-ubik-mcp-<employee-id>-<mcp-name>
-```
-
-Example: `ubik-mcp-emp123-postgres`
-
-### Container Lifecycle
-
-**Starting containers:**
-```go
-func (cm *ContainerManager) StartMCPContainer(mcp types.MCPConfig) error {
-    // 1. Pull image if needed
-    // 2. Create container with proper config
-    // 3. Start container
-    // 4. Wait for health check
-}
-```
-
-**Stopping containers:**
-```go
-func (cm *ContainerManager) StopMCPContainer(containerID string) error {
-    // 1. Stop container gracefully
-    // 2. Remove container
-    // 3. Clean up volumes
-}
-```
-
-### Health Checks
-
-```go
-func (cm *ContainerManager) WaitForHealthy(containerID string, timeout time.Duration) error {
-    // Poll container health status
-    // Return error if timeout
-}
-```
-
----
-
-## Debugging
-
-**Golden Rule: Check the cache, not just the code**
-
-### Quick Debug Checklist
-1. ✅ Rebuild CLI: `make clean && make build`
-2. ✅ Clear cache: `rm -rf ~/.ubik/`
-3. ✅ Check Docker: `docker ps`
-4. ✅ Verify API: `curl http://localhost:8080/api/v1/health`
-5. ✅ Check logs: `cat ~/.ubik/logs/*.log`
-
-### Debug Logging
-
-```bash
-# Enable debug logging
-export UBIK_DEBUG=true
-ubik sync
-
-# Set log level
-export UBIK_LOG_LEVEL=debug
-ubik sync
-
-# View debug output
-tail -f ~/.ubik/logs/ubik.log
-```
-
-### Testing with Local API
-
-```bash
-# Terminal 1: Start API
-cd ../../ && make dev-api
-
-# Terminal 2: Test CLI
-cd services/cli
-make build
-../../bin/ubik-cli login --api-url http://localhost:8080
-```
-
----
-
-## Installation & Distribution
-
-### Local Installation
-
-```bash
-# Build and install
-make build && make install
-
-# Verify
-ubik version
-which ubik  # Should show /usr/local/bin/ubik
-```
-
-### Uninstallation
-
-```bash
-# Remove binary
-make uninstall
-
-# Remove config (optional)
-rm -rf ~/.ubik/
-```
-
-### Cross-Platform Builds (Future)
-
-```bash
-# Build for all platforms
-make build-all
-
-# Outputs:
-# bin/ubik-darwin-amd64
-# bin/ubik-darwin-arm64
-# bin/ubik-linux-amd64
-# bin/ubik-windows-amd64.exe
-```
-
----
-
-## Performance
-
-**Binary size:** ~10MB (uncompressed)
-**Startup time:** ~50ms (cold start)
-**Sync time:** ~1-2s (initial), ~200-500ms (incremental)
-
-**Optimization tips:**
-- Use connection pooling for HTTP client
-- Cache Docker client instance
-- Minimize filesystem operations
-- Batch API requests when possible
 
 ---
 
@@ -563,6 +319,5 @@ make build-all
 - [../../CLAUDE.md](../../CLAUDE.md) - Monorepo overview
 - [../../docs/TESTING.md](../../docs/TESTING.md) - Testing guide
 - [../../docs/DEV_WORKFLOW.md](../../docs/DEV_WORKFLOW.md) - PR workflow
-- [../../docs/TOOL_BLOCKING_DESIGN.md](../../docs/TOOL_BLOCKING_DESIGN.md) - Tool blocking architecture (in progress)
 - [../api/CLAUDE.md](../api/CLAUDE.md) - API development
 - [../web/CLAUDE.md](../web/CLAUDE.md) - Web UI development

@@ -68,10 +68,11 @@ func TestNew(t *testing.T) {
 
 func TestSetSession(t *testing.T) {
 	p := New(nil)
-	p.SetSession("session-123", "agent-456")
+	p.SetSession("session-123", "claude-code", "1.0.25")
 
 	assert.Equal(t, "session-123", p.sessionID)
-	assert.Equal(t, "agent-456", p.agentID)
+	assert.Equal(t, "claude-code", p.clientName)
+	assert.Equal(t, "1.0.25", p.clientVersion)
 }
 
 func TestStartStop(t *testing.T) {
@@ -158,7 +159,7 @@ func TestProxyIntegration(t *testing.T) {
 
 	logger := &mockLogger{}
 	p := New(logger)
-	p.SetSession("test-session", "test-agent")
+	p.SetSession("test-session", "claude-code", "1.0.25")
 
 	err := p.Start()
 	require.NoError(t, err)
@@ -314,7 +315,7 @@ func TestPortRange(t *testing.T) {
 func TestConcurrentProxyAccess(t *testing.T) {
 	logger := &mockLogger{}
 	p := New(logger)
-	p.SetSession("test-session", "test-agent")
+	p.SetSession("test-session", "claude-code", "1.0.25")
 
 	err := p.Start()
 	require.NoError(t, err)
@@ -326,7 +327,7 @@ func TestConcurrentProxyAccess(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			p.SetSession("session-"+string(rune('a'+id)), "agent-"+string(rune('a'+id)))
+			p.SetSession("session-"+string(rune('a'+id)), "client-"+string(rune('a'+id)), "1.0."+string(rune('0'+id)))
 		}(i)
 	}
 	wg.Wait()
@@ -469,8 +470,9 @@ func TestProxyWithSessionMetadata(t *testing.T) {
 	p := New(logger)
 
 	sessionID := "test-session-12345"
-	agentID := "test-agent-67890"
-	p.SetSession(sessionID, agentID)
+	clientName := "claude-code"
+	clientVersion := "1.0.25"
+	p.SetSession(sessionID, clientName, clientVersion)
 
 	err := p.Start()
 	require.NoError(t, err)
@@ -478,7 +480,8 @@ func TestProxyWithSessionMetadata(t *testing.T) {
 
 	// Verify session is set
 	assert.Equal(t, sessionID, p.sessionID)
-	assert.Equal(t, agentID, p.agentID)
+	assert.Equal(t, clientName, p.clientName)
+	assert.Equal(t, clientVersion, p.clientVersion)
 }
 
 // TestProxyHTTPRequest tests HTTP (non-HTTPS) request proxying
@@ -493,7 +496,7 @@ func TestProxyHTTPRequest(t *testing.T) {
 
 	logger := &mockLogger{}
 	p := New(logger)
-	p.SetSession("session-1", "agent-1")
+	p.SetSession("session-1", "claude-code", "1.0.25")
 
 	err := p.Start()
 	require.NoError(t, err)
