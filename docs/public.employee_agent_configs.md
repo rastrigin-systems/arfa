@@ -101,6 +101,7 @@ erDiagram
   varchar_100_ type
   text description
   varchar_100_ provider
+  varchar_255_ docker_image
   jsonb default_config
   jsonb capabilities
   varchar_50_ llm_provider

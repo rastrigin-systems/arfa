@@ -32,7 +32,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: services/api/Dockerfile
+      dockerfile: services/api/build/Dockerfile.gcp
     container_name: ubik-api
     ports:
       - "8080:8080"

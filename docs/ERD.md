@@ -51,6 +51,14 @@ erDiagram
     organizations ||--o{ usage_records : "has"
     employees ||--o{ usage_records : "has"
     employee_agent_configs ||--o{ usage_records : "has"
+    organizations ||--o{ tool_policies : "has"
+    teams ||--o{ tool_policies : "has"
+    employees ||--o{ tool_policies : "has"
+    employees ||--o{ tool_policies : "has"
+    organizations ||--o{ webhook_destinations : "has"
+    employees ||--o{ webhook_destinations : "has"
+    activity_logs ||--o{ webhook_deliveries : "has"
+    webhook_destinations ||--o{ webhook_deliveries : "has"
 
     %% Table Definitions
     organizations {
@@ -352,12 +360,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 26
+- **Total Tables**: 29
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
 - **Views**: 3
-- **Total Columns**: ~210
-- **Foreign Keys**: 39+
-- **Indexes**: 91+
+- **Total Columns**: ~251
+- **Foreign Keys**: 47+
+- **Indexes**: 105+
 
 ## Legend
 

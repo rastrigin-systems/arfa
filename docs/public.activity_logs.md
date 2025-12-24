@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false |  |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.webhook_deliveries](public.webhook_deliveries.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | employee_id | uuid |  | true |  | [public.employees](public.employees.md) |  |
 | session_id | uuid |  | true |  |  |  |
@@ -44,6 +44,7 @@
 ```mermaid
 erDiagram
 
+"public.webhook_deliveries" }o--|| "public.activity_logs" : "FOREIGN KEY (log_id) REFERENCES activity_logs(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.activity_logs" }o--o| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL"
@@ -59,6 +60,20 @@ erDiagram
   text content
   jsonb payload
   timestamp_without_time_zone created_at
+}
+"public.webhook_deliveries" {
+  uuid id
+  uuid destination_id FK
+  uuid log_id FK
+  varchar_50_ status
+  integer attempts
+  timestamp_without_time_zone last_attempt_at
+  timestamp_without_time_zone next_retry_at
+  integer response_status
+  text response_body
+  text error_message
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone delivered_at
 }
 "public.organizations" {
   uuid id
@@ -94,6 +109,7 @@ erDiagram
   varchar_100_ type
   text description
   varchar_100_ provider
+  varchar_255_ docker_image
   jsonb default_config
   jsonb capabilities
   varchar_50_ llm_provider

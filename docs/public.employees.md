@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.password_reset_tokens](public.password_reset_tokens.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.password_reset_tokens](public.password_reset_tokens.md) [public.employee_agent_configs](public.employee_agent_configs.md) [public.employee_policies](public.employee_policies.md) [public.employee_mcp_configs](public.employee_mcp_configs.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) [public.tool_policies](public.tool_policies.md) [public.webhook_destinations](public.webhook_destinations.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | team_id | uuid |  | true |  | [public.teams](public.teams.md) |  |
 | role_id | uuid |  | false |  | [public.roles](public.roles.md) |  |
@@ -65,6 +65,9 @@ erDiagram
 "public.invitations" }o--|| "public.employees" : "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
+"public.tool_policies" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
+"public.tool_policies" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
+"public.webhook_destinations" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
 "public.employees" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
@@ -191,6 +194,38 @@ erDiagram
   jsonb metadata
   varchar_20_ token_source
   timestamp_without_time_zone created_at
+}
+"public.tool_policies" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid employee_id FK
+  varchar_255_ tool_name
+  jsonb conditions
+  varchar_20_ action
+  text reason
+  uuid created_by FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.webhook_destinations" {
+  uuid id
+  uuid org_id FK
+  varchar_100_ name
+  text url
+  varchar_50_ auth_type
+  jsonb auth_config
+  text__ event_types
+  jsonb event_filter
+  boolean enabled
+  integer batch_size
+  integer timeout_ms
+  integer retry_max
+  integer retry_backoff_ms
+  varchar_255_ signing_secret
+  uuid created_by FK
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
 }
 "public.organizations" {
   uuid id

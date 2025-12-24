@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) [public.team_policies](public.team_policies.md) [public.team_agent_configs](public.team_agent_configs.md) [public.invitations](public.invitations.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.employees](public.employees.md) [public.team_policies](public.team_policies.md) [public.team_agent_configs](public.team_agent_configs.md) [public.invitations](public.invitations.md) [public.tool_policies](public.tool_policies.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | name | varchar(255) |  | false |  |  |  |
 | description | text |  | true |  |  |  |
@@ -44,6 +44,7 @@ erDiagram
 "public.team_policies" }o--|| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
 "public.team_agent_configs" }o--|| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
 "public.invitations" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
+"public.tool_policies" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE"
 "public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 
 "public.teams" {
@@ -98,6 +99,19 @@ erDiagram
   timestamp_without_time_zone expires_at
   uuid accepted_by FK
   timestamp_without_time_zone accepted_at
+  timestamp_without_time_zone created_at
+  timestamp_without_time_zone updated_at
+}
+"public.tool_policies" {
+  uuid id
+  uuid org_id FK
+  uuid team_id FK
+  uuid employee_id FK
+  varchar_255_ tool_name
+  jsonb conditions
+  varchar_20_ action
+  text reason
+  uuid created_by FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }

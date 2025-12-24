@@ -11,6 +11,7 @@
 | type | varchar(100) |  | false |  |  |  |
 | description | text |  | false |  |  |  |
 | provider | varchar(100) |  | false |  |  |  |
+| docker_image | varchar(255) |  | true |  |  |  |
 | default_config | jsonb | '{}'::jsonb | false |  |  |  |
 | capabilities | jsonb | '[]'::jsonb | false |  |  |  |
 | llm_provider | varchar(50) | 'anthropic'::character varying | false |  |  |  |
@@ -58,6 +59,7 @@ erDiagram
   varchar_100_ type
   text description
   varchar_100_ provider
+  varchar_255_ docker_image
   jsonb default_config
   jsonb capabilities
   varchar_50_ llm_provider

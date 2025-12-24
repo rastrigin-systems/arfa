@@ -107,53 +107,56 @@
 <!-- public.agents -->
 <g id="node4" class="node">
 <title>public.agents</title>
-<polygon fill="#efefef" stroke="none" points="635.16,-443.6 635.16,-479.2 908.3,-479.2 908.3,-443.6 635.16,-443.6"/>
-<polygon fill="none" stroke="black" points="635.16,-443.6 635.16,-479.2 908.3,-479.2 908.3,-443.6 635.16,-443.6"/>
-<text text-anchor="start" x="661.75" y="-457" font-family="Arial Bold" font-size="18.00">public.agents</text>
-<text text-anchor="start" x="757.23" y="-457" font-family="Arial" font-size="14.00">    </text>
-<text text-anchor="start" x="788.34" y="-457" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="black" points="635.16,-412.8 635.16,-443.6 908.3,-443.6 908.3,-412.8 635.16,-412.8"/>
-<text text-anchor="start" x="642.16" y="-425" font-family="Arial" font-size="14.00">id </text>
-<text text-anchor="start" x="656.95" y="-425" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="635.16,-382 635.16,-412.8 908.3,-412.8 908.3,-382 635.16,-382"/>
-<text text-anchor="start" x="642.16" y="-394.2" font-family="Arial" font-size="14.00">name </text>
-<text text-anchor="start" x="681.07" y="-394.2" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
-<polygon fill="none" stroke="black" points="635.16,-351.2 635.16,-382 908.3,-382 908.3,-351.2 635.16,-351.2"/>
-<text text-anchor="start" x="642.16" y="-363.4" font-family="Arial" font-size="14.00">type </text>
-<text text-anchor="start" x="672.51" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
-<polygon fill="none" stroke="black" points="635.16,-320.4 635.16,-351.2 908.3,-351.2 908.3,-320.4 635.16,-320.4"/>
-<text text-anchor="start" x="642.16" y="-332.6" font-family="Arial" font-size="14.00">description </text>
-<text text-anchor="start" x="713.75" y="-332.6" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="black" points="635.16,-289.6 635.16,-320.4 908.3,-320.4 908.3,-289.6 635.16,-289.6"/>
-<text text-anchor="start" x="642.16" y="-301.8" font-family="Arial" font-size="14.00">provider </text>
-<text text-anchor="start" x="696.63" y="-301.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
-<polygon fill="none" stroke="black" points="635.16,-258.8 635.16,-289.6 908.3,-289.6 908.3,-258.8 635.16,-258.8"/>
-<text text-anchor="start" x="642.16" y="-271" font-family="Arial" font-size="14.00">default_config </text>
-<text text-anchor="start" x="733.23" y="-271" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
-<polygon fill="none" stroke="black" points="635.16,-228 635.16,-258.8 908.3,-258.8 908.3,-228 635.16,-228"/>
-<text text-anchor="start" x="642.16" y="-240.2" font-family="Arial" font-size="14.00">capabilities </text>
-<text text-anchor="start" x="715.31" y="-240.2" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
-<polygon fill="none" stroke="black" points="635.16,-197.2 635.16,-228 908.3,-228 908.3,-197.2 635.16,-197.2"/>
-<text text-anchor="start" x="642.16" y="-209.4" font-family="Arial" font-size="14.00">llm_provider </text>
-<text text-anchor="start" x="722.3" y="-209.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
-<polygon fill="none" stroke="black" points="635.16,-166.4 635.16,-197.2 908.3,-197.2 908.3,-166.4 635.16,-166.4"/>
-<text text-anchor="start" x="642.16" y="-178.6" font-family="Arial" font-size="14.00">llm_model </text>
-<text text-anchor="start" x="709.85" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
-<polygon fill="none" stroke="black" points="635.16,-135.6 635.16,-166.4 908.3,-166.4 908.3,-135.6 635.16,-135.6"/>
-<text text-anchor="start" x="642.16" y="-147.8" font-family="Arial" font-size="14.00">is_public </text>
-<text text-anchor="start" x="700.53" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
-<polygon fill="none" stroke="black" points="635.16,-104.8 635.16,-135.6 908.3,-135.6 908.3,-104.8 635.16,-104.8"/>
-<text text-anchor="start" x="642.16" y="-117" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="712.21" y="-117" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
-<polygon fill="none" stroke="black" points="635.16,-74 635.16,-104.8 908.3,-104.8 908.3,-74 635.16,-74"/>
-<text text-anchor="start" x="642.16" y="-86.2" font-family="Arial" font-size="14.00">updated_at </text>
-<text text-anchor="start" x="716.12" y="-86.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="#efefef" stroke="none" points="635.16,-459 635.16,-494.6 908.3,-494.6 908.3,-459 635.16,-459"/>
+<polygon fill="none" stroke="black" points="635.16,-459 635.16,-494.6 908.3,-494.6 908.3,-459 635.16,-459"/>
+<text text-anchor="start" x="661.75" y="-472.4" font-family="Arial Bold" font-size="18.00">public.agents</text>
+<text text-anchor="start" x="757.23" y="-472.4" font-family="Arial" font-size="14.00">    </text>
+<text text-anchor="start" x="788.34" y="-472.4" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="black" points="635.16,-428.2 635.16,-459 908.3,-459 908.3,-428.2 635.16,-428.2"/>
+<text text-anchor="start" x="642.16" y="-440.4" font-family="Arial" font-size="14.00">id </text>
+<text text-anchor="start" x="656.95" y="-440.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="635.16,-397.4 635.16,-428.2 908.3,-428.2 908.3,-397.4 635.16,-397.4"/>
+<text text-anchor="start" x="642.16" y="-409.6" font-family="Arial" font-size="14.00">name </text>
+<text text-anchor="start" x="681.07" y="-409.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
+<polygon fill="none" stroke="black" points="635.16,-366.6 635.16,-397.4 908.3,-397.4 908.3,-366.6 635.16,-366.6"/>
+<text text-anchor="start" x="642.16" y="-378.8" font-family="Arial" font-size="14.00">type </text>
+<text text-anchor="start" x="672.51" y="-378.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<polygon fill="none" stroke="black" points="635.16,-335.8 635.16,-366.6 908.3,-366.6 908.3,-335.8 635.16,-335.8"/>
+<text text-anchor="start" x="642.16" y="-348" font-family="Arial" font-size="14.00">description </text>
+<text text-anchor="start" x="713.75" y="-348" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="black" points="635.16,-305 635.16,-335.8 908.3,-335.8 908.3,-305 635.16,-305"/>
+<text text-anchor="start" x="642.16" y="-317.2" font-family="Arial" font-size="14.00">provider </text>
+<text text-anchor="start" x="696.63" y="-317.2" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<polygon fill="none" stroke="black" points="635.16,-274.2 635.16,-305 908.3,-305 908.3,-274.2 635.16,-274.2"/>
+<text text-anchor="start" x="642.16" y="-286.4" font-family="Arial" font-size="14.00">docker_image </text>
+<text text-anchor="start" x="733.99" y="-286.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(255)]</text>
+<polygon fill="none" stroke="black" points="635.16,-243.4 635.16,-274.2 908.3,-274.2 908.3,-243.4 635.16,-243.4"/>
+<text text-anchor="start" x="642.16" y="-255.6" font-family="Arial" font-size="14.00">default_config </text>
+<text text-anchor="start" x="733.23" y="-255.6" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
+<polygon fill="none" stroke="black" points="635.16,-212.6 635.16,-243.4 908.3,-243.4 908.3,-212.6 635.16,-212.6"/>
+<text text-anchor="start" x="642.16" y="-224.8" font-family="Arial" font-size="14.00">capabilities </text>
+<text text-anchor="start" x="715.31" y="-224.8" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
+<polygon fill="none" stroke="black" points="635.16,-181.8 635.16,-212.6 908.3,-212.6 908.3,-181.8 635.16,-181.8"/>
+<text text-anchor="start" x="642.16" y="-194" font-family="Arial" font-size="14.00">llm_provider </text>
+<text text-anchor="start" x="722.3" y="-194" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
+<polygon fill="none" stroke="black" points="635.16,-151 635.16,-181.8 908.3,-181.8 908.3,-151 635.16,-151"/>
+<text text-anchor="start" x="642.16" y="-163.2" font-family="Arial" font-size="14.00">llm_model </text>
+<text text-anchor="start" x="709.85" y="-163.2" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<polygon fill="none" stroke="black" points="635.16,-120.2 635.16,-151 908.3,-151 908.3,-120.2 635.16,-120.2"/>
+<text text-anchor="start" x="642.16" y="-132.4" font-family="Arial" font-size="14.00">is_public </text>
+<text text-anchor="start" x="700.53" y="-132.4" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
+<polygon fill="none" stroke="black" points="635.16,-89.4 635.16,-120.2 908.3,-120.2 908.3,-89.4 635.16,-89.4"/>
+<text text-anchor="start" x="642.16" y="-101.6" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="712.21" y="-101.6" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="none" stroke="black" points="635.16,-58.6 635.16,-89.4 908.3,-89.4 908.3,-58.6 635.16,-58.6"/>
+<text text-anchor="start" x="642.16" y="-70.8" font-family="Arial" font-size="14.00">updated_at </text>
+<text text-anchor="start" x="716.12" y="-70.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.employee_agent_configs&#45;&gt;public.agents -->
 <g id="edge3" class="edge">
 <title>public.employee_agent_configs:agent_id&#45;&gt;public.agents:id</title>
-<path fill="none" stroke="black" d="M776.07,-835.1C871.66,-825.51 819.97,-679.5 764.69,-589.2 730.87,-533.96 669.16,-577.53 635.16,-522.4 613.18,-486.76 592.29,-428.2 634.16,-428.2"/>
-<polygon fill="black" stroke="black" points="776.01,-835.1 765.81,-831.09 770.69,-835.36 766.36,-835.57 766.36,-835.57 766.36,-835.57 770.69,-835.36 766.24,-840.08 776.01,-835.1"/>
+<path fill="none" stroke="black" d="M776.08,-835.09C871.95,-825.32 824.35,-676.67 764.69,-589.2 729.79,-538.03 670.23,-588.85 635.16,-537.8 611.46,-503.29 592.29,-443.6 634.16,-443.6"/>
+<polygon fill="black" stroke="black" points="776.01,-835.1 765.81,-831.09 770.69,-835.36 766.36,-835.57 766.36,-835.57 766.36,-835.57 770.69,-835.36 766.25,-840.08 776.01,-835.1"/>
 <text text-anchor="start" x="772.69" y="-845.6" font-family="Arial" font-size="10.00">FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE RESTRICT</text>
 </g>
 <!-- public.usage_records -->
