@@ -32,7 +32,8 @@ services:
   api:
     build:
       context: .
-      dockerfile: services/api/build/Dockerfile.gcp
+      dockerfile: services/api/Dockerfile
+      target: development
     container_name: ubik-api
     ports:
       - "8080:8080"

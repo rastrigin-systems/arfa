@@ -346,13 +346,6 @@ cd ../.. && make generate
 cd services/api && make build
 ```
 
-### 5. Docker Issues
-```bash
-# ✅ Test Docker builds locally
-cd ../.. && docker build -f services/api/Dockerfile.gcp -t test .
-docker run --rm test ls -la /app/platform/api-spec/
-```
-
 **See [../../docs/DEBUGGING.md](../../docs/DEBUGGING.md) for debugging strategies.**
 
 ---
@@ -394,38 +387,28 @@ SELECT * FROM employees WHERE org_id = 'org-uuid';
 
 ### Local Docker Testing
 
-**MANDATORY before deploying:**
 ```bash
 # 1. Build image (from root)
-docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
+docker build -f services/api/Dockerfile -t ubik-api-test .
 
-# 2. Verify files in image
-docker run --rm ubik-api-test ls -la /app/
-docker run --rm ubik-api-test ls -la /app/platform/api-spec/
-
-# 3. Test container
+# 2. Test container
 docker run --rm -p 8080:8080 \
   -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
   ubik-api-test
 
-# 4. Verify endpoints
+# 3. Verify endpoints
 curl http://localhost:8080/api/v1/health
 curl http://localhost:8080/api/docs/
 ```
 
-### GCP Deployment
+### Docker Compose
 
 ```bash
-# Deploy to Cloud Run (from root)
-gcloud builds submit --config=cloudbuild-api.yaml
+# Start all services (from root)
+docker compose up
 
-# This will:
-# 1. Build Docker image with Cloud Build
-# 2. Push to Artifact Registry
-# 3. Deploy to Cloud Run
+# API available at http://localhost:8080
 ```
-
-**See [../../docs/DOCKER_TESTING_CHECKLIST.md](../../docs/DOCKER_TESTING_CHECKLIST.md) for complete guide.**
 
 ---
 

@@ -430,7 +430,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 ```bash
 # From repository root
-docker build -f services/web/build/Dockerfile -t ubik-web .
+docker build -f services/web/Dockerfile -t ubik-web .
 
 # Test container
 docker run -p 3000:3000 \
@@ -441,11 +441,13 @@ docker run -p 3000:3000 \
 curl http://localhost:3000
 ```
 
-### GCP Cloud Run Deployment
+### Docker Compose
 
 ```bash
-# From repository root
-gcloud builds submit --config=cloudbuild-web.yaml
+# Start all services (from root)
+docker compose up
+
+# Web UI available at http://localhost:3000
 ```
 
 ---
