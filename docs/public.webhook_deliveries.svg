@@ -125,46 +125,49 @@
 <!-- public.activity_logs -->
 <g id="node3" class="node">
 <title>public.activity_logs</title>
-<polygon fill="#efefef" stroke="none" points="688.37,-459 688.37,-494.6 969.34,-494.6 969.34,-459 688.37,-459"/>
-<polygon fill="none" stroke="black" points="688.37,-459 688.37,-494.6 969.34,-494.6 969.34,-459 688.37,-459"/>
-<text text-anchor="start" x="695.37" y="-472.4" font-family="Arial Bold" font-size="18.00">public.activity_logs</text>
-<text text-anchor="start" x="837.85" y="-472.4" font-family="Arial" font-size="14.00">    </text>
-<text text-anchor="start" x="868.96" y="-472.4" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="black" points="688.37,-428.2 688.37,-459 969.34,-459 969.34,-428.2 688.37,-428.2"/>
-<text text-anchor="start" x="695.37" y="-440.4" font-family="Arial" font-size="14.00">id </text>
-<text text-anchor="start" x="710.15" y="-440.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="688.37,-397.4 688.37,-428.2 969.34,-428.2 969.34,-397.4 688.37,-397.4"/>
-<text text-anchor="start" x="695.37" y="-409.6" font-family="Arial" font-size="14.00">org_id </text>
-<text text-anchor="start" x="738.17" y="-409.6" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="688.37,-366.6 688.37,-397.4 969.34,-397.4 969.34,-366.6 688.37,-366.6"/>
-<text text-anchor="start" x="695.37" y="-378.8" font-family="Arial" font-size="14.00">employee_id </text>
-<text text-anchor="start" x="778.64" y="-378.8" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="688.37,-335.8 688.37,-366.6 969.34,-366.6 969.34,-335.8 688.37,-335.8"/>
-<text text-anchor="start" x="695.37" y="-348" font-family="Arial" font-size="14.00">session_id </text>
-<text text-anchor="start" x="765.41" y="-348" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="688.37,-305 688.37,-335.8 969.34,-335.8 969.34,-305 688.37,-305"/>
-<text text-anchor="start" x="695.37" y="-317.2" font-family="Arial" font-size="14.00">agent_id </text>
-<text text-anchor="start" x="752.97" y="-317.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
-<polygon fill="none" stroke="black" points="688.37,-274.2 688.37,-305 969.34,-305 969.34,-274.2 688.37,-274.2"/>
-<text text-anchor="start" x="695.37" y="-286.4" font-family="Arial" font-size="14.00">event_type </text>
-<text text-anchor="start" x="767.75" y="-286.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
-<polygon fill="none" stroke="black" points="688.37,-243.4 688.37,-274.2 969.34,-274.2 969.34,-243.4 688.37,-243.4"/>
-<text text-anchor="start" x="695.37" y="-255.6" font-family="Arial" font-size="14.00">event_category </text>
-<text text-anchor="start" x="794.99" y="-255.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
-<polygon fill="none" stroke="black" points="688.37,-212.6 688.37,-243.4 969.34,-243.4 969.34,-212.6 688.37,-212.6"/>
-<text text-anchor="start" x="695.37" y="-224.8" font-family="Arial" font-size="14.00">content </text>
-<text text-anchor="start" x="745.18" y="-224.8" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="black" points="688.37,-181.8 688.37,-212.6 969.34,-212.6 969.34,-181.8 688.37,-181.8"/>
-<text text-anchor="start" x="695.37" y="-194" font-family="Arial" font-size="14.00">payload </text>
-<text text-anchor="start" x="748.3" y="-194" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
-<polygon fill="none" stroke="black" points="688.37,-151 688.37,-181.8 969.34,-181.8 969.34,-151 688.37,-151"/>
-<text text-anchor="start" x="695.37" y="-163.2" font-family="Arial" font-size="14.00">created_at </text>
-<text text-anchor="start" x="765.42" y="-163.2" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
+<polygon fill="#efefef" stroke="none" points="688.37,-474.4 688.37,-510 969.34,-510 969.34,-474.4 688.37,-474.4"/>
+<polygon fill="none" stroke="black" points="688.37,-474.4 688.37,-510 969.34,-510 969.34,-474.4 688.37,-474.4"/>
+<text text-anchor="start" x="695.37" y="-487.8" font-family="Arial Bold" font-size="18.00">public.activity_logs</text>
+<text text-anchor="start" x="837.85" y="-487.8" font-family="Arial" font-size="14.00">    </text>
+<text text-anchor="start" x="868.96" y="-487.8" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="black" points="688.37,-443.6 688.37,-474.4 969.34,-474.4 969.34,-443.6 688.37,-443.6"/>
+<text text-anchor="start" x="695.37" y="-455.8" font-family="Arial" font-size="14.00">id </text>
+<text text-anchor="start" x="710.15" y="-455.8" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="688.37,-412.8 688.37,-443.6 969.34,-443.6 969.34,-412.8 688.37,-412.8"/>
+<text text-anchor="start" x="695.37" y="-425" font-family="Arial" font-size="14.00">org_id </text>
+<text text-anchor="start" x="738.17" y="-425" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="688.37,-382 688.37,-412.8 969.34,-412.8 969.34,-382 688.37,-382"/>
+<text text-anchor="start" x="695.37" y="-394.2" font-family="Arial" font-size="14.00">employee_id </text>
+<text text-anchor="start" x="778.64" y="-394.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="688.37,-351.2 688.37,-382 969.34,-382 969.34,-351.2 688.37,-351.2"/>
+<text text-anchor="start" x="695.37" y="-363.4" font-family="Arial" font-size="14.00">session_id </text>
+<text text-anchor="start" x="765.41" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<polygon fill="none" stroke="black" points="688.37,-320.4 688.37,-351.2 969.34,-351.2 969.34,-320.4 688.37,-320.4"/>
+<text text-anchor="start" x="695.37" y="-332.6" font-family="Arial" font-size="14.00">client_name </text>
+<text text-anchor="start" x="774.75" y="-332.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<polygon fill="none" stroke="black" points="688.37,-289.6 688.37,-320.4 969.34,-320.4 969.34,-289.6 688.37,-289.6"/>
+<text text-anchor="start" x="695.37" y="-301.8" font-family="Arial" font-size="14.00">client_version </text>
+<text text-anchor="start" x="784.86" y="-301.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
+<polygon fill="none" stroke="black" points="688.37,-258.8 688.37,-289.6 969.34,-289.6 969.34,-258.8 688.37,-258.8"/>
+<text text-anchor="start" x="695.37" y="-271" font-family="Arial" font-size="14.00">event_type </text>
+<text text-anchor="start" x="767.75" y="-271" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>
+<polygon fill="none" stroke="black" points="688.37,-228 688.37,-258.8 969.34,-258.8 969.34,-228 688.37,-228"/>
+<text text-anchor="start" x="695.37" y="-240.2" font-family="Arial" font-size="14.00">event_category </text>
+<text text-anchor="start" x="794.99" y="-240.2" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
+<polygon fill="none" stroke="black" points="688.37,-197.2 688.37,-228 969.34,-228 969.34,-197.2 688.37,-197.2"/>
+<text text-anchor="start" x="695.37" y="-209.4" font-family="Arial" font-size="14.00">content </text>
+<text text-anchor="start" x="745.18" y="-209.4" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="black" points="688.37,-166.4 688.37,-197.2 969.34,-197.2 969.34,-166.4 688.37,-166.4"/>
+<text text-anchor="start" x="695.37" y="-178.6" font-family="Arial" font-size="14.00">payload </text>
+<text text-anchor="start" x="748.3" y="-178.6" font-family="Arial" font-size="14.00" fill="#666666">[jsonb]</text>
+<polygon fill="none" stroke="black" points="688.37,-135.6 688.37,-166.4 969.34,-166.4 969.34,-135.6 688.37,-135.6"/>
+<text text-anchor="start" x="695.37" y="-147.8" font-family="Arial" font-size="14.00">created_at </text>
+<text text-anchor="start" x="765.42" y="-147.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp without time zone]</text>
 </g>
 <!-- public.webhook_deliveries&#45;&gt;public.activity_logs -->
 <g id="edge2" class="edge">
 <title>public.webhook_deliveries:log_id&#45;&gt;public.activity_logs:id</title>
-<path fill="none" stroke="black" d="M796.49,-1020.08C931.9,-1011.29 828.51,-822.16 785.32,-681.6 762.68,-607.92 711.29,-611.39 688.37,-537.8 675.92,-497.82 645.5,-443.6 687.37,-443.6"/>
+<path fill="none" stroke="black" d="M796.49,-1020.08C932.08,-1011.24 832.25,-820.96 785.32,-681.6 762.5,-613.83 711.45,-620.88 688.37,-553.2 674.85,-513.57 645.5,-459 687.37,-459"/>
 <polygon fill="black" stroke="black" points="796.65,-1020.08 786.51,-1015.89 791.32,-1020.24 786.99,-1020.38 786.99,-1020.38 786.99,-1020.38 791.32,-1020.24 786.8,-1024.89 796.65,-1020.08"/>
 <text text-anchor="start" x="793.32" y="-1030.4" font-family="Arial" font-size="10.00">FOREIGN KEY (log_id) REFERENCES activity_logs(id) ON DELETE CASCADE</text>
 </g>

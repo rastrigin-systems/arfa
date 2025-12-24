@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
 )
 
@@ -36,9 +35,10 @@ func TestLoggingEndToEnd(t *testing.T) {
 	}
 	defer logger.Close()
 
-	// Set agent ID
-	agentID := uuid.New().String()
-	logger.SetAgentID(agentID)
+	// Set client info
+	clientName := "claude-code"
+	clientVersion := "1.0.25"
+	logger.SetClient(clientName, clientVersion)
 
 	// Start session
 	sessionID := logger.StartSession()
@@ -81,8 +81,8 @@ func TestLoggingEndToEnd(t *testing.T) {
 			t.Errorf("Expected session_id %s, got %s", sessionID, log.SessionID)
 		}
 
-		if log.AgentID != agentID {
-			t.Errorf("Expected agent_id %s, got %s", agentID, log.AgentID)
+		if log.ClientName != clientName {
+			t.Errorf("Expected client_name %s, got %s", clientName, log.ClientName)
 		}
 
 		switch log.EventType {

@@ -5,7 +5,8 @@ SELECT
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
@@ -21,7 +22,8 @@ SELECT
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
@@ -38,13 +40,14 @@ INSERT INTO activity_logs (
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
     payload
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 ) RETURNING *;
 
 -- name: CountActivityLogs :one
@@ -59,7 +62,8 @@ SELECT
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
@@ -76,7 +80,8 @@ SELECT
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
@@ -102,7 +107,8 @@ SELECT
     org_id,
     employee_id,
     session_id,
-    agent_id,
+    client_name,
+    client_version,
     event_type,
     event_category,
     content,
@@ -112,7 +118,7 @@ FROM activity_logs
 WHERE org_id = sqlc.arg(org_id)
     AND (sqlc.narg(employee_id)::UUID IS NULL OR employee_id = sqlc.narg(employee_id))
     AND (sqlc.narg(session_id)::UUID IS NULL OR session_id = sqlc.narg(session_id))
-    AND (sqlc.narg(agent_id)::UUID IS NULL OR agent_id = sqlc.narg(agent_id))
+    AND (sqlc.narg(client_name)::VARCHAR IS NULL OR client_name = sqlc.narg(client_name))
     AND (sqlc.narg(event_type)::VARCHAR IS NULL OR event_type = sqlc.narg(event_type))
     AND (sqlc.narg(event_category)::VARCHAR IS NULL OR event_category = sqlc.narg(event_category))
     AND (sqlc.narg(start_date)::TIMESTAMP IS NULL OR created_at >= sqlc.narg(start_date))
@@ -126,8 +132,28 @@ SELECT COUNT(*) FROM activity_logs
 WHERE org_id = sqlc.arg(org_id)
     AND (sqlc.narg(employee_id)::UUID IS NULL OR employee_id = sqlc.narg(employee_id))
     AND (sqlc.narg(session_id)::UUID IS NULL OR session_id = sqlc.narg(session_id))
-    AND (sqlc.narg(agent_id)::UUID IS NULL OR agent_id = sqlc.narg(agent_id))
+    AND (sqlc.narg(client_name)::VARCHAR IS NULL OR client_name = sqlc.narg(client_name))
     AND (sqlc.narg(event_type)::VARCHAR IS NULL OR event_type = sqlc.narg(event_type))
     AND (sqlc.narg(event_category)::VARCHAR IS NULL OR event_category = sqlc.narg(event_category))
     AND (sqlc.narg(start_date)::TIMESTAMP IS NULL OR created_at >= sqlc.narg(start_date))
     AND (sqlc.narg(end_date)::TIMESTAMP IS NULL OR created_at <= sqlc.narg(end_date));
+
+-- name: ListActivityLogsByClient :many
+-- List activity logs filtered by client name (claude-code, cursor, etc.)
+SELECT
+    id,
+    org_id,
+    employee_id,
+    session_id,
+    client_name,
+    client_version,
+    event_type,
+    event_category,
+    content,
+    payload,
+    created_at
+FROM activity_logs
+WHERE org_id = $1
+    AND client_name = $2
+ORDER BY created_at DESC
+LIMIT $3 OFFSET $4;

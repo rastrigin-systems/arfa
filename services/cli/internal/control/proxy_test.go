@@ -22,7 +22,6 @@ func TestNewControlledProxy(t *testing.T) {
 	svc, err := NewService(ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
 		QueueDir:   dir,
 	})
 	require.NoError(t, err)
@@ -43,7 +42,6 @@ func TestControlledProxy_StartStop(t *testing.T) {
 	svc, err := NewService(ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
 		QueueDir:   dir,
 	})
 	require.NoError(t, err)
@@ -80,7 +78,6 @@ func TestControlledProxy_RequestsFlowThroughPipeline(t *testing.T) {
 	svc, err := NewService(ServiceConfig{
 		EmployeeID: "emp-test",
 		OrgID:      "org-test",
-		AgentID:    "agent-test",
 		QueueDir:   dir,
 	})
 	require.NoError(t, err)
@@ -144,7 +141,6 @@ func TestControlledProxy_MultiplePortAllocation(t *testing.T) {
 		svc, err := NewService(ServiceConfig{
 			EmployeeID: "emp-123",
 			OrgID:      "org-456",
-			AgentID:    fmt.Sprintf("agent-%d", i),
 			QueueDir:   filepath.Join(dir, fmt.Sprintf("queue-%d", i)),
 		})
 		require.NoError(t, err)
@@ -179,7 +175,6 @@ func TestControlledProxy_GracefulShutdown(t *testing.T) {
 	svc, err := NewService(ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-		AgentID:    "agent-abc",
 		QueueDir:   dir,
 	})
 	require.NoError(t, err)

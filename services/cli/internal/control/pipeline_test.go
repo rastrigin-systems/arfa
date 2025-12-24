@@ -84,7 +84,7 @@ func TestPipeline_ExecuteRequest_AllHandlersCalled(t *testing.T) {
 	p.Register(h2)
 	p.Register(h3)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := p.ExecuteRequest(ctx, req)
@@ -112,7 +112,7 @@ func TestPipeline_ExecuteRequest_StopsOnBlock(t *testing.T) {
 	p.Register(h2)
 	p.Register(h3)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := p.ExecuteRequest(ctx, req)
@@ -149,7 +149,7 @@ func TestPipeline_ExecuteRequest_PropagatesModifiedRequest(t *testing.T) {
 	p.Register(h1)
 	p.Register(h2)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	p.ExecuteRequest(ctx, req)
@@ -168,7 +168,7 @@ func TestPipeline_ExecuteResponse_AllHandlersCalled(t *testing.T) {
 	p.Register(h2)
 	p.Register(h3)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	res := &http.Response{StatusCode: 200}
 
 	result := p.ExecuteResponse(ctx, res)
@@ -196,7 +196,7 @@ func TestPipeline_ExecuteResponse_StopsOnBlock(t *testing.T) {
 	p.Register(h2)
 	p.Register(h3)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	res := &http.Response{StatusCode: 200}
 
 	result := p.ExecuteResponse(ctx, res)
@@ -211,7 +211,7 @@ func TestPipeline_ExecuteResponse_StopsOnBlock(t *testing.T) {
 func TestPipeline_ExecuteRequest_EmptyPipeline(t *testing.T) {
 	p := NewPipeline()
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := p.ExecuteRequest(ctx, req)
@@ -222,7 +222,7 @@ func TestPipeline_ExecuteRequest_EmptyPipeline(t *testing.T) {
 func TestPipeline_ExecuteResponse_EmptyPipeline(t *testing.T) {
 	p := NewPipeline()
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	res := &http.Response{StatusCode: 200}
 
 	result := p.ExecuteResponse(ctx, res)
@@ -245,7 +245,7 @@ func TestPipeline_ExecuteRequest_ErrorContinues(t *testing.T) {
 	p.Register(h1)
 	p.Register(h2)
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := p.ExecuteRequest(ctx, req)
@@ -286,7 +286,7 @@ func TestPipeline_HandlerOrder_ExecutedHighToLow(t *testing.T) {
 		},
 	})
 
-	ctx := NewHandlerContext("emp", "org", "sess", "agent")
+	ctx := NewHandlerContext("emp", "org", "sess")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	p.ExecuteRequest(ctx, req)

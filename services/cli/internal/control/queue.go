@@ -17,7 +17,10 @@ type LogEntry struct {
 	EmployeeID string `json:"employee_id"`
 	OrgID      string `json:"org_id"`
 	SessionID  string `json:"session_id"`
-	AgentID    string `json:"agent_id"`
+
+	// Client detection (from User-Agent)
+	ClientName    string `json:"client_name,omitempty"`
+	ClientVersion string `json:"client_version,omitempty"`
 
 	// Event metadata
 	EventType     string    `json:"event_type"`

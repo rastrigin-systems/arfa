@@ -54,13 +54,6 @@ func (h *TeamsHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 			apiTeam.MemberCount = &count
 		}
 
-		// Get agent config count for this team
-		agentCount, err := h.db.CountTeamAgentConfigs(ctx, team.ID)
-		if err == nil {
-			count := int(agentCount)
-			apiTeam.AgentConfigCount = &count
-		}
-
 		apiTeams[i] = apiTeam
 	}
 

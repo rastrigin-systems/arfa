@@ -56,7 +56,8 @@ func TestAPIUploader_Upload_SingleEntry(t *testing.T) {
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
 			SessionID:     "sess-789",
-			AgentID:       "agent-abc",
+			ClientName:    "claude-code",
+			ClientVersion: "1.0.25",
 			EventType:     "api_request",
 			EventCategory: "proxy",
 			Payload:       map[string]interface{}{"method": "POST"},
@@ -70,7 +71,8 @@ func TestAPIUploader_Upload_SingleEntry(t *testing.T) {
 
 	uploaded := client.Entries()[0]
 	assert.Equal(t, "sess-789", uploaded.SessionID)
-	assert.Equal(t, "agent-abc", uploaded.AgentID)
+	assert.Equal(t, "claude-code", uploaded.ClientName)
+	assert.Equal(t, "1.0.25", uploaded.ClientVersion)
 	assert.Equal(t, "api_request", uploaded.EventType)
 	assert.Equal(t, "proxy", uploaded.EventCategory)
 	assert.Equal(t, "POST", uploaded.Payload["method"])

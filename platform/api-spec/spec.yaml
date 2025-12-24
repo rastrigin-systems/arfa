@@ -1802,11 +1802,14 @@ components:
           format: uuid
           description: CLI session ID (optional, generated if not provided)
           example: "550e8400-e29b-41d4-a716-446655440000"
-        agent_id:
+        client_name:
           type: string
-          format: uuid
-          description: Agent that generated this log entry
-          example: "660e8400-e29b-41d4-a716-446655440000"
+          description: AI client name (e.g., claude-code, cursor, continue)
+          example: "claude-code"
+        client_version:
+          type: string
+          description: AI client version
+          example: "1.0.25"
         event_type:
           type: string
           description: Type of event
@@ -1879,11 +1882,16 @@ components:
           format: uuid
           nullable: true
           example: "550e8400-e29b-41d4-a716-446655440000"
-        agent_id:
+        client_name:
           type: string
-          format: uuid
           nullable: true
-          example: "660e8400-e29b-41d4-a716-446655440000"
+          description: AI client name (e.g., claude-code, cursor, continue)
+          example: "claude-code"
+        client_version:
+          type: string
+          nullable: true
+          description: AI client version
+          example: "1.0.25"
         event_type:
           type: string
           example: "input"
@@ -4184,7 +4192,7 @@ paths:
         Supports filtering by:
         - session_id: Get all logs for a specific CLI session
         - employee_id: Get logs for a specific employee
-        - agent_id: Get logs for a specific agent
+        - client_name: Get logs for a specific AI client (e.g., claude-code, cursor)
         - event_type: Filter by event type (input, output, error, etc.)
         - event_category: Filter by category (io, agent, mcp, auth, admin)
         - start_date: Logs created on or after this date
@@ -4203,12 +4211,11 @@ paths:
             type: string
             format: uuid
           description: Filter by employee ID
-        - name: agent_id
+        - name: client_name
           in: query
           schema:
             type: string
-            format: uuid
-          description: Filter by agent ID
+          description: Filter by AI client name (e.g., claude-code, cursor, continue)
         - name: event_type
           in: query
           schema:

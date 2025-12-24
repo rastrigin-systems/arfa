@@ -17,7 +17,8 @@ type LogEntry struct {
 	OrgID         uuid.UUID
 	EmployeeID    uuid.UUID
 	SessionID     uuid.UUID
-	AgentID       uuid.UUID
+	ClientName    string // e.g., "claude-code", "cursor"
+	ClientVersion string // e.g., "1.0.25"
 	EventType     string
 	EventCategory string
 	Content       string
@@ -79,14 +80,19 @@ func (s *LoggingService) CreateLog(ctx context.Context, entry LogEntry) error {
 		sessionID = pgtype.UUID{Bytes: entry.SessionID, Valid: true}
 	}
 
-	agentID := pgtype.UUID{Valid: false}
-	if entry.AgentID != uuid.Nil {
-		agentID = pgtype.UUID{Bytes: entry.AgentID, Valid: true}
-	}
-
 	employeeID := pgtype.UUID{Valid: false}
 	if entry.EmployeeID != uuid.Nil {
 		employeeID = pgtype.UUID{Bytes: entry.EmployeeID, Valid: true}
+	}
+
+	// Create nullable string pointers for client info
+	var clientName *string
+	if entry.ClientName != "" {
+		clientName = &entry.ClientName
+	}
+	var clientVersion *string
+	if entry.ClientVersion != "" {
+		clientVersion = &entry.ClientVersion
 	}
 
 	// Create content pointer (nullable field)
@@ -100,7 +106,8 @@ func (s *LoggingService) CreateLog(ctx context.Context, entry LogEntry) error {
 		OrgID:         entry.OrgID,
 		EmployeeID:    employeeID,
 		SessionID:     sessionID,
-		AgentID:       agentID,
+		ClientName:    clientName,
+		ClientVersion: clientVersion,
 		EventType:     entry.EventType,
 		EventCategory: entry.EventCategory,
 		Content:       content,

@@ -58,16 +58,17 @@ type Logger interface {
 
 // Proxy provides in-process HTTPS interception for LLM API logging.
 type Proxy struct {
-	goproxy   *goproxy.ProxyHttpServer
-	server    *http.Server
-	logger    Logger
-	parser    *logparser.AnthropicParser
-	port      int
-	certPath  string
-	keyPath   string
-	sessionID string
-	agentID   string
-	mu        sync.RWMutex // Protects sessionID and agentID
+	goproxy       *goproxy.ProxyHttpServer
+	server        *http.Server
+	logger        Logger
+	parser        *logparser.AnthropicParser
+	port          int
+	certPath      string
+	keyPath       string
+	sessionID     string
+	clientName    string
+	clientVersion string
+	mu            sync.RWMutex // Protects sessionID, clientName, and clientVersion
 }
 
 // New creates a new proxy instance.
@@ -79,12 +80,13 @@ func New(logger Logger) *Proxy {
 	}
 }
 
-// SetSession sets the session and agent ID for log entries.
-func (p *Proxy) SetSession(sessionID, agentID string) {
+// SetSession sets the session and client info for log entries.
+func (p *Proxy) SetSession(sessionID, clientName, clientVersion string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.sessionID = sessionID
-	p.agentID = agentID
+	p.clientName = clientName
+	p.clientVersion = clientVersion
 }
 
 // Start starts the proxy on an available port in the range [MinPort, MaxPort].
@@ -309,7 +311,8 @@ func (p *Proxy) logRequest(r *http.Request) {
 	// Get session info under read lock
 	p.mu.RLock()
 	sessionID := p.sessionID
-	agentID := p.agentID
+	clientName := p.clientName
+	clientVersion := p.clientVersion
 	p.mu.RUnlock()
 
 	// Parse and log classified entries for Anthropic
@@ -318,7 +321,8 @@ func (p *Proxy) logRequest(r *http.Request) {
 		if err == nil {
 			for _, entry := range entries {
 				entry.SessionID = sessionID
-				entry.AgentID = agentID
+				entry.ClientName = clientName
+				entry.ClientVersion = clientVersion
 				p.logger.LogClassified(entry)
 			}
 		}
@@ -326,12 +330,13 @@ func (p *Proxy) logRequest(r *http.Request) {
 
 	// Log raw request
 	payload := map[string]interface{}{
-		"method":     r.Method,
-		"url":        r.URL.String(),
-		"headers":    redactHeaders(r.Header),
-		"body":       string(bodyBytes),
-		"session_id": sessionID,
-		"agent_id":   agentID,
+		"method":         r.Method,
+		"url":            r.URL.String(),
+		"headers":        redactHeaders(r.Header),
+		"body":           string(bodyBytes),
+		"session_id":     sessionID,
+		"client_name":    clientName,
+		"client_version": clientVersion,
 	}
 
 	p.logger.LogEvent("api_request", "proxy", fmt.Sprintf("%s %s", r.Method, r.URL.Host), payload)
@@ -363,7 +368,8 @@ func (p *Proxy) logResponse(resp *http.Response) {
 	// Get session info under read lock
 	p.mu.RLock()
 	sessionID := p.sessionID
-	agentID := p.agentID
+	clientName := p.clientName
+	clientVersion := p.clientVersion
 	p.mu.RUnlock()
 
 	// Parse and log classified entries for Anthropic
@@ -372,7 +378,8 @@ func (p *Proxy) logResponse(resp *http.Response) {
 		if err == nil {
 			for _, entry := range entries {
 				entry.SessionID = sessionID
-				entry.AgentID = agentID
+				entry.ClientName = clientName
+				entry.ClientVersion = clientVersion
 				p.logger.LogClassified(entry)
 			}
 		}
@@ -385,11 +392,12 @@ func (p *Proxy) logResponse(resp *http.Response) {
 	}
 
 	payload := map[string]interface{}{
-		"status":     resp.StatusCode,
-		"headers":    redactHeaders(resp.Header),
-		"body":       string(decodedBody),
-		"session_id": sessionID,
-		"agent_id":   agentID,
+		"status":         resp.StatusCode,
+		"headers":        redactHeaders(resp.Header),
+		"body":           string(decodedBody),
+		"session_id":     sessionID,
+		"client_name":    clientName,
+		"client_version": clientVersion,
 	}
 
 	p.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, url), payload)

@@ -239,7 +239,8 @@ type ListEmployeeSkillsResponse struct {
 // LogEntry represents a log entry to send to the API.
 type LogEntry struct {
 	SessionID     string                 `json:"session_id,omitempty"`
-	AgentID       string                 `json:"agent_id,omitempty"`
+	ClientName    string                 `json:"client_name,omitempty"`
+	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
 	EventCategory string                 `json:"event_category"`
 	Content       string                 `json:"content,omitempty"`
@@ -249,7 +250,8 @@ type LogEntry struct {
 // CreateLogRequest represents a single log creation request.
 type CreateLogRequest struct {
 	SessionID     *string                 `json:"session_id,omitempty"`
-	AgentID       *string                 `json:"agent_id,omitempty"`
+	ClientName    *string                 `json:"client_name,omitempty"`
+	ClientVersion *string                 `json:"client_version,omitempty"`
 	EventType     string                  `json:"event_type"`
 	EventCategory string                  `json:"event_category"`
 	Content       *string                 `json:"content,omitempty"`
@@ -260,7 +262,8 @@ type CreateLogRequest struct {
 type LogEntryResponse struct {
 	ID            string                 `json:"id"`
 	SessionID     string                 `json:"session_id"`
-	AgentID       string                 `json:"agent_id,omitempty"`
+	ClientName    string                 `json:"client_name,omitempty"`
+	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
 	EventCategory string                 `json:"event_category"`
 	Content       string                 `json:"content"`

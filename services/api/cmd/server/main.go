@@ -6,13 +6,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
 	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
@@ -57,10 +60,6 @@ func main() {
 	rolesHandler := handlers.NewRolesHandler(queries)
 	organizationsHandler := handlers.NewOrganizationsHandler(queries)
 	teamsHandler := handlers.NewTeamsHandler(queries)
-	agentsHandler := handlers.NewAgentsHandler(queries)
-	orgAgentConfigsHandler := handlers.NewOrgAgentConfigsHandler(queries)
-	teamAgentConfigsHandler := handlers.NewTeamAgentConfigsHandler(queries)
-	employeeAgentConfigsHandler := handlers.NewEmployeeAgentConfigsHandler(queries)
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
 	logsHandler := handlers.NewLogsHandler(queries, wsHub)
 	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
@@ -68,8 +67,6 @@ func main() {
 	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
 	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
 	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
-	mcpServersHandler := handlers.NewMCPServersHandler(queries)
-	syncHandler := handlers.NewSyncHandler(queries)
 	skillsHandler := handlers.NewSkillsHandler(queries)
 	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
 	webhooksHandler := handlers.NewWebhooksHandler(queries)
@@ -151,11 +148,6 @@ func main() {
 				r.Delete("/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
 				r.Get("/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
 				r.Get("/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
-
-				// Resolved agent configs (JWT-based)
-				r.Route("/agent-configs", func(r chi.Router) {
-					r.Get("/resolved", orgAgentConfigsHandler.GetMyResolvedAgentConfigs)
-				})
 			})
 
 			// =================================================================
@@ -189,16 +181,6 @@ func main() {
 					r.Get("/{employee_id}", employeesHandler.GetEmployee)
 					r.Patch("/{employee_id}", employeesHandler.UpdateEmployee)
 					r.Delete("/{employee_id}", employeesHandler.DeleteEmployee)
-
-					// Employee agent configs (parameterized)
-					r.Route("/{employee_id}/agent-configs", func(r chi.Router) {
-						r.Get("/", employeeAgentConfigsHandler.ListEmployeeAgentConfigs)
-						r.Post("/", employeeAgentConfigsHandler.CreateEmployeeAgentConfig)
-						r.Get("/resolved", orgAgentConfigsHandler.GetEmployeeResolvedAgentConfigs)
-						r.Get("/{config_id}", employeeAgentConfigsHandler.GetEmployeeAgentConfig)
-						r.Patch("/{config_id}", employeeAgentConfigsHandler.UpdateEmployeeAgentConfig)
-						r.Delete("/{config_id}", employeeAgentConfigsHandler.DeleteEmployeeAgentConfig)
-					})
 				})
 
 				// Teams routes
@@ -208,15 +190,6 @@ func main() {
 					r.Get("/{team_id}", teamsHandler.GetTeam)
 					r.Patch("/{team_id}", teamsHandler.UpdateTeam)
 					r.Delete("/{team_id}", teamsHandler.DeleteTeam)
-
-					// Team agent configs
-					r.Route("/{team_id}/agent-configs", func(r chi.Router) {
-						r.Get("/", teamAgentConfigsHandler.ListTeamAgentConfigs)
-						r.Post("/", teamAgentConfigsHandler.CreateTeamAgentConfig)
-						r.Get("/{config_id}", teamAgentConfigsHandler.GetTeamAgentConfig)
-						r.Patch("/{config_id}", teamAgentConfigsHandler.UpdateTeamAgentConfig)
-						r.Delete("/{config_id}", teamAgentConfigsHandler.DeleteTeamAgentConfig)
-					})
 				})
 			})
 
@@ -238,33 +211,6 @@ func main() {
 				// Organization Claude token (hybrid auth)
 				r.Put("/claude-token", claudeTokensHandler.SetOrganizationClaudeToken)
 				r.Delete("/claude-token", claudeTokensHandler.DeleteOrganizationClaudeToken)
-
-				// Organization agent configs
-				r.Route("/agent-configs", func(r chi.Router) {
-					r.Get("/", orgAgentConfigsHandler.ListOrgAgentConfigs)
-					r.Post("/", orgAgentConfigsHandler.CreateOrgAgentConfig)
-					r.Get("/{config_id}", orgAgentConfigsHandler.GetOrgAgentConfig)
-					r.Patch("/{config_id}", orgAgentConfigsHandler.UpdateOrgAgentConfig)
-					r.Delete("/{config_id}", orgAgentConfigsHandler.DeleteOrgAgentConfig)
-				})
-			})
-
-			// Agents catalog routes (read-only)
-			r.Route("/agents", func(r chi.Router) {
-				r.Get("/", agentsHandler.ListAgents)
-				r.Get("/{agent_id}", agentsHandler.GetAgent)
-			})
-
-			// MCP servers catalog routes
-			r.Route("/mcp-servers", func(r chi.Router) {
-				r.Get("/", mcpServersHandler.ListMCPServers)
-				// TODO: Fix GetMCPServer route - handler signature incompatible with Chi router
-				// r.Get("/{id}", mcpServersHandler.GetMCPServer)
-			})
-
-			// Employee MCP servers routes
-			r.Route("/employees/me/mcp-servers", func(r chi.Router) {
-				r.Get("/", mcpServersHandler.ListEmployeeMCPServers)
 			})
 
 			// Skills catalog routes
@@ -282,11 +228,6 @@ func main() {
 			// Employee tool policies routes
 			r.Route("/employees/me/tool-policies", func(r chi.Router) {
 				r.Get("/", toolPoliciesHandler.GetEmployeeToolPolicies)
-			})
-
-			// Sync routes
-			r.Route("/sync", func(r chi.Router) {
-				r.Get("/claude-code", syncHandler.GetClaudeCodeSync)
 			})
 
 			// Activity logs routes (for web UI dashboard)
@@ -314,7 +255,7 @@ func main() {
 				})
 
 				// WebSocket endpoint for real-time log streaming
-				// Format: WS /api/v1/logs/stream?session_id=xxx&employee_id=xxx&agent_id=xxx
+				// Format: WS /api/v1/logs/stream?session_id=xxx&employee_id=xxx
 				// Auth: JWT token required in Authorization header
 				r.Get("/stream", wsHandler.ServeHTTP)
 			})
@@ -347,7 +288,7 @@ func main() {
 				r.Get("/", usageStatsHandler.GetEmployeeUsageStats)
 			})
 
-			// Agent requests routes
+			// Agent requests routes (keeping for future access request workflow)
 			r.Route("/agent-requests", func(r chi.Router) {
 				r.Get("/", agentRequestsHandler.ListAgentRequests)
 				r.Get("/pending/count", agentRequestsHandler.GetPendingCount)
@@ -426,8 +367,65 @@ func maskPassword(dbURL string) string {
 // extractListLogsParams extracts query parameters for ListLogs
 func extractListLogsParams(r *http.Request) api.ListLogsParams {
 	params := api.ListLogsParams{}
-	// TODO: Parse query parameters from r.URL.Query()
-	// For now, return empty params - will be implemented in follow-up
+	query := r.URL.Query()
+
+	// Parse string parameters
+	if clientName := query.Get("client_name"); clientName != "" {
+		params.ClientName = &clientName
+	}
+
+	// Parse UUID parameters
+	if sessionID := query.Get("session_id"); sessionID != "" {
+		if uid, err := uuid.Parse(sessionID); err == nil {
+			apiUUID := openapi_types.UUID(uid)
+			params.SessionId = &apiUUID
+		}
+	}
+	if employeeID := query.Get("employee_id"); employeeID != "" {
+		if uid, err := uuid.Parse(employeeID); err == nil {
+			apiUUID := openapi_types.UUID(uid)
+			params.EmployeeId = &apiUUID
+		}
+	}
+
+	// Parse event type
+	if eventType := query.Get("event_type"); eventType != "" {
+		et := api.ListLogsParamsEventType(eventType)
+		params.EventType = &et
+	}
+
+	// Parse event category
+	if eventCategory := query.Get("event_category"); eventCategory != "" {
+		ec := api.ListLogsParamsEventCategory(eventCategory)
+		params.EventCategory = &ec
+	}
+
+	// Parse pagination
+	if pageStr := query.Get("page"); pageStr != "" {
+		if page, err := strconv.Atoi(pageStr); err == nil {
+			p := api.Page(page)
+			params.Page = &p
+		}
+	}
+	if perPageStr := query.Get("per_page"); perPageStr != "" {
+		if perPage, err := strconv.Atoi(perPageStr); err == nil {
+			pp := api.PerPage(perPage)
+			params.PerPage = &pp
+		}
+	}
+
+	// Parse date filters
+	if startDate := query.Get("start_date"); startDate != "" {
+		if t, err := time.Parse(time.RFC3339, startDate); err == nil {
+			params.StartDate = &t
+		}
+	}
+	if endDate := query.Get("end_date"); endDate != "" {
+		if t, err := time.Parse(time.RFC3339, endDate); err == nil {
+			params.EndDate = &t
+		}
+	}
+
 	return params
 }
 

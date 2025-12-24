@@ -11,25 +11,28 @@ import (
 
 func TestHandlerContext_HasRequiredFields(t *testing.T) {
 	ctx := &HandlerContext{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
-		AgentID:    "agent-abc",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
+		ClientName:    "claude-code",
+		ClientVersion: "1.0.25",
 	}
 
 	assert.Equal(t, "emp-123", ctx.EmployeeID)
 	assert.Equal(t, "org-456", ctx.OrgID)
 	assert.Equal(t, "sess-789", ctx.SessionID)
-	assert.Equal(t, "agent-abc", ctx.AgentID)
+	assert.Equal(t, "claude-code", ctx.ClientName)
+	assert.Equal(t, "1.0.25", ctx.ClientVersion)
 }
 
 func TestHandlerContext_WithMetadata(t *testing.T) {
 	ctx := &HandlerContext{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
-		AgentID:    "agent-abc",
-		Metadata:   map[string]interface{}{"key": "value"},
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
+		ClientName:    "claude-code",
+		ClientVersion: "1.0.25",
+		Metadata:      map[string]interface{}{"key": "value"},
 	}
 
 	assert.Equal(t, "value", ctx.Metadata["key"])
@@ -127,10 +130,11 @@ func TestHandler_HandleRequest(t *testing.T) {
 	}
 
 	ctx := &HandlerContext{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
-		AgentID:    "agent-abc",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
+		ClientName:    "claude-code",
+		ClientVersion: "1.0.25",
 	}
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
@@ -148,10 +152,11 @@ func TestHandler_HandleResponse(t *testing.T) {
 	}
 
 	ctx := &HandlerContext{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
-		AgentID:    "agent-abc",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
+		ClientName:    "claude-code",
+		ClientVersion: "1.0.25",
 	}
 	res := &http.Response{
 		StatusCode: 200,
@@ -165,14 +170,26 @@ func TestHandler_HandleResponse(t *testing.T) {
 }
 
 func TestNewHandlerContext(t *testing.T) {
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 
 	require.NotNil(t, ctx)
 	assert.Equal(t, "emp-123", ctx.EmployeeID)
 	assert.Equal(t, "org-456", ctx.OrgID)
 	assert.Equal(t, "sess-789", ctx.SessionID)
-	assert.Equal(t, "agent-abc", ctx.AgentID)
+	// Client detection fields are empty until SetClient is called
+	assert.Empty(t, ctx.ClientName)
+	assert.Empty(t, ctx.ClientVersion)
 	assert.NotNil(t, ctx.Metadata)
+}
+
+func TestHandlerContext_SetClient(t *testing.T) {
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
+
+	// Test SetClient method
+	ctx.SetClient(ClientInfo{Name: "cursor", Version: "0.43.0"})
+
+	assert.Equal(t, "cursor", ctx.ClientName)
+	assert.Equal(t, "0.43.0", ctx.ClientVersion)
 }
 
 func TestContinueResult(t *testing.T) {

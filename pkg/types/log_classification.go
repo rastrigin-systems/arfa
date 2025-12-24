@@ -36,10 +36,11 @@ const (
 // ClassifiedLogEntry represents a parsed and classified log entry
 type ClassifiedLogEntry struct {
 	// Identity
-	ID        string    `json:"id"`
-	SessionID string    `json:"session_id"`
-	AgentID   string    `json:"agent_id,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
+	ID            string    `json:"id"`
+	SessionID     string    `json:"session_id"`
+	ClientName    string    `json:"client_name,omitempty"`
+	ClientVersion string    `json:"client_version,omitempty"`
+	Timestamp     time.Time `json:"timestamp"`
 
 	// Classification
 	EntryType LogEntryType `json:"entry_type"`

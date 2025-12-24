@@ -50,7 +50,7 @@ CREATE VIEW v_pending_approvals AS (
 | ---- | ------- | ------- | ---- |
 | [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
 | [public.employees](public.employees.md) | 14 |  | BASE TABLE |
-| [public.organizations](public.organizations.md) | 10 |  | BASE TABLE |
+| [public.organizations](public.organizations.md) | 9 |  | BASE TABLE |
 | [public.teams](public.teams.md) | 6 |  | BASE TABLE |
 
 ## Relations

@@ -41,12 +41,13 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 
 	// Start session
 	sessionID := logger.StartSession()
-	agentID := "test-agent-integration"
-	logger.SetAgentID(agentID)
+	clientName := "claude-code"
+	clientVersion := "1.0.25"
+	logger.SetClient(clientName, clientVersion)
 
 	// Create proxy with logger
 	p := proxy.New(logger)
-	p.SetSession(sessionID.String(), agentID)
+	p.SetSession(sessionID.String(), clientName, clientVersion)
 
 	err = p.Start()
 	require.NoError(t, err)
@@ -134,14 +135,15 @@ func TestProxyLoggingSessionPropagation(t *testing.T) {
 	require.NoError(t, err)
 	defer logger.Close()
 
-	// Set agent ID before starting session so session_start has it
-	agentID := "agent-session-prop"
-	logger.SetAgentID(agentID)
+	// Set client info before starting session so session_start has it
+	clientName := "claude-code"
+	clientVersion := "1.0.25"
+	logger.SetClient(clientName, clientVersion)
 
 	sessionID := logger.StartSession()
 
 	p := proxy.New(logger)
-	p.SetSession(sessionID.String(), agentID)
+	p.SetSession(sessionID.String(), clientName, clientVersion)
 
 	err = p.Start()
 	require.NoError(t, err)
@@ -161,7 +163,7 @@ func TestProxyLoggingSessionPropagation(t *testing.T) {
 
 	for _, log := range mockAPI.logs {
 		assert.Equal(t, sessionID.String(), log.SessionID, "Log %s should have correct session ID", log.EventType)
-		assert.Equal(t, agentID, log.AgentID, "Log %s should have correct agent ID", log.EventType)
+		assert.Equal(t, clientName, log.ClientName, "Log %s should have correct client name", log.EventType)
 	}
 }
 
@@ -188,13 +190,13 @@ func TestMultipleProxiesWithDifferentSessions(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
-	logger.SetAgentID("multi-proxy-agent")
+	logger.SetClient("multi-proxy-client", "1.0.0")
 
 	// Start multiple proxies
 	proxies := make([]*proxy.Proxy, 3)
 	for i := 0; i < 3; i++ {
 		p := proxy.New(logger)
-		p.SetSession(sessionID.String(), "agent-"+string(rune('A'+i)))
+		p.SetSession(sessionID.String(), "client-"+string(rune('A'+i)), "1.0."+string(rune('0'+i)))
 		err := p.Start()
 		require.NoError(t, err)
 		proxies[i] = p
@@ -266,7 +268,7 @@ func TestProxyLoggingDisabled(t *testing.T) {
 
 	// Create proxy without logger
 	p := proxy.New(nil)
-	p.SetSession("session-no-logger", "agent-no-logger")
+	p.SetSession("session-no-logger", "claude-code", "1.0.25")
 
 	err := p.Start()
 	require.NoError(t, err)
@@ -319,10 +321,10 @@ func TestProxyLoggingWithLargePayload(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
-	logger.SetAgentID("large-payload-agent")
+	logger.SetClient("large-payload-client", "1.0.25")
 
 	p := proxy.New(logger)
-	p.SetSession(sessionID.String(), "large-payload-agent")
+	p.SetSession(sessionID.String(), "large-payload-client", "1.0.25")
 
 	err = p.Start()
 	require.NoError(t, err)
@@ -382,9 +384,10 @@ func TestProxyStopDuringRequest(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
+	logger.SetClient("graceful-client", "1.0.25")
 
 	p := proxy.New(logger)
-	p.SetSession(sessionID.String(), "graceful-shutdown-agent")
+	p.SetSession(sessionID.String(), "graceful-client", "1.0.25")
 
 	err = p.Start()
 	require.NoError(t, err)
@@ -454,10 +457,10 @@ func TestProxyLoggingEventTypes(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
-	logger.SetAgentID("event-types-agent")
+	logger.SetClient("event-types-client", "1.0.25")
 
 	p := proxy.New(logger)
-	p.SetSession(sessionID.String(), "event-types-agent")
+	p.SetSession(sessionID.String(), "event-types-client", "1.0.25")
 
 	err = p.Start()
 	require.NoError(t, err)
@@ -511,11 +514,11 @@ func TestProxyRestartWithSameLogger(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
-	logger.SetAgentID("restart-agent")
+	logger.SetClient("restart-client", "1.0.25")
 
 	// First proxy instance
 	p1 := proxy.New(logger)
-	p1.SetSession(sessionID.String(), "restart-agent")
+	p1.SetSession(sessionID.String(), "restart-client", "1.0.25")
 
 	err = p1.Start()
 	require.NoError(t, err)
@@ -528,7 +531,7 @@ func TestProxyRestartWithSameLogger(t *testing.T) {
 
 	// Second proxy instance with same logger
 	p2 := proxy.New(logger)
-	p2.SetSession(sessionID.String(), "restart-agent")
+	p2.SetSession(sessionID.String(), "restart-client", "1.0.25")
 
 	err = p2.Start()
 	require.NoError(t, err)

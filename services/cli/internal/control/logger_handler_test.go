@@ -55,7 +55,7 @@ func TestLoggerHandler_HandleRequest_LogsEntry(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	result := handler.HandleRequest(ctx, req)
@@ -69,7 +69,9 @@ func TestLoggerHandler_HandleRequest_LogsEntry(t *testing.T) {
 	assert.Equal(t, "emp-123", entry.EmployeeID)
 	assert.Equal(t, "org-456", entry.OrgID)
 	assert.Equal(t, "sess-789", entry.SessionID)
-	assert.Equal(t, "agent-abc", entry.AgentID)
+	// ClientName/ClientVersion are empty since we didn't call SetClient
+	assert.Empty(t, entry.ClientName)
+	assert.Empty(t, entry.ClientVersion)
 	assert.Equal(t, "api_request", entry.EventType)
 	assert.Equal(t, "proxy", entry.EventCategory)
 }
@@ -78,7 +80,7 @@ func TestLoggerHandler_HandleRequest_CapturesMethod(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	handler.HandleRequest(ctx, req)
@@ -93,7 +95,7 @@ func TestLoggerHandler_HandleRequest_CapturesURL(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	handler.HandleRequest(ctx, req)
@@ -108,7 +110,7 @@ func TestLoggerHandler_HandleRequest_CapturesHost(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	handler.HandleRequest(ctx, req)
@@ -123,7 +125,7 @@ func TestLoggerHandler_HandleRequest_CapturesBody(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	body := `{"model": "claude-3", "messages": [{"role": "user", "content": "Hello"}]}`
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBufferString(body))
 
@@ -139,7 +141,7 @@ func TestLoggerHandler_HandleRequest_PreservesRequestBody(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	body := `{"model": "claude-3"}`
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBufferString(body))
 
@@ -155,7 +157,7 @@ func TestLoggerHandler_HandleRequest_CapturesHeaders(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Custom", "value")
@@ -174,7 +176,7 @@ func TestLoggerHandler_HandleRequest_RedactsSensitiveHeaders(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 	req.Header.Set("Authorization", "Bearer sk-secret-key")
 	req.Header.Set("X-Api-Key", "secret-api-key")
@@ -195,7 +197,7 @@ func TestLoggerHandler_HandleRequest_SetsTimestamp(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 
 	before := time.Now()
@@ -213,7 +215,7 @@ func TestLoggerHandler_HandleResponse_LogsEntry(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	res := &http.Response{
 		StatusCode: 200,
 		Request:    httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil),
@@ -232,7 +234,9 @@ func TestLoggerHandler_HandleResponse_LogsEntry(t *testing.T) {
 	assert.Equal(t, "emp-123", entry.EmployeeID)
 	assert.Equal(t, "org-456", entry.OrgID)
 	assert.Equal(t, "sess-789", entry.SessionID)
-	assert.Equal(t, "agent-abc", entry.AgentID)
+	// ClientName/ClientVersion are empty since we didn't call SetClient
+	assert.Empty(t, entry.ClientName)
+	assert.Empty(t, entry.ClientVersion)
 	assert.Equal(t, "api_response", entry.EventType)
 	assert.Equal(t, "proxy", entry.EventCategory)
 }
@@ -241,7 +245,7 @@ func TestLoggerHandler_HandleResponse_CapturesStatusCode(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	res := &http.Response{
 		StatusCode: 200,
 		Request:    httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil),
@@ -261,7 +265,7 @@ func TestLoggerHandler_HandleResponse_CapturesBody(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	body := `{"content": "Hello from Claude!"}`
 	res := &http.Response{
 		StatusCode: 200,
@@ -282,7 +286,7 @@ func TestLoggerHandler_HandleResponse_PreservesResponseBody(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	body := `{"content": "Hello!"}`
 	res := &http.Response{
 		StatusCode: 200,
@@ -303,7 +307,7 @@ func TestLoggerHandler_HandleResponse_CapturesHeaders(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	res := &http.Response{
 		StatusCode: 200,
 		Request:    httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil),
@@ -327,7 +331,7 @@ func TestLoggerHandler_AlwaysContinues(t *testing.T) {
 	queue := &mockLoggerQueue{}
 	handler := NewLoggerHandler(queue)
 
-	ctx := NewHandlerContext("emp-123", "org-456", "sess-789", "agent-abc")
+	ctx := NewHandlerContext("emp-123", "org-456", "sess-789")
 	req := httptest.NewRequest("POST", "https://api.anthropic.com/v1/messages", nil)
 	res := &http.Response{
 		StatusCode: 500, // Even on error response

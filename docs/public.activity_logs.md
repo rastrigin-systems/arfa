@@ -10,7 +10,8 @@
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | employee_id | uuid |  | true |  | [public.employees](public.employees.md) |  |
 | session_id | uuid |  | true |  |  |  |
-| agent_id | uuid |  | true |  | [public.agents](public.agents.md) |  |
+| client_name | varchar(100) |  | true |  |  |  |
+| client_version | varchar(50) |  | true |  |  |  |
 | event_type | varchar(100) |  | false |  |  |  |
 | event_category | varchar(50) |  | false |  |  |  |
 | content | text |  | true |  |  |  |
@@ -23,7 +24,6 @@
 | ---- | ---- | ---------- |
 | activity_logs_org_id_fkey | FOREIGN KEY | FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE |
 | activity_logs_employee_id_fkey | FOREIGN KEY | FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL |
-| activity_logs_agent_id_fkey | FOREIGN KEY | FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL |
 | activity_logs_pkey | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
@@ -34,7 +34,8 @@
 | idx_activity_logs_org_id | CREATE INDEX idx_activity_logs_org_id ON public.activity_logs USING btree (org_id) |
 | idx_activity_logs_employee_id | CREATE INDEX idx_activity_logs_employee_id ON public.activity_logs USING btree (employee_id) |
 | idx_activity_logs_session_id | CREATE INDEX idx_activity_logs_session_id ON public.activity_logs USING btree (session_id) WHERE (session_id IS NOT NULL) |
-| idx_activity_logs_agent_id | CREATE INDEX idx_activity_logs_agent_id ON public.activity_logs USING btree (agent_id) WHERE (agent_id IS NOT NULL) |
+| idx_activity_logs_client | CREATE INDEX idx_activity_logs_client ON public.activity_logs USING btree (client_name) |
+| idx_activity_logs_client_version | CREATE INDEX idx_activity_logs_client_version ON public.activity_logs USING btree (client_name, client_version) |
 | idx_activity_logs_event_type | CREATE INDEX idx_activity_logs_event_type ON public.activity_logs USING btree (event_type) |
 | idx_activity_logs_created_at | CREATE INDEX idx_activity_logs_created_at ON public.activity_logs USING btree (created_at DESC) |
 | idx_activity_logs_session_created | CREATE INDEX idx_activity_logs_session_created ON public.activity_logs USING btree (session_id, created_at) WHERE (session_id IS NOT NULL) |
@@ -47,14 +48,14 @@ erDiagram
 "public.webhook_deliveries" }o--|| "public.activity_logs" : "FOREIGN KEY (log_id) REFERENCES activity_logs(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-"public.activity_logs" }o--o| "public.agents" : "FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL"
 
 "public.activity_logs" {
   uuid id
   uuid org_id FK
   uuid employee_id FK
   uuid session_id
-  uuid agent_id FK
+  varchar_100_ client_name
+  varchar_50_ client_version
   varchar_100_ event_type
   varchar_50_ event_category
   text content
@@ -82,7 +83,6 @@ erDiagram
   varchar_50_ plan
   jsonb settings
   integer max_employees
-  integer max_agents_per_employee
   text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -102,21 +102,6 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
   timestamp_without_time_zone deleted_at
-}
-"public.agents" {
-  uuid id
-  varchar_255_ name
-  varchar_100_ type
-  text description
-  varchar_100_ provider
-  varchar_255_ docker_image
-  jsonb default_config
-  jsonb capabilities
-  varchar_50_ llm_provider
-  varchar_100_ llm_model
-  boolean is_public
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
 }
 ```
 

@@ -20,7 +20,8 @@ func NewCLIAPIClient(client *api.Client) *CLIAPIClient {
 func (c *CLIAPIClient) CreateLog(ctx context.Context, entry APILogEntry) error {
 	apiEntry := api.LogEntry{
 		SessionID:     entry.SessionID,
-		AgentID:       entry.AgentID,
+		ClientName:    entry.ClientName,
+		ClientVersion: entry.ClientVersion,
 		EventType:     entry.EventType,
 		EventCategory: entry.EventCategory,
 		Content:       entry.Content,

@@ -14,7 +14,8 @@ type LogMessage struct {
 	OrgID         uuid.UUID              `json:"org_id"`
 	EmployeeID    uuid.UUID              `json:"employee_id,omitempty"`
 	SessionID     uuid.UUID              `json:"session_id,omitempty"`
-	AgentID       uuid.UUID              `json:"agent_id,omitempty"`
+	ClientName    string                 `json:"client_name,omitempty"`
+	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
 	EventCategory string                 `json:"event_category"`
 	Content       string                 `json:"content,omitempty"`
@@ -26,7 +27,7 @@ type LogMessage struct {
 type ClientFilters struct {
 	SessionID  uuid.UUID `json:"session_id,omitempty"`
 	EmployeeID uuid.UUID `json:"employee_id,omitempty"`
-	AgentID    uuid.UUID `json:"agent_id,omitempty"`
+	ClientName string    `json:"client_name,omitempty"`
 }
 
 // Client represents a WebSocket client connection
@@ -155,8 +156,8 @@ func (h *Hub) shouldSendToClient(client *Client, message LogMessage) bool {
 		return false
 	}
 
-	// If agent filter is set, check if it matches
-	if filters.AgentID != uuid.Nil && filters.AgentID != message.AgentID {
+	// If client name filter is set, check if it matches
+	if filters.ClientName != "" && filters.ClientName != message.ClientName {
 		return false
 	}
 

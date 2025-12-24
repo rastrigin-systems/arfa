@@ -15,18 +15,19 @@ import (
 
 // loggerImpl implements the Logger interface
 type loggerImpl struct {
-	config    *Config
-	api       APIClient
-	sessionID uuid.UUID
-	agentID   string
-	startTime time.Time
-	buffer    []LogEntry
-	bufferMu  sync.Mutex
-	done      chan struct{}
-	wg        sync.WaitGroup
-	queueDir  string
-	ctx       context.Context
-	cancel    context.CancelFunc
+	config        *Config
+	api           APIClient
+	sessionID     uuid.UUID
+	clientName    string
+	clientVersion string
+	startTime     time.Time
+	buffer        []LogEntry
+	bufferMu      sync.Mutex
+	done          chan struct{}
+	wg            sync.WaitGroup
+	queueDir      string
+	ctx           context.Context
+	cancel        context.CancelFunc
 
 	// Classified logs (parsed API requests/responses)
 	classifiedLogs   []types.ClassifiedLogEntry
@@ -105,9 +106,10 @@ func (l *loggerImpl) StartSession() uuid.UUID {
 	return l.sessionID
 }
 
-// SetAgentID sets the agent ID for all subsequent log entries
-func (l *loggerImpl) SetAgentID(agentID string) {
-	l.agentID = agentID
+// SetClient sets the client name and version for all subsequent log entries
+func (l *loggerImpl) SetClient(clientName, clientVersion string) {
+	l.clientName = clientName
+	l.clientVersion = clientVersion
 }
 
 // EndSession marks the end of the current session
@@ -131,17 +133,22 @@ func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[
 		}
 	}
 
-	// Use agent_id from metadata if provided
-	agentID := l.agentID
+	// Use client info from metadata if provided
+	clientName := l.clientName
+	clientVersion := l.clientVersion
 	if metadata != nil {
-		if aid, ok := metadata["agent_id"].(string); ok && aid != "" {
-			agentID = aid
+		if cn, ok := metadata["client_name"].(string); ok && cn != "" {
+			clientName = cn
+		}
+		if cv, ok := metadata["client_version"].(string); ok && cv != "" {
+			clientVersion = cv
 		}
 	}
 
 	entry := LogEntry{
 		SessionID:     sessionID,
-		AgentID:       agentID,
+		ClientName:    clientName,
+		ClientVersion: clientVersion,
 		EventType:     eventType,
 		EventCategory: category,
 		Content:       content,
@@ -180,13 +187,14 @@ func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
 
 	// Send to API for persistence (primary storage)
 	payload := map[string]interface{}{
-		"entry_type":    string(entry.EntryType),
-		"provider":      string(entry.Provider),
-		"model":         entry.Model,
-		"tokens_input":  entry.TokensInput,
-		"tokens_output": entry.TokensOutput,
-		"session_id":    entry.SessionID, // Pass session_id to LogEvent for proper tracking
-		"agent_id":      entry.AgentID,   // Pass agent_id to LogEvent for proper tracking
+		"entry_type":     string(entry.EntryType),
+		"provider":       string(entry.Provider),
+		"model":          entry.Model,
+		"tokens_input":   entry.TokensInput,
+		"tokens_output":  entry.TokensOutput,
+		"session_id":     entry.SessionID,     // Pass session_id to LogEvent for proper tracking
+		"client_name":    entry.ClientName,    // Pass client info to LogEvent for proper tracking
+		"client_version": entry.ClientVersion, // Pass client info to LogEvent for proper tracking
 	}
 
 	if entry.ToolName != "" {

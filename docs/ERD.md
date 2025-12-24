@@ -19,24 +19,22 @@ erDiagram
     roles ||--o{ employees : "has"
     employees ||--o{ sessions : "has"
     employees ||--o{ password_reset_tokens : "has"
-    agents ||--o{ agent_tools : "has"
-    tools ||--o{ agent_tools : "has"
-    agents ||--o{ agent_policies : "has"
-    policies ||--o{ agent_policies : "has"
+    organizations ||--o{ tool_policies : "has"
+    teams ||--o{ tool_policies : "has"
+    employees ||--o{ tool_policies : "has"
+    employees ||--o{ tool_policies : "has"
     teams ||--o{ team_policies : "has"
     policies ||--o{ team_policies : "has"
-    organizations ||--o{ org_agent_configs : "has"
-    agents ||--o{ org_agent_configs : "has"
-    teams ||--o{ team_agent_configs : "has"
-    agents ||--o{ team_agent_configs : "has"
-    employees ||--o{ employee_agent_configs : "has"
-    agents ||--o{ employee_agent_configs : "has"
-    agents ||--o{ system_prompts : "has"
     employees ||--o{ employee_policies : "has"
     policies ||--o{ employee_policies : "has"
-    mcp_categories ||--o{ mcp_catalog : "has"
-    employees ||--o{ employee_mcp_configs : "has"
-    mcp_catalog ||--o{ employee_mcp_configs : "has"
+    organizations ||--o{ activity_logs : "has"
+    employees ||--o{ activity_logs : "has"
+    organizations ||--o{ usage_records : "has"
+    employees ||--o{ usage_records : "has"
+    organizations ||--o{ webhook_destinations : "has"
+    employees ||--o{ webhook_destinations : "has"
+    activity_logs ||--o{ webhook_deliveries : "has"
+    webhook_destinations ||--o{ webhook_deliveries : "has"
     employees ||--o{ agent_requests : "has"
     employees ||--o{ approvals : "has"
     agent_requests ||--o{ approvals : "has"
@@ -45,20 +43,6 @@ erDiagram
     roles ||--o{ invitations : "has"
     employees ||--o{ invitations : "has"
     employees ||--o{ invitations : "has"
-    organizations ||--o{ activity_logs : "has"
-    employees ||--o{ activity_logs : "has"
-    agents ||--o{ activity_logs : "has"
-    organizations ||--o{ usage_records : "has"
-    employees ||--o{ usage_records : "has"
-    employee_agent_configs ||--o{ usage_records : "has"
-    organizations ||--o{ tool_policies : "has"
-    teams ||--o{ tool_policies : "has"
-    employees ||--o{ tool_policies : "has"
-    employees ||--o{ tool_policies : "has"
-    organizations ||--o{ webhook_destinations : "has"
-    employees ||--o{ webhook_destinations : "has"
-    activity_logs ||--o{ webhook_deliveries : "has"
-    webhook_destinations ||--o{ webhook_deliveries : "has"
 
     %% Table Definitions
     organizations {
@@ -68,7 +52,6 @@ erDiagram
         varchar50 plan
         jsonb settings
         int max_employees
-        int max_agents_per_employee
         text claude_api_token
         timestamp created_at
         timestamp updated_at
@@ -132,17 +115,6 @@ erDiagram
         timestamp created_at
     }
     
-    tools {
-        uuid id PK
-        varchar100 name UK
-        varchar50 type
-        text description
-        jsonb schema
-        boolean requires_approval
-        timestamp created_at
-        timestamp updated_at
-    }
-    
     policies {
         uuid id PK
         varchar100 name UK
@@ -153,72 +125,12 @@ erDiagram
         timestamp updated_at
     }
     
-    agent_tools {
-        uuid agent_id PK
-        uuid tool_id PK
-        jsonb config
-        timestamp created_at
-    }
-    
-    agent_policies {
-        uuid agent_id PK
-        uuid policy_id PK
-        timestamp created_at
-    }
-    
     team_policies {
         uuid id PK
         uuid team_id FK
         uuid policy_id FK
         jsonb overrides
         timestamp created_at
-    }
-    
-    employee_agent_configs {
-        uuid id PK
-        uuid employee_id FK
-        uuid agent_id FK
-        jsonb config_override
-        boolean is_enabled
-        varchar255 sync_token UK
-        timestamp last_synced_at
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    mcp_categories {
-        uuid id PK
-        varchar100 name UK
-        text description
-        timestamp created_at
-    }
-    
-    mcp_catalog {
-        uuid id PK
-        varchar255 name UK
-        varchar255 provider
-        varchar50 version
-        text description
-        jsonb connection_schema
-        jsonb capabilities
-        boolean requires_credentials
-        boolean is_approved
-        uuid category_id FK
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    employee_mcp_configs {
-        uuid id PK
-        uuid employee_id FK
-        uuid mcp_catalog_id FK
-        varchar50 status
-        jsonb connection_config
-        text credentials_encrypted
-        varchar255 sync_token UK
-        timestamp last_sync_at
-        timestamp created_at
-        timestamp updated_at
     }
     
     agent_requests {
@@ -247,7 +159,8 @@ erDiagram
         uuid org_id FK
         uuid employee_id FK
         uuid session_id
-        uuid agent_id FK
+        varchar100 client_name
+        varchar50 client_version
         varchar100 event_type
         varchar50 event_category
         text content
@@ -259,7 +172,6 @@ erDiagram
         uuid id PK
         uuid org_id FK
         uuid employee_id FK
-        uuid agent_config_id FK
         varchar50 resource_type
         bigint quantity
         decimal cost_usd
@@ -346,9 +258,7 @@ employees (1) ──→ (N) approvals (approver)
 
 The schema also includes {len(views)} materialized views for common queries:
 
-1. **v_employee_agents** - Employee agents with catalog details
-2. **v_employee_mcps** - Employee MCPs with catalog details
-3. **v_pending_approvals** - Pending approval requests with context
+1. **v_pending_approvals** - Pending approval requests with context
 
 ## Indexes
 
@@ -360,12 +270,12 @@ All tables have appropriate indexes on:
 
 ## Database Statistics
 
-- **Total Tables**: 29
+- **Total Tables**: 18
 - **Junction Tables**: 3 (agent_tools, agent_policies, team_policies)
-- **Views**: 3
-- **Total Columns**: ~251
-- **Foreign Keys**: 47+
-- **Indexes**: 105+
+- **Views**: 1
+- **Total Columns**: ~165
+- **Foreign Keys**: 31+
+- **Indexes**: 74+
 
 ## Legend
 

@@ -477,8 +477,8 @@ func TestQueuePersistence(t *testing.T) {
 	assert.True(t, foundPersisted, "persisted log should be sent after restart")
 }
 
-// TestSetAgentID tests setting agent ID
-func TestSetAgentID(t *testing.T) {
+// TestSetClient tests setting client name and version
+func TestSetClient(t *testing.T) {
 	config := &Config{
 		Enabled:       true,
 		BatchSize:     100,
@@ -496,7 +496,7 @@ func TestSetAgentID(t *testing.T) {
 	defer logger.Close()
 
 	logger.StartSession()
-	logger.SetAgentID("test-agent-123")
+	logger.SetClient("claude-code", "1.0.25")
 
 	logger.LogEvent("test_event", "test", "test content", nil)
 
@@ -506,15 +506,15 @@ func TestSetAgentID(t *testing.T) {
 	mockAPI.mu.Lock()
 	defer mockAPI.mu.Unlock()
 
-	var foundWithAgent bool
+	var foundWithClient bool
 	for _, log := range mockAPI.logs {
-		if log.EventType == "test_event" && log.AgentID == "test-agent-123" {
-			foundWithAgent = true
+		if log.EventType == "test_event" && log.ClientName == "claude-code" && log.ClientVersion == "1.0.25" {
+			foundWithClient = true
 			break
 		}
 	}
 
-	assert.True(t, foundWithAgent, "log should have agent ID")
+	assert.True(t, foundWithClient, "log should have client name and version")
 }
 
 // Mock API client for testing
@@ -574,7 +574,7 @@ func TestLogClassified(t *testing.T) {
 	defer logger.Close()
 
 	sessionID := logger.StartSession()
-	logger.SetAgentID("test-agent")
+	logger.SetClient("claude-code", "1.0.25")
 
 	// Log a classified entry
 	entry := types.ClassifiedLogEntry{
@@ -601,7 +601,7 @@ func TestLogClassified(t *testing.T) {
 		if log.EventType == string(types.LogTypeUserPrompt) && log.EventCategory == "classified" {
 			foundClassified = true
 			assert.Equal(t, sessionID.String(), log.SessionID)
-			assert.Equal(t, "test-agent", log.AgentID)
+			assert.Equal(t, "claude-code", log.ClientName)
 			assert.Equal(t, "Hello, Claude!", log.Content)
 			// Check payload
 			if log.Payload != nil {
@@ -634,7 +634,7 @@ func TestLogClassifiedWithToolUse(t *testing.T) {
 	defer logger.Close()
 
 	logger.StartSession()
-	logger.SetAgentID("test-agent")
+	logger.SetClient("claude-code", "1.0.25")
 
 	// Log a tool use entry
 	entry := types.ClassifiedLogEntry{
@@ -689,7 +689,7 @@ func TestGetClassifiedLogs(t *testing.T) {
 	defer logger.Close()
 
 	logger.StartSession()
-	logger.SetAgentID("test-agent")
+	logger.SetClient("claude-code", "1.0.25")
 
 	// Log multiple classified entries
 	entries := []types.ClassifiedLogEntry{
@@ -793,12 +793,13 @@ func TestLogEventWithSessionOverride(t *testing.T) {
 	defer logger.Close()
 
 	logger.StartSession() // This creates a session ID
-	logger.SetAgentID("original-agent")
+	logger.SetClient("original-client", "1.0.0")
 
-	// Log event with overridden session and agent ID
+	// Log event with overridden session and client info
 	logger.LogEvent("test_event", "test", "content", map[string]interface{}{
-		"session_id": "override-session-123",
-		"agent_id":   "override-agent-456",
+		"session_id":     "override-session-123",
+		"client_name":    "override-client",
+		"client_version": "2.0.0",
 	})
 
 	logger.Flush()
@@ -812,7 +813,8 @@ func TestLogEventWithSessionOverride(t *testing.T) {
 		if log.EventType == "test_event" {
 			found = true
 			assert.Equal(t, "override-session-123", log.SessionID)
-			assert.Equal(t, "override-agent-456", log.AgentID)
+			assert.Equal(t, "override-client", log.ClientName)
+			assert.Equal(t, "2.0.0", log.ClientVersion)
 			break
 		}
 	}

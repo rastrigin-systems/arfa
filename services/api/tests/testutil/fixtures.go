@@ -118,24 +118,13 @@ func GenerateUniqueName(baseName string, timestamp int64) string {
 	return baseName + "-" + uuid.NewString()[:8]
 }
 
-// CreateTeamAgentConfigParams creates parameters for team agent config creation
-func CreateTeamAgentConfigParams(teamID, agentID uuid.UUID, configJSON []byte, isEnabled bool) db.CreateTeamAgentConfigParams {
-	return db.CreateTeamAgentConfigParams{
-		TeamID:         teamID,
-		AgentID:        agentID,
-		ConfigOverride: configJSON,
-		IsEnabled:      isEnabled,
-	}
-}
-
 // CreateUpdateOrgParams creates parameters for updating an organization
-func CreateUpdateOrgParams(id uuid.UUID, name string, maxEmployees int32, maxAgentsPerEmployee int32, settings []byte) db.UpdateOrganizationParams {
+func CreateUpdateOrgParams(id uuid.UUID, name string, maxEmployees int32, settings []byte) db.UpdateOrganizationParams {
 	return db.UpdateOrganizationParams{
-		ID:                   id,
-		Name:                 name,
-		MaxEmployees:         maxEmployees,
-		MaxAgentsPerEmployee: maxAgentsPerEmployee,
-		Settings:             settings,
+		ID:           id,
+		Name:         name,
+		MaxEmployees: maxEmployees,
+		Settings:     settings,
 	}
 }
 

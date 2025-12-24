@@ -281,13 +281,17 @@ func (c *Client) CreateLog(ctx context.Context, entry LogEntry) error {
 		EventCategory: entry.EventCategory,
 	}
 
-	// Only include session_id and agent_id if they are valid UUIDs
-	// The API validates these as UUID format
+	// Only include session_id if it's a valid UUID
+	// The API validates session_id as UUID format
 	if entry.SessionID != "" && isValidUUID(entry.SessionID) {
 		req.SessionID = &entry.SessionID
 	}
-	if entry.AgentID != "" && isValidUUID(entry.AgentID) {
-		req.AgentID = &entry.AgentID
+	// Include client detection fields (strings, no UUID validation needed)
+	if entry.ClientName != "" {
+		req.ClientName = &entry.ClientName
+	}
+	if entry.ClientVersion != "" {
+		req.ClientVersion = &entry.ClientVersion
 	}
 	if entry.Content != "" {
 		req.Content = &entry.Content

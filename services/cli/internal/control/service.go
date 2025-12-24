@@ -13,7 +13,6 @@ type ServiceConfig struct {
 	// Ownership fields
 	EmployeeID string
 	OrgID      string
-	AgentID    string
 
 	// Queue configuration
 	QueueDir      string
@@ -47,7 +46,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 	sessionID := uuid.New().String()
 
 	// Create handler context
-	ctx := NewHandlerContext(config.EmployeeID, config.OrgID, sessionID, config.AgentID)
+	ctx := NewHandlerContext(config.EmployeeID, config.OrgID, sessionID)
 
 	// Create disk queue
 	queueConfig := QueueConfig{
@@ -62,6 +61,11 @@ func NewService(config ServiceConfig) (*Service, error) {
 
 	// Create pipeline
 	pipeline := NewPipeline()
+
+	// Register client detector handler FIRST (highest priority)
+	// This detects the AI client from User-Agent headers before other handlers run
+	clientDetector := NewClientDetectorHandler()
+	pipeline.Register(clientDetector)
 
 	// Register default handlers
 	loggerHandler := NewLoggerHandler(queue)

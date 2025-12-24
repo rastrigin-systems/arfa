@@ -5,13 +5,10 @@ package container
 import (
 	gosync "sync"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/agent"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/docker"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/skill"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/sync"
 )
 
 // Container manages dependencies for the CLI application.
@@ -27,10 +24,7 @@ type Container struct {
 	configManager *config.Manager
 	apiClient     *api.Client
 	authService   *auth.Service
-	syncService   *sync.Service
-	agentService  *agent.Service
 	skillsService *skill.Service
-	dockerClient  *docker.Client
 }
 
 // Option is a functional option for configuring the Container.
@@ -167,83 +161,6 @@ func (c *Container) AuthService() (*auth.Service, error) {
 	return c.authService, nil
 }
 
-// SyncService returns the SyncService, creating it if necessary.
-func (c *Container) SyncService() (*sync.Service, error) {
-	c.mu.RLock()
-	if c.syncService != nil {
-		c.mu.RUnlock()
-		return c.syncService, nil
-	}
-	c.mu.RUnlock()
-
-	// Need to create - acquire write lock
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	if c.syncService != nil {
-		return c.syncService, nil
-	}
-
-	// Get dependencies (unlock temporarily to avoid deadlock)
-	c.mu.Unlock()
-	cm, err := c.ConfigManager()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	ac, err := c.APIClient()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	as, err := c.AuthService()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	c.mu.Lock()
-
-	c.syncService = sync.NewService(cm, ac, as)
-	return c.syncService, nil
-}
-
-// AgentService returns the AgentService, creating it if necessary.
-func (c *Container) AgentService() (*agent.Service, error) {
-	c.mu.RLock()
-	if c.agentService != nil {
-		c.mu.RUnlock()
-		return c.agentService, nil
-	}
-	c.mu.RUnlock()
-
-	// Need to create - acquire write lock
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	if c.agentService != nil {
-		return c.agentService, nil
-	}
-
-	// Get dependencies (unlock temporarily to avoid deadlock)
-	c.mu.Unlock()
-	ac, err := c.APIClient()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	cm, err := c.ConfigManager()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	c.mu.Lock()
-
-	c.agentService = agent.NewService(ac, cm)
-	return c.agentService, nil
-}
-
 // SkillsService returns the SkillsService, creating it if necessary.
 func (c *Container) SkillsService() (*skill.Service, error) {
 	c.mu.RLock()
@@ -280,36 +197,8 @@ func (c *Container) SkillsService() (*skill.Service, error) {
 	return c.skillsService, nil
 }
 
-// DockerClient returns the DockerClient, creating it if necessary.
-// Note: This requires Docker to be available on the system.
-func (c *Container) DockerClient() (*docker.Client, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.dockerClient != nil {
-		return c.dockerClient, nil
-	}
-
-	dc, err := docker.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	c.dockerClient = dc
-	return c.dockerClient, nil
-}
-
 // Close cleans up any resources held by the container.
 func (c *Container) Close() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.dockerClient != nil {
-		if err := c.dockerClient.Close(); err != nil {
-			return err
-		}
-		c.dockerClient = nil
-	}
-
+	// No resources to clean up currently
 	return nil
 }
