@@ -3,7 +3,7 @@ package logparser
 import (
 	"testing"
 
-	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
