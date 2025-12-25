@@ -83,7 +83,7 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-lg">
           <CardHeader>
-            <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
+            <CardTitle className="text-center text-3xl">Arfa</CardTitle>
             <CardTitle className="text-center text-2xl font-semibold">Reset Password</CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,7 +125,7 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-lg">
           <CardHeader>
-            <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
+            <CardTitle className="text-center text-3xl">Arfa</CardTitle>
             <CardTitle className="text-center text-2xl font-semibold">Reset Password</CardTitle>
           </CardHeader>
           <CardContent>
@@ -153,7 +153,7 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa</CardTitle>
           <CardTitle className="text-center text-2xl font-semibold">Reset Password</CardTitle>
         </CardHeader>
         <CardContent>

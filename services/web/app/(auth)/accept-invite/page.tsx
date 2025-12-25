@@ -250,7 +250,7 @@ function AcceptInviteContent() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa</CardTitle>
           <CardDescription className="text-center text-lg">You&apos;ve Been Invited!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

@@ -34,9 +34,9 @@ func TestMockEmailService_SendPasswordResetEmail(t *testing.T) {
 		service := NewMockEmailService()
 
 		// Send multiple emails
-		service.SendPasswordResetEmail("user1@example.com", "token1")
-		service.SendPasswordResetEmail("user2@example.com", "token2")
-		service.SendPasswordResetEmail("user3@example.com", "token3")
+		_ = service.SendPasswordResetEmail("user1@example.com", "token1")
+		_ = service.SendPasswordResetEmail("user2@example.com", "token2")
+		_ = service.SendPasswordResetEmail("user3@example.com", "token3")
 
 		if len(service.SentEmails) != 3 {
 			t.Fatalf("Expected 3 sent emails, got %d", len(service.SentEmails))
@@ -86,8 +86,8 @@ func TestMockEmailService_Reset(t *testing.T) {
 	service := NewMockEmailService()
 
 	// Send some emails
-	service.SendPasswordResetEmail("user1@example.com", "token1")
-	service.SendPasswordResetEmail("user2@example.com", "token2")
+	_ = service.SendPasswordResetEmail("user1@example.com", "token1")
+	_ = service.SendPasswordResetEmail("user2@example.com", "token2")
 
 	if len(service.SentEmails) != 2 {
 		t.Fatalf("Expected 2 sent emails before reset, got %d", len(service.SentEmails))

@@ -388,7 +388,7 @@ func configureSystemProxy(pacPath string) error {
 			pacURL := "file://" + pacPath
 			cmd := exec.Command("networksetup", "-setautoproxyurl", service, pacURL)
 			// Ignore errors for non-existent services
-			cmd.Run()
+			_ = cmd.Run()
 		}
 		return nil
 	case "linux":
@@ -501,7 +501,7 @@ WantedBy=default.target
 	}
 
 	// Reload and enable
-	exec.Command("systemctl", "--user", "daemon-reload").Run()
+	_ = exec.Command("systemctl", "--user", "daemon-reload").Run()
 	cmd := exec.Command("systemctl", "--user", "enable", "--now", "arfa-proxy")
 	return cmd.Run()
 }
@@ -511,7 +511,7 @@ func removeSystemProxy() error {
 	case "darwin":
 		services := []string{"Wi-Fi", "Ethernet"}
 		for _, service := range services {
-			exec.Command("networksetup", "-setautoproxystate", service, "off").Run()
+			_ = exec.Command("networksetup", "-setautoproxystate", service, "off").Run()
 		}
 		return nil
 	case "linux":
@@ -528,10 +528,10 @@ func removeAutoStart() error {
 	switch runtime.GOOS {
 	case "darwin":
 		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.arfa.proxy.plist")
-		exec.Command("launchctl", "unload", plistPath).Run()
+		_ = exec.Command("launchctl", "unload", plistPath).Run()
 		return os.Remove(plistPath)
 	case "linux":
-		exec.Command("systemctl", "--user", "disable", "--now", "arfa-proxy").Run()
+		_ = exec.Command("systemctl", "--user", "disable", "--now", "arfa-proxy").Run()
 		servicePath := filepath.Join(home, ".config", "systemd", "user", "arfa-proxy.service")
 		return os.Remove(servicePath)
 	default:

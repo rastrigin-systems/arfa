@@ -147,7 +147,7 @@ func WithTestAuth(ctx context.Context, employeeID, orgID uuid.UUID) context.Cont
 func writeError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(api.Error{
+	_ = json.NewEncoder(w).Encode(api.Error{
 		Error: message,
 	})
 }

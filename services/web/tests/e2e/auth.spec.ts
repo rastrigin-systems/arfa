@@ -15,7 +15,7 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
 
     // Check page title
-    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa' })).toBeVisible();
 
     // Check form fields
     await expect(page.getByLabel('Email')).toBeVisible();

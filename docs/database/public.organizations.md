@@ -6,13 +6,11 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.subscriptions](public.subscriptions.md) [public.teams](public.teams.md) [public.employees](public.employees.md) [public.tool_policies](public.tool_policies.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) [public.webhook_destinations](public.webhook_destinations.md) [public.invitations](public.invitations.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.teams](public.teams.md) [public.employees](public.employees.md) [public.tool_policies](public.tool_policies.md) [public.activity_logs](public.activity_logs.md) [public.webhook_destinations](public.webhook_destinations.md) [public.invitations](public.invitations.md) |  |  |
 | name | varchar(255) |  | false |  |  |  |
 | slug | varchar(100) |  | false |  |  |  |
-| plan | varchar(50) | 'starter'::character varying | false |  |  |  |
 | settings | jsonb | '{}'::jsonb | false |  |  |  |
 | max_employees | integer | 10 | false |  |  |  |
-| claude_api_token | text |  | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
 
@@ -42,12 +40,10 @@
 ```mermaid
 erDiagram
 
-"public.subscriptions" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.tool_policies" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
-"public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.webhook_destinations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.invitations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 
@@ -55,22 +51,8 @@ erDiagram
   uuid id
   varchar_255_ name
   varchar_100_ slug
-  varchar_50_ plan
   jsonb settings
   integer max_employees
-  text claude_api_token
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
-}
-"public.subscriptions" {
-  uuid id
-  uuid org_id FK
-  varchar_50_ plan_type
-  numeric_10_2_ monthly_budget_usd
-  numeric_10_2_ current_spending_usd
-  timestamp_without_time_zone billing_period_start
-  timestamp_without_time_zone billing_period_end
-  varchar_50_ status
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }
@@ -92,7 +74,6 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
-  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -122,19 +103,6 @@ erDiagram
   varchar_50_ event_category
   text content
   jsonb payload
-  timestamp_without_time_zone created_at
-}
-"public.usage_records" {
-  uuid id
-  uuid org_id FK
-  uuid employee_id FK
-  varchar_50_ resource_type
-  bigint quantity
-  numeric_10_4_ cost_usd
-  timestamp_without_time_zone period_start
-  timestamp_without_time_zone period_end
-  jsonb metadata
-  varchar_20_ token_source
   timestamp_without_time_zone created_at
 }
 "public.webhook_destinations" {

@@ -40,22 +40,6 @@ func (m *mockLogger) LogClassified(entry types.ClassifiedLogEntry) {
 	m.classified = append(m.classified, entry)
 }
 
-func (m *mockLogger) getEvents() []logEvent {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	result := make([]logEvent, len(m.events))
-	copy(result, m.events)
-	return result
-}
-
-func (m *mockLogger) getClassified() []types.ClassifiedLogEntry {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	result := make([]types.ClassifiedLogEntry, len(m.classified))
-	copy(result, m.classified)
-	return result
-}
-
 func TestNew(t *testing.T) {
 	logger := &mockLogger{}
 	p := New(logger)
@@ -102,12 +86,12 @@ func TestMultipleInstances(t *testing.T) {
 	p1 := New(logger)
 	err := p1.Start()
 	require.NoError(t, err)
-	defer p1.Stop()
+	defer func() { _ = p1.Stop() }()
 
 	p2 := New(logger)
 	err = p2.Start()
 	require.NoError(t, err)
-	defer p2.Stop()
+	defer func() { _ = p2.Stop() }()
 
 	// They should be on different ports
 	assert.NotEqual(t, p1.GetPort(), p2.GetPort())
@@ -153,7 +137,7 @@ func TestProxyIntegration(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"response": "hello"}`))
+		_, _ = w.Write([]byte(`{"response": "hello"}`))
 	}))
 	defer backend.Close()
 
@@ -163,7 +147,7 @@ func TestProxyIntegration(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Make a request through the proxy to the test backend
 	// Note: This tests the proxy machinery but not HTTPS interception
@@ -176,7 +160,7 @@ func TestProxyIntegration(t *testing.T) {
 
 	resp, err := client.Get(backend.URL)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
@@ -225,7 +209,7 @@ func TestCAGenerationAndLoading(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	certPath := p.GetCertPath()
 	assert.NotEmpty(t, certPath)
@@ -259,13 +243,13 @@ func TestCAReuse(t *testing.T) {
 	certData1, err := os.ReadFile(certPath1)
 	require.NoError(t, err)
 
-	p1.Stop()
+	_ = p1.Stop()
 
 	// Start second proxy - should reuse the same CA
 	p2 := New(logger)
 	err = p2.Start()
 	require.NoError(t, err)
-	defer p2.Stop()
+	defer func() { _ = p2.Stop() }()
 
 	certPath2 := p2.GetCertPath()
 	certData2, err := os.ReadFile(certPath2)
@@ -293,7 +277,7 @@ func TestPortRange(t *testing.T) {
 	// Clean up
 	defer func() {
 		for _, p := range proxies {
-			p.Stop()
+			_ = p.Stop()
 		}
 	}()
 
@@ -319,7 +303,7 @@ func TestConcurrentProxyAccess(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Concurrent SetSession calls
 	var wg sync.WaitGroup
@@ -476,7 +460,7 @@ func TestProxyWithSessionMetadata(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Verify session is set
 	assert.Equal(t, sessionID, p.sessionID)
@@ -490,7 +474,7 @@ func TestProxyHTTPRequest(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status": "ok"}`))
+		_, _ = w.Write([]byte(`{"status": "ok"}`))
 	}))
 	defer backend.Close()
 
@@ -500,7 +484,7 @@ func TestProxyHTTPRequest(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Create client with proxy
 	client := &http.Client{
@@ -512,7 +496,7 @@ func TestProxyHTTPRequest(t *testing.T) {
 	// Make request through proxy
 	resp, err := client.Get(backend.URL)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
@@ -534,7 +518,7 @@ func TestProxyMethods(t *testing.T) {
 
 			err := p.Start()
 			require.NoError(t, err)
-			defer p.Stop()
+			defer func() { _ = p.Stop() }()
 
 			client := &http.Client{
 				Transport: &http.Transport{
@@ -547,7 +531,7 @@ func TestProxyMethods(t *testing.T) {
 
 			resp, err := client.Do(req)
 			require.NoError(t, err)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
@@ -579,7 +563,7 @@ func TestProxyErrorHandling(t *testing.T) {
 
 			err := p.Start()
 			require.NoError(t, err)
-			defer p.Stop()
+			defer func() { _ = p.Stop() }()
 
 			client := &http.Client{
 				Transport: &http.Transport{
@@ -589,7 +573,7 @@ func TestProxyErrorHandling(t *testing.T) {
 
 			resp, err := client.Get(backend.URL)
 			require.NoError(t, err)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			// Proxy should pass through the error status code
 			assert.Equal(t, tt.statusCode, resp.StatusCode)

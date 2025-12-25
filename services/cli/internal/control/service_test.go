@@ -17,7 +17,7 @@ func TestNewService(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -32,7 +32,7 @@ func TestService_SessionID_Generated(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc1, _ := NewService(config)
@@ -47,7 +47,7 @@ func TestService_HandlerContext(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -68,7 +68,7 @@ func TestService_Pipeline(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -94,7 +94,7 @@ func TestService_RegisterHandler(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -120,7 +120,7 @@ func TestService_HandleRequest(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -138,7 +138,7 @@ func TestService_HandleResponse(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -159,7 +159,7 @@ func TestService_HandleRequest_WritesToQueue(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -179,7 +179,7 @@ func TestService_HandleResponse_WritesToQueue(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -228,7 +228,7 @@ func TestService_Stop_GracefulShutdown(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 	}
 
 	svc, err := NewService(config)
@@ -257,7 +257,7 @@ func TestServiceConfig_Defaults(t *testing.T) {
 	config := ServiceConfig{
 		EmployeeID: "emp-123",
 		OrgID:      "org-456",
-				QueueDir:   dir,
+		QueueDir:   dir,
 		// No FlushInterval or MaxBatchSize set
 	}
 

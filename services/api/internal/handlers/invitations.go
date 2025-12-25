@@ -22,6 +22,12 @@ import (
 	"github.com/rastrigin-systems/arfa/services/api/internal/service"
 )
 
+// contextKey is a type for context keys to avoid collisions
+type contextKey string
+
+// Context keys for invitation handler
+const invitationIDKey contextKey = "invitation_id"
+
 // InvitationHandler handles invitation-related requests
 type InvitationHandler struct {
 	db           db.Querier
@@ -136,7 +142,7 @@ func (h *InvitationHandler) CreateInvitation(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ListInvitations handles GET /invitations
@@ -207,7 +213,7 @@ func (h *InvitationHandler) ListInvitations(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // GetInvitationByToken handles GET /invitations/{token}
@@ -265,7 +271,7 @@ func (h *InvitationHandler) GetInvitationByToken(w http.ResponseWriter, r *http.
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // AcceptInvitation handles POST /invitations/{token}/accept
@@ -393,7 +399,7 @@ func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // CancelInvitation handles DELETE /invitations/{id}
@@ -416,7 +422,7 @@ func (h *InvitationHandler) CancelInvitation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	invitationID, ok := ctx.Value("invitation_id").(uuid.UUID)
+	invitationID, ok := ctx.Value(invitationIDKey).(uuid.UUID)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "Missing invitation ID")
 		return

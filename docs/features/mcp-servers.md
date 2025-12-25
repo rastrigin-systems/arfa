@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-This guide covers all Model Context Protocol (MCP) servers used in the Arfa Enterprise project.
+This guide covers all Model Context Protocol (MCP) servers used in the Arfa project.
 
 ---
 

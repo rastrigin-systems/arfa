@@ -51,7 +51,7 @@ Examples:
 				return fmt.Errorf("webhook not found: %w", err)
 			}
 
-			fmt.Fprintf(out, "Testing webhook '%s'...\n", webhook.Name)
+			_, _ = fmt.Fprintf(out, "Testing webhook '%s'...\n", webhook.Name)
 
 			// Test webhook
 			result, err := client.TestWebhook(ctx, webhookID)
@@ -62,21 +62,21 @@ Examples:
 			// Output as JSON if requested
 			if showJSON {
 				data, _ := json.MarshalIndent(result, "", "  ")
-				fmt.Fprintln(out, string(data))
+				_, _ = fmt.Fprintln(out, string(data))
 				return nil
 			}
 
 			// Display result
-			fmt.Fprintln(out)
+			_, _ = fmt.Fprintln(out)
 			if result.Success {
-				fmt.Fprintln(out, "Test successful!")
-				fmt.Fprintf(out, "  Response Status: %d\n", result.ResponseStatus)
-				fmt.Fprintf(out, "  Response Time:   %dms\n", result.ResponseTimeMs)
+				_, _ = fmt.Fprintln(out, "Test successful!")
+				_, _ = fmt.Fprintf(out, "  Response Status: %d\n", result.ResponseStatus)
+				_, _ = fmt.Fprintf(out, "  Response Time:   %dms\n", result.ResponseTimeMs)
 			} else {
-				fmt.Fprintln(out, "Test failed!")
-				fmt.Fprintf(out, "  Response Status: %d\n", result.ResponseStatus)
+				_, _ = fmt.Fprintln(out, "Test failed!")
+				_, _ = fmt.Fprintf(out, "  Response Status: %d\n", result.ResponseStatus)
 				if result.ErrorMessage != "" {
-					fmt.Fprintf(out, "  Error:           %s\n", result.ErrorMessage)
+					_, _ = fmt.Fprintf(out, "  Error:           %s\n", result.ErrorMessage)
 				}
 			}
 

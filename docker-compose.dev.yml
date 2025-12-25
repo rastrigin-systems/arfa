@@ -1,0 +1,7 @@
+# Development override - adds seed data
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  postgres:
+    volumes:
+      - ./platform/database/seeds:/docker-entrypoint-initdb.d/seeds

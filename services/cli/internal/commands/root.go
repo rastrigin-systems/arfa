@@ -7,7 +7,6 @@ import (
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/policies"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/proxy"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/setup"
-	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/skills"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/status"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/webhooks"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
@@ -51,7 +50,6 @@ Examples:
 	rootCmd.AddCommand(status.NewStatusCommand(c))
 
 	// Register monitoring commands
-	rootCmd.AddCommand(skills.NewSkillsCommand(c))
 	rootCmd.AddCommand(logs.NewLogsCommand(c))
 	rootCmd.AddCommand(policies.NewPoliciesCommand(c))
 	rootCmd.AddCommand(webhooks.NewWebhooksCommand(c))

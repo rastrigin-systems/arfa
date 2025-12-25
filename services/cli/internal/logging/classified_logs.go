@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 )
 
 // GetClassifiedLogs retrieves classified logs from the API using the provided api.Client.

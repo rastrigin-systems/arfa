@@ -151,7 +151,7 @@ func TestLogin_InvalidPassword(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "Invalid credentials")
 }
 
@@ -244,7 +244,7 @@ func TestLogin_InactiveUser(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "Account is suspended")
 }
 
@@ -282,7 +282,7 @@ func TestLogout_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response map[string]string
-	json.Unmarshal(rec.Body.Bytes(), &response)
+	_ = json.Unmarshal(rec.Body.Bytes(), &response)
 	assert.Equal(t, "Logged out successfully", response["message"])
 }
 
@@ -658,7 +658,7 @@ func TestRegister_DuplicateOrgSlug(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "org_slug")
 	assert.Contains(t, errorResponse.Error, "already exists")
 }
@@ -707,7 +707,7 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "email")
 	assert.Contains(t, errorResponse.Error, "already exists")
 }
@@ -758,7 +758,7 @@ func TestRegister_WeakPassword(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "password")
 }
 
@@ -802,7 +802,7 @@ func TestRegister_InvalidOrgSlug(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 			var errorResponse api.Error
-			json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+			_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 			assert.Contains(t, errorResponse.Error, "org_slug")
 		})
 	}

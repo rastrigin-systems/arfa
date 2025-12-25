@@ -93,7 +93,7 @@ func TestCheckPasswordResetRateLimit(t *testing.T) {
 		// Max out employee1's rate limit
 		for i := 0; i < 3; i++ {
 			token, _ := GenerateSecureToken()
-			queries.CreatePasswordResetToken(ctx, db.CreatePasswordResetTokenParams{
+			_, _ = queries.CreatePasswordResetToken(ctx, db.CreatePasswordResetTokenParams{
 				EmployeeID: employee.ID,
 				Token:      token,
 				ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(1 * time.Hour), Valid: true},

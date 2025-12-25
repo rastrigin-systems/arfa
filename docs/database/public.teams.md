@@ -64,7 +64,6 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
-  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -109,10 +108,8 @@ erDiagram
   uuid id
   varchar_255_ name
   varchar_100_ slug
-  varchar_50_ plan
   jsonb settings
   integer max_employees
-  text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }

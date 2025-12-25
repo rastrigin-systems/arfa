@@ -185,7 +185,7 @@ func (p *AnthropicParser) ParseResponse(body []byte) ([]types.ClassifiedLogEntry
 		case "tool_use":
 			var input map[string]any
 			if len(block.Input) > 0 {
-				json.Unmarshal(block.Input, &input)
+				_ = json.Unmarshal(block.Input, &input)
 			}
 			entry := types.ClassifiedLogEntry{
 				EntryType:    types.LogTypeToolCall,

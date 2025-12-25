@@ -40,7 +40,7 @@ func SpecHandler() http.HandlerFunc {
 		// Set content type to YAML
 		w.Header().Set("Content-Type", "application/x-yaml")
 		w.WriteHeader(http.StatusOK)
-		w.Write(content)
+		_, _ = w.Write(content)
 	}
 }
 

@@ -50,11 +50,11 @@ Examples:
 
 			// Confirm deletion if not forced
 			if !force {
-				fmt.Fprintf(out, "Delete webhook '%s' (%s)? [y/N] ", webhook.Name, webhook.ID)
+				_, _ = fmt.Fprintf(out, "Delete webhook '%s' (%s)? [y/N] ", webhook.Name, webhook.ID)
 				var confirm string
-				fmt.Scanln(&confirm)
+				_, _ = fmt.Scanln(&confirm)
 				if confirm != "y" && confirm != "Y" {
-					fmt.Fprintln(out, "Cancelled.")
+					_, _ = fmt.Fprintln(out, "Cancelled.")
 					return nil
 				}
 			}
@@ -64,7 +64,7 @@ Examples:
 				return fmt.Errorf("failed to delete webhook: %w", err)
 			}
 
-			fmt.Fprintf(out, "Webhook '%s' deleted.\n", webhook.Name)
+			_, _ = fmt.Fprintf(out, "Webhook '%s' deleted.\n", webhook.Name)
 
 			return nil
 		},

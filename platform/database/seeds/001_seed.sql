@@ -1,5 +1,5 @@
--- Seed Data for Arfa Enterprise - Security Proxy Mode
--- Version: 3.0.0 - Matches actual schema
+-- Seed Data for Arfa - AI Agent Security Proxy
+-- Version: 4.0.0 - OSS Release (simplified schema)
 
 -- =============================================================================
 -- Organizations
@@ -15,25 +15,10 @@ INSERT INTO organizations (id, name, slug, settings, created_at, updated_at) VAL
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
--- Subscriptions
+-- Roles - Use existing roles from schema.sql
 -- =============================================================================
-
-INSERT INTO subscriptions (id, org_id, plan_type, monthly_budget_usd, current_spending_usd, billing_period_start, billing_period_end, status) VALUES
-    ('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     'enterprise', 10000.00, 0.00, NOW(), NOW() + INTERVAL '1 month', 'active'),
-    ('b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 'f6e21110-1a99-55c7-c424-78ffcccc2fa9',
-     'team', 1000.00, 0.00, NOW(), NOW() + INTERVAL '1 month', 'active')
-ON CONFLICT (id) DO NOTHING;
-
--- =============================================================================
--- Roles (Global - no org_id)
--- =============================================================================
-
-INSERT INTO roles (id, name, description, permissions) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'Admin', 'Full administrative access', '["*"]'),
-    ('22222222-2222-2222-2222-222222222222', 'Developer', 'Standard developer access', '["logs:read", "policies:read"]'),
-    ('33333333-3333-3333-3333-333333333333', 'Viewer', 'Read-only access', '["logs:read"]')
-ON CONFLICT (id) DO NOTHING;
+-- Default roles (admin, member, viewer) are created by schema.sql
+-- We just need to look them up by name for seeding employees
 
 -- =============================================================================
 -- Teams
@@ -55,19 +40,20 @@ ON CONFLICT (id) DO NOTHING;
 -- =============================================================================
 
 -- Password: admin123 (bcrypt hash with cost 10)
+-- Note: role_id uses subquery to look up roles created by schema.sql
 INSERT INTO employees (id, org_id, team_id, role_id, email, full_name, password_hash, status, preferences) VALUES
     -- Acme Corporation employees
     ('6a41beee-cf2d-4c59-affd-80e3f58466d6', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111',
+     'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', (SELECT id FROM roles WHERE name = 'admin'),
      'admin@acme.com', 'Admin User',
      '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}'),
     ('7b52cfff-d03e-5d6a-bffe-91f4069577e7', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222',
+     'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', (SELECT id FROM roles WHERE name = 'member'),
      'dev@acme.com', 'Developer User',
      '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}'),
     -- TechStart employees
     ('8c63d000-e04f-6e7b-c00f-a2050706880f', 'f6e21110-1a99-55c7-c424-78ffcccc2fa9',
-     'cccc3333-cccc-cccc-cccc-cccccccccccc', '11111111-1111-1111-1111-111111111111',
+     'cccc3333-cccc-cccc-cccc-cccccccccccc', (SELECT id FROM roles WHERE name = 'admin'),
      'admin@techstart.com', 'TechStart Admin',
      '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}')
 ON CONFLICT (id) DO NOTHING;

@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./platform/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./platform/database/seeds:/docker-entrypoint-initdb.d/seeds
+      # Seeds are opt-in: use docker-compose.dev.yml for demo data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U arfa"]
       interval: 5s

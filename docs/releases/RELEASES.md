@@ -1,4 +1,4 @@
-# Arfa Enterprise - Release History
+# Arfa - Release History
 
 Complete history of all releases with links to GitHub Releases and detailed changelogs.
 
@@ -143,7 +143,7 @@ Project initialization with:
 
 ## Versioning Strategy
 
-Arfa Enterprise follows [Semantic Versioning 2.0.0](https://semver.org/):
+Arfa follows [Semantic Versioning 2.0.0](https://semver.org/):
 
 - **v0.x.y** (Pre-1.0): Rapid development, breaking changes allowed
   - **0.x.0**: New milestone features

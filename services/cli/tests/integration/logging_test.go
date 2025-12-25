@@ -33,7 +33,7 @@ func TestLoggingEndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create logger: %v", err)
 	}
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	// Set client info
 	clientName := "claude-code"
@@ -154,7 +154,7 @@ func TestLoggingBatching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create logger: %v", err)
 	}
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 
@@ -197,7 +197,7 @@ func TestLoggingOfflineQueue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create logger: %v", err)
 	}
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 

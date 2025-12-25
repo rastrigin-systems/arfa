@@ -67,14 +67,6 @@ func TestListTeams_Success(t *testing.T) {
 		CountEmployeesByTeam(gomock.Any(), pgtype.UUID{Bytes: team2ID, Valid: true}).
 		Return(int64(7), nil)
 
-	// Expect agent config count queries for each team
-	mockDB.EXPECT().
-		CountTeamAgentConfigs(gomock.Any(), team1ID).
-		Return(int64(3), nil)
-	mockDB.EXPECT().
-		CountTeamAgentConfigs(gomock.Any(), team2ID).
-		Return(int64(2), nil)
-
 	req := httptest.NewRequest(http.MethodGet, "/teams", nil)
 	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
 	rec := httptest.NewRecorder()

@@ -160,7 +160,7 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ListLogs implements GET /logs
@@ -271,7 +271,7 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ExportLogs implements GET /logs/export

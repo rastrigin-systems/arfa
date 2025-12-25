@@ -2,10 +2,12 @@
 package config
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -19,14 +21,55 @@ func DefaultPlatformURL() string {
 }
 
 // Config represents the local CLI configuration stored in ~/.arfa/config.json.
+// Only stores platform_url and token - all other data is extracted from the JWT.
 type Config struct {
-	PlatformURL  string    `json:"platform_url"`
-	Token        string    `json:"token"`
-	TokenExpires time.Time `json:"token_expires"`
-	EmployeeID   string    `json:"employee_id"`
-	OrgID        string    `json:"org_id"`
-	DefaultAgent string    `json:"default_agent"`
-	LastSync     time.Time `json:"last_sync"`
+	PlatformURL string `json:"platform_url"`
+	Token       string `json:"token"`
+}
+
+// JWTClaims represents the claims extracted from the JWT token.
+type JWTClaims struct {
+	EmployeeID string
+	OrgID      string
+	ExpiresAt  time.Time
+}
+
+// ParseJWTClaims extracts claims from a JWT token without validating the signature.
+// This is safe because the API server validates the token - we just need the cached claims.
+func ParseJWTClaims(token string) (*JWTClaims, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid JWT format")
+	}
+
+	// Decode the payload (middle part)
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode JWT payload: %w", err)
+	}
+
+	var claims struct {
+		EmployeeID string `json:"employee_id"`
+		OrgID      string `json:"org_id"`
+		Exp        int64  `json:"exp"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return nil, fmt.Errorf("failed to parse JWT claims: %w", err)
+	}
+
+	return &JWTClaims{
+		EmployeeID: claims.EmployeeID,
+		OrgID:      claims.OrgID,
+		ExpiresAt:  time.Unix(claims.Exp, 0),
+	}, nil
+}
+
+// GetClaims parses and returns the JWT claims from the stored token.
+func (c *Config) GetClaims() (*JWTClaims, error) {
+	if c.Token == "" {
+		return nil, fmt.Errorf("no token stored")
+	}
+	return ParseJWTClaims(c.Token)
 }
 
 // Manager handles local configuration storage and retrieval.
@@ -102,7 +145,17 @@ func (m *Manager) IsAuthenticated() (bool, error) {
 		return false, err
 	}
 
-	return config.Token != "" && config.EmployeeID != "", nil
+	if config.Token == "" {
+		return false, nil
+	}
+
+	// Verify we can parse the token and it has required claims
+	claims, err := config.GetClaims()
+	if err != nil {
+		return false, nil
+	}
+
+	return claims.EmployeeID != "" && claims.OrgID != "", nil
 }
 
 // IsTokenValid checks if the stored token is valid (not expired).
@@ -112,18 +165,17 @@ func (m *Manager) IsTokenValid() (bool, error) {
 		return false, err
 	}
 
-	// No token means not authenticated
 	if config.Token == "" {
 		return false, nil
 	}
 
-	// No expiration time means we can't validate (assume valid for backwards compatibility)
-	if config.TokenExpires.IsZero() {
-		return true, nil
+	claims, err := config.GetClaims()
+	if err != nil {
+		return false, nil
 	}
 
 	// Check if token has expired (with 5 minute buffer)
-	return time.Now().Add(5 * time.Minute).Before(config.TokenExpires), nil
+	return time.Now().Add(5 * time.Minute).Before(claims.ExpiresAt), nil
 }
 
 // Clear removes the config file (logout).

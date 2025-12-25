@@ -167,17 +167,16 @@ func (c *Client) readPump(hub *Hub) {
 	defer func() {
 		hub.unregister <- c
 		if wsConn, ok := c.conn.(*websocket.Conn); ok {
-			wsConn.Close()
+			_ = wsConn.Close()
 		}
 	}()
 
 	// Configure connection
 	if wsConn, ok := c.conn.(*websocket.Conn); ok {
 		wsConn.SetReadLimit(maxMessageSize)
-		wsConn.SetReadDeadline(time.Now().Add(pongWait))
+		_ = wsConn.SetReadDeadline(time.Now().Add(pongWait))
 		wsConn.SetPongHandler(func(string) error {
-			wsConn.SetReadDeadline(time.Now().Add(pongWait))
-			return nil
+			return wsConn.SetReadDeadline(time.Now().Add(pongWait))
 		})
 	}
 
@@ -224,7 +223,7 @@ func (c *Client) writePump() {
 	defer func() {
 		ticker.Stop()
 		if wsConn, ok := c.conn.(*websocket.Conn); ok {
-			wsConn.Close()
+			_ = wsConn.Close()
 		}
 	}()
 
@@ -236,10 +235,10 @@ func (c *Client) writePump() {
 				return
 			}
 
-			wsConn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = wsConn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !channelOpen {
 				// Hub closed the channel
-				wsConn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = wsConn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
@@ -254,7 +253,7 @@ func (c *Client) writePump() {
 				return
 			}
 
-			wsConn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = wsConn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := wsConn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

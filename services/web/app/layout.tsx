@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Arfa Enterprise - AI Agent Management',
+  title: 'Arfa - AI Agent Management',
   description: 'Centralized platform for managing employee AI agent and MCP configurations',
 };
 

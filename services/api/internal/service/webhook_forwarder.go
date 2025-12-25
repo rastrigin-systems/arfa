@@ -228,7 +228,7 @@ func (wf *WebhookForwarder) processDelivery(ctx context.Context, delivery db.Get
 		// Mark as failed
 		errMsg := err.Error()
 		nextRetry := time.Now().Add(time.Duration(dest.RetryBackoffMs) * time.Millisecond * time.Duration(1<<delivery.Attempts))
-		wf.db.MarkDeliveryFailed(ctx, db.MarkDeliveryFailedParams{
+		_ = wf.db.MarkDeliveryFailed(ctx, db.MarkDeliveryFailedParams{
 			ID:             delivery.ID,
 			ResponseStatus: nil,
 			ResponseBody:   nil,
@@ -238,7 +238,7 @@ func (wf *WebhookForwarder) processDelivery(ctx context.Context, delivery db.Get
 		})
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body (limited to 1KB)
 	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
@@ -247,7 +247,7 @@ func (wf *WebhookForwarder) processDelivery(ctx context.Context, delivery db.Get
 
 	// Check if successful (2xx status code)
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		wf.db.MarkDeliverySuccess(ctx, db.MarkDeliverySuccessParams{
+		_ = wf.db.MarkDeliverySuccess(ctx, db.MarkDeliverySuccessParams{
 			ID:             delivery.ID,
 			ResponseStatus: &statusCode,
 			ResponseBody:   &bodyStr,
@@ -258,7 +258,7 @@ func (wf *WebhookForwarder) processDelivery(ctx context.Context, delivery db.Get
 	// Mark as failed for non-2xx responses
 	errMsg := fmt.Sprintf("HTTP %d: %s", resp.StatusCode, bodyStr)
 	nextRetry := time.Now().Add(time.Duration(dest.RetryBackoffMs) * time.Millisecond * time.Duration(1<<delivery.Attempts))
-	wf.db.MarkDeliveryFailed(ctx, db.MarkDeliveryFailedParams{
+	_ = wf.db.MarkDeliveryFailed(ctx, db.MarkDeliveryFailedParams{
 		ID:             delivery.ID,
 		ResponseStatus: &statusCode,
 		ResponseBody:   &bodyStr,

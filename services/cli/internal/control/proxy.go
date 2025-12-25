@@ -82,7 +82,7 @@ func (p *ControlledProxy) tryStart(port int) error {
 	if err != nil {
 		return err
 	}
-	listener.Close()
+	_ = listener.Close()
 
 	// Start server
 	p.server = &http.Server{
@@ -176,7 +176,7 @@ func (p *ControlledProxy) generateCA() error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			Organization: []string{"Arfa Enterprise Proxy CA"},
+			Organization: []string{"Arfa Proxy CA"},
 			CommonName:   "arfa-proxy-ca",
 		},
 		NotBefore:             time.Now(),
@@ -203,10 +203,10 @@ func (p *ControlledProxy) generateCA() error {
 		return err
 	}
 	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: caBytes}); err != nil {
-		certOut.Close()
+		_ = certOut.Close()
 		return err
 	}
-	certOut.Close()
+	_ = certOut.Close()
 
 	// Save key
 	keyOut, err := os.OpenFile(p.keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -214,10 +214,10 @@ func (p *ControlledProxy) generateCA() error {
 		return err
 	}
 	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey)}); err != nil {
-		keyOut.Close()
+		_ = keyOut.Close()
 		return err
 	}
-	keyOut.Close()
+	_ = keyOut.Close()
 
 	// Load the new CA
 	caCert, err := tls.LoadX509KeyPair(p.certPath, p.keyPath)
@@ -289,7 +289,7 @@ func (p *ControlledProxy) handleResponse(resp *http.Response) *http.Response {
 			reader, err := gzip.NewReader(bytes.NewBuffer(bodyBytes))
 			if err == nil {
 				decodedBody, err := io.ReadAll(reader)
-				reader.Close()
+				_ = reader.Close()
 				if err == nil {
 					// Replace body with decompressed content
 					resp.Body = io.NopCloser(bytes.NewBuffer(decodedBody))
@@ -308,12 +308,8 @@ func (p *ControlledProxy) handleResponse(resp *http.Response) *http.Response {
 
 	result := p.service.HandleResponse(resp)
 
-	// If blocked, we can't really block responses (already in flight)
-	// Just log and continue
-	if result.Action == ActionBlock {
-		// Response blocking is a future enhancement
-		// For now, just log the blocked response
-	}
+	// Response blocking is logged but not enforced (response already in flight)
+	// This is captured for policy analytics purposes
 
 	// Use modified response if provided
 	if result.ModifiedResponse != nil {

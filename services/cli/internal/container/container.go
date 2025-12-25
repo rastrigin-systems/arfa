@@ -8,7 +8,6 @@ import (
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/auth"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
-	"github.com/rastrigin-systems/arfa/services/cli/internal/skill"
 )
 
 // Container manages dependencies for the CLI application.
@@ -24,7 +23,6 @@ type Container struct {
 	configManager *config.Manager
 	apiClient     *api.Client
 	authService   *auth.Service
-	skillsService *skill.Service
 }
 
 // Option is a functional option for configuring the Container.
@@ -159,42 +157,6 @@ func (c *Container) AuthService() (*auth.Service, error) {
 
 	c.authService = auth.NewService(cm, ac)
 	return c.authService, nil
-}
-
-// SkillsService returns the SkillsService, creating it if necessary.
-func (c *Container) SkillsService() (*skill.Service, error) {
-	c.mu.RLock()
-	if c.skillsService != nil {
-		c.mu.RUnlock()
-		return c.skillsService, nil
-	}
-	c.mu.RUnlock()
-
-	// Need to create - acquire write lock
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	if c.skillsService != nil {
-		return c.skillsService, nil
-	}
-
-	// Get dependencies (unlock temporarily to avoid deadlock)
-	c.mu.Unlock()
-	ac, err := c.APIClient()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	cm, err := c.ConfigManager()
-	if err != nil {
-		c.mu.Lock()
-		return nil, err
-	}
-	c.mu.Lock()
-
-	c.skillsService = skill.NewService(ac, cm)
-	return c.skillsService, nil
 }
 
 // Close cleans up any resources held by the container.

@@ -30,8 +30,8 @@ import (
 	"time"
 
 	"github.com/elazarl/goproxy"
-	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 )
 
 const (
@@ -120,7 +120,7 @@ func (p *Proxy) tryStart(port int) error {
 	if err != nil {
 		return err
 	}
-	listener.Close()
+	_ = listener.Close()
 
 	// Start server
 	p.server = &http.Server{
@@ -214,7 +214,7 @@ func (p *Proxy) generateCA() error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			Organization: []string{"Arfa Enterprise Proxy CA"},
+			Organization: []string{"Arfa Proxy CA"},
 			CommonName:   "arfa-proxy-ca",
 		},
 		NotBefore:             time.Now(),
@@ -241,10 +241,10 @@ func (p *Proxy) generateCA() error {
 		return err
 	}
 	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: caBytes}); err != nil {
-		certOut.Close()
+		_ = certOut.Close()
 		return err
 	}
-	certOut.Close()
+	_ = certOut.Close()
 
 	// Save key
 	keyOut, err := os.OpenFile(p.keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -252,10 +252,10 @@ func (p *Proxy) generateCA() error {
 		return err
 	}
 	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey)}); err != nil {
-		keyOut.Close()
+		_ = keyOut.Close()
 		return err
 	}
-	keyOut.Close()
+	_ = keyOut.Close()
 
 	// Load the new CA
 	caCert, err := tls.LoadX509KeyPair(p.certPath, p.keyPath)
@@ -361,7 +361,7 @@ func (p *Proxy) logResponse(resp *http.Response) {
 		reader, err := gzip.NewReader(bytes.NewBuffer(bodyBytes))
 		if err == nil {
 			decodedBody, _ = io.ReadAll(reader)
-			reader.Close()
+			_ = reader.Close()
 		}
 	}
 

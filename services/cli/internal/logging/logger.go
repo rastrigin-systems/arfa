@@ -374,7 +374,7 @@ func (l *loggerImpl) processQueueFile(filename string) {
 	var entries []LogEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
 		// Invalid file, delete it
-		os.Remove(filename)
+		_ = os.Remove(filename)
 		return
 	}
 
@@ -385,5 +385,5 @@ func (l *loggerImpl) processQueueFile(filename string) {
 	}
 
 	// Success, delete file
-	os.Remove(filename)
+	_ = os.Remove(filename)
 }

@@ -76,7 +76,7 @@ func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 	require.NoError(t, err, "Failed to connect to test database")
 
 	t.Cleanup(func() {
-		conn.Close(ctx)
+		_ = conn.Close(ctx)
 	})
 
 	// Create queries instance

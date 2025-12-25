@@ -13,7 +13,7 @@ var version = "v0.2.0-dev"
 func main() {
 	// Create dependency injection container
 	c := container.New()
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if err := commands.NewRootCommand(version, c).Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

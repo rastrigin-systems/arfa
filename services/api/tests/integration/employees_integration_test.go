@@ -28,7 +28,7 @@ import (
 // Tests complete flow: org isolation, pagination, and filtering
 func TestListEmployees_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -108,7 +108,7 @@ func TestListEmployees_Integration_Success(t *testing.T) {
 // TDD Lesson: Test org isolation - employees from different orgs should not be visible
 func TestListEmployees_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations
@@ -171,7 +171,7 @@ func TestListEmployees_Integration_OrgIsolation(t *testing.T) {
 // TDD Lesson: Test status filtering
 func TestListEmployees_Integration_FilterByStatus(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -237,7 +237,7 @@ func TestListEmployees_Integration_FilterByStatus(t *testing.T) {
 // TDD Lesson: Test pagination with limit and offset
 func TestListEmployees_Integration_Pagination(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -334,7 +334,7 @@ func TestListEmployees_Integration_Pagination(t *testing.T) {
 // TDD Lesson: Integration test for GET /employees/{id} with org isolation
 func TestGetEmployee_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization and role
@@ -386,7 +386,7 @@ func TestGetEmployee_Integration_Success(t *testing.T) {
 // TDD Lesson: Test org isolation - cannot fetch employee from different org
 func TestGetEmployee_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations
@@ -445,7 +445,7 @@ func TestGetEmployee_Integration_OrgIsolation(t *testing.T) {
 // TDD Lesson: Test 404 when employee doesn't exist
 func TestGetEmployee_Integration_NotFound(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -495,7 +495,7 @@ func TestGetEmployee_Integration_NotFound(t *testing.T) {
 // TDD Lesson: Integration test for POST /employees
 func TestCreateEmployee_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization and role
@@ -568,7 +568,7 @@ func TestCreateEmployee_Integration_Success(t *testing.T) {
 // TDD Lesson: Test creating employee with team_id
 func TestCreateEmployee_Integration_WithTeam(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -640,7 +640,7 @@ func TestCreateEmployee_Integration_WithTeam(t *testing.T) {
 // not just Employee directly
 func TestCreateEmployee_Integration_ResponseStructure(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -711,7 +711,7 @@ func TestCreateEmployee_Integration_ResponseStructure(t *testing.T) {
 // TDD Lesson: Test duplicate email returns 409 Conflict
 func TestCreateEmployee_Integration_DuplicateEmail(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -768,7 +768,7 @@ func TestCreateEmployee_Integration_DuplicateEmail(t *testing.T) {
 // TDD Lesson: Integration test for PATCH /employees/{id}
 func TestUpdateEmployee_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -829,7 +829,7 @@ func TestUpdateEmployee_Integration_Success(t *testing.T) {
 // TDD Lesson: Test org isolation for update
 func TestUpdateEmployee_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations
@@ -894,7 +894,7 @@ func TestUpdateEmployee_Integration_OrgIsolation(t *testing.T) {
 // TDD Lesson: Integration test for DELETE /employees/{id}
 func TestDeleteEmployee_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -948,7 +948,7 @@ func TestDeleteEmployee_Integration_Success(t *testing.T) {
 // TDD Lesson: Test org isolation for delete
 func TestDeleteEmployee_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations

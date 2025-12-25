@@ -27,7 +27,7 @@ func TestAuthMiddleware_Integration_ProtectedRoute(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test data
@@ -73,7 +73,7 @@ func TestAuthMiddleware_Integration_ProtectedRoute(t *testing.T) {
 		assert.Equal(t, "active", sessionData.Status)
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Protected resource accessed"))
+		_, _ = w.Write([]byte("Protected resource accessed"))
 	})
 
 	// Setup router with middleware
@@ -124,7 +124,7 @@ func TestAuthMiddleware_Integration_AfterLogout(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test data
@@ -153,7 +153,7 @@ func TestAuthMiddleware_Integration_AfterLogout(t *testing.T) {
 	// Create protected endpoint
 	protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Success"))
+		_, _ = w.Write([]byte("Success"))
 	})
 
 	router := chi.NewRouter()

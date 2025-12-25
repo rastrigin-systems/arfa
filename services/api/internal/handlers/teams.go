@@ -66,7 +66,7 @@ func (h *TeamsHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // CreateTeam handles POST /teams
@@ -109,7 +109,7 @@ func (h *TeamsHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // GetTeam handles GET /teams/{team_id}
@@ -150,7 +150,7 @@ func (h *TeamsHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // UpdateTeam handles PATCH /teams/{team_id}
@@ -210,7 +210,7 @@ func (h *TeamsHandler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // DeleteTeam handles DELETE /teams/{team_id}

@@ -75,7 +75,7 @@ func (h *RolesHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // GetRole handles GET /roles/{role_id}
@@ -106,7 +106,7 @@ func (h *RolesHandler) GetRole(w http.ResponseWriter, r *http.Request) {
 	apiRole := dbRoleToAPI(role)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiRole)
+	_ = json.NewEncoder(w).Encode(apiRole)
 }
 
 // CreateRole handles POST /roles
@@ -148,7 +148,7 @@ func (h *RolesHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	apiRole := dbRoleToAPI(role)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(apiRole)
+	_ = json.NewEncoder(w).Encode(apiRole)
 }
 
 // UpdateRole handles PATCH /roles/{role_id}
@@ -208,7 +208,7 @@ func (h *RolesHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	apiRole := dbRoleToAPI(role)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiRole)
+	_ = json.NewEncoder(w).Encode(apiRole)
 }
 
 // DeleteRole handles DELETE /roles/{role_id}
@@ -240,7 +240,7 @@ func dbRoleToAPI(role db.Role) api.Role {
 	// Parse permissions JSON to string array
 	var permissions []string
 	if len(role.Permissions) > 0 {
-		json.Unmarshal(role.Permissions, &permissions)
+		_ = json.Unmarshal(role.Permissions, &permissions)
 	}
 
 	// Convert UUIDs

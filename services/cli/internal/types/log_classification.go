@@ -70,18 +70,18 @@ type ClassifiedLogEntry struct {
 
 // SessionSummary provides aggregate statistics for a session
 type SessionSummary struct {
-	SessionID    string        `json:"session_id"`
-	StartTime    time.Time     `json:"start_time"`
-	EndTime      *time.Time    `json:"end_time,omitempty"`
-	Duration     time.Duration `json:"duration,omitempty"`
-	Provider     LogProvider   `json:"provider"`
-	Model        string        `json:"model,omitempty"`
-	TokensInput  int           `json:"tokens_input"`
-	TokensOutput int           `json:"tokens_output"`
-	ToolCalls    int           `json:"tool_calls"`
+	SessionID    string         `json:"session_id"`
+	StartTime    time.Time      `json:"start_time"`
+	EndTime      *time.Time     `json:"end_time,omitempty"`
+	Duration     time.Duration  `json:"duration,omitempty"`
+	Provider     LogProvider    `json:"provider"`
+	Model        string         `json:"model,omitempty"`
+	TokensInput  int            `json:"tokens_input"`
+	TokensOutput int            `json:"tokens_output"`
+	ToolCalls    int            `json:"tool_calls"`
 	ToolsByName  map[string]int `json:"tools_by_name,omitempty"` // Tool name -> count
-	Errors       int           `json:"errors"`
-	CostEstimate float64       `json:"cost_estimate,omitempty"` // USD
+	Errors       int            `json:"errors"`
+	CostEstimate float64        `json:"cost_estimate,omitempty"` // USD
 }
 
 // LogParser defines the interface for parsing provider-specific API logs

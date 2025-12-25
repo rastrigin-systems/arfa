@@ -1,12 +1,12 @@
 # AI Agent Security Gateway
 
-**Vision**: Enterprise-grade visibility and control for AI coding agents, integrated with existing security infrastructure.
+**Vision**: Visibility and control for AI coding agents, integrated with existing security infrastructure.
 
 ---
 
 ## Executive Summary
 
-Arfa provides the missing security layer for AI coding agents. As enterprises adopt Claude Code, Cursor, and Copilot, security teams have zero visibility into what these agents actually do. Arfa captures every tool invocation, enforces policies, and forwards structured events to existing SIEM systems.
+Arfa provides the missing security layer for AI coding agents. As organizations adopt Claude Code, Cursor, and Copilot, security teams have zero visibility into what these agents actually do. Arfa captures every tool invocation, enforces policies, and forwards structured events to existing SIEM systems.
 
 **One-liner**: "See and control every tool your AI agents use. Export to your existing SIEM."
 
@@ -28,7 +28,7 @@ Arfa provides the missing security layer for AI coding agents. As enterprises ad
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ENTERPRISE SIEM                              │
+│                         SIEM                                    │
 │              (Kibana / Splunk / Datadog / etc.)                 │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
@@ -122,7 +122,7 @@ What we capture for every tool invocation:
 - [x] Conditional blocking (parameter-based rules)
 - [x] Audit-only mode (log without blocking)
 
-#### Needed for Enterprise
+#### Needed for Production
 - [ ] Policy inheritance (org → team → employee)
 - [ ] Time-based policies (block after hours)
 - [ ] Approval workflows (request access to blocked tool)
@@ -164,7 +164,7 @@ What we capture for every tool invocation:
 
 **Status**: ❌ Not implemented
 
-**Priority**: HIGH - This is the enterprise differentiator
+**Priority**: HIGH - This is the key differentiator
 
 #### Integration Options
 
@@ -320,7 +320,7 @@ arfa audit report --type compliance
 - [x] View logs (flat list)
 - [x] Basic filtering
 
-#### Needed for Enterprise
+#### Needed for Production
 - [ ] Real-time dashboard with metrics
 - [ ] Policy management UI
 - [ ] Destination configuration UI
@@ -328,7 +328,7 @@ arfa audit report --type compliance
 - [ ] Anomaly visualization
 - [ ] Compliance reports
 
-**Note**: Dashboard is secondary. Enterprises will use their SIEM. Our dashboard is for:
+**Note**: Dashboard is secondary. Organizations will use their SIEM. Our dashboard is for:
 1. Initial setup/configuration
 2. Quick debugging
 3. Companies without existing SIEM
@@ -361,8 +361,8 @@ arfa audit report --type compliance
 - [x] Log storage in PostgreSQL
 - [x] Basic CLI for employees
 
-### Phase 2: Enterprise Integration (Next)
-**Goal**: Connect to enterprise security infrastructure
+### Phase 2: External Integration (Next)
+**Goal**: Connect to existing security infrastructure
 
 - [ ] Webhook destination support
 - [ ] Configurable event forwarding
@@ -381,7 +381,7 @@ arfa audit report --type compliance
 - [ ] Anomaly detection rules
 
 ### Phase 4: Scale & Compliance
-**Goal**: Enterprise-ready deployment
+**Goal**: Production-ready deployment
 
 - [ ] High-availability deployment
 - [ ] On-premises option
@@ -400,7 +400,7 @@ arfa audit report --type compliance
 - [ ] <5s event delivery to SIEM
 
 ### Business
-- [ ] 3 enterprise pilots with SIEM integration
+- [ ] 3 pilot customers with SIEM integration
 - [ ] Security team approval (not just dev team)
 - [ ] Compliance checkbox for AI agent usage
 
@@ -453,7 +453,7 @@ arfa audit report --type compliance
 |------|-------|----------|
 | Starter | $15/user/month | 5 users, basic policies |
 | Team | $30/user/month | Unlimited users, SIEM export |
-| Enterprise | Custom | On-prem, SSO, SLA, support |
+| Professional | Custom | On-prem, SSO, SLA, support |
 
 ---
 
@@ -461,7 +461,7 @@ arfa audit report --type compliance
 
 ### Year 1: Prove Value (Current → +12 months)
 
-**Goal**: 10 paying enterprise customers
+**Goal**: 10 paying customers
 
 ```
 Q1: Foundation                          ← CURRENT
@@ -470,7 +470,7 @@ Q1: Foundation                          ← CURRENT
 ├── 3 pilot customers
 └── Basic alerting (Slack)
 
-Q2: Enterprise Ready
+Q2: Production Ready
 ├── SSO/SAML integration
 ├── Policy management UI
 ├── On-prem deployment option
@@ -508,7 +508,7 @@ Q4: Expand
 | Timeline | Moat |
 |----------|------|
 | **Today** | Proxy captures unique tool-level data |
-| **Year 1** | Enterprise integrations + policy library + customer lock-in |
+| **Year 1** | Integrations + policy library + customer lock-in |
 | **Year 2+** | Network effects + platform + largest AI behavior dataset |
 
 ---
@@ -521,7 +521,7 @@ Q4: Expand
 | **CrowdStrike** | Endpoint security + AI security |
 | **Palo Alto** | Expand security portfolio |
 | **Microsoft** | Secure Copilot ecosystem |
-| **Anthropic/OpenAI** | Enterprise trust layer |
+| **Anthropic/OpenAI** | Trust layer |
 
 **IPO path**: $50M+ ARR, category leader in AI security
 
@@ -534,7 +534,7 @@ Q4: Expand
 | 1 | **Webhook export** | Prove SIEM integration story | Not started |
 | 2 | **Kibana template** | Tangible demo artifact | Not started |
 | 3 | **Slack alerting** | Real-time policy violation alerts | Not started |
-| 4 | **3 pilot customers** | Validate with real enterprises | Not started |
+| 4 | **3 pilot customers** | Validate with real customers | Not started |
 
 ---
 

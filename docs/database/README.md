@@ -4,11 +4,10 @@
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [public.organizations](public.organizations.md) | 9 |  | BASE TABLE |
-| [public.subscriptions](public.subscriptions.md) | 10 |  | BASE TABLE |
+| [public.organizations](public.organizations.md) | 7 |  | BASE TABLE |
 | [public.teams](public.teams.md) | 6 |  | BASE TABLE |
 | [public.roles](public.roles.md) | 6 |  | BASE TABLE |
-| [public.employees](public.employees.md) | 14 |  | BASE TABLE |
+| [public.employees](public.employees.md) | 13 |  | BASE TABLE |
 | [public.sessions](public.sessions.md) | 7 |  | BASE TABLE |
 | [public.password_reset_tokens](public.password_reset_tokens.md) | 6 |  | BASE TABLE |
 | [public.policies](public.policies.md) | 7 |  | BASE TABLE |
@@ -16,13 +15,9 @@
 | [public.team_policies](public.team_policies.md) | 5 |  | BASE TABLE |
 | [public.employee_policies](public.employee_policies.md) | 5 |  | BASE TABLE |
 | [public.activity_logs](public.activity_logs.md) | 11 |  | BASE TABLE |
-| [public.usage_records](public.usage_records.md) | 11 |  | BASE TABLE |
 | [public.webhook_destinations](public.webhook_destinations.md) | 17 |  | BASE TABLE |
 | [public.webhook_deliveries](public.webhook_deliveries.md) | 12 |  | BASE TABLE |
-| [public.agent_requests](public.agent_requests.md) | 8 |  | BASE TABLE |
-| [public.approvals](public.approvals.md) | 7 |  | BASE TABLE |
 | [public.invitations](public.invitations.md) | 13 |  | BASE TABLE |
-| [public.v_pending_approvals](public.v_pending_approvals.md) | 10 | Pending approval requests with full requester context | VIEW |
 
 ## Stored procedures and functions
 
@@ -77,14 +72,12 @@
 | public.update_updated_at_column | trigger |  | FUNCTION |
 | public.generate_invitation_token | trigger |  | FUNCTION |
 | public.expire_old_invitations | void |  | FUNCTION |
-| public.get_effective_claude_token | record | emp_id uuid | FUNCTION |
 
 ## Relations
 
 ```mermaid
 erDiagram
 
-"public.subscriptions" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.teams" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.employees" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
@@ -101,15 +94,10 @@ erDiagram
 "public.employee_policies" }o--|| "public.policies" : "FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE"
 "public.activity_logs" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-"public.usage_records" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
-"public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.webhook_destinations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.webhook_destinations" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
 "public.webhook_deliveries" }o--|| "public.activity_logs" : "FOREIGN KEY (log_id) REFERENCES activity_logs(id) ON DELETE CASCADE"
 "public.webhook_deliveries" }o--|| "public.webhook_destinations" : "FOREIGN KEY (destination_id) REFERENCES webhook_destinations(id) ON DELETE CASCADE"
-"public.agent_requests" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
-"public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
-"public.approvals" }o--|| "public.agent_requests" : "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
 "public.invitations" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
 "public.invitations" }o--o| "public.teams" : "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL"
 "public.invitations" }o--|| "public.roles" : "FOREIGN KEY (role_id) REFERENCES roles(id)"
@@ -120,22 +108,8 @@ erDiagram
   uuid id
   varchar_255_ name
   varchar_100_ slug
-  varchar_50_ plan
   jsonb settings
   integer max_employees
-  text claude_api_token
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone updated_at
-}
-"public.subscriptions" {
-  uuid id
-  uuid org_id FK
-  varchar_50_ plan_type
-  numeric_10_2_ monthly_budget_usd
-  numeric_10_2_ current_spending_usd
-  timestamp_without_time_zone billing_period_start
-  timestamp_without_time_zone billing_period_end
-  varchar_50_ status
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }
@@ -165,7 +139,6 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
-  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -237,19 +210,6 @@ erDiagram
   jsonb payload
   timestamp_without_time_zone created_at
 }
-"public.usage_records" {
-  uuid id
-  uuid org_id FK
-  uuid employee_id FK
-  varchar_50_ resource_type
-  bigint quantity
-  numeric_10_4_ cost_usd
-  timestamp_without_time_zone period_start
-  timestamp_without_time_zone period_end
-  jsonb metadata
-  varchar_20_ token_source
-  timestamp_without_time_zone created_at
-}
 "public.webhook_destinations" {
   uuid id
   uuid org_id FK
@@ -283,25 +243,6 @@ erDiagram
   timestamp_without_time_zone created_at
   timestamp_without_time_zone delivered_at
 }
-"public.agent_requests" {
-  uuid id
-  uuid employee_id FK
-  varchar_50_ request_type
-  jsonb request_data
-  varchar_50_ status
-  text reason
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone resolved_at
-}
-"public.approvals" {
-  uuid id
-  uuid request_id FK
-  uuid approver_id FK
-  varchar_50_ status
-  text comment
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone resolved_at
-}
 "public.invitations" {
   uuid id
   uuid org_id FK
@@ -316,18 +257,6 @@ erDiagram
   timestamp_without_time_zone accepted_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-}
-"public.v_pending_approvals" {
-  uuid request_id
-  varchar_50_ request_type
-  jsonb request_data
-  text reason
-  timestamp_without_time_zone requested_at
-  uuid employee_id
-  varchar_255_ requester_name
-  varchar_255_ requester_email
-  varchar_255_ team_name
-  varchar_255_ org_name
 }
 ```
 

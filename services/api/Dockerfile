@@ -15,11 +15,12 @@ COPY go.work go.work.sum ./
 # Copy platform files (schema, API spec)
 COPY platform/ platform/
 
-# Copy service files
+# Copy all service modules referenced in go.work
 COPY services/api/ services/api/
+COPY services/cli/ services/cli/
 
-# Copy generated code (will be regenerated in dev)
-RUN mkdir -p generated
+# Copy generated code (or create empty module for workspace)
+COPY generated/ generated/
 
 # Build the server
 WORKDIR /app/services/api

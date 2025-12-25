@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-This guide covers debugging strategies, best practices, and common pitfalls when working with the Arfa Enterprise platform.
+This guide covers debugging strategies, best practices, and common pitfalls when working with the Arfa platform.
 
 ---
 

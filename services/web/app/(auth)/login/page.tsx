@@ -25,7 +25,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa</CardTitle>
           <CardDescription className="text-center">
             Sign in to manage your AI agent configurations
           </CardDescription>
@@ -40,7 +40,6 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="you@example.com"
-                defaultValue="alice@acme.com"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.email}
@@ -66,7 +65,6 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 placeholder="••••••••"
-                defaultValue="SecurePass123!"
                 required
                 aria-required="true"
                 aria-invalid={!!state.errors?.password}

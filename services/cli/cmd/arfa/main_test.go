@@ -35,8 +35,8 @@ func TestLoggerInitialization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable
 			if tt.envVar != "" {
-				os.Setenv("ARFA_NO_LOGGING", tt.envVar)
-				defer os.Unsetenv("ARFA_NO_LOGGING")
+				_ = os.Setenv("ARFA_NO_LOGGING", tt.envVar)
+				defer func() { _ = os.Unsetenv("ARFA_NO_LOGGING") }()
 			}
 
 			// Create logger config
@@ -73,7 +73,7 @@ func TestLoggerInitialization(t *testing.T) {
 
 			// Clean up
 			if logger != nil {
-				logger.Close()
+				_ = logger.Close()
 			}
 		})
 	}
@@ -90,7 +90,7 @@ func TestLoggerConfigDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create logger: %v", err)
 	}
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	if logger == nil {
 		t.Fatal("Expected logger to be created")
@@ -103,8 +103,8 @@ func TestLoggerConfigDefaults(t *testing.T) {
 
 // TestLoggerOptOut tests that ARFA_NO_LOGGING opt-out works
 func TestLoggerOptOut(t *testing.T) {
-	os.Setenv("ARFA_NO_LOGGING", "1")
-	defer os.Unsetenv("ARFA_NO_LOGGING")
+	_ = os.Setenv("ARFA_NO_LOGGING", "1")
+	defer func() { _ = os.Unsetenv("ARFA_NO_LOGGING") }()
 
 	config := &logging.Config{
 		Enabled:       true,

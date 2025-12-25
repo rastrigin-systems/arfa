@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
@@ -88,27 +87,22 @@ func (s *Service) LoginInteractive(ctx context.Context) error {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	// Parse expiration time
-	expiresAt, err := parseExpiresAt(loginResp.ExpiresAt)
-	if err != nil {
-		return fmt.Errorf("failed to parse token expiration: %w", err)
-	}
-
-	// Save config
+	// Save config (only platform_url and token - claims are in JWT)
 	cfg := &config.Config{
-		PlatformURL:  platformURL,
-		Token:        loginResp.Token,
-		TokenExpires: expiresAt,
-		EmployeeID:   loginResp.Employee.ID,
-		OrgID:        loginResp.Employee.OrgID,
+		PlatformURL: platformURL,
+		Token:       loginResp.Token,
 	}
 
 	if err := s.configManager.Save(cfg); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
 
+	// Parse claims from token to display employee info
+	claims, _ := cfg.GetClaims()
 	fmt.Println("✓ Authenticated successfully")
-	fmt.Printf("✓ Employee ID: %s\n", loginResp.Employee.ID)
+	if claims != nil {
+		fmt.Printf("✓ Employee ID: %s\n", claims.EmployeeID)
+	}
 
 	return nil
 }
@@ -124,19 +118,10 @@ func (s *Service) Login(ctx context.Context, platformURL, email, password string
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	// Parse expiration time
-	expiresAt, err := parseExpiresAt(loginResp.ExpiresAt)
-	if err != nil {
-		return fmt.Errorf("failed to parse token expiration: %w", err)
-	}
-
-	// Save config
+	// Save config (only platform_url and token - claims are in JWT)
 	cfg := &config.Config{
-		PlatformURL:  platformURL,
-		Token:        loginResp.Token,
-		TokenExpires: expiresAt,
-		EmployeeID:   loginResp.Employee.ID,
-		OrgID:        loginResp.Employee.OrgID,
+		PlatformURL: platformURL,
+		Token:       loginResp.Token,
 	}
 
 	if err := s.configManager.Save(cfg); err != nil {
@@ -196,26 +181,4 @@ func (s *Service) RequireAuth() (*config.Config, error) {
 	s.apiClient.SetBaseURL(cfg.PlatformURL)
 
 	return cfg, nil
-}
-
-// parseExpiresAt parses the expiration timestamp from the API.
-func parseExpiresAt(expiresAt string) (time.Time, error) {
-	if expiresAt == "" {
-		// If no expiration provided, default to 24 hours from now
-		return time.Now().Add(24 * time.Hour), nil
-	}
-
-	// Try RFC3339 format first
-	t, err := time.Parse(time.RFC3339, expiresAt)
-	if err == nil {
-		return t, nil
-	}
-
-	// Try RFC3339Nano format
-	t, err = time.Parse(time.RFC3339Nano, expiresAt)
-	if err == nil {
-		return t, nil
-	}
-
-	return time.Time{}, fmt.Errorf("invalid timestamp format: %s", expiresAt)
 }

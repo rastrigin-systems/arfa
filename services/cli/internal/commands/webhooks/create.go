@@ -86,24 +86,24 @@ Examples:
 			// Output as JSON if requested
 			if showJSON {
 				data, _ := json.MarshalIndent(webhook, "", "  ")
-				fmt.Fprintln(out, string(data))
+				_, _ = fmt.Fprintln(out, string(data))
 				return nil
 			}
 
 			// Display success message
-			fmt.Fprintln(out, "Webhook created successfully!")
-			fmt.Fprintln(out)
-			fmt.Fprintf(out, "  Name:        %s\n", webhook.Name)
-			fmt.Fprintf(out, "  ID:          %s\n", webhook.ID)
-			fmt.Fprintf(out, "  URL:         %s\n", webhook.URL)
-			fmt.Fprintf(out, "  Status:      %s\n", statusString(webhook.Enabled))
+			_, _ = fmt.Fprintln(out, "Webhook created successfully!")
+			_, _ = fmt.Fprintln(out)
+			_, _ = fmt.Fprintf(out, "  Name:        %s\n", webhook.Name)
+			_, _ = fmt.Fprintf(out, "  ID:          %s\n", webhook.ID)
+			_, _ = fmt.Fprintf(out, "  URL:         %s\n", webhook.URL)
+			_, _ = fmt.Fprintf(out, "  Status:      %s\n", statusString(webhook.Enabled))
 			if len(webhook.EventTypes) > 0 {
-				fmt.Fprintf(out, "  Event Types: %s\n", strings.Join(webhook.EventTypes, ", "))
+				_, _ = fmt.Fprintf(out, "  Event Types: %s\n", strings.Join(webhook.EventTypes, ", "))
 			} else {
-				fmt.Fprintf(out, "  Event Types: all\n")
+				_, _ = fmt.Fprintf(out, "  Event Types: all\n")
 			}
-			fmt.Fprintln(out)
-			fmt.Fprintln(out, "Test the webhook with: arfa webhooks test "+webhook.ID)
+			_, _ = fmt.Fprintln(out)
+			_, _ = fmt.Fprintln(out, "Test the webhook with: arfa webhooks test "+webhook.ID)
 
 			return nil
 		},
@@ -116,8 +116,8 @@ Examples:
 	cmd.Flags().StringSliceVar(&eventTypes, "event-types", nil, "Event types to forward (default: all)")
 	cmd.Flags().BoolVar(&showJSON, "json", false, "Output as JSON")
 
-	cmd.MarkFlagRequired("name")
-	cmd.MarkFlagRequired("url")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("url")
 
 	return cmd
 }

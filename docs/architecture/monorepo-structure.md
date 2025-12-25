@@ -1,6 +1,6 @@
 # Monorepo Structure Documentation
 
-**Arfa Enterprise Platform - Architecture Guide**
+**Arfa Platform - Architecture Guide**
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Arfa Enterprise uses a **Go workspace monorepo** architecture with **self-contained services** and **shared platform resources**.
+Arfa uses a **Go workspace monorepo** architecture with **self-contained services** and **shared platform resources**.
 
 ### Key Principles
 

@@ -37,7 +37,7 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	// Start session
 	sessionID := logger.StartSession()
@@ -51,7 +51,7 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 
 	err = p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	t.Logf("Proxy started on port %d", p.GetPort())
 
@@ -59,7 +59,7 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message": "hello from backend"}`))
+		_, _ = w.Write([]byte(`{"message": "hello from backend"}`))
 	}))
 	defer backend.Close()
 
@@ -76,7 +76,7 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 	// Make request through proxy
 	resp, err := client.Get(backend.URL)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -133,7 +133,7 @@ func TestProxyLoggingSessionPropagation(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	// Set client info before starting session so session_start has it
 	clientName := "claude-code"
@@ -147,7 +147,7 @@ func TestProxyLoggingSessionPropagation(t *testing.T) {
 
 	err = p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Log some events
 	logger.LogEvent("custom_event_1", "test", "content 1", nil)
@@ -187,7 +187,7 @@ func TestMultipleProxiesWithDifferentSessions(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("multi-proxy-client", "1.0.0")
@@ -205,7 +205,7 @@ func TestMultipleProxiesWithDifferentSessions(t *testing.T) {
 	// Clean up all proxies
 	defer func() {
 		for _, p := range proxies {
-			p.Stop()
+			_ = p.Stop()
 		}
 	}()
 
@@ -241,7 +241,7 @@ func TestMultipleProxiesWithDifferentSessions(t *testing.T) {
 			for j := 0; j < 5; j++ {
 				resp, err := client.Get(backend.URL)
 				if err == nil {
-					resp.Body.Close()
+					_ = resp.Body.Close()
 				}
 			}
 		}(p, i)
@@ -272,13 +272,13 @@ func TestProxyLoggingDisabled(t *testing.T) {
 
 	err := p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Create backend
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok": true}`))
+		_, _ = w.Write([]byte(`{"ok": true}`))
 	}))
 	defer backend.Close()
 
@@ -293,7 +293,7 @@ func TestProxyLoggingDisabled(t *testing.T) {
 	// Make request - should work without logging
 	resp, err := client.Get(backend.URL)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
@@ -318,7 +318,7 @@ func TestProxyLoggingWithLargePayload(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("large-payload-client", "1.0.25")
@@ -328,7 +328,7 @@ func TestProxyLoggingWithLargePayload(t *testing.T) {
 
 	err = p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Create backend with large response
 	largeResponse := make([]byte, 100*1024) // 100KB
@@ -339,7 +339,7 @@ func TestProxyLoggingWithLargePayload(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
-		w.Write(largeResponse)
+		_, _ = w.Write(largeResponse)
 	}))
 	defer backend.Close()
 
@@ -352,7 +352,7 @@ func TestProxyLoggingWithLargePayload(t *testing.T) {
 
 	resp, err := client.Get(backend.URL)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -381,7 +381,7 @@ func TestProxyStopDuringRequest(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("graceful-client", "1.0.25")
@@ -412,7 +412,7 @@ func TestProxyStopDuringRequest(t *testing.T) {
 	go func() {
 		resp, _ := client.Get(backend.URL)
 		if resp != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 		close(done)
 	}()
@@ -454,7 +454,7 @@ func TestProxyLoggingEventTypes(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("event-types-client", "1.0.25")
@@ -464,7 +464,7 @@ func TestProxyLoggingEventTypes(t *testing.T) {
 
 	err = p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	// Log different event types
 	logger.LogEvent("api_request", "proxy", "POST /v1/messages", map[string]interface{}{"method": "POST"})
@@ -511,7 +511,7 @@ func TestProxyRestartWithSameLogger(t *testing.T) {
 
 	logger, err := logging.NewLogger(loggerConfig, mockAPI)
 	require.NoError(t, err)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("restart-client", "1.0.25")
@@ -535,7 +535,7 @@ func TestProxyRestartWithSameLogger(t *testing.T) {
 
 	err = p2.Start()
 	require.NoError(t, err)
-	defer p2.Stop()
+	defer func() { _ = p2.Stop() }()
 
 	port2 := p2.GetPort()
 	t.Logf("Second proxy on port %d", port2)

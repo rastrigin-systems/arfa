@@ -124,7 +124,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // Logout handles employee logout requests
@@ -176,7 +176,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Step 5: Return success (TestLogout_Success validates this)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = json.NewEncoder(w).Encode(map[string]string{
 		"message": "Logged out successfully",
 	})
 }
@@ -236,7 +236,7 @@ func (h *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(employee)
+	_ = json.NewEncoder(w).Encode(employee)
 }
 
 // mapSessionDataToAPIEmployee converts GetSessionWithEmployeeRow to API Employee
@@ -447,7 +447,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // CheckSlugAvailability checks if an organization slug is available
@@ -486,7 +486,7 @@ func (h *AuthHandler) CheckSlugAvailability(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ForgotPassword handles password reset requests
@@ -518,7 +518,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		// Employee not found - return generic success (security)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+		_ = json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
 			Message: genericMessage,
 		})
 		return
@@ -538,7 +538,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error generating token: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+		_ = json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
 			Message: genericMessage,
 		})
 		return
@@ -556,7 +556,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error creating password reset token: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+		_ = json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
 			Message: genericMessage,
 		})
 		return
@@ -577,7 +577,7 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	// Return generic success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
+	_ = json.NewEncoder(w).Encode(api.ForgotPasswordResponse{
 		Message: genericMessage,
 	})
 }
@@ -612,7 +612,7 @@ func (h *AuthHandler) VerifyResetToken(w http.ResponseWriter, r *http.Request) {
 	// Step 4: Return success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(api.VerifyResetTokenResponse{
+	_ = json.NewEncoder(w).Encode(api.VerifyResetTokenResponse{
 		Valid: true,
 	})
 }
@@ -679,7 +679,7 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	// Step 7: Return success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(api.ResetPasswordResponse{
+	_ = json.NewEncoder(w).Encode(api.ResetPasswordResponse{
 		Message: "Password reset successful",
 	})
 }
@@ -692,7 +692,10 @@ func isValidOrgSlug(slug string) bool {
 	}
 
 	for _, ch := range slug {
-		if !((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-') {
+		isLowercase := ch >= 'a' && ch <= 'z'
+		isDigit := ch >= '0' && ch <= '9'
+		isHyphen := ch == '-'
+		if !isLowercase && !isDigit && !isHyphen {
 			return false
 		}
 	}
@@ -710,7 +713,6 @@ func mapOrganizationToAPI(org db.Organization) api.Organization {
 		Id:        &orgID,
 		Name:      org.Name,
 		Slug:      org.Slug,
-		Plan:      api.OrganizationPlan(org.Plan),
 		CreatedAt: &createdAt,
 		UpdatedAt: &updatedAt,
 	}
@@ -722,7 +724,7 @@ func mapOrganizationToAPI(org db.Organization) api.Organization {
 func writeError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(api.Error{
+	_ = json.NewEncoder(w).Encode(api.Error{
 		Error: message,
 	})
 }

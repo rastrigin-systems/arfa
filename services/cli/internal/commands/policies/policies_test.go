@@ -44,8 +44,8 @@ func TestNewListCommand(t *testing.T) {
 func TestListCommand_NoPoliciesFile(t *testing.T) {
 	tempDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -66,13 +66,13 @@ func TestListCommand_NoPoliciesFile(t *testing.T) {
 func TestListCommand_EmptyPolicies(t *testing.T) {
 	tempDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	// Create empty policies file
 	arfaDir := tempDir + "/.arfa"
-	os.MkdirAll(arfaDir, 0700)
-	os.WriteFile(arfaDir+"/policies.json", []byte(`{"policies":[],"version":1,"synced_at":"2024-01-15T10:00:00Z"}`), 0600)
+	_ = os.MkdirAll(arfaDir, 0700)
+	_ = os.WriteFile(arfaDir+"/policies.json", []byte(`{"policies":[],"version":1,"synced_at":"2024-01-15T10:00:00Z"}`), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -91,12 +91,12 @@ func TestListCommand_EmptyPolicies(t *testing.T) {
 func TestListCommand_WithPolicies(t *testing.T) {
 	tempDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	// Create policies file with some policies
 	arfaDir := tempDir + "/.arfa"
-	os.MkdirAll(arfaDir, 0700)
+	_ = os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked", "scope": "organization"},
@@ -105,7 +105,7 @@ func TestListCommand_WithPolicies(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
+	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -129,12 +129,12 @@ func TestListCommand_WithPolicies(t *testing.T) {
 func TestListCommand_WithAllFlag(t *testing.T) {
 	tempDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	// Create policies file with both deny and audit policies
 	arfaDir := tempDir + "/.arfa"
-	os.MkdirAll(arfaDir, 0700)
+	_ = os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
@@ -143,7 +143,7 @@ func TestListCommand_WithAllFlag(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
+	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -166,11 +166,11 @@ func TestListCommand_WithAllFlag(t *testing.T) {
 func TestListCommand_JSONOutput(t *testing.T) {
 	tempDir := t.TempDir()
 	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 	arfaDir := tempDir + "/.arfa"
-	os.MkdirAll(arfaDir, 0700)
+	_ = os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"}
@@ -178,7 +178,7 @@ func TestListCommand_JSONOutput(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
+	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)

@@ -124,7 +124,7 @@ func (h *ActivityLogsHandler) ListActivityLogs(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // dbActivityLogToResponse converts a database activity log to a response format
@@ -132,7 +132,7 @@ func dbActivityLogToResponse(log db.ActivityLog) ActivityLogResponse {
 	// Parse payload JSON
 	var payload map[string]interface{}
 	if len(log.Payload) > 0 {
-		json.Unmarshal(log.Payload, &payload)
+		_ = json.Unmarshal(log.Payload, &payload)
 	}
 
 	// Convert employee ID

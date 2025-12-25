@@ -6,7 +6,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.password_reset_tokens](public.password_reset_tokens.md) [public.tool_policies](public.tool_policies.md) [public.employee_policies](public.employee_policies.md) [public.activity_logs](public.activity_logs.md) [public.usage_records](public.usage_records.md) [public.webhook_destinations](public.webhook_destinations.md) [public.agent_requests](public.agent_requests.md) [public.approvals](public.approvals.md) [public.invitations](public.invitations.md) |  |  |
+| id | uuid | uuid_generate_v4() | false | [public.sessions](public.sessions.md) [public.password_reset_tokens](public.password_reset_tokens.md) [public.tool_policies](public.tool_policies.md) [public.employee_policies](public.employee_policies.md) [public.activity_logs](public.activity_logs.md) [public.webhook_destinations](public.webhook_destinations.md) [public.invitations](public.invitations.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | team_id | uuid |  | true |  | [public.teams](public.teams.md) |  |
 | role_id | uuid |  | false |  | [public.roles](public.roles.md) |  |
@@ -15,7 +15,6 @@
 | password_hash | varchar(255) |  | false |  |  |  |
 | status | varchar(50) | 'active'::character varying | false |  |  |  |
 | preferences | jsonb | '{}'::jsonb | false |  |  |  |
-| personal_claude_token | text |  | true |  |  |  |
 | last_login_at | timestamp without time zone |  | true |  |  |  |
 | created_at | timestamp without time zone | now() | false |  |  |  |
 | updated_at | timestamp without time zone | now() | false |  |  |  |
@@ -41,7 +40,6 @@
 | idx_employees_team_id | CREATE INDEX idx_employees_team_id ON public.employees USING btree (team_id) |
 | idx_employees_email | CREATE INDEX idx_employees_email ON public.employees USING btree (email) |
 | idx_employees_status | CREATE INDEX idx_employees_status ON public.employees USING btree (status) |
-| idx_employees_personal_token | CREATE INDEX idx_employees_personal_token ON public.employees USING btree (org_id, personal_claude_token) WHERE (personal_claude_token IS NOT NULL) |
 
 ## Triggers
 
@@ -60,10 +58,7 @@ erDiagram
 "public.tool_policies" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employee_policies" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.activity_logs" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-"public.usage_records" }o--o| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
 "public.webhook_destinations" }o--o| "public.employees" : "FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL"
-"public.agent_requests" }o--|| "public.employees" : "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
-"public.approvals" }o--|| "public.employees" : "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.invitations" }o--o| "public.employees" : "FOREIGN KEY (accepted_by) REFERENCES employees(id) ON DELETE SET NULL"
 "public.invitations" }o--|| "public.employees" : "FOREIGN KEY (inviter_id) REFERENCES employees(id) ON DELETE CASCADE"
 "public.employees" }o--|| "public.organizations" : "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
@@ -80,7 +75,6 @@ erDiagram
   varchar_255_ password_hash
   varchar_50_ status
   jsonb preferences
-  text personal_claude_token
   timestamp_without_time_zone last_login_at
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
@@ -136,19 +130,6 @@ erDiagram
   jsonb payload
   timestamp_without_time_zone created_at
 }
-"public.usage_records" {
-  uuid id
-  uuid org_id FK
-  uuid employee_id FK
-  varchar_50_ resource_type
-  bigint quantity
-  numeric_10_4_ cost_usd
-  timestamp_without_time_zone period_start
-  timestamp_without_time_zone period_end
-  jsonb metadata
-  varchar_20_ token_source
-  timestamp_without_time_zone created_at
-}
 "public.webhook_destinations" {
   uuid id
   uuid org_id FK
@@ -167,25 +148,6 @@ erDiagram
   uuid created_by FK
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
-}
-"public.agent_requests" {
-  uuid id
-  uuid employee_id FK
-  varchar_50_ request_type
-  jsonb request_data
-  varchar_50_ status
-  text reason
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone resolved_at
-}
-"public.approvals" {
-  uuid id
-  uuid request_id FK
-  uuid approver_id FK
-  varchar_50_ status
-  text comment
-  timestamp_without_time_zone created_at
-  timestamp_without_time_zone resolved_at
 }
 "public.invitations" {
   uuid id
@@ -206,10 +168,8 @@ erDiagram
   uuid id
   varchar_255_ name
   varchar_100_ slug
-  varchar_50_ plan
   jsonb settings
   integer max_employees
-  text claude_api_token
   timestamp_without_time_zone created_at
   timestamp_without_time_zone updated_at
 }

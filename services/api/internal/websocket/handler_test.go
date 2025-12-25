@@ -142,10 +142,10 @@ func TestClient_ReadPump(t *testing.T) {
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Close connection
-	conn.Close()
+	_ = conn.Close()
 
 	time.Sleep(50 * time.Millisecond)
 }
@@ -185,7 +185,7 @@ func TestClient_WritePump(t *testing.T) {
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Read the message
 	_, message, err := conn.ReadMessage()
@@ -232,7 +232,7 @@ func TestClient_Heartbeat(t *testing.T) {
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Read messages (to process control frames including pings)
 	go func() {

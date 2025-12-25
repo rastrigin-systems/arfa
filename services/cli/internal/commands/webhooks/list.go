@@ -50,25 +50,25 @@ Examples:
 			}
 
 			if len(resp.Destinations) == 0 {
-				fmt.Fprintln(out, "No webhook destinations configured.")
-				fmt.Fprintln(out)
-				fmt.Fprintln(out, "Create one with: arfa webhooks create --name <name> --url <url>")
+				_, _ = fmt.Fprintln(out, "No webhook destinations configured.")
+				_, _ = fmt.Fprintln(out)
+				_, _ = fmt.Fprintln(out, "Create one with: arfa webhooks create --name <name> --url <url>")
 				return nil
 			}
 
 			// Output as JSON if requested
 			if showJSON {
 				data, _ := json.MarshalIndent(resp, "", "  ")
-				fmt.Fprintln(out, string(data))
+				_, _ = fmt.Fprintln(out, string(data))
 				return nil
 			}
 
 			// Display table
-			fmt.Fprintf(out, "\nWebhook Destinations (%d):\n\n", len(resp.Destinations))
+			_, _ = fmt.Fprintf(out, "\nWebhook Destinations (%d):\n\n", len(resp.Destinations))
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tURL\tSTATUS\tEVENT TYPES")
-			fmt.Fprintln(w, "────\t───\t──────\t───────────")
+			_, _ = fmt.Fprintln(w, "NAME\tURL\tSTATUS\tEVENT TYPES")
+			_, _ = fmt.Fprintln(w, "────\t───\t──────\t───────────")
 
 			for _, webhook := range resp.Destinations {
 				status := "enabled"
@@ -89,11 +89,11 @@ Examples:
 					url = url[:37] + "..."
 				}
 
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", webhook.Name, url, status, eventTypes)
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", webhook.Name, url, status, eventTypes)
 			}
 
-			w.Flush()
-			fmt.Fprintln(out)
+			_ = w.Flush()
+			_, _ = fmt.Fprintln(out)
 
 			return nil
 		},

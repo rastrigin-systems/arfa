@@ -79,7 +79,7 @@ func (h *ToolPoliciesHandler) GetEmployeeToolPolicies(w http.ResponseWriter, r *
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // dbToolPolicyToAPI converts a database ToolPolicy to an API ToolPolicy

@@ -38,7 +38,7 @@ func TestLogin_Integration_Success(t *testing.T) {
 	// Integration Test Lesson: This is the KEY difference from unit tests!
 	// We're using a REAL database, not a mock.
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	ctx := testutil.GetContext(t)
 
@@ -160,7 +160,7 @@ func TestLogin_Integration_InvalidPassword(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test data
@@ -220,7 +220,7 @@ func TestLogin_Integration_SuspendedUser(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	org := testutil.CreateTestOrg(t, queries, ctx)
@@ -259,7 +259,7 @@ func TestLogin_Integration_SuspendedUser(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "suspended")
 }
 
@@ -274,7 +274,7 @@ func TestLogin_Integration_MultipleEmployees(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create TWO organizations
@@ -326,7 +326,7 @@ func TestLogin_Integration_MultipleEmployees(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response api.LoginResponse
-	json.Unmarshal(rec.Body.Bytes(), &response)
+	_ = json.Unmarshal(rec.Body.Bytes(), &response)
 
 	// Verify we got the CORRECT employee (from org1, not org2)
 	require.NotNil(t, response.Employee.Id)
@@ -347,7 +347,7 @@ func TestLogout_Integration_Success(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test data
@@ -386,7 +386,7 @@ func TestLogout_Integration_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var loginResponse api.LoginResponse
-	json.Unmarshal(rec.Body.Bytes(), &loginResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &loginResponse)
 	token := loginResponse.Token
 	tokenHash := auth.HashToken(token)
 
@@ -406,7 +406,7 @@ func TestLogout_Integration_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, logoutRec.Code)
 
 	var logoutResponse map[string]string
-	json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
+	_ = json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
 	assert.Equal(t, "Logged out successfully", logoutResponse["message"])
 
 	// Verify session was deleted from database
@@ -429,7 +429,7 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Setup test data
@@ -474,7 +474,7 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	assert.Equal(t, http.StatusOK, loginRec.Code, "Login should succeed")
 
 	var loginResponse api.LoginResponse
-	json.Unmarshal(loginRec.Body.Bytes(), &loginResponse)
+	_ = json.Unmarshal(loginRec.Body.Bytes(), &loginResponse)
 	token := loginResponse.Token
 
 	assert.NotEmpty(t, token, "Should receive token")
@@ -493,7 +493,7 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	assert.Equal(t, http.StatusOK, getMeRec1.Code, "GetMe should succeed with valid token")
 
 	var meResponse1 api.Employee
-	json.Unmarshal(getMeRec1.Body.Bytes(), &meResponse1)
+	_ = json.Unmarshal(getMeRec1.Body.Bytes(), &meResponse1)
 
 	assert.Equal(t, employee.ID.String(), meResponse1.Id.String())
 	assert.Equal(t, "fullflow@acme.com", string(meResponse1.Email))
@@ -513,7 +513,7 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	assert.Equal(t, http.StatusOK, logoutRec.Code, "Logout should succeed")
 
 	var logoutResponse map[string]string
-	json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
+	_ = json.Unmarshal(logoutRec.Body.Bytes(), &logoutResponse)
 	assert.Equal(t, "Logged out successfully", logoutResponse["message"])
 
 	// ========================================================================
@@ -529,7 +529,7 @@ func TestFullAuthFlow_Integration(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, getMeRec2.Code, "GetMe should fail after logout")
 
 	var errorResponse api.Error
-	json.Unmarshal(getMeRec2.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(getMeRec2.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "Session not found")
 
 	// Integration Test Lesson: Complete auth lifecycle verified!
@@ -557,7 +557,7 @@ func TestRegister_Integration_Success(t *testing.T) {
 
 	// === ARRANGE === Setup real database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	ctx := testutil.GetContext(t)
 
@@ -667,7 +667,7 @@ func TestRegister_Integration_DuplicateOrgSlug(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	ctx := testutil.GetContext(t)
 
@@ -705,7 +705,7 @@ func TestRegister_Integration_DuplicateOrgSlug(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "org_slug")
 }
 
@@ -716,7 +716,7 @@ func TestRegister_Integration_DuplicateEmail(t *testing.T) {
 	}
 
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	ctx := testutil.GetContext(t)
 
@@ -759,6 +759,6 @@ func TestRegister_Integration_DuplicateEmail(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, rec.Code)
 
 	var errorResponse api.Error
-	json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+	_ = json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 	assert.Contains(t, errorResponse.Error, "email")
 }
