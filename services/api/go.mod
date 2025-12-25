@@ -92,7 +92,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace (
-	github.com/rastrigin-systems/ubik-enterprise/generated => ../../generated
-	github.com/rastrigin-systems/ubik-enterprise/pkg/types => ../../pkg/types
-)
+replace github.com/rastrigin-systems/ubik-enterprise/generated => ../../generated
