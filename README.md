@@ -1,4 +1,8 @@
-# Arfa — AI Agent Security Platform
+<p align="center">
+  <img src="services/web/public/logo.svg" alt="arfa" width="200" />
+</p>
+
+# AI Agent Security Platform
 
 **Enterprise-grade security proxy for AI coding assistants**
 

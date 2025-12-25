@@ -1,6 +1,9 @@
 package config
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +13,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// createTestJWT creates a JWT token for testing with the given claims.
+// The signature is fake but that's fine since we don't validate signatures client-side.
+func createTestJWT(employeeID, orgID string, expiresAt time.Time) string {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+
+	claims := map[string]interface{}{
+		"employee_id": employeeID,
+		"org_id":      orgID,
+		"exp":         expiresAt.Unix(),
+	}
+	claimsJSON, _ := json.Marshal(claims)
+	payload := base64.RawURLEncoding.EncodeToString(claimsJSON)
+
+	// Fake signature - not validated client-side
+	signature := base64.RawURLEncoding.EncodeToString([]byte("fake-signature"))
+
+	return fmt.Sprintf("%s.%s.%s", header, payload, signature)
+}
+
 func TestManager_SaveAndLoad(t *testing.T) {
 	// Create temp directory for test
 	tempDir := t.TempDir()
@@ -18,13 +40,11 @@ func TestManager_SaveAndLoad(t *testing.T) {
 		configPath: filepath.Join(tempDir, "config.json"),
 	}
 
-	// Create config
+	// Create config with valid JWT
+	token := createTestJWT("employee-456", "org-789", time.Now().Add(24*time.Hour))
 	config := &Config{
-		PlatformURL:  "https://test.example.com",
-		Token:        "test-token-123",
-		EmployeeID:   "employee-456",
-		DefaultAgent: "claude-code",
-		LastSync:     time.Now(),
+		PlatformURL: "https://test.example.com",
+		Token:       token,
 	}
 
 	// Save config
@@ -38,9 +58,12 @@ func TestManager_SaveAndLoad(t *testing.T) {
 	// Verify
 	assert.Equal(t, config.PlatformURL, loaded.PlatformURL)
 	assert.Equal(t, config.Token, loaded.Token)
-	assert.Equal(t, config.EmployeeID, loaded.EmployeeID)
-	assert.Equal(t, config.DefaultAgent, loaded.DefaultAgent)
-	// Note: Time precision may vary due to JSON marshaling
+
+	// Verify claims can be extracted
+	claims, err := loaded.GetClaims()
+	require.NoError(t, err)
+	assert.Equal(t, "employee-456", claims.EmployeeID)
+	assert.Equal(t, "org-789", claims.OrgID)
 }
 
 func TestManager_LoadNonExistent(t *testing.T) {
@@ -54,7 +77,7 @@ func TestManager_LoadNonExistent(t *testing.T) {
 	loaded, err := m.Load()
 	require.NoError(t, err)
 	assert.Equal(t, "", loaded.Token)
-	assert.Equal(t, "", loaded.EmployeeID)
+	assert.Equal(t, "", loaded.PlatformURL)
 }
 
 func TestManager_IsAuthenticated(t *testing.T) {
@@ -69,11 +92,11 @@ func TestManager_IsAuthenticated(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, authenticated)
 
-	// Save authenticated config
+	// Save authenticated config with valid JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	config := &Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err = m.Save(config)
 	require.NoError(t, err)
@@ -84,6 +107,27 @@ func TestManager_IsAuthenticated(t *testing.T) {
 	assert.True(t, authenticated)
 }
 
+func TestManager_IsAuthenticated_InvalidToken(t *testing.T) {
+	tempDir := t.TempDir()
+
+	m := &Manager{
+		configPath: filepath.Join(tempDir, "config.json"),
+	}
+
+	// Save config with invalid token
+	config := &Config{
+		PlatformURL: "https://test.example.com",
+		Token:       "not-a-valid-jwt",
+	}
+	err := m.Save(config)
+	require.NoError(t, err)
+
+	// Should not be authenticated due to invalid token
+	authenticated, err := m.IsAuthenticated()
+	require.NoError(t, err)
+	assert.False(t, authenticated)
+}
+
 func TestManager_Clear(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -92,10 +136,10 @@ func TestManager_Clear(t *testing.T) {
 	}
 
 	// Save config
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	config := &Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err := m.Save(config)
 	require.NoError(t, err)
@@ -162,35 +206,36 @@ func TestManager_IsTokenValid(t *testing.T) {
 	}
 
 	t.Run("no token", func(t *testing.T) {
+		// Clear any existing config
+		m.Clear()
+
 		// No config saved
 		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.False(t, valid)
 	})
 
-	t.Run("valid token with no expiration", func(t *testing.T) {
-		// Save config without expiration time (backwards compatibility)
+	t.Run("invalid token format", func(t *testing.T) {
+		// Save config with invalid token
 		config := &Config{
 			PlatformURL: "https://test.example.com",
-			Token:       "test-token",
-			EmployeeID:  "employee-id",
+			Token:       "not-a-jwt",
 		}
 		err := m.Save(config)
 		require.NoError(t, err)
 
-		// Should be considered valid for backwards compatibility
+		// Should be invalid due to parse error
 		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
-		assert.True(t, valid)
+		assert.False(t, valid)
 	})
 
 	t.Run("valid token not expired", func(t *testing.T) {
 		// Save config with future expiration
+		token := createTestJWT("employee-id", "org-id", time.Now().Add(1*time.Hour))
 		config := &Config{
-			PlatformURL:  "https://test.example.com",
-			Token:        "test-token",
-			TokenExpires: time.Now().Add(1 * time.Hour),
-			EmployeeID:   "employee-id",
+			PlatformURL: "https://test.example.com",
+			Token:       token,
 		}
 		err := m.Save(config)
 		require.NoError(t, err)
@@ -203,11 +248,10 @@ func TestManager_IsTokenValid(t *testing.T) {
 
 	t.Run("expired token", func(t *testing.T) {
 		// Save config with past expiration
+		token := createTestJWT("employee-id", "org-id", time.Now().Add(-1*time.Hour))
 		config := &Config{
-			PlatformURL:  "https://test.example.com",
-			Token:        "test-token",
-			TokenExpires: time.Now().Add(-1 * time.Hour),
-			EmployeeID:   "employee-id",
+			PlatformURL: "https://test.example.com",
+			Token:       token,
 		}
 		err := m.Save(config)
 		require.NoError(t, err)
@@ -220,11 +264,10 @@ func TestManager_IsTokenValid(t *testing.T) {
 
 	t.Run("token expiring soon within buffer", func(t *testing.T) {
 		// Save config expiring in 3 minutes (within 5 minute buffer)
+		token := createTestJWT("employee-id", "org-id", time.Now().Add(3*time.Minute))
 		config := &Config{
-			PlatformURL:  "https://test.example.com",
-			Token:        "test-token",
-			TokenExpires: time.Now().Add(3 * time.Minute),
-			EmployeeID:   "employee-id",
+			PlatformURL: "https://test.example.com",
+			Token:       token,
 		}
 		err := m.Save(config)
 		require.NoError(t, err)
@@ -237,11 +280,10 @@ func TestManager_IsTokenValid(t *testing.T) {
 
 	t.Run("token expiring outside buffer", func(t *testing.T) {
 		// Save config expiring in 10 minutes (outside 5 minute buffer)
+		token := createTestJWT("employee-id", "org-id", time.Now().Add(10*time.Minute))
 		config := &Config{
-			PlatformURL:  "https://test.example.com",
-			Token:        "test-token",
-			TokenExpires: time.Now().Add(10 * time.Minute),
-			EmployeeID:   "employee-id",
+			PlatformURL: "https://test.example.com",
+			Token:       token,
 		}
 		err := m.Save(config)
 		require.NoError(t, err)
@@ -250,5 +292,53 @@ func TestManager_IsTokenValid(t *testing.T) {
 		valid, err := m.IsTokenValid()
 		require.NoError(t, err)
 		assert.True(t, valid)
+	})
+}
+
+func TestParseJWTClaims(t *testing.T) {
+	t.Run("valid token", func(t *testing.T) {
+		token := createTestJWT("emp-123", "org-456", time.Unix(1735689600, 0))
+		claims, err := ParseJWTClaims(token)
+		require.NoError(t, err)
+		assert.Equal(t, "emp-123", claims.EmployeeID)
+		assert.Equal(t, "org-456", claims.OrgID)
+		assert.Equal(t, time.Unix(1735689600, 0), claims.ExpiresAt)
+	})
+
+	t.Run("invalid format - not enough parts", func(t *testing.T) {
+		_, err := ParseJWTClaims("only.two")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid JWT format")
+	})
+
+	t.Run("invalid format - bad base64", func(t *testing.T) {
+		_, err := ParseJWTClaims("header.!!!invalid!!!.signature")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to decode JWT payload")
+	})
+
+	t.Run("invalid format - bad json", func(t *testing.T) {
+		badPayload := base64.RawURLEncoding.EncodeToString([]byte("not json"))
+		_, err := ParseJWTClaims("header." + badPayload + ".signature")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse JWT claims")
+	})
+}
+
+func TestConfig_GetClaims(t *testing.T) {
+	t.Run("with token", func(t *testing.T) {
+		token := createTestJWT("emp-123", "org-456", time.Now().Add(1*time.Hour))
+		cfg := &Config{Token: token}
+		claims, err := cfg.GetClaims()
+		require.NoError(t, err)
+		assert.Equal(t, "emp-123", claims.EmployeeID)
+		assert.Equal(t, "org-456", claims.OrgID)
+	})
+
+	t.Run("without token", func(t *testing.T) {
+		cfg := &Config{}
+		_, err := cfg.GetClaims()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no token stored")
 	})
 }

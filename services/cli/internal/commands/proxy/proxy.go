@@ -184,11 +184,13 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Get employee ID and org ID from config
+	// Get employee ID and org ID from JWT claims
 	var employeeID, orgID string
 	if cfg, _ := configManager.Load(); cfg != nil {
-		employeeID = cfg.EmployeeID
-		orgID = cfg.OrgID
+		if claims, err := cfg.GetClaims(); err == nil {
+			employeeID = claims.EmployeeID
+			orgID = claims.OrgID
+		}
 	}
 
 	// Get queue directory for log storage

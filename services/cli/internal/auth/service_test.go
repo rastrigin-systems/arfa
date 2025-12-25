@@ -2,11 +2,14 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
@@ -14,17 +17,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Helper function to create a mock login server.
+// createTestJWT creates a JWT token for testing with the given claims.
+// The signature is fake but that's fine since we don't validate signatures client-side.
+func createTestJWT(employeeID, orgID string, expiresAt time.Time) string {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+
+	claims := map[string]interface{}{
+		"employee_id": employeeID,
+		"org_id":      orgID,
+		"exp":         expiresAt.Unix(),
+	}
+	claimsJSON, _ := json.Marshal(claims)
+	payload := base64.RawURLEncoding.EncodeToString(claimsJSON)
+
+	// Fake signature - not validated client-side
+	signature := base64.RawURLEncoding.EncodeToString([]byte("fake-signature"))
+
+	return fmt.Sprintf("%s.%s.%s", header, payload, signature)
+}
+
+// Helper function to create a mock login server that returns a valid JWT.
 func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
 			var reqBody api.LoginRequest
 			json.NewDecoder(r.Body).Decode(&reqBody)
 
+			// Create a valid JWT token with employee/org claims
+			token := createTestJWT("emp-123", "org-456", time.Now().Add(24*time.Hour))
+
 			// Return success response
 			resp := api.LoginResponse{
-				Token:     "test-token-abc123",
-				ExpiresAt: "2024-12-31T23:59:59Z",
+				Token:     token,
+				ExpiresAt: time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 				Employee: api.LoginEmployeeInfo{
 					ID:    "emp-123",
 					OrgID: "org-456",
@@ -59,11 +84,11 @@ func TestService_IsAuthenticated(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, authenticated)
 
-	// Manually save config
+	// Manually save config with valid JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	cfg := &config.Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err = cm.Save(cfg)
 	require.NoError(t, err)
@@ -81,11 +106,11 @@ func TestService_Logout(t *testing.T) {
 	pc := api.NewClient("https://test.example.com")
 	authService := NewService(cm, pc)
 
-	// Save config
+	// Save config with valid JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	cfg := &config.Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err := cm.Save(cfg)
 	require.NoError(t, err)
@@ -107,11 +132,11 @@ func TestService_GetConfig(t *testing.T) {
 	pc := api.NewClient("https://test.example.com")
 	authService := NewService(cm, pc)
 
-	// Save config
+	// Save config with valid JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	expectedConfig := &config.Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err := cm.Save(expectedConfig)
 	require.NoError(t, err)
@@ -121,7 +146,12 @@ func TestService_GetConfig(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expectedConfig.PlatformURL, cfg.PlatformURL)
 	assert.Equal(t, expectedConfig.Token, cfg.Token)
-	assert.Equal(t, expectedConfig.EmployeeID, cfg.EmployeeID)
+
+	// Verify claims can be extracted
+	claims, err := cfg.GetClaims()
+	require.NoError(t, err)
+	assert.Equal(t, "employee-id", claims.EmployeeID)
+	assert.Equal(t, "org-id", claims.OrgID)
 }
 
 func TestService_RequireAuth_NotAuthenticated(t *testing.T) {
@@ -145,11 +175,11 @@ func TestService_RequireAuth_Authenticated(t *testing.T) {
 	pc := api.NewClient("https://test.example.com")
 	authService := NewService(cm, pc)
 
-	// Save config
+	// Save config with valid JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(24*time.Hour))
 	expectedConfig := &config.Config{
 		PlatformURL: "https://test.example.com",
-		Token:       "test-token",
-		EmployeeID:  "employee-id",
+		Token:       token,
 	}
 	err := cm.Save(expectedConfig)
 	require.NoError(t, err)
@@ -163,6 +193,29 @@ func TestService_RequireAuth_Authenticated(t *testing.T) {
 	// Verify platform client was updated
 	assert.Equal(t, expectedConfig.Token, pc.Token())
 	assert.Equal(t, expectedConfig.PlatformURL, pc.BaseURL())
+}
+
+func TestService_RequireAuth_ExpiredToken(t *testing.T) {
+	tempDir := t.TempDir()
+
+	cm := config.NewManagerWithPath(filepath.Join(tempDir, "config.json"))
+	pc := api.NewClient("https://test.example.com")
+	authService := NewService(cm, pc)
+
+	// Save config with expired JWT
+	token := createTestJWT("employee-id", "org-id", time.Now().Add(-1*time.Hour))
+	cfg := &config.Config{
+		PlatformURL: "https://test.example.com",
+		Token:       token,
+	}
+	err := cm.Save(cfg)
+	require.NoError(t, err)
+
+	// RequireAuth should fail with expired token
+	resultCfg, err := authService.RequireAuth()
+	assert.Error(t, err)
+	assert.Nil(t, resultCfg)
+	assert.Contains(t, err.Error(), "expired")
 }
 
 func TestService_Login_Success(t *testing.T) {
@@ -186,8 +239,13 @@ func TestService_Login_Success(t *testing.T) {
 	cfg, err := cm.Load()
 	require.NoError(t, err)
 	assert.Equal(t, server.URL, cfg.PlatformURL)
-	assert.Equal(t, "test-token-abc123", cfg.Token)
-	assert.Equal(t, "emp-123", cfg.EmployeeID)
+	assert.NotEmpty(t, cfg.Token)
+
+	// Verify claims can be extracted from saved token
+	claims, err := cfg.GetClaims()
+	require.NoError(t, err)
+	assert.Equal(t, "emp-123", claims.EmployeeID)
+	assert.Equal(t, "org-456", claims.OrgID)
 }
 
 func TestService_Login_InvalidCredentials(t *testing.T) {
@@ -212,47 +270,4 @@ func TestService_Login_InvalidCredentials(t *testing.T) {
 	cfg, err := cm.Load()
 	require.NoError(t, err) // Load returns empty config, not error
 	assert.Empty(t, cfg.Token)
-	assert.Empty(t, cfg.EmployeeID)
-}
-
-func TestParseExpiresAt(t *testing.T) {
-	tests := []struct {
-		name      string
-		input     string
-		wantErr   bool
-		checkFunc func(t *testing.T, result interface{})
-	}{
-		{
-			name:    "empty string defaults to 24 hours",
-			input:   "",
-			wantErr: false,
-		},
-		{
-			name:    "RFC3339 format",
-			input:   "2024-12-31T23:59:59Z",
-			wantErr: false,
-		},
-		{
-			name:    "RFC3339Nano format",
-			input:   "2024-12-31T23:59:59.123456789Z",
-			wantErr: false,
-		},
-		{
-			name:    "invalid format",
-			input:   "not-a-date",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseExpiresAt(tt.input)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.False(t, result.IsZero())
-			}
-		})
-	}
 }

@@ -43,7 +43,11 @@ func NewStatusCommand(c *container.Container) *cobra.Command {
 
 			fmt.Println("Status: Authenticated")
 			fmt.Printf("Platform:       %s\n", config.PlatformURL)
-			fmt.Printf("Employee ID:    %s\n", config.EmployeeID)
+
+			// Get claims from JWT
+			if claims, err := config.GetClaims(); err == nil {
+				fmt.Printf("Employee ID:    %s\n", claims.EmployeeID)
+			}
 
 			fmt.Println("\nRun 'arfa proxy start' to start the security proxy.")
 

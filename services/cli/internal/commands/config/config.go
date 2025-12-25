@@ -30,11 +30,14 @@ func NewConfigCommand(c *container.Container) *cobra.Command {
 			}
 
 			fmt.Printf("Platform URL:   %s\n", config.PlatformURL)
-			fmt.Printf("Employee ID:    %s\n", config.EmployeeID)
-			fmt.Printf("Default Agent:  %s\n", config.DefaultAgent)
-			if !config.LastSync.IsZero() {
-				fmt.Printf("Last Sync:      %s\n", config.LastSync.Format("2006-01-02 15:04:05"))
+
+			// Get claims from JWT
+			if claims, err := config.GetClaims(); err == nil {
+				fmt.Printf("Employee ID:    %s\n", claims.EmployeeID)
+				fmt.Printf("Org ID:         %s\n", claims.OrgID)
+				fmt.Printf("Token Expires:  %s\n", claims.ExpiresAt.Format("2006-01-02 15:04:05"))
 			}
+
 			fmt.Printf("\nConfig Path:    %s\n", configManager.GetConfigPath())
 
 			return nil

@@ -2,7 +2,9 @@ package auth_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,10 +20,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// createTestJWT creates a JWT token for testing with the given claims.
+// The signature is fake but that's fine since we don't validate signatures client-side.
+func createTestJWT(employeeID, orgID string, expiresAt time.Time) string {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+
+	claims := map[string]interface{}{
+		"employee_id": employeeID,
+		"org_id":      orgID,
+		"exp":         expiresAt.Unix(),
+	}
+	claimsJSON, _ := json.Marshal(claims)
+	payload := base64.RawURLEncoding.EncodeToString(claimsJSON)
+
+	// Fake signature - not validated client-side
+	signature := base64.RawURLEncoding.EncodeToString([]byte("fake-signature"))
+
+	return fmt.Sprintf("%s.%s.%s", header, payload, signature)
+}
+
 // TestLoginCommand_NonInteractive tests the login command with email/password flags.
 func TestLoginCommand_NonInteractive(t *testing.T) {
 	t.Run("success - valid credentials", func(t *testing.T) {
-		// Setup mock server
+		// Setup mock server that returns a valid JWT
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
 				// Verify request body
@@ -31,9 +52,12 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 				assert.Equal(t, "test@example.com", req.Email)
 				assert.Equal(t, "password123", req.Password)
 
+				// Create a valid JWT token with employee/org claims
+				token := createTestJWT("emp-123", "org-456", time.Now().Add(24*time.Hour))
+
 				// Return success response
 				resp := api.LoginResponse{
-					Token:     "test-token-12345",
+					Token:     token,
 					ExpiresAt: time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 					Employee: api.LoginEmployeeInfo{
 						ID:       "emp-123",
@@ -86,9 +110,14 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 		err = json.Unmarshal(configData, &cfg)
 		require.NoError(t, err)
 
-		assert.Equal(t, "test-token-12345", cfg.Token)
-		assert.Equal(t, "emp-123", cfg.EmployeeID)
+		assert.NotEmpty(t, cfg.Token)
 		assert.Equal(t, server.URL, cfg.PlatformURL)
+
+		// Verify claims can be extracted from the saved token
+		claims, err := cfg.GetClaims()
+		require.NoError(t, err)
+		assert.Equal(t, "emp-123", claims.EmployeeID)
+		assert.Equal(t, "org-456", claims.OrgID)
 	})
 
 	t.Run("failure - invalid credentials", func(t *testing.T) {
@@ -174,8 +203,11 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	// Setup mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/login" {
+			// Create a valid JWT token with employee/org claims
+			token := createTestJWT("emp-123", "org-456", time.Now().Add(24*time.Hour))
+
 			resp := api.LoginResponse{
-				Token:     "new-token",
+				Token:     token,
 				ExpiresAt: time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 				Employee: api.LoginEmployeeInfo{
 					ID:    "emp-123",
@@ -195,10 +227,11 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "config.json")
 
+	// Create old config with valid JWT to test that it gets replaced
+	oldToken := createTestJWT("old-emp", "old-org", time.Now().Add(24*time.Hour))
 	existingConfig := config.Config{
 		PlatformURL: server.URL,
-		Token:       "old-token",
-		EmployeeID:  "old-emp",
+		Token:       oldToken,
 	}
 	configData, _ := json.Marshal(existingConfig)
 	os.WriteFile(configPath, configData, 0600)
@@ -229,8 +262,13 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	var updatedConfig config.Config
 	json.Unmarshal(updatedData, &updatedConfig)
 
-	assert.Equal(t, "new-token", updatedConfig.Token)
+	assert.NotEmpty(t, updatedConfig.Token)
 	assert.Equal(t, server.URL, updatedConfig.PlatformURL)
+
+	// Verify claims from new token
+	claims, err := updatedConfig.GetClaims()
+	require.NoError(t, err)
+	assert.Equal(t, "emp-123", claims.EmployeeID)
 }
 
 // TestLoginCommand_Flags tests that command flags are properly configured.
