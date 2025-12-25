@@ -98,7 +98,7 @@ Arfa's transparent proxy architecture lets you:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/arfa.git
+git clone https://github.com/rastrigin-systems/arfa.git
 cd arfa
 
 # Start PostgreSQL with Docker
@@ -411,8 +411,8 @@ Individual services may have their own licenses - check each service directory.
 ## Support
 
 - 📖 **Documentation**: [docs/](docs/)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/arfa/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/arfa/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rastrigin-systems/arfa/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/rastrigin-systems/arfa/discussions)
 - 📧 **Email**: support@arfa.dev
 
 ---

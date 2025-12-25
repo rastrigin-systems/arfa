@@ -1,4 +1,4 @@
-module github.com/rastrigin-systems/ubik-enterprise
+module github.com/rastrigin-systems/arfa
 
 go 1.24.5
 

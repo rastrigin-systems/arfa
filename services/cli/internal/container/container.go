@@ -118,7 +118,7 @@ func (c *Container) APIClient() (*api.Client, error) {
 
 	platformURL := c.platformURL
 	if platformURL == "" {
-		platformURL = config.DefaultPlatformURL
+		platformURL = config.DefaultPlatformURL()
 	}
 
 	c.apiClient = api.NewClient(platformURL)

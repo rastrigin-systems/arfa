@@ -250,24 +250,24 @@ func TestHub_BroadcastFilterByAgentID(t *testing.T) {
 	defer hub.Stop()
 
 	orgID := uuid.New()
-	agentID := uuid.New()
+	employeeID := uuid.New()
 
 	client := &Client{
 		orgID: orgID,
 		send:  make(chan []byte, 256),
 		filters: ClientFilters{
-			AgentID: agentID,
+			EmployeeID: employeeID,
 		},
 	}
 
 	hub.register <- client
 	time.Sleep(10 * time.Millisecond)
 
-	// Broadcast log matching agent filter
+	// Broadcast log matching employee filter
 	logMsg := LogMessage{
 		ID:            uuid.New(),
 		OrgID:         orgID,
-		AgentID:       agentID,
+		EmployeeID:    employeeID,
 		EventType:     "agent.invoked",
 		EventCategory: "agent",
 		Content:       "Agent log",

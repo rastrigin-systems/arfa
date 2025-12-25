@@ -1,4 +1,4 @@
-module github.com/rastrigin-systems/ubik-enterprise/services/api
+module github.com/rastrigin-systems/arfa/services/api
 
 go 1.24.5
 
@@ -13,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/testcontainers/testcontainers-go v0.33.0
-	github.com/rastrigin-systems/ubik-enterprise/generated v0.0.0
+	github.com/rastrigin-systems/arfa/generated v0.0.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.41.0
 	golang.org/x/time v0.14.0
@@ -92,4 +92,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/rastrigin-systems/ubik-enterprise/generated => ../../generated
+replace github.com/rastrigin-systems/arfa/generated => ../../generated

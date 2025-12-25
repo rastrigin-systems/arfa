@@ -9,8 +9,14 @@ import (
 	"time"
 )
 
-// DefaultPlatformURL is the default platform API URL.
-const DefaultPlatformURL = "https://api.arfa.io"
+// DefaultPlatformURL returns the platform API URL.
+// Can be overridden via ARFA_API_URL environment variable.
+func DefaultPlatformURL() string {
+	if url := os.Getenv("ARFA_API_URL"); url != "" {
+		return url
+	}
+	return "http://localhost:8080"
+}
 
 // Config represents the local CLI configuration stored in ~/.arfa/config.json.
 type Config struct {

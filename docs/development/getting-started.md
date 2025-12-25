@@ -26,7 +26,7 @@ Quick reference for common commands, operations, and configurations.
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/arfa.git
+git clone https://github.com/rastrigin-systems/arfa.git
 cd arfa
 
 # Start database

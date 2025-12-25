@@ -28,12 +28,12 @@ func NewLoginCommand(c *container.Container) *cobra.Command {
 			}
 
 			// If no URL provided via flag, check config for saved platform URL
-			if platformURL == "" || platformURL == config.DefaultPlatformURL {
+			if platformURL == "" || platformURL == config.DefaultPlatformURL() {
 				cfg, err := configManager.Load()
 				if err == nil && cfg.PlatformURL != "" {
 					platformURL = cfg.PlatformURL
 				} else if platformURL == "" {
-					platformURL = config.DefaultPlatformURL
+					platformURL = config.DefaultPlatformURL()
 				}
 			}
 
@@ -65,7 +65,7 @@ func NewLoginCommand(c *container.Container) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or "+config.DefaultPlatformURL+")")
+	cmd.Flags().StringVar(&platformURL, "url", "", "Platform URL (defaults to saved URL or ARFA_API_URL env var)")
 	cmd.Flags().StringVar(&email, "email", "", "Email address")
 	cmd.Flags().StringVar(&password, "password", "", "Password")
 
