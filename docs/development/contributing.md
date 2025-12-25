@@ -48,7 +48,7 @@ cd services/api && go run cmd/server/main.go
 ```
 platform/database/schema.sql → PostgreSQL → tbls → schema.json, README.md, public.*.md, schema.svg
                              ↓         ↓
-                            sqlc      Python script → ERD.md (user-friendly)
+                            sqlc      Python script → schema-reference.md (user-friendly)
                              ↓
                        generated/db/*.go
 
@@ -59,9 +59,9 @@ Services (services/*/) → Use generated types
 ```
 
 **ERD Documentation:**
-- `make generate-erd` creates **both** README.md (tbls) and ERD.md (custom script)
+- `make generate-erd` creates **both** README.md (tbls) and schema-reference.md (custom script)
 - README.md = Technical reference with table index
-- ERD.md = User-friendly overview with categories
+- schema-reference.md = User-friendly overview with categories
 
 ---
 
@@ -445,4 +445,4 @@ ubik-enterprise/
 **See also:**
 - [docs/TESTING.md](./TESTING.md) - Complete testing guide
 - [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Next endpoints to build
-- [docs/ERD.md](./ERD.md) - Database schema reference
+- [docs/database/schema-reference.md](./schema-reference.md) - Database schema reference

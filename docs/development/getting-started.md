@@ -42,7 +42,7 @@ make generate
 make test
 
 # View documentation
-open docs/ERD.md
+open docs/database/schema-reference.md
 ```
 
 **See:** [QUICKSTART.md](./QUICKSTART.md) for detailed setup guide.

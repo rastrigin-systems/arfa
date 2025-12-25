@@ -194,6 +194,6 @@ Complex authorization rules like:
 
 ## Related Documentation
 
-- [Database Schema](./ERD.md) - roles and employees tables
+- [Database Schema](./schema-reference.md) - roles and employees tables
 - [API Spec](../platform/api-spec/spec.yaml) - endpoint definitions
 - [Testing Guide](./TESTING.md) - writing authorization tests

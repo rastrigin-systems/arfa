@@ -70,7 +70,7 @@ Complete guide to the Ubik Enterprise database schema, operations, and best prac
 - `v_employee_mcps` - Employee MCPs with catalog details
 - `v_pending_approvals` - Pending approval requests with context
 
-**See [ERD.md](./ERD.md) for complete visual schema and relationships.**
+**See [schema-reference.md](./schema-reference.md) for complete visual schema and relationships.**
 
 ---
 
@@ -297,11 +297,10 @@ migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_p
 make generate-erd
 
 # This creates:
-# - docs/ERD.md (user-friendly overview)
-# - docs/README.md (technical reference)
-# - docs/schema.json (machine-readable)
-# - docs/schema.svg (visual diagram)
-# - docs/public.*.md (per-table docs)
+# - docs/database/schema-reference.md (complete reference with ERD)
+# - docs/database/schema.json (machine-readable)
+# - docs/database/schema.svg (visual diagram)
+# - docs/database/tables/*.md (per-table docs)
 ```
 
 **Update after schema changes:**
@@ -486,7 +485,7 @@ docker exec -i ubik-postgres pg_restore -U ubik -d ubik backup.dump
 
 ## See Also
 
-- [ERD.md](./ERD.md) - Visual schema and relationships
+- [schema-reference.md](./schema-reference.md) - Complete schema reference with ERD
 - [README.md](./README.md) - Technical reference (auto-generated)
 - [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Command reference
 - [MCP_SERVERS.md](./MCP_SERVERS.md) - PostgreSQL MCP setup

@@ -80,7 +80,7 @@ ubik-enterprise/                       # Monorepo Root
 │
 ├── docs/                              # Documentation
 │   ├── architecture/                  # Architecture docs (this file)
-│   ├── ERD.md                         # Database schema (auto-generated)
+│   ├── schema-reference.md                         # Database schema (auto-generated)
 │   ├── README.md                      # Table index (auto-generated)
 │   └── public.*.md                    # Per-table docs (auto-generated)
 │
@@ -138,7 +138,7 @@ Auto-generated, never manually edited:
 
 Comprehensive documentation:
 - **architecture/**: System design docs (this file)
-- **ERD.md**: User-friendly database schema (auto-generated)
+- **schema-reference.md**: User-friendly database schema (auto-generated)
 - **README.md**: Technical database reference (auto-generated)
 - **public.*.md**: Per-table documentation (auto-generated)
 - **TESTING.md, DEVELOPMENT.md, etc.**: Development guides
@@ -258,7 +258,7 @@ platform/database/schema.sql
 PostgreSQL (via make db-reset)
     ↓
     ├─→ tbls → docs/README.md, docs/public.*.md, schema.json
-    ├─→ Python script → docs/ERD.md (user-friendly)
+    ├─→ Python script → docs/database/schema-reference.md (user-friendly)
     └─→ sqlc → generated/db/*.go (type-safe queries)
 ```
 
