@@ -1,6 +1,6 @@
-# Testing Guide — Pivot Enterprise Platform
+# Testing Guide — Arfa Platform
 
-**Complete guide to testing in the Pivot platform**
+**Complete guide to testing in the Arfa platform**
 
 ---
 

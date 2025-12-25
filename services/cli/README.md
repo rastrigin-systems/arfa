@@ -1,12 +1,12 @@
 # Arfa CLI Service
 
-**Command-line interface for syncing AI agent configurations from the Arfa Enterprise platform.**
+**Command-line interface for syncing AI agent configurations from the Arfa platform.**
 
 ---
 
 ## Overview
 
-The Arfa CLI is a self-contained Go application that allows employees to sync their AI agent configurations from the centralized Arfa Enterprise platform to their local development machines. It handles authentication, configuration synchronization, Docker container management, and provides an interactive mode for easy use.
+The Arfa CLI is a self-contained Go application that allows employees to sync their AI agent configurations from the centralized Arfa platform to their local development machines. It handles authentication, configuration synchronization, Docker container management, and provides an interactive mode for easy use.
 
 ### Key Features
 
@@ -172,7 +172,7 @@ arfa agents  # Shows container status
 
 - Go 1.24+
 - Docker (for integration tests and MCP containers)
-- Access to Arfa Enterprise platform
+- Access to Arfa platform
 
 ### Setup
 
@@ -505,4 +505,4 @@ Compressed:   ~3MB
 
 **Version**: 0.2.0
 **Last Updated**: 2025-11-13
-**Maintained by**: Arfa Enterprise Team
+**Maintained by**: Arfa Team

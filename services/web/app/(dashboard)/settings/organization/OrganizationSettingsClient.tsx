@@ -90,9 +90,9 @@ export function OrganizationSettingsClient({ organization }: OrganizationSetting
 
   const getPlanBadgeVariant = (plan: string) => {
     switch (plan) {
-      case 'enterprise':
-        return 'default';
       case 'professional':
+        return 'default';
+      case 'team':
         return 'secondary';
       default:
         return 'outline';

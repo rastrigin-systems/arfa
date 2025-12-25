@@ -176,7 +176,7 @@ func (p *ControlledProxy) generateCA() error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			Organization: []string{"Arfa Enterprise Proxy CA"},
+			Organization: []string{"Arfa Proxy CA"},
 			CommonName:   "arfa-proxy-ca",
 		},
 		NotBefore:             time.Now(),

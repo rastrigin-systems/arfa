@@ -65,7 +65,7 @@ func TestService_GetAgent(t *testing.T) {
 			Name:        "Claude Code",
 			Provider:    "anthropic",
 			Description: "AI coding assistant",
-			PricingTier: "enterprise",
+			PricingTier: "professional",
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -83,7 +83,7 @@ func TestService_GetAgent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Claude Code", agent.Name)
 	assert.Equal(t, "anthropic", agent.Provider)
-	assert.Equal(t, "enterprise", agent.PricingTier)
+	assert.Equal(t, "professional", agent.PricingTier)
 }
 
 func TestService_ListEmployeeAgentConfigs(t *testing.T) {

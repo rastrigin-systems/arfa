@@ -94,7 +94,7 @@ db-reset:
 # =============================================================================
 # Code Generation
 # =============================================================================
-
+// TODO: this looks hacky, what is the reason behind it?
 generate-setup:
 	@mkdir -p $(GENERATED_DIR)
 	@if [ ! -f $(GENERATED_DIR)/go.mod ]; then \

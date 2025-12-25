@@ -36,7 +36,7 @@ describe('SignupPage', () => {
     it('should render signup page with title', () => {
       render(<SignupPage />);
 
-      expect(screen.getByText('Arfa Enterprise')).toBeInTheDocument();
+      expect(screen.getByText('Arfa')).toBeInTheDocument();
       expect(screen.getByText(/Create Your Organization Account/i)).toBeInTheDocument();
     });
 

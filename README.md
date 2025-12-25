@@ -4,7 +4,7 @@
 
 # AI Agent Security Platform
 
-**Enterprise-grade security proxy for AI coding assistants**
+**Security proxy for AI coding assistants**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24%2B-blue)](https://go.dev/)
@@ -14,7 +14,7 @@
 
 ## What is Arfa?
 
-Arfa is a **security-first platform** that gives enterprises **visibility and control** over AI coding assistant usage (Claude Code, Cursor, Windsurf, GitHub Copilot).
+Arfa is a **security-first platform** that gives organizations **visibility and control** over AI coding assistant usage (Claude Code, Cursor, Windsurf, GitHub Copilot).
 
 Instead of blocking AI tools, Arfa enables **safe adoption** through:
 - 🔒 **Transparent HTTPS Proxy** - Intercept and log all AI agent API traffic
@@ -82,7 +82,7 @@ Arfa's transparent proxy architecture lets you:
 **Deployment modes:**
 - 🔧 **CI Pipelines** - Temporary proxy via `eval $(arfa proxy env)`
 - 💻 **Local Development** - Per-session proxy in terminal
-- 🏢 **Enterprise** - Permanent system-wide setup via PAC file + auto-start daemon
+- 🏢 **System-wide** - Permanent system-wide setup via PAC file + auto-start daemon
 
 **Supported AI Clients:**
 - Claude Code, Cursor, Continue, Windsurf, Aider, GitHub Copilot
@@ -434,4 +434,4 @@ Built with:
 
 ---
 
-**Made with ❤️ for enterprises embracing AI coding assistants safely**
+**Made with ❤️ for teams embracing AI coding assistants safely**

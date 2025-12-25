@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { DebugLogsClient } from './DebugLogsClient';
 
 export const metadata = {
-  title: 'Debug Logs | Arfa Enterprise',
+  title: 'Debug Logs | Arfa',
   description: 'Raw JSON view of activity logs for debugging',
 };
 

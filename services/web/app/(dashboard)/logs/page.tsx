@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { LogsClient } from './LogsClient';
 
 export const metadata = {
-  title: 'Activity Logs | Arfa Enterprise',
+  title: 'Activity Logs | Arfa',
   description: 'View and search agent activity logs in real-time',
 };
 

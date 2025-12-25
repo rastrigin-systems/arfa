@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-Complete guide to the Arfa Enterprise database schema, operations, and best practices.
+Complete guide to the Arfa database schema, operations, and best practices.
 
 ---
 

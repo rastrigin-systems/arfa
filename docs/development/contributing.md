@@ -1,4 +1,4 @@
-# Development Guide — Pivot Enterprise Platform
+# Development Guide — Arfa Platform
 
 **Essential development workflow and best practices**
 

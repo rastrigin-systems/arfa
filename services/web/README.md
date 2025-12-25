@@ -1,6 +1,6 @@
 # Arfa Web UI
 
-Next.js 14 admin panel for the Arfa Enterprise platform.
+Next.js 14 admin panel for the Arfa platform.
 
 ## Overview
 

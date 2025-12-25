@@ -1,6 +1,6 @@
 # Arfa API Server
 
-Multi-tenant REST API for the Arfa Enterprise platform.
+Multi-tenant REST API for the Arfa platform.
 
 ## Overview
 
@@ -328,4 +328,4 @@ cd ../.. && make generate
 
 ## License
 
-Proprietary - Arfa Enterprise Platform
+MIT License - Arfa Platform
