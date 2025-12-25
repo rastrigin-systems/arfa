@@ -361,12 +361,11 @@ $$ LANGUAGE plpgsql;
 -- SEED DATA
 -- ============================================================================
 
--- Roles
+-- Default Roles (required for signup)
 INSERT INTO roles (name, description, permissions) VALUES
-    ('admin', 'Full system access', '["*"]'),
-    ('manager', 'Team management', '["teams:manage", "policies:manage"]'),
-    ('developer', 'Standard access', '["logs:view", "policies:view"]'),
-    ('viewer', 'Read-only access', '["logs:view"]');
+    ('admin', 'Full administrative access', '["*"]'),
+    ('member', 'Standard employee access', '["logs:read", "policies:read"]'),
+    ('viewer', 'Read-only access', '["logs:read"]');
 
 -- Default Policies
 INSERT INTO policies (name, type, rules, severity) VALUES

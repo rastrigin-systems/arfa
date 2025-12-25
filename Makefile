@@ -1,4 +1,4 @@
-.PHONY: help install-tools install-cli uninstall-cli db-up db-down db-reset generate-erd generate-api generate-db generate-mocks generate test test-unit test-integration test-cli test-web dev dev-down dev-logs dev-rebuild dev-api dev-web run-server build build-cli build-server build-web docker-build docker-test docker-run lint lint-api lint-cli format clean
+.PHONY: help install-tools install-cli uninstall-cli db-up db-up-dev db-down db-reset generate-erd generate-api generate-db generate-mocks generate test test-unit test-integration test-cli test-web dev dev-down dev-logs dev-rebuild dev-api dev-web run-server build build-cli build-server build-web docker-build docker-test docker-run lint lint-api lint-cli format clean
 
 # Default target
 help:
@@ -6,7 +6,8 @@ help:
 	@echo ""
 	@echo "Setup:"
 	@echo "  make install-tools    Install code generation tools (oapi-codegen, sqlc, tbls, mockgen)"
-	@echo "  make db-up            Start PostgreSQL with Docker Compose"
+	@echo "  make db-up            Start PostgreSQL (clean, no seed data)"
+	@echo "  make db-up-dev        Start PostgreSQL with demo seed data"
 	@echo "  make db-down          Stop PostgreSQL"
 	@echo "  make db-reset         Reset database (drop and recreate)"
 	@echo ""
@@ -76,11 +77,18 @@ install-tools:
 # =============================================================================
 
 db-up:
-	@echo "Starting PostgreSQL..."
+	@echo "Starting PostgreSQL (clean, no seed data)..."
 	docker-compose up -d postgres
 	@sleep 3
 	@docker-compose exec -T postgres pg_isready -U arfa || (sleep 5 && docker-compose exec -T postgres pg_isready -U arfa)
 	@echo "PostgreSQL ready at localhost:5432"
+
+db-up-dev:
+	@echo "Starting PostgreSQL with demo seed data..."
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres
+	@sleep 3
+	@docker-compose exec -T postgres pg_isready -U arfa || (sleep 5 && docker-compose exec -T postgres pg_isready -U arfa)
+	@echo "PostgreSQL ready at localhost:5432 (with seed data)"
 
 db-down:
 	docker-compose down
@@ -234,10 +242,8 @@ uninstall-cli:
 
 docker-build:
 	cd services/api && $(MAKE) docker-build
-
 docker-test: docker-build
 	cd services/api && $(MAKE) docker-test
-
 docker-run: docker-build
 	cd services/api && $(MAKE) docker-run
 
