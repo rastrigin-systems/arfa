@@ -176,8 +176,8 @@ func TestNewManager(t *testing.T) {
 	// Test with temp HOME
 	tempDir := t.TempDir()
 	oldHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", oldHome)
+	_ = os.Setenv("HOME", tempDir)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	m, err := NewManager()
 	require.NoError(t, err)
@@ -207,7 +207,7 @@ func TestManager_IsTokenValid(t *testing.T) {
 
 	t.Run("no token", func(t *testing.T) {
 		// Clear any existing config
-		m.Clear()
+		_ = m.Clear()
 
 		// No config saved
 		valid, err := m.IsTokenValid()

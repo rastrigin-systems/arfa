@@ -41,7 +41,7 @@ func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string)
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
 			var reqBody api.LoginRequest
-			json.NewDecoder(r.Body).Decode(&reqBody)
+			_ = json.NewDecoder(r.Body).Decode(&reqBody)
 
 			// Create a valid JWT token with employee/org claims
 			token := createTestJWT("emp-123", "org-456", time.Now().Add(24*time.Hour))
@@ -57,7 +57,7 @@ func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string)
 				},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -68,7 +68,7 @@ func createMockLoginServer(t *testing.T, expectedEmail, expectedPassword string)
 func createMockLoginServerWithError(t *testing.T, statusCode int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
-		w.Write([]byte(`{"error":"Authentication failed"}`))
+		_, _ = w.Write([]byte(`{"error":"Authentication failed"}`))
 	}))
 }
 

@@ -33,7 +33,7 @@ func TestClient_Login(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -55,7 +55,7 @@ func TestClient_Login(t *testing.T) {
 func TestClient_Login_InvalidCredentials(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error":"Invalid credentials"}`))
+		_, _ = w.Write([]byte(`{"error":"Invalid credentials"}`))
 	}))
 	defer server.Close()
 
@@ -81,7 +81,7 @@ func TestClient_GetEmployeeInfo(t *testing.T) {
 			OrgID:    "org-456",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -102,7 +102,7 @@ func TestClient_GetEmployeeInfo(t *testing.T) {
 func TestClient_GetEmployeeInfo_NotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error":"Employee not found"}`))
+		_, _ = w.Write([]byte(`{"error":"Employee not found"}`))
 	}))
 	defer server.Close()
 
@@ -151,7 +151,7 @@ func TestClient_GetResolvedAgentConfigs(t *testing.T) {
 			Total: 2,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -182,7 +182,7 @@ func TestClient_GetResolvedAgentConfigs_Empty(t *testing.T) {
 			Total:   0,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -286,7 +286,7 @@ func TestClient_GetClaudeCodeConfig(t *testing.T) {
 			SyncedAt: "2024-11-02T12:00:00Z",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -334,7 +334,7 @@ func TestClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 			SyncedAt:   "2024-11-02T12:00:00Z",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -354,7 +354,7 @@ func TestClient_GetClaudeCodeConfig_Empty(t *testing.T) {
 func TestClient_GetClaudeCodeConfig_Unauthorized(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error":"Unauthorized"}`))
+		_, _ = w.Write([]byte(`{"error":"Unauthorized"}`))
 	}))
 	defer server.Close()
 
@@ -403,7 +403,7 @@ func TestClient_GetMyResolvedAgentConfigs(t *testing.T) {
 			Total: 2,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -434,7 +434,7 @@ func TestClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 			Total:   0,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -451,7 +451,7 @@ func TestClient_GetMyResolvedAgentConfigs_Empty(t *testing.T) {
 func TestClient_GetMyResolvedAgentConfigs_Unauthorized(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error":"Unauthorized"}`))
+		_, _ = w.Write([]byte(`{"error":"Unauthorized"}`))
 	}))
 	defer server.Close()
 

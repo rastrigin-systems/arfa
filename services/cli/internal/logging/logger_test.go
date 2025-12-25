@@ -56,7 +56,7 @@ func TestNewLogger(t *testing.T) {
 				require.NoError(t, err, "no error expected")
 
 				// Clean up
-				logger.Close()
+				_ = logger.Close()
 			}
 		})
 	}
@@ -65,8 +65,8 @@ func TestNewLogger(t *testing.T) {
 // TestLoggerDisabledViaEnv tests ARFA_NO_LOGGING environment variable
 func TestLoggerDisabledViaEnv(t *testing.T) {
 	// Set environment variable
-	os.Setenv("ARFA_NO_LOGGING", "1")
-	defer os.Unsetenv("ARFA_NO_LOGGING")
+	_ = os.Setenv("ARFA_NO_LOGGING", "1")
+	defer func() { _ = os.Unsetenv("ARFA_NO_LOGGING") }()
 
 	config := &Config{
 		Enabled:       true, // explicitly enabled in config
@@ -96,7 +96,7 @@ func TestSessionTracking(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	// Start session
 	sessionID := logger.StartSession()
@@ -153,7 +153,7 @@ func TestLogEvent(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 
@@ -199,7 +199,7 @@ func TestBatchSending(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 
@@ -261,7 +261,7 @@ func TestOfflineQueue(t *testing.T) {
 	time.Sleep(400 * time.Millisecond)
 
 	// Close logger
-	logger.Close()
+	_ = logger.Close()
 
 	// Verify queue files exist
 	files, err := os.ReadDir(queueDir)
@@ -286,7 +286,7 @@ func TestOfflineQueue(t *testing.T) {
 	// Give time for queue processing
 	time.Sleep(500 * time.Millisecond)
 
-	logger2.Close()
+	_ = logger2.Close()
 
 	// Verify logs were sent
 	mockAPI.mu.Lock()
@@ -315,7 +315,7 @@ func TestRetryWithBackoff(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 	logger.LogEvent("test_event", "test", "test retry", nil)
@@ -349,7 +349,7 @@ func TestConcurrentLogging(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 
@@ -404,7 +404,7 @@ func TestLoggerClose(t *testing.T) {
 	logger.LogEvent("test_event", "test", "test before close", nil)
 
 	// Close should flush pending logs
-	logger.Close()
+	_ = logger.Close()
 
 	mockAPI.mu.Lock()
 	logCount := len(mockAPI.logs)
@@ -441,7 +441,7 @@ func TestQueuePersistence(t *testing.T) {
 	logger1.Flush()
 	// Wait for retries: 50ms + 100ms + queue = ~300ms
 	time.Sleep(400 * time.Millisecond)
-	logger1.Close()
+	_ = logger1.Close()
 
 	// Verify queue file exists
 	files, err := os.ReadDir(queueDir)
@@ -460,7 +460,7 @@ func TestQueuePersistence(t *testing.T) {
 
 	// Give time to process queue
 	time.Sleep(500 * time.Millisecond)
-	logger2.Close()
+	_ = logger2.Close()
 
 	// Verify persisted log was sent
 	mockAPI2.mu.Lock()
@@ -493,7 +493,7 @@ func TestSetClient(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 	logger.SetClient("claude-code", "1.0.25")
@@ -571,7 +571,7 @@ func TestLogClassified(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	sessionID := logger.StartSession()
 	logger.SetClient("claude-code", "1.0.25")
@@ -631,7 +631,7 @@ func TestLogClassifiedWithToolUse(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 	logger.SetClient("claude-code", "1.0.25")
@@ -686,7 +686,7 @@ func TestGetClassifiedLogs(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 	logger.SetClient("claude-code", "1.0.25")
@@ -743,7 +743,7 @@ func TestLogClassifiedWithError(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession()
 
@@ -790,7 +790,7 @@ func TestLogEventWithSessionOverride(t *testing.T) {
 	logger, err := NewLogger(config, mockAPI)
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Close()
+	defer func() { _ = logger.Close() }()
 
 	logger.StartSession() // This creates a session ID
 	logger.SetClient("original-client", "1.0.0")

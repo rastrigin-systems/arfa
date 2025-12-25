@@ -67,7 +67,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 					},
 				}
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(resp)
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 			http.NotFound(w, r)
@@ -83,7 +83,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 			container.WithConfigPath(configPath),
 			container.WithPlatformURL(server.URL),
 		)
-		defer c.Close()
+		defer func() { _ = c.Close() }()
 
 		// Create command
 		cmd := auth.NewLoginCommand(c)
@@ -125,7 +125,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/v1/auth/login" && r.Method == "POST" {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error": "invalid credentials"}`))
+				_, _ = w.Write([]byte(`{"error": "invalid credentials"}`))
 				return
 			}
 			http.NotFound(w, r)
@@ -141,7 +141,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 			container.WithConfigPath(configPath),
 			container.WithPlatformURL(server.URL),
 		)
-		defer c.Close()
+		defer func() { _ = c.Close() }()
 
 		// Create and execute command
 		cmd := auth.NewLoginCommand(c)
@@ -165,7 +165,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 		// Setup mock server that returns 500
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error": "internal server error"}`))
+			_, _ = w.Write([]byte(`{"error": "internal server error"}`))
 		}))
 		defer server.Close()
 
@@ -178,7 +178,7 @@ func TestLoginCommand_NonInteractive(t *testing.T) {
 			container.WithConfigPath(configPath),
 			container.WithPlatformURL(server.URL),
 		)
-		defer c.Close()
+		defer func() { _ = c.Close() }()
 
 		// Create and execute command
 		cmd := auth.NewLoginCommand(c)
@@ -216,7 +216,7 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 				},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 			return
 		}
 		http.NotFound(w, r)
@@ -234,13 +234,13 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 		Token:       oldToken,
 	}
 	configData, _ := json.Marshal(existingConfig)
-	os.WriteFile(configPath, configData, 0600)
+	_ = os.WriteFile(configPath, configData, 0600)
 
 	// Create container (no platform URL set - should use saved one)
 	c := container.New(
 		container.WithConfigPath(configPath),
 	)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	// Create command without --url flag
 	cmd := auth.NewLoginCommand(c)
@@ -260,7 +260,7 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 	// Verify config was updated with new token
 	updatedData, _ := os.ReadFile(configPath)
 	var updatedConfig config.Config
-	json.Unmarshal(updatedData, &updatedConfig)
+	_ = json.Unmarshal(updatedData, &updatedConfig)
 
 	assert.NotEmpty(t, updatedConfig.Token)
 	assert.Equal(t, server.URL, updatedConfig.PlatformURL)
@@ -274,7 +274,7 @@ func TestLoginCommand_UsesExistingPlatformURL(t *testing.T) {
 // TestLoginCommand_Flags tests that command flags are properly configured.
 func TestLoginCommand_Flags(t *testing.T) {
 	c := container.New()
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	cmd := auth.NewLoginCommand(c)
 

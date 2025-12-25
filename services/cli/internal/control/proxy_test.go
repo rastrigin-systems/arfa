@@ -51,7 +51,7 @@ func TestControlledProxy_StartStop(t *testing.T) {
 	// Start proxy
 	err = proxy.Start()
 	require.NoError(t, err)
-	defer proxy.Stop()
+	defer func() { _ = proxy.Stop() }()
 
 	// Should have a valid port
 	assert.GreaterOrEqual(t, proxy.GetPort(), MinPort)
@@ -85,7 +85,7 @@ func TestControlledProxy_RequestsFlowThroughPipeline(t *testing.T) {
 	proxy := NewControlledProxy(svc)
 	err = proxy.Start()
 	require.NoError(t, err)
-	defer proxy.Stop()
+	defer func() { _ = proxy.Stop() }()
 
 	// Create HTTP client that uses proxy
 	proxyURL := proxy.GetProxyURL()
@@ -153,7 +153,7 @@ func TestControlledProxy_MultiplePortAllocation(t *testing.T) {
 
 	defer func() {
 		for _, p := range proxies {
-			p.Stop()
+			_ = p.Stop()
 		}
 	}()
 
@@ -201,7 +201,7 @@ func TestControlledProxy_GracefulShutdown(t *testing.T) {
 	newProxy := NewControlledProxy(svc)
 	err = newProxy.Start()
 	require.NoError(t, err)
-	defer newProxy.Stop()
+	defer func() { _ = newProxy.Stop() }()
 
 	// Might get same or different port depending on timing
 	assert.GreaterOrEqual(t, newProxy.GetPort(), MinPort)

@@ -53,7 +53,7 @@ func (h *ToolCallLoggerHandler) HandleResponse(ctx *HandlerContext, res *http.Re
 
 	// Read entire body
 	bodyBytes, err := io.ReadAll(res.Body)
-	res.Body.Close()
+	_ = res.Body.Close()
 	if err != nil {
 		// Restore empty body and continue
 		res.Body = io.NopCloser(bytes.NewReader([]byte{}))
@@ -68,15 +68,6 @@ func (h *ToolCallLoggerHandler) HandleResponse(ctx *HandlerContext, res *http.Re
 	res.ContentLength = int64(len(bodyBytes))
 
 	return ContinueResult()
-}
-
-// toolCallEntry represents a parsed tool call for logging.
-type toolCallEntry struct {
-	ToolName    string
-	ToolID      string
-	ToolInput   map[string]interface{}
-	Blocked     bool
-	BlockReason string
 }
 
 // pendingToolCall tracks tool_use blocks during SSE parsing.

@@ -55,14 +55,14 @@ Examples:
 
 			cache, err := loadPoliciesCache()
 			if err != nil {
-				fmt.Fprintln(out, "No tool policies found.")
-				fmt.Fprintln(out, "\nRun 'arfa sync' to fetch policies from the platform.")
+				_, _ = fmt.Fprintln(out, "No tool policies found.")
+				_, _ = fmt.Fprintln(out, "\nRun 'arfa sync' to fetch policies from the platform.")
 				return nil
 			}
 
 			if len(cache.Policies) == 0 {
-				fmt.Fprintln(out, "No tool policies are configured for your account.")
-				fmt.Fprintln(out, "\nThis means all LLM tools are allowed.")
+				_, _ = fmt.Fprintln(out, "No tool policies are configured for your account.")
+				_, _ = fmt.Fprintln(out, "\nThis means all LLM tools are allowed.")
 				return nil
 			}
 
@@ -73,8 +73,8 @@ Examples:
 			}
 
 			if len(policies) == 0 {
-				fmt.Fprintln(out, "No blocking policies found.")
-				fmt.Fprintln(out, "\nUse --all to see audit-only policies.")
+				_, _ = fmt.Fprintln(out, "No blocking policies found.")
+				_, _ = fmt.Fprintln(out, "\nUse --all to see audit-only policies.")
 				return nil
 			}
 
@@ -90,7 +90,7 @@ Examples:
 					SyncedAt: cache.SyncedAt,
 				}
 				data, _ := json.MarshalIndent(output, "", "  ")
-				fmt.Fprintln(out, string(data))
+				_, _ = fmt.Fprintln(out, string(data))
 				return nil
 			}
 
@@ -99,14 +99,14 @@ Examples:
 			if showAll {
 				title = "Tool Policies (All)"
 			}
-			fmt.Fprintf(out, "\n%s (%d):\n\n", title, len(policies))
+			_, _ = fmt.Fprintf(out, "\n%s (%d):\n\n", title, len(policies))
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "TOOL\tACTION\tSCOPE\tREASON")
-			fmt.Fprintln(w, "────\t──────\t─────\t──────")
+			_, _ = fmt.Fprintln(w, "TOOL\tACTION\tSCOPE\tREASON")
+			_, _ = fmt.Fprintln(w, "────\t──────\t─────\t──────")
 
 			for _, policy := range policies {
-				action := string(policy.Action)
+				var action string
 				if policy.Action == api.ToolPolicyActionDeny {
 					action = "DENY"
 				} else {
@@ -126,15 +126,15 @@ Examples:
 					}
 				}
 
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", policy.ToolName, action, scope, reason)
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", policy.ToolName, action, scope, reason)
 			}
 
-			w.Flush()
+			_ = w.Flush()
 
-			fmt.Fprintf(out, "\nSynced at: %s (version %d)\n", cache.SyncedAt, cache.Version)
-			fmt.Fprintln(out)
-			fmt.Fprintln(out, "Run 'arfa sync' to refresh policies from the platform.")
-			fmt.Fprintln(out)
+			_, _ = fmt.Fprintf(out, "\nSynced at: %s (version %d)\n", cache.SyncedAt, cache.Version)
+			_, _ = fmt.Fprintln(out)
+			_, _ = fmt.Fprintln(out, "Run 'arfa sync' to refresh policies from the platform.")
+			_, _ = fmt.Fprintln(out)
 
 			return nil
 		},

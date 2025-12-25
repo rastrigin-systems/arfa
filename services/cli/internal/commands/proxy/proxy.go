@@ -234,7 +234,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	if err := controlProxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
-	defer controlProxy.Stop()
+	defer func() { _ = controlProxy.Stop() }()
 
 	port := controlProxy.GetPort()
 	certPath := controlProxy.GetCertPath()

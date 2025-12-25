@@ -37,7 +37,7 @@ func TestService_ListAgents(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -69,7 +69,7 @@ func TestService_GetAgent(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(agent)
+		_ = json.NewEncoder(w).Encode(agent)
 	}))
 	defer server.Close()
 
@@ -106,7 +106,7 @@ func TestService_ListEmployeeAgentConfigs(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 

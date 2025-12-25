@@ -338,7 +338,7 @@ func (h *PolicyHandler) HandleResponse(ctx *HandlerContext, res *http.Response) 
 
 	// Read entire body
 	bodyBytes, err := io.ReadAll(res.Body)
-	res.Body.Close()
+	_ = res.Body.Close()
 	if err != nil {
 		return ErrorResult(err)
 	}
@@ -475,7 +475,7 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 						reason := blockedIndices[stop.Index]
 						input := blocked.inputJSON.String()
 						var toolInput map[string]interface{}
-						json.Unmarshal([]byte(input), &toolInput)
+						_ = json.Unmarshal([]byte(input), &toolInput)
 						h.logBlockedTool(ctx, blocked.toolName, blocked.toolID, reason, toolInput)
 						delete(blockedBlocks, stop.Index)
 						shouldWrite = false // Skip stop for blocked tools (we already wrote it)
@@ -488,15 +488,15 @@ func (h *PolicyHandler) processSSEStream(ctx *HandlerContext, data []byte) ([]by
 							h.writeBlockedEvent(&output, pending.index, pending.toolName, reason)
 							// Log blocked tool with parsed input
 							var toolInput map[string]interface{}
-							json.Unmarshal([]byte(input), &toolInput)
+							_ = json.Unmarshal([]byte(input), &toolInput)
 							h.logBlockedTool(ctx, pending.toolName, pending.toolID, reason, toolInput)
 						} else {
 							// No conditions matched - flush buffered events
-							output.WriteString("event: ")
-							output.WriteString(pending.startEvent)
-							output.WriteString("\n")
-							output.WriteString("data: ")
-							output.WriteString(pending.startData)
+							_, _ = output.WriteString("event: ")
+							_, _ = output.WriteString(pending.startEvent)
+							_, _ = output.WriteString("\n")
+							_, _ = output.WriteString("data: ")
+							_, _ = output.WriteString(pending.startData)
 							output.WriteString("\n\n")
 							for _, event := range pending.deltaEvents {
 								output.WriteString(event)

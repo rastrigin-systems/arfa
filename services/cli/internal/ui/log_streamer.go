@@ -78,7 +78,7 @@ func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to WebSocket: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	fmt.Println("✓ Connected to log stream. Press Ctrl+C to exit.")
 
