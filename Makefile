@@ -47,7 +47,7 @@ help:
 DATABASE_URL ?= postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
 SERVER_PORT ?= 8080
 GENERATED_DIR = generated
-DOCS_DIR = docs
+DOCS_DIR = docs/database
 
 # Install code generation tools
 install-tools:
