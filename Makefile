@@ -245,7 +245,8 @@ docker-run: docker-build
 
 lint:
 	@echo "Running linters..."
-	golangci-lint run ./...
+	cd services/api && golangci-lint run ./...
+	cd services/cli && golangci-lint run ./...
 
 format:
 	@echo "Formatting code..."

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/logging"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/spf13/cobra"
 )
 

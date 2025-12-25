@@ -32,7 +32,7 @@ coverage:
 # Build Docker image
 docker-build:
 	@echo "🐳 Building Docker image..."
-	cd ../.. && docker build -f services/api/build/Dockerfile.gcp -t arfa-api:latest .
+	cd ../.. && docker build -f services/api/Dockerfile -t arfa-api:latest .
 
 # Test Docker image locally
 docker-test: docker-build
@@ -53,7 +53,7 @@ docker-run: docker-build
 # Deploy to GCP Cloud Run
 deploy:
 	@echo "🚀 Deploying to GCP Cloud Run..."
-	cd ../.. && gcloud builds submit --config services/api/build/cloudbuild.yaml
+	cd ../.. && gcloud builds submit --config services/api/cloudbuild.yaml
 
 # Clean build artifacts
 clean:

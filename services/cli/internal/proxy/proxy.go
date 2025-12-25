@@ -30,8 +30,8 @@ import (
 	"time"
 
 	"github.com/elazarl/goproxy"
-	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 )
 
 const (

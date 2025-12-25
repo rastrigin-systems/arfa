@@ -22,12 +22,6 @@
           "nullable": false
         },
         {
-          "name": "plan",
-          "type": "varchar(50)",
-          "nullable": false,
-          "default": "'starter'::character varying"
-        },
-        {
           "name": "settings",
           "type": "jsonb",
           "nullable": false,
@@ -38,11 +32,6 @@
           "type": "integer",
           "nullable": false,
           "default": "10"
-        },
-        {
-          "name": "claude_api_token",
-          "type": "text",
-          "nullable": true
         },
         {
           "name": "created_at",
@@ -109,109 +98,6 @@
         {
           "name": "update_organizations_updated_at",
           "def": "CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON public.organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
-        }
-      ]
-    },
-    {
-      "name": "public.subscriptions",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "org_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "plan_type",
-          "type": "varchar(50)",
-          "nullable": false
-        },
-        {
-          "name": "monthly_budget_usd",
-          "type": "numeric(10,2)",
-          "nullable": false,
-          "default": "100.00"
-        },
-        {
-          "name": "current_spending_usd",
-          "type": "numeric(10,2)",
-          "nullable": false,
-          "default": "0.00"
-        },
-        {
-          "name": "billing_period_start",
-          "type": "timestamp without time zone",
-          "nullable": false
-        },
-        {
-          "name": "billing_period_end",
-          "type": "timestamp without time zone",
-          "nullable": false
-        },
-        {
-          "name": "status",
-          "type": "varchar(50)",
-          "nullable": false,
-          "default": "'active'::character varying"
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "updated_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        }
-      ],
-      "indexes": [
-        {
-          "name": "subscriptions_pkey",
-          "def": "CREATE UNIQUE INDEX subscriptions_pkey ON public.subscriptions USING btree (id)",
-          "table": "public.subscriptions",
-          "columns": [
-            "id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "subscriptions_org_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE",
-          "table": "public.subscriptions",
-          "referenced_table": "organizations",
-          "columns": [
-            "org_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "subscriptions_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.subscriptions",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ],
-      "triggers": [
-        {
-          "name": "update_subscriptions_updated_at",
-          "def": "CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
         }
       ]
     },
@@ -462,11 +348,6 @@
           "default": "'{}'::jsonb"
         },
         {
-          "name": "personal_claude_token",
-          "type": "text",
-          "nullable": true
-        },
-        {
           "name": "last_login_at",
           "type": "timestamp without time zone",
           "nullable": true
@@ -536,15 +417,6 @@
           "table": "public.employees",
           "columns": [
             "status"
-          ]
-        },
-        {
-          "name": "idx_employees_personal_token",
-          "def": "CREATE INDEX idx_employees_personal_token ON public.employees USING btree (org_id, personal_claude_token) WHERE (personal_claude_token IS NOT NULL)",
-          "table": "public.employees",
-          "columns": [
-            "org_id",
-            "personal_claude_token"
           ]
         }
       ],
@@ -1512,154 +1384,6 @@
       ]
     },
     {
-      "name": "public.usage_records",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "org_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "employee_id",
-          "type": "uuid",
-          "nullable": true
-        },
-        {
-          "name": "resource_type",
-          "type": "varchar(50)",
-          "nullable": false
-        },
-        {
-          "name": "quantity",
-          "type": "bigint",
-          "nullable": false
-        },
-        {
-          "name": "cost_usd",
-          "type": "numeric(10,4)",
-          "nullable": false
-        },
-        {
-          "name": "period_start",
-          "type": "timestamp without time zone",
-          "nullable": false
-        },
-        {
-          "name": "period_end",
-          "type": "timestamp without time zone",
-          "nullable": false
-        },
-        {
-          "name": "metadata",
-          "type": "jsonb",
-          "nullable": false,
-          "default": "'{}'::jsonb"
-        },
-        {
-          "name": "token_source",
-          "type": "varchar(20)",
-          "nullable": true,
-          "default": "'company'::character varying"
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        }
-      ],
-      "indexes": [
-        {
-          "name": "usage_records_pkey",
-          "def": "CREATE UNIQUE INDEX usage_records_pkey ON public.usage_records USING btree (id)",
-          "table": "public.usage_records",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "idx_usage_records_org_id",
-          "def": "CREATE INDEX idx_usage_records_org_id ON public.usage_records USING btree (org_id)",
-          "table": "public.usage_records",
-          "columns": [
-            "org_id"
-          ]
-        },
-        {
-          "name": "idx_usage_records_employee_id",
-          "def": "CREATE INDEX idx_usage_records_employee_id ON public.usage_records USING btree (employee_id)",
-          "table": "public.usage_records",
-          "columns": [
-            "employee_id"
-          ]
-        },
-        {
-          "name": "idx_usage_records_period",
-          "def": "CREATE INDEX idx_usage_records_period ON public.usage_records USING btree (period_start, period_end)",
-          "table": "public.usage_records",
-          "columns": [
-            "period_start",
-            "period_end"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "usage_records_token_source_check",
-          "type": "CHECK",
-          "def": "CHECK (((token_source)::text = ANY ((ARRAY['company'::character varying, 'personal'::character varying])::text[])))",
-          "table": "public.usage_records",
-          "referenced_table": "",
-          "columns": [
-            "token_source"
-          ]
-        },
-        {
-          "name": "usage_records_org_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE",
-          "table": "public.usage_records",
-          "referenced_table": "organizations",
-          "columns": [
-            "org_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "usage_records_employee_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL",
-          "table": "public.usage_records",
-          "referenced_table": "employees",
-          "columns": [
-            "employee_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "usage_records_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.usage_records",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ]
-    },
-    {
       "name": "public.webhook_destinations",
       "type": "BASE TABLE",
       "columns": [
@@ -2071,221 +1795,6 @@
       ]
     },
     {
-      "name": "public.agent_requests",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "employee_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "request_type",
-          "type": "varchar(50)",
-          "nullable": false
-        },
-        {
-          "name": "request_data",
-          "type": "jsonb",
-          "nullable": false
-        },
-        {
-          "name": "status",
-          "type": "varchar(50)",
-          "nullable": false,
-          "default": "'pending'::character varying"
-        },
-        {
-          "name": "reason",
-          "type": "text",
-          "nullable": true
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "resolved_at",
-          "type": "timestamp without time zone",
-          "nullable": true
-        }
-      ],
-      "indexes": [
-        {
-          "name": "agent_requests_pkey",
-          "def": "CREATE UNIQUE INDEX agent_requests_pkey ON public.agent_requests USING btree (id)",
-          "table": "public.agent_requests",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "idx_agent_requests_employee_id",
-          "def": "CREATE INDEX idx_agent_requests_employee_id ON public.agent_requests USING btree (employee_id)",
-          "table": "public.agent_requests",
-          "columns": [
-            "employee_id"
-          ]
-        },
-        {
-          "name": "idx_agent_requests_status",
-          "def": "CREATE INDEX idx_agent_requests_status ON public.agent_requests USING btree (status)",
-          "table": "public.agent_requests",
-          "columns": [
-            "status"
-          ]
-        },
-        {
-          "name": "idx_agent_requests_created_at",
-          "def": "CREATE INDEX idx_agent_requests_created_at ON public.agent_requests USING btree (created_at DESC)",
-          "table": "public.agent_requests",
-          "columns": [
-            "created_at"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "agent_requests_employee_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE",
-          "table": "public.agent_requests",
-          "referenced_table": "employees",
-          "columns": [
-            "employee_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "agent_requests_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.agent_requests",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "public.approvals",
-      "type": "BASE TABLE",
-      "columns": [
-        {
-          "name": "id",
-          "type": "uuid",
-          "nullable": false,
-          "default": "uuid_generate_v4()"
-        },
-        {
-          "name": "request_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "approver_id",
-          "type": "uuid",
-          "nullable": false
-        },
-        {
-          "name": "status",
-          "type": "varchar(50)",
-          "nullable": false
-        },
-        {
-          "name": "comment",
-          "type": "text",
-          "nullable": true
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": false,
-          "default": "now()"
-        },
-        {
-          "name": "resolved_at",
-          "type": "timestamp without time zone",
-          "nullable": true
-        }
-      ],
-      "indexes": [
-        {
-          "name": "approvals_pkey",
-          "def": "CREATE UNIQUE INDEX approvals_pkey ON public.approvals USING btree (id)",
-          "table": "public.approvals",
-          "columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "idx_approvals_request_id",
-          "def": "CREATE INDEX idx_approvals_request_id ON public.approvals USING btree (request_id)",
-          "table": "public.approvals",
-          "columns": [
-            "request_id"
-          ]
-        },
-        {
-          "name": "idx_approvals_approver_id",
-          "def": "CREATE INDEX idx_approvals_approver_id ON public.approvals USING btree (approver_id)",
-          "table": "public.approvals",
-          "columns": [
-            "approver_id"
-          ]
-        }
-      ],
-      "constraints": [
-        {
-          "name": "approvals_approver_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE",
-          "table": "public.approvals",
-          "referenced_table": "employees",
-          "columns": [
-            "approver_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "approvals_request_id_fkey",
-          "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE",
-          "table": "public.approvals",
-          "referenced_table": "agent_requests",
-          "columns": [
-            "request_id"
-          ],
-          "referenced_columns": [
-            "id"
-          ]
-        },
-        {
-          "name": "approvals_pkey",
-          "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (id)",
-          "table": "public.approvals",
-          "referenced_table": "",
-          "columns": [
-            "id"
-          ]
-        }
-      ]
-    },
-    {
       "name": "public.invitations",
       "type": "BASE TABLE",
       "columns": [
@@ -2545,86 +2054,9 @@
           "def": "CREATE TRIGGER generate_invitation_token_trigger BEFORE INSERT ON public.invitations FOR EACH ROW EXECUTE FUNCTION generate_invitation_token()"
         }
       ]
-    },
-    {
-      "name": "public.v_pending_approvals",
-      "type": "VIEW",
-      "comment": "Pending approval requests with full requester context",
-      "columns": [
-        {
-          "name": "request_id",
-          "type": "uuid",
-          "nullable": true
-        },
-        {
-          "name": "request_type",
-          "type": "varchar(50)",
-          "nullable": true
-        },
-        {
-          "name": "request_data",
-          "type": "jsonb",
-          "nullable": true
-        },
-        {
-          "name": "reason",
-          "type": "text",
-          "nullable": true
-        },
-        {
-          "name": "requested_at",
-          "type": "timestamp without time zone",
-          "nullable": true
-        },
-        {
-          "name": "employee_id",
-          "type": "uuid",
-          "nullable": true
-        },
-        {
-          "name": "requester_name",
-          "type": "varchar(255)",
-          "nullable": true
-        },
-        {
-          "name": "requester_email",
-          "type": "varchar(255)",
-          "nullable": true
-        },
-        {
-          "name": "team_name",
-          "type": "varchar(255)",
-          "nullable": true
-        },
-        {
-          "name": "org_name",
-          "type": "varchar(255)",
-          "nullable": true
-        }
-      ],
-      "def": "CREATE VIEW v_pending_approvals AS (\n SELECT ar.id AS request_id,\n    ar.request_type,\n    ar.request_data,\n    ar.reason,\n    ar.created_at AS requested_at,\n    e.id AS employee_id,\n    e.full_name AS requester_name,\n    e.email AS requester_email,\n    t.name AS team_name,\n    o.name AS org_name\n   FROM (((agent_requests ar\n     JOIN employees e ON ((ar.employee_id = e.id)))\n     JOIN organizations o ON ((e.org_id = o.id)))\n     LEFT JOIN teams t ON ((e.team_id = t.id)))\n  WHERE ((ar.status)::text = 'pending'::text)\n)",
-      "referenced_tables": [
-        "public.agent_requests",
-        "public.employees",
-        "public.organizations",
-        "public.teams"
-      ]
     }
   ],
   "relations": [
-    {
-      "table": "public.subscriptions",
-      "columns": [
-        "org_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.organizations",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
-    },
     {
       "table": "public.teams",
       "columns": [
@@ -2834,32 +2266,6 @@
       "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
     },
     {
-      "table": "public.usage_records",
-      "columns": [
-        "org_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.organizations",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.usage_records",
-      "columns": [
-        "employee_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.employees",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "zero_or_one",
-      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL"
-    },
-    {
       "table": "public.webhook_destinations",
       "columns": [
         "org_id"
@@ -2910,45 +2316,6 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (destination_id) REFERENCES webhook_destinations(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.agent_requests",
-      "columns": [
-        "employee_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.employees",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.approvals",
-      "columns": [
-        "approver_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.employees",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (approver_id) REFERENCES employees(id) ON DELETE CASCADE"
-    },
-    {
-      "table": "public.approvals",
-      "columns": [
-        "request_id"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "public.agent_requests",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (request_id) REFERENCES agent_requests(id) ON DELETE CASCADE"
     },
     {
       "table": "public.invitations",
@@ -3309,12 +2676,6 @@
       "name": "public.expire_old_invitations",
       "return_type": "void",
       "arguments": "",
-      "type": "FUNCTION"
-    },
-    {
-      "name": "public.get_effective_claude_token",
-      "return_type": "record",
-      "arguments": "emp_id uuid",
       "type": "FUNCTION"
     }
   ],

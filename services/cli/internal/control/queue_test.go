@@ -40,14 +40,14 @@ func TestDiskQueue_Enqueue_CreatesFile(t *testing.T) {
 	require.NoError(t, err)
 
 	entry := LogEntry{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
-		EventType:  "api_request",
-		Timestamp:  time.Now(),
-		Payload:    map[string]interface{}{"key": "value"},
+		EventType:     "api_request",
+		Timestamp:     time.Now(),
+		Payload:       map[string]interface{}{"key": "value"},
 	}
 
 	err = q.Enqueue(entry)
@@ -83,13 +83,13 @@ func TestDiskQueue_Enqueue_MultipleEntries(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		entry := LogEntry{
-			EmployeeID: "emp-123",
-			OrgID:      "org-456",
-			SessionID:  "sess-789",
+			EmployeeID:    "emp-123",
+			OrgID:         "org-456",
+			SessionID:     "sess-789",
 			ClientName:    "claude-code",
-		ClientVersion: "1.0.25",
-			EventType:  "api_request",
-			Timestamp:  time.Now(),
+			ClientVersion: "1.0.25",
+			EventType:     "api_request",
+			Timestamp:     time.Now(),
 		}
 		err = q.Enqueue(entry)
 		require.NoError(t, err)
@@ -114,13 +114,13 @@ func TestDiskQueue_Pending_ReturnsQueuedEntries(t *testing.T) {
 	// Enqueue entries
 	for i := 0; i < 3; i++ {
 		entry := LogEntry{
-			EmployeeID: "emp-123",
-			OrgID:      "org-456",
-			SessionID:  "sess-789",
+			EmployeeID:    "emp-123",
+			OrgID:         "org-456",
+			SessionID:     "sess-789",
 			ClientName:    "claude-code",
-		ClientVersion: "1.0.25",
-			EventType:  "api_request",
-			Timestamp:  time.Now(),
+			ClientVersion: "1.0.25",
+			EventType:     "api_request",
+			Timestamp:     time.Now(),
 		}
 		err = q.Enqueue(entry)
 		require.NoError(t, err)
@@ -143,13 +143,13 @@ func TestDiskQueue_Remove_DeletesFile(t *testing.T) {
 	require.NoError(t, err)
 
 	entry := LogEntry{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
-		EventType:  "api_request",
-		Timestamp:  time.Now(),
+		EventType:     "api_request",
+		Timestamp:     time.Now(),
 	}
 	err = q.Enqueue(entry)
 	require.NoError(t, err)
@@ -190,13 +190,13 @@ func TestDiskQueue_BackgroundWorker_UploadsEntries(t *testing.T) {
 	// Enqueue entries
 	for i := 0; i < 3; i++ {
 		entry := LogEntry{
-			EmployeeID: "emp-123",
-			OrgID:      "org-456",
-			SessionID:  "sess-789",
+			EmployeeID:    "emp-123",
+			OrgID:         "org-456",
+			SessionID:     "sess-789",
 			ClientName:    "claude-code",
-		ClientVersion: "1.0.25",
-			EventType:  "api_request",
-			Timestamp:  time.Now(),
+			ClientVersion: "1.0.25",
+			EventType:     "api_request",
+			Timestamp:     time.Now(),
 		}
 		err = q.Enqueue(entry)
 		require.NoError(t, err)
@@ -242,13 +242,13 @@ func TestDiskQueue_BackgroundWorker_RetriesOnError(t *testing.T) {
 	require.NoError(t, err)
 
 	entry := LogEntry{
-		EmployeeID: "emp-123",
-		OrgID:      "org-456",
-		SessionID:  "sess-789",
+		EmployeeID:    "emp-123",
+		OrgID:         "org-456",
+		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
-		EventType:  "api_request",
-		Timestamp:  time.Now(),
+		EventType:     "api_request",
+		Timestamp:     time.Now(),
 	}
 	err = q.Enqueue(entry)
 	require.NoError(t, err)
@@ -294,13 +294,13 @@ func TestDiskQueue_BatchSize_LimitedToConfig(t *testing.T) {
 	// Enqueue 5 entries
 	for i := 0; i < 5; i++ {
 		entry := LogEntry{
-			EmployeeID: "emp-123",
-			OrgID:      "org-456",
-			SessionID:  "sess-789",
+			EmployeeID:    "emp-123",
+			OrgID:         "org-456",
+			SessionID:     "sess-789",
 			ClientName:    "claude-code",
-		ClientVersion: "1.0.25",
-			EventType:  "api_request",
-			Timestamp:  time.Now(),
+			ClientVersion: "1.0.25",
+			EventType:     "api_request",
+			Timestamp:     time.Now(),
 		}
 		err = q.Enqueue(entry)
 		require.NoError(t, err)
