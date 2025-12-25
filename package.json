@@ -2,7 +2,7 @@
   "name": "arfa",
   "private": true,
   "version": "1.0.0",
-  "description": "**Multi-tenant SaaS for centralized AI agent and MCP configuration management**",
+  "description": "HTTPS proxy for AI coding assistants with activity monitoring and policy enforcement",
   "main": "test-agents.js",
   "directories": {
     "doc": "docs",
@@ -13,13 +13,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rastrigin-org/arfa.git"
+    "url": "git+https://github.com/rastrigin-systems/arfa.git"
   },
-  "keywords": [],
+  "keywords": ["ai", "agents", "mcp", "configuration-management", "saas", "multi-tenant"],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/rastrigin-org/arfa/issues"
+    "url": "https://github.com/rastrigin-systems/arfa/issues"
   },
-  "homepage": "https://github.com/rastrigin-org/arfa#readme"
+  "homepage": "https://github.com/rastrigin-systems/arfa#readme"
 }
