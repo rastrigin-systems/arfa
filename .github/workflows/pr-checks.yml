@@ -1,0 +1,174 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # API Service: Build + Test
+  api:
+    name: API Service
+    runs-on: ubuntu-latest
+
+    # Only run if API files changed
+    if: |
+      contains(github.event.head_commit.modified, 'services/api/') ||
+      contains(github.event.head_commit.modified, 'platform/') ||
+      github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
+
+      - name: Install tools
+        run: |
+          go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          go install go.uber.org/mock/mockgen@latest
+
+      - name: Generate code
+        run: |
+          make generate-api
+          make generate-db
+          make generate-mocks
+          go work sync
+
+      - name: Lint
+        working-directory: services/api
+        run: |
+          go vet ./...
+          test -z "$(gofmt -l .)"
+
+      - name: Build
+        run: |
+          cd services/api && go build -v ./...
+
+      - name: Test (unit tests only)
+        working-directory: services/api
+        run: |
+          go test -v -race -short -coverprofile=coverage.out ./internal/...
+          go tool cover -func=coverage.out | tail -1
+
+  # CLI Service: Build + Test
+  cli:
+    name: CLI Service
+    runs-on: ubuntu-latest
+
+    # Only run if CLI files changed
+    if: |
+      contains(github.event.head_commit.modified, 'services/cli/') ||
+      contains(github.event.head_commit.modified, 'platform/api-spec/') ||
+      github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/*/go.sum
+
+      - name: Install tools
+        run: |
+          go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+      - name: Generate code
+        run: |
+          make generate-api
+          make generate-db
+          go work sync
+
+      - name: Lint
+        working-directory: services/cli
+        run: |
+          go vet ./...
+          test -z "$(gofmt -l .)"
+
+      - name: Build
+        run: |
+          cd services/cli && go build -v -o ../../bin/ubik ./cmd/ubik/main.go
+          chmod +x bin/ubik
+          ./bin/ubik --version
+
+      - name: Test
+        working-directory: services/cli
+        run: |
+          go test -v -race -short -coverprofile=coverage.out ./internal/...
+          go tool cover -func=coverage.out | tail -1
+
+  # Web Service: Build + Type Check + Test
+  web:
+    name: Web Service
+    runs-on: ubuntu-latest
+
+    # Only run if Web files changed
+    if: |
+      contains(github.event.head_commit.modified, 'services/web/') ||
+      contains(github.event.head_commit.modified, 'platform/api-spec/') ||
+      github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: services/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: services/web
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate API types
+        working-directory: services/web
+        run: pnpm run generate:api
+
+      - name: Type check
+        working-directory: services/web
+        run: pnpm run type-check
+
+      - name: Lint
+        working-directory: services/web
+        run: pnpm run lint
+
+      - name: Build
+        working-directory: services/web
+        run: pnpm run build
+
+      - name: Test
+        working-directory: services/web
+        run: pnpm run test
