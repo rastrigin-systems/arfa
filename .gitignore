@@ -65,3 +65,6 @@ node_modules/
 # Claude context files (local development only)
 CLAUDE.md
 services/*/CLAUDE.md
+
+# Personal planning files
+final-plan.md
