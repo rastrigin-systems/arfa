@@ -35,10 +35,10 @@ Webhook export allows you to send activity logs to external endpoints as they ha
 
 ```bash
 # Login first
-ubik login
+arfa login
 
 # Create a webhook destination
-ubik webhooks create \
+arfa webhooks create \
   --name "my-siem" \
   --url "https://siem.example.com/api/events" \
   --auth-type bearer \
@@ -48,7 +48,7 @@ ubik webhooks create \
 ### 2. Test the Webhook
 
 ```bash
-ubik webhooks test my-siem
+arfa webhooks test my-siem
 ```
 
 Output:
@@ -65,7 +65,7 @@ Test successful!
 Generate some activity (run CLI commands), then check deliveries:
 
 ```bash
-ubik webhooks list
+arfa webhooks list
 ```
 
 ---
@@ -75,7 +75,7 @@ ubik webhooks list
 ### List Webhooks
 
 ```bash
-ubik webhooks list
+arfa webhooks list
 ```
 
 Output:
@@ -89,7 +89,7 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890  slack       https://hooks.slack.com/...   
 ### Create Webhook
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "webhook-name" \
   --url "https://your-endpoint.com/webhook" \
   --auth-type bearer \
@@ -112,19 +112,19 @@ ubik webhooks create \
 Send a test event to verify the endpoint is working:
 
 ```bash
-ubik webhooks test <webhook-id>
+arfa webhooks test <webhook-id>
 ```
 
 ### Delete Webhook
 
 ```bash
-ubik webhooks delete <webhook-id>
+arfa webhooks delete <webhook-id>
 ```
 
 Add `--force` to skip confirmation:
 
 ```bash
-ubik webhooks delete <webhook-id> --force
+arfa webhooks delete <webhook-id> --force
 ```
 
 ---
@@ -184,23 +184,23 @@ Each webhook request includes these headers:
 ```http
 POST /webhook HTTP/1.1
 Content-Type: application/json
-User-Agent: Ubik-Webhook/1.0
-X-Ubik-Event-Type: tool_call
-X-Ubik-Delivery-ID: 3623d0e4-5ed6-4a8b-a5ed-915845df446d
-X-Ubik-Signature: sha256=a1b2c3d4e5f6...
+User-Agent: Arfa-Webhook/1.0
+X-Arfa-Event-Type: tool_call
+X-Arfa-Delivery-ID: 3623d0e4-5ed6-4a8b-a5ed-915845df446d
+X-Arfa-Signature: sha256=a1b2c3d4e5f6...
 ```
 
 | Header | Description |
 |--------|-------------|
-| `X-Ubik-Event-Type` | The event type being delivered |
-| `X-Ubik-Delivery-ID` | Unique delivery attempt ID |
-| `X-Ubik-Signature` | HMAC-SHA256 signature for verification |
+| `X-Arfa-Event-Type` | The event type being delivered |
+| `X-Arfa-Delivery-ID` | Unique delivery attempt ID |
+| `X-Arfa-Signature` | HMAC-SHA256 signature for verification |
 
 ---
 
 ## Signature Verification
 
-Verify webhooks came from Ubik using the signing secret:
+Verify webhooks came from Arfa using the signing secret:
 
 ### Python
 
@@ -219,8 +219,8 @@ def verify_signature(payload: bytes, signature: str, secret: str) -> bool:
 # Usage in Flask
 @app.route('/webhook', methods=['POST'])
 def handle_webhook():
-    signature = request.headers.get('X-Ubik-Signature')
-    if not verify_signature(request.data, signature, UBIK_WEBHOOK_SECRET):
+    signature = request.headers.get('X-Arfa-Signature')
+    if not verify_signature(request.data, signature, ARFA_WEBHOOK_SECRET):
         return 'Invalid signature', 401
 
     event = request.json
@@ -246,8 +246,8 @@ function verifySignature(payload, signature, secret) {
 
 // Usage in Express
 app.post('/webhook', (req, res) => {
-    const signature = req.headers['x-ubik-signature'];
-    if (!verifySignature(req.rawBody, signature, UBIK_WEBHOOK_SECRET)) {
+    const signature = req.headers['x-arfa-signature'];
+    if (!verifySignature(req.rawBody, signature, ARFA_WEBHOOK_SECRET)) {
         return res.status(401).send('Invalid signature');
     }
 
@@ -283,7 +283,7 @@ func verifySignature(payload []byte, signature, secret string) bool {
 For services like Slack where the URL itself is the secret:
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "slack" \
   --url "https://hooks.slack.com/services/T00/B00/xxxx" \
   --auth-type none
@@ -294,7 +294,7 @@ ubik webhooks create \
 Standard Authorization header with Bearer token:
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "splunk" \
   --url "https://splunk.example.com:8088/services/collector" \
   --auth-type bearer \
@@ -326,7 +326,7 @@ HTTP Basic authentication:
 ### Splunk HEC
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "splunk-hec" \
   --url "https://splunk.example.com:8088/services/collector/event" \
   --auth-type bearer \
@@ -337,7 +337,7 @@ ubik webhooks create \
 ### Datadog Logs
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "datadog" \
   --url "https://http-intake.logs.datadoghq.com/api/v2/logs" \
   --auth-type bearer \
@@ -347,7 +347,7 @@ ubik webhooks create \
 ### Slack (Blocked Events Only)
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "slack-alerts" \
   --url "https://hooks.slack.com/services/T00/B00/xxxx" \
   --auth-type none \
@@ -357,9 +357,9 @@ ubik webhooks create \
 ### Elasticsearch
 
 ```bash
-ubik webhooks create \
+arfa webhooks create \
   --name "elastic" \
-  --url "https://elastic.example.com:9200/ubik-logs/_doc" \
+  --url "https://elastic.example.com:9200/arfa-logs/_doc" \
   --auth-type bearer \
   --bearer-token "YOUR_API_KEY"
 ```
@@ -397,13 +397,13 @@ After max retries, the delivery is marked as `dead` and won't be retried.
 
 1. **Check webhook is enabled:**
    ```bash
-   ubik webhooks list
+   arfa webhooks list
    ```
    Status should show "enabled"
 
 2. **Test the endpoint:**
    ```bash
-   ubik webhooks test <webhook-id>
+   arfa webhooks test <webhook-id>
    ```
 
 3. **Check API server logs** for forwarder errors
@@ -448,7 +448,7 @@ See the [OpenAPI spec](../platform/api-spec/spec.yaml) for full details.
 
 1. **Always verify signatures** - Don't trust webhook payloads without verification
 2. **Respond quickly** - Return 200 OK within 5 seconds; process asynchronously if needed
-3. **Handle duplicates** - Use `X-Ubik-Delivery-ID` to deduplicate
+3. **Handle duplicates** - Use `X-Arfa-Delivery-ID` to deduplicate
 4. **Filter events** - Only subscribe to events you need to reduce noise
 5. **Monitor deliveries** - Check for failed deliveries regularly
 6. **Rotate secrets** - Periodically rotate signing secrets for security

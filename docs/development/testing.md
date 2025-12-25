@@ -41,8 +41,8 @@ package handlers_test
 import (
 	"testing"
 	"go.uber.org/mock/gomock"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/mocks"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 func TestGetEmployee_Success(t *testing.T) {

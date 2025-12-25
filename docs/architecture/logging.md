@@ -1,6 +1,6 @@
 # Logging Architecture
 
-This document describes how the CLI captures and sends logs to the Ubik platform.
+This document describes how the CLI captures and sends logs to the Arfa platform.
 
 ## Flow Diagram
 
@@ -18,12 +18,12 @@ flowchart TB
             Buffer[Event Buffer]
             BatchTimer[Batch Timer<br/>5 seconds]
             RetryQueue[Retry Queue<br/>Exponential Backoff]
-            DiskQueue[Disk Queue<br/>~/.ubik/log_queue/]
+            DiskQueue[Disk Queue<br/>~/.arfa/log_queue/]
         end
 
         subgraph Proxy["In-Process Proxy (proxy/)"]
             P[MITM Proxy<br/>goproxy]
-            CA[CA Certificate<br/>~/.ubik/certs/]
+            CA[CA Certificate<br/>~/.arfa/certs/]
             Parser[Log Parser<br/>logparser/anthropic.go]
         end
 
@@ -36,7 +36,7 @@ flowchart TB
         LLM[LLM API<br/>api.anthropic.com<br/>api.openai.com<br/>generativelanguage.googleapis.com]
     end
 
-    subgraph Platform["Ubik Platform"]
+    subgraph Platform["Arfa Platform"]
         API[API Server<br/>/api/v1/logs]
         DB[(PostgreSQL<br/>activity_logs<br/>usage_records)]
         Web[Web UI<br/>Logs Dashboard]
@@ -89,10 +89,10 @@ flowchart TB
 
 ### 1. Initialization
 
-When `ubik interactive` starts:
+When `arfa interactive` starts:
 1. Logger instance created with batching config (100 entries, 5s interval)
 2. Proxy starts on available port (8082-8091)
-3. CA certificate loaded/generated at `~/.ubik/certs/`
+3. CA certificate loaded/generated at `~/.arfa/certs/`
 4. Agent process spawned with proxy environment variables
 
 ### 2. Request Interception
@@ -137,7 +137,7 @@ POST /api/v1/logs with batch
 Success: Logs stored in DB
 Failure: Retry with exponential backoff (1s, 2s, 4s, 8s, 16s)
     |
-After 5 retries: Queue to disk (~/.ubik/log_queue/)
+After 5 retries: Queue to disk (~/.arfa/log_queue/)
     |
 Background worker retries every 10 seconds
 ```
@@ -174,19 +174,19 @@ loggerConfig := &logging.Config{
 ```bash
 HTTP_PROXY=http://127.0.0.1:8082
 HTTPS_PROXY=http://127.0.0.1:8082
-NODE_EXTRA_CA_CERTS=~/.ubik/certs/ubik-ca.pem
-UBIK_SESSION_ID=<uuid>
-UBIK_AGENT_ID=<agent-id>
+NODE_EXTRA_CA_CERTS=~/.arfa/certs/arfa-ca.pem
+ARFA_SESSION_ID=<uuid>
+ARFA_AGENT_ID=<agent-id>
 ```
 
 ## Local Storage
 
 | Path | Purpose |
 |------|---------|
-| `~/.ubik/certs/ubik-ca.pem` | CA certificate for HTTPS interception |
-| `~/.ubik/certs/ubik-ca-key.pem` | CA private key |
-| `~/.ubik/log_queue/logs_*.json` | Failed logs queued for retry |
-| `~/.ubik/config.json` | CLI configuration with API token |
+| `~/.arfa/certs/arfa-ca.pem` | CA certificate for HTTPS interception |
+| `~/.arfa/certs/arfa-ca-key.pem` | CA private key |
+| `~/.arfa/log_queue/logs_*.json` | Failed logs queued for retry |
+| `~/.arfa/config.json` | CLI configuration with API token |
 
 ## Troubleshooting
 
@@ -194,7 +194,7 @@ UBIK_AGENT_ID=<agent-id>
 
 **Check the disk queue:**
 ```bash
-ls -la ~/.ubik/log_queue/
+ls -la ~/.arfa/log_queue/
 ```
 
 If files exist, logs are failing to send. Common causes:
@@ -204,10 +204,10 @@ If files exist, logs are failing to send. Common causes:
 
 **Check queued log content:**
 ```bash
-head -c 500 ~/.ubik/log_queue/logs_*.json
+head -c 500 ~/.arfa/log_queue/logs_*.json
 ```
 
 **Clear queue after fixing issues:**
 ```bash
-rm ~/.ubik/log_queue/*.json
+rm ~/.arfa/log_queue/*.json
 ```

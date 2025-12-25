@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +19,8 @@ func NewDeleteCommand(c *container.Container) *cobra.Command {
 		Long: `Delete a webhook destination by ID.
 
 Examples:
-  ubik webhooks delete abc123-def456
-  ubik webhooks delete abc123-def456 --force   # Skip confirmation`,
+  arfa webhooks delete abc123-def456
+  arfa webhooks delete abc123-def456 --force   # Skip confirmation`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()

@@ -1,4 +1,4 @@
-// Package types contains shared types used across the ubik-enterprise platform
+// Package types contains shared types used across the arfa platform
 package types
 
 import (

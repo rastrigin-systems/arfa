@@ -1,4 +1,4 @@
-# Ubik — AI Agent Security Platform
+# Arfa — AI Agent Security Platform
 
 **Enterprise-grade security proxy for AI coding assistants**
 
@@ -8,18 +8,18 @@
 
 ---
 
-## What is Ubik?
+## What is Arfa?
 
-Ubik is a **security-first platform** that gives enterprises **visibility and control** over AI coding assistant usage (Claude Code, Cursor, Windsurf, GitHub Copilot).
+Arfa is a **security-first platform** that gives enterprises **visibility and control** over AI coding assistant usage (Claude Code, Cursor, Windsurf, GitHub Copilot).
 
-Instead of blocking AI tools, Ubik enables **safe adoption** through:
+Instead of blocking AI tools, Arfa enables **safe adoption** through:
 - 🔒 **Transparent HTTPS Proxy** - Intercept and log all AI agent API traffic
 - 📊 **Activity Monitoring** - Track every tool call, file access, and command execution
 - 🛡️ **Policy Enforcement** - Block dangerous operations based on organizational policies
 - 🎯 **Zero Configuration** - Automatic client detection and policy application
 - 🏢 **Multi-Tenant SaaS** - Centralized management across teams and organizations
 
-### Why Ubik?
+### Why Arfa?
 
 **The Problem:**
 - Companies want developers using AI coding assistants for productivity
@@ -28,7 +28,7 @@ Instead of blocking AI tools, Ubik enables **safe adoption** through:
 - No audit trail for compliance
 
 **The Solution:**
-Ubik's transparent proxy architecture lets you:
+Arfa's transparent proxy architecture lets you:
 - ✅ **See everything** - Every API call, tool execution, file access logged
 - ✅ **Control access** - Block dangerous operations via declarative policies
 - ✅ **Audit usage** - Complete audit trail for security/compliance reviews
@@ -45,7 +45,7 @@ Ubik's transparent proxy architecture lets you:
 │  Developer's Machine                                        │
 │                                                             │
 │  ┌──────────────┐           ┌──────────────┐                │
-│  │ Claude Code  │──────────▶│ Ubik Proxy   │                │
+│  │ Claude Code  │──────────▶│ Arfa Proxy   │                │
 │  │ Cursor       │  HTTPS    │ (localhost)  │                │
 │  │ Windsurf     │           └──────┬───────┘                │
 │  └──────────────┘                  │                        │
@@ -60,7 +60,7 @@ Ubik's transparent proxy architecture lets you:
                             └────────┬─────────┘
                                      │
                             ┌────────▼─────────┐
-                            │  Ubik Platform   │
+                            │  Arfa Platform   │
                             │  (Activity Logs, │
                             │   Policies)      │
                             └──────────────────┘
@@ -76,7 +76,7 @@ Ubik's transparent proxy architecture lets you:
 5. **Logs uploaded** async to central platform for audit/analysis
 
 **Deployment modes:**
-- 🔧 **CI Pipelines** - Temporary proxy via `eval $(ubik proxy env)`
+- 🔧 **CI Pipelines** - Temporary proxy via `eval $(arfa proxy env)`
 - 💻 **Local Development** - Per-session proxy in terminal
 - 🏢 **Enterprise** - Permanent system-wide setup via PAC file + auto-start daemon
 
@@ -98,8 +98,8 @@ Ubik's transparent proxy architecture lets you:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/ubik.git
-cd ubik
+git clone https://github.com/yourusername/arfa.git
+cd arfa
 
 # Start PostgreSQL with Docker
 docker compose up -d
@@ -134,18 +134,18 @@ API server runs at `http://localhost:8080`
 cd services/cli
 make install
 
-# CLI installed to /usr/local/bin/ubik
-ubik version
+# CLI installed to /usr/local/bin/arfa
+arfa version
 ```
 
 ### 5. Login and Start Proxy
 
 ```bash
 # Login to platform (use admin@acme.com / password)
-ubik login
+arfa login
 
 # Start proxy
-ubik proxy start
+arfa proxy start
 ```
 
 Proxy runs at `http://localhost:8082`
@@ -154,12 +154,12 @@ Proxy runs at `http://localhost:8082`
 
 ```bash
 # In a new terminal, set environment variables
-eval $(ubik proxy env)
+eval $(arfa proxy env)
 
 # Now run your AI client (e.g., Claude Code)
 claude "list files in current directory"
 
-# All API traffic is logged to Ubik platform!
+# All API traffic is logged to Arfa platform!
 ```
 
 ---
@@ -190,7 +190,7 @@ claude "list files in current directory"
 ## Project Structure
 
 ```
-ubik/
+arfa/
 ├── services/                     # Self-contained services
 │   ├── api/                      # REST API (Go)
 │   ├── cli/                      # Proxy CLI (Go)
@@ -385,7 +385,7 @@ See [Database Documentation](docs/database/schema-reference.md) for complete vis
 
 **DO NOT** open public GitHub issues for security vulnerabilities.
 
-Instead, email: **security@ubik.dev** (or contact maintainer directly)
+Instead, email: **security@arfa.dev** (or contact maintainer directly)
 
 We'll respond within 48 hours and work with you to address the issue.
 
@@ -411,9 +411,9 @@ Individual services may have their own licenses - check each service directory.
 ## Support
 
 - 📖 **Documentation**: [docs/](docs/)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/ubik/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/ubik/discussions)
-- 📧 **Email**: support@ubik.dev
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/arfa/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/arfa/discussions)
+- 📧 **Email**: support@arfa.dev
 
 ---
 

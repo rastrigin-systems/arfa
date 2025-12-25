@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"text/tabwriter"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -44,19 +44,19 @@ func NewListCommand(c *container.Container) *cobra.Command {
 
 These policies control which LLM tools can be used and are set by your
 organization administrator. Policies are synced from the platform when
-you run 'ubik sync'.
+you run 'arfa sync'.
 
 Examples:
-  ubik policies list           # Show deny policies (blocked tools)
-  ubik policies list --all     # Show all policies including audit
-  ubik policies list --json    # Output as JSON`,
+  arfa policies list           # Show deny policies (blocked tools)
+  arfa policies list --all     # Show all policies including audit
+  arfa policies list --json    # Output as JSON`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 
 			cache, err := loadPoliciesCache()
 			if err != nil {
 				fmt.Fprintln(out, "No tool policies found.")
-				fmt.Fprintln(out, "\nRun 'ubik sync' to fetch policies from the platform.")
+				fmt.Fprintln(out, "\nRun 'arfa sync' to fetch policies from the platform.")
 				return nil
 			}
 
@@ -133,7 +133,7 @@ Examples:
 
 			fmt.Fprintf(out, "\nSynced at: %s (version %d)\n", cache.SyncedAt, cache.Version)
 			fmt.Fprintln(out)
-			fmt.Fprintln(out, "Run 'ubik sync' to refresh policies from the platform.")
+			fmt.Fprintln(out, "Run 'arfa sync' to refresh policies from the platform.")
 			fmt.Fprintln(out)
 
 			return nil
@@ -146,14 +146,14 @@ Examples:
 	return cmd
 }
 
-// loadPoliciesCache loads the policies from ~/.ubik/policies.json
+// loadPoliciesCache loads the policies from ~/.arfa/policies.json
 func loadPoliciesCache() (*policyCacheFile, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	policiesPath := filepath.Join(homeDir, ".ubik", "policies.json")
+	policiesPath := filepath.Join(homeDir, ".arfa", "policies.json")
 	data, err := os.ReadFile(policiesPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read policies file: %w", err)

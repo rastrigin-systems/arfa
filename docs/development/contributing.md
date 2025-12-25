@@ -404,7 +404,7 @@ go build ./...
 ## Project Structure
 
 ```
-ubik-enterprise/
+arfa/
 ├── platform/database/schema.sql             # Database schema (source of truth)
 ├── platform/api-spec/spec.yaml              # API contract (source of truth)
 │

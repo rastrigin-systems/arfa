@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/ui"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 

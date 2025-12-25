@@ -17,17 +17,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
-	authmiddleware "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/websocket"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/services/api/internal/handlers"
+	authmiddleware "github.com/rastrigin-systems/arfa/services/api/internal/middleware"
+	"github.com/rastrigin-systems/arfa/services/api/internal/service"
+	"github.com/rastrigin-systems/arfa/services/api/internal/websocket"
 )
 
 func main() {
 	// Get configuration from environment
-	dbURL := getEnv("DATABASE_URL", "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable")
+	dbURL := getEnv("DATABASE_URL", "postgres://arfa:arfa_dev_password@localhost:5432/arfa?sslmode=disable")
 	port := getEnv("PORT", "3001")
 
 	// Connect to database
@@ -91,7 +91,7 @@ func main() {
 			"http://localhost:3000",
 			"http://localhost:3001",
 			"http://localhost:8080",
-			"https://ubik-web-754414213269.us-central1.run.app",
+			"https://arfa-web-754414213269.us-central1.run.app",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},

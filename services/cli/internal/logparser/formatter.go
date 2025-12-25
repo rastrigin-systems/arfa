@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 )
 
 // Formatter formats classified log entries for display

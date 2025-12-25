@@ -263,7 +263,7 @@ gh issue create \
 - Marks: `status/in-progress`
 
 **Backend Agent:**
-1. Creates worktree: `../ubik-issue-302`
+1. Creates worktree: `../arfa-issue-302`
 2. Writes tests (TDD)
 3. Implements API endpoints
 4. Runs tests (all pass)
@@ -289,7 +289,7 @@ gh issue create \
 **Action:** Assigns to `frontend-developer`
 
 **Frontend Agent:**
-1. Creates worktree: `../ubik-issue-303`
+1. Creates worktree: `../arfa-issue-303`
 2. Implements UI components
 3. Integrates with API
 4. Writes tests
@@ -394,7 +394,7 @@ You orchestrate AI development teams.
 **Option A: Manual (Development)**
 ```bash
 # Start coordinator in terminal
-ubik-coordinator start
+arfa-coordinator start
 
 # Runs polling loop
 # Logs all actions
@@ -404,9 +404,9 @@ ubik-coordinator start
 **Option B: Daemon (Production)**
 ```bash
 # Run as background service
-ubik-coordinator daemon
+arfa-coordinator daemon
 
-# Logs to ~/.ubik/coordinator.log
+# Logs to ~/.arfa/coordinator.log
 # Automatically restarts on failure
 ```
 
@@ -489,8 +489,8 @@ jobs:
 ## Next Steps
 
 1. **Create coordinator-agent.md** (this week)
-2. **Test with Ubik project** (next week)
-3. **Package as Ubik CLI command** (`ubik coordinate start`)
+2. **Test with Arfa project** (next week)
+3. **Package as Arfa CLI command** (`arfa coordinate start`)
 4. **Document setup guide** (for reproducibility)
 5. **Test with 2nd project** (validate reproducibility)
 6. **Open source** (GitHub repo with examples)
@@ -506,14 +506,14 @@ jobs:
 mkdir my-saas-app && cd my-saas-app
 git init
 
-# User installs Ubik
-ubik init
+# User installs Arfa
+arfa init
 
 # User creates epic
 gh issue create --title "Build user auth system" --label "epic"
 
 # User starts coordinator
-ubik coordinate start
+arfa coordinate start
 
 # ✨ MAGIC HAPPENS ✨
 # - Tech lead breaks down epic
@@ -523,7 +523,7 @@ ubik coordinate start
 # - Feature ships
 
 # User checks status
-ubik status
+arfa status
 # Output: "Auth system: 5/5 tasks complete ✅"
 
 # User deploys
@@ -532,7 +532,7 @@ git push heroku main
 
 **Zero human intervention between epic creation and deployment.**
 
-That's the vision. That's what Ubik is.
+That's the vision. That's what Arfa is.
 
 ---
 

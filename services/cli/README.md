@@ -1,12 +1,12 @@
-# Ubik CLI Service
+# Arfa CLI Service
 
-**Command-line interface for syncing AI agent configurations from the Ubik Enterprise platform.**
+**Command-line interface for syncing AI agent configurations from the Arfa Enterprise platform.**
 
 ---
 
 ## Overview
 
-The Ubik CLI is a self-contained Go application that allows employees to sync their AI agent configurations from the centralized Ubik Enterprise platform to their local development machines. It handles authentication, configuration synchronization, Docker container management, and provides an interactive mode for easy use.
+The Arfa CLI is a self-contained Go application that allows employees to sync their AI agent configurations from the centralized Arfa Enterprise platform to their local development machines. It handles authentication, configuration synchronization, Docker container management, and provides an interactive mode for easy use.
 
 ### Key Features
 
@@ -23,7 +23,7 @@ The Ubik CLI is a self-contained Go application that allows employees to sync th
 
 ```
 services/cli/
-├── cmd/ubik/          # Main CLI entry point
+├── cmd/arfa/          # Main CLI entry point
 │   └── main.go        # Cobra commands, CLI interface
 │
 ├── internal/          # Internal packages (not importable by other services)
@@ -83,7 +83,7 @@ make build-cli
 make install-cli
 ```
 
-This installs the `ubik` command to `/usr/local/bin/`.
+This installs the `arfa` command to `/usr/local/bin/`.
 
 ### Uninstall
 
@@ -104,46 +104,46 @@ make uninstall-cli
 
 ```bash
 # Login to platform
-ubik login
+arfa login
 
 # Login with specific API URL
-ubik login --api-url https://api.ubik.dev
+arfa login --api-url https://api.arfa.dev
 
 # Logout
-ubik logout
+arfa logout
 ```
 
 ### Configuration Sync
 
 ```bash
 # Sync all agent configurations
-ubik sync
+arfa sync
 
 # Sync specific agent
-ubik sync --agent claude
+arfa sync --agent claude
 
 # Dry run (show what would be synced)
-ubik sync --dry-run
+arfa sync --dry-run
 ```
 
 ### Agent Management
 
 ```bash
 # List configured agents
-ubik agents
+arfa agents
 
 # Show detailed info for specific agent
-ubik agents show claude-code
+arfa agents show claude-code
 
 # List available agents in catalog
-ubik agents list
+arfa agents list
 ```
 
 ### Interactive Mode
 
 ```bash
 # Launch interactive interface
-ubik
+arfa
 
 # Interactive mode provides:
 # - Guided configuration sync
@@ -155,13 +155,13 @@ ubik
 
 ```bash
 # Start MCP server containers
-ubik sync  # Automatically starts required containers
+arfa sync  # Automatically starts required containers
 
 # Stop containers
-ubik sync --stop
+arfa sync --stop
 
 # List running containers
-ubik agents  # Shows container status
+arfa agents  # Shows container status
 ```
 
 ---
@@ -172,7 +172,7 @@ ubik agents  # Shows container status
 
 - Go 1.24+
 - Docker (for integration tests and MCP containers)
-- Access to Ubik Enterprise platform
+- Access to Arfa Enterprise platform
 
 ### Setup
 
@@ -209,7 +209,7 @@ make coverage
 ### Building
 
 ```bash
-# Build binary to ../../bin/ubik-cli
+# Build binary to ../../bin/arfa-cli
 make build
 
 # Install to system
@@ -221,9 +221,9 @@ make clean
 
 ### Project Structure
 
-**Command Structure** (in `cmd/ubik/main.go`):
+**Command Structure** (in `cmd/arfa/main.go`):
 ```
-ubik                  # Interactive mode
+arfa                  # Interactive mode
 ├── login            # Authenticate with platform
 ├── logout           # Clear local session
 ├── sync             # Sync agent configurations
@@ -241,7 +241,7 @@ ubik                  # Interactive mode
 - `docker.go`: Docker SDK wrapper
 - `container.go`: MCP container lifecycle
 - `proxy.go`: Local MCP proxy server
-- `config.go`: Local config file management (~/.ubik/)
+- `config.go`: Local config file management (~/.arfa/)
 - `workspace.go`: Workspace detection (Git, env vars)
 - `logging/`: Activity logging to platform API
 
@@ -252,7 +252,7 @@ ubik                  # Interactive mode
 ### Local Config Files
 
 ```
-~/.ubik/
+~/.arfa/
 ├── config.json           # CLI configuration
 ├── auth.json            # Authentication tokens
 ├── agents/              # Synced agent configs
@@ -267,16 +267,16 @@ ubik                  # Interactive mode
 
 ```bash
 # Override API URL
-export UBIK_API_URL="https://api.ubik.dev"
+export ARFA_API_URL="https://api.arfa.dev"
 
 # Override config directory
-export UBIK_CONFIG_DIR="$HOME/.ubik"
+export ARFA_CONFIG_DIR="$HOME/.arfa"
 
 # Enable debug logging
-export UBIK_DEBUG=true
+export ARFA_DEBUG=true
 
 # Set log level (debug, info, warn, error)
-export UBIK_LOG_LEVEL=debug
+export ARFA_LOG_LEVEL=debug
 ```
 
 ---
@@ -317,10 +317,10 @@ The CLI automatically manages Docker containers for MCP servers:
 ### Container Naming
 
 ```
-ubik-mcp-<employee-id>-<mcp-name>
+arfa-mcp-<employee-id>-<mcp-name>
 ```
 
-Example: `ubik-mcp-emp123-postgres`
+Example: `arfa-mcp-emp123-postgres`
 
 ---
 
@@ -330,23 +330,23 @@ Example: `ubik-mcp-emp123-postgres`
 
 ```bash
 # Clear cached credentials
-rm ~/.ubik/auth.json
+rm ~/.arfa/auth.json
 
 # Try login with debug logging
-UBIK_DEBUG=true ubik login
+ARFA_DEBUG=true arfa login
 ```
 
 ### Sync Issues
 
 ```bash
 # Check current configuration
-cat ~/.ubik/config.json
+cat ~/.arfa/config.json
 
 # Check agent configurations
-ls -la ~/.ubik/agents/
+ls -la ~/.arfa/agents/
 
 # Re-sync with verbose output
-UBIK_DEBUG=true ubik sync
+ARFA_DEBUG=true arfa sync
 ```
 
 ### Docker Issues
@@ -356,23 +356,23 @@ UBIK_DEBUG=true ubik sync
 docker ps
 
 # Check MCP containers
-docker ps -f name=ubik-mcp
+docker ps -f name=arfa-mcp
 
 # View container logs
-docker logs ubik-mcp-<employee-id>-<mcp-name>
+docker logs arfa-mcp-<employee-id>-<mcp-name>
 
 # Restart containers
-docker restart ubik-mcp-<employee-id>-<mcp-name>
+docker restart arfa-mcp-<employee-id>-<mcp-name>
 ```
 
 ### Debug Mode
 
 ```bash
 # Enable debug logging for any command
-UBIK_DEBUG=true ubik <command>
+ARFA_DEBUG=true arfa <command>
 
 # View detailed error messages
-UBIK_LOG_LEVEL=debug ubik <command>
+ARFA_LOG_LEVEL=debug arfa <command>
 ```
 
 ---
@@ -388,7 +388,7 @@ UBIK_LOG_LEVEL=debug ubik <command>
 
 ### Adding New Commands
 
-1. Add command definition in `cmd/ubik/main.go`
+1. Add command definition in `cmd/arfa/main.go`
 2. Implement logic in appropriate `internal/*.go` file
 3. Write tests in `internal/*_test.go`
 4. Update this README with usage examples
@@ -407,7 +407,7 @@ UBIK_LOG_LEVEL=debug ubik <command>
 
 The CLI is released independently from the API service:
 
-1. Version bump in `cmd/ubik/main.go` (semantic versioning)
+1. Version bump in `cmd/arfa/main.go` (semantic versioning)
 2. Update CHANGELOG.md with changes
 3. Create git tag: `cli-v0.2.0`
 4. Build binaries for all platforms
@@ -422,7 +422,7 @@ The CLI is released independently from the API service:
 
 - `github.com/spf13/cobra` - CLI framework
 - `github.com/docker/docker` - Docker SDK
-- `github.com/rastrigin-systems/ubik-enterprise/pkg/types` - Shared types
+- `github.com/rastrigin-systems/arfa/pkg/types` - Shared types
 
 ### Development Dependencies
 
@@ -465,7 +465,7 @@ Compressed:   ~3MB
 
 ### Credential Storage
 
-- JWT tokens stored in `~/.ubik/auth.json` (chmod 600)
+- JWT tokens stored in `~/.arfa/auth.json` (chmod 600)
 - Tokens encrypted at rest (future enhancement)
 - Session expiry enforced
 
@@ -498,11 +498,11 @@ Compressed:   ~3MB
 ## Support
 
 - 📖 Documentation: [docs/CLI_CLIENT.md](../../docs/CLI_CLIENT.md)
-- 🐛 Issues: [GitHub Issues](https://github.com/ubik-enterprise/ubik/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/ubik-enterprise/ubik/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/arfa/arfa/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/arfa/arfa/discussions)
 
 ---
 
 **Version**: 0.2.0
 **Last Updated**: 2025-11-13
-**Maintained by**: Ubik Enterprise Team
+**Maintained by**: Arfa Enterprise Team

@@ -8,11 +8,11 @@
 
 ## Problem Description
 
-When running `ubik` in interactive mode, users could type inputs like "2+2" or "234" but they weren't reaching the Claude Code container. The container would start successfully but no interaction was possible.
+When running `arfa` in interactive mode, users could type inputs like "2+2" or "234" but they weren't reaching the Claude Code container. The container would start successfully but no interaction was possible.
 
 **Symptoms:**
 ```bash
-$ ubik
+$ arfa
 ✓ Agent: Claude Code (ide_assistant)
 ✓ Workspace: /Users/user/project (88.4 MB, 234 files)
 
@@ -70,7 +70,7 @@ _, err := io.Copy(options.Stdout, resp.Reader)
 ### 3. Container Network Configuration
 **Status:** Already Correct ✅
 
-Containers are connected to `ubik-network` bridge network, which allows:
+Containers are connected to `arfa-network` bridge network, which allows:
 - Container-to-container communication (agent ↔ MCP servers)
 - Internet access (Claude Code → Anthropic API)
 
@@ -167,10 +167,10 @@ func (ps *ProxyService) AttachToContainer(ctx context.Context, options ProxyOpti
 make build-cli
 
 # 2. Stop existing containers
-./bin/ubik-cli stop
+./bin/arfa-cli stop
 
 # 3. Start fresh interactive session
-./bin/ubik-cli
+./bin/arfa-cli
 
 # 4. Type interactive input
 > What is 2+2?
@@ -238,7 +238,7 @@ config := &container.Config{
 
 ### Internet Access
 The container has internet access via Docker's default bridge networking:
-- Uses `ubik-network` for container-to-container communication
+- Uses `arfa-network` for container-to-container communication
 - Default route allows internet egress
 - Claude Code can reach Anthropic API at `api.anthropic.com`
 
@@ -250,22 +250,22 @@ The container has internet access via Docker's default bridge networking:
 
 **1. Check Docker networking:**
 ```bash
-docker inspect ubik-agent-<agent-id> | grep NetworkMode
+docker inspect arfa-agent-<agent-id> | grep NetworkMode
 ```
 
 **2. Verify internet access from container:**
 ```bash
-docker exec ubik-agent-<agent-id> curl -I https://api.anthropic.com
+docker exec arfa-agent-<agent-id> curl -I https://api.anthropic.com
 ```
 
 **3. Check Claude Code is running:**
 ```bash
-docker exec ubik-agent-<agent-id> ps aux | grep claude
+docker exec arfa-agent-<agent-id> ps aux | grep claude
 ```
 
 **4. Check API key is set:**
 ```bash
-docker exec ubik-agent-<agent-id> env | grep ANTHROPIC_API_KEY
+docker exec arfa-agent-<agent-id> env | grep ANTHROPIC_API_KEY
 ```
 
 ### If terminal gets corrupted after crash:

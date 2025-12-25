@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
 )
 
 // LogStreamer handles WebSocket connection and log streaming
@@ -52,7 +52,7 @@ func (ls *LogStreamer) StreamLogs(ctx context.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 	if cfg.Token == "" {
-		return fmt.Errorf("not authenticated. Run 'ubik login' first")
+		return fmt.Errorf("not authenticated. Run 'arfa login' first")
 	}
 
 	// Construct WebSocket URL

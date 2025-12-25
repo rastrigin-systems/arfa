@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/logging"
 )
 
 // TestLoggerInitialization tests that the logger is initialized correctly
@@ -27,7 +27,7 @@ func TestLoggerInitialization(t *testing.T) {
 			name:        "logger disabled via env var",
 			envVar:      "1",
 			expectNil:   true,
-			description: "Logger should be nil when UBIK_NO_LOGGING=1",
+			description: "Logger should be nil when ARFA_NO_LOGGING=1",
 		},
 	}
 
@@ -35,8 +35,8 @@ func TestLoggerInitialization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variable
 			if tt.envVar != "" {
-				os.Setenv("UBIK_NO_LOGGING", tt.envVar)
-				defer os.Unsetenv("UBIK_NO_LOGGING")
+				os.Setenv("ARFA_NO_LOGGING", tt.envVar)
+				defer os.Unsetenv("ARFA_NO_LOGGING")
 			}
 
 			// Create logger config
@@ -101,10 +101,10 @@ func TestLoggerConfigDefaults(t *testing.T) {
 	// the logger was created successfully
 }
 
-// TestLoggerOptOut tests that UBIK_NO_LOGGING opt-out works
+// TestLoggerOptOut tests that ARFA_NO_LOGGING opt-out works
 func TestLoggerOptOut(t *testing.T) {
-	os.Setenv("UBIK_NO_LOGGING", "1")
-	defer os.Unsetenv("UBIK_NO_LOGGING")
+	os.Setenv("ARFA_NO_LOGGING", "1")
+	defer os.Unsetenv("ARFA_NO_LOGGING")
 
 	config := &logging.Config{
 		Enabled:       true,

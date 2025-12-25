@@ -1,6 +1,6 @@
 # E2E Testing with MSW (Mock Service Worker)
 
-This directory contains end-to-end tests for the Ubik Enterprise web application using Playwright and MSW for API mocking.
+This directory contains end-to-end tests for the Arfa Enterprise web application using Playwright and MSW for API mocking.
 
 ## Architecture
 

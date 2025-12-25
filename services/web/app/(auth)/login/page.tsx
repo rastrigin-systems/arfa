@@ -25,7 +25,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Ubik Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
           <CardDescription className="text-center">
             Sign in to manage your AI agent configurations
           </CardDescription>

@@ -234,8 +234,8 @@ export function OrganizationSettingsClient({ organization }: OrganizationSetting
           <div className="pt-4 border-t">
             <p className="text-sm text-muted-foreground">
               Need to change your plan? Contact{' '}
-              <a href="mailto:sales@ubik.ai" className="text-primary hover:underline">
-                sales@ubik.ai
+              <a href="mailto:sales@arfa.ai" className="text-primary hover:underline">
+                sales@arfa.ai
               </a>
             </p>
           </div>

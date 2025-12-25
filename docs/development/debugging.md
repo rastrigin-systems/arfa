@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-This guide covers debugging strategies, best practices, and common pitfalls when working with the Ubik Enterprise platform.
+This guide covers debugging strategies, best practices, and common pitfalls when working with the Arfa Enterprise platform.
 
 ---
 
@@ -90,13 +90,13 @@ fmt.Fprintf(os.Stderr, "[DEBUG] Response: status=%d body=%s\n", resp.StatusCode,
 
 ```bash
 # Check if required records exist
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT * FROM table_name WHERE id = '...'"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT * FROM table_name WHERE id = '...'"
 
 # Check foreign key relationships
-docker exec ubik-postgres psql -U ubik -d ubik -c "\d table_name"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\d table_name"
 
 # Check table counts
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM table_name"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM table_name"
 ```
 
 **Common database issues:**
@@ -113,26 +113,26 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM table_na
 
 ```bash
 # Clear agent configs
-rm -rf ~/.ubik/agents/
+rm -rf ~/.arfa/agents/
 
 # Clear offline log queue
-rm -rf ~/.ubik/log_queue/
+rm -rf ~/.arfa/log_queue/
 
 # Clear entire config
-rm -rf ~/.ubik/
+rm -rf ~/.arfa/
 
 # Force fresh sync
-./bin/ubik-test sync
+./bin/arfa-test sync
 ```
 
 **API cache (if using Redis/memcached):**
 
 ```bash
 # Flush Redis cache
-docker exec ubik-redis redis-cli FLUSHALL
+docker exec arfa-redis redis-cli FLUSHALL
 
 # Or restart Redis
-docker restart ubik-redis
+docker restart arfa-redis
 ```
 
 ---
@@ -143,11 +143,11 @@ docker restart ubik-redis
 
 ```bash
 # Check binary timestamp vs source file timestamp
-ls -la ./bin/ubik-test
-ls -la services/cli/cmd/ubik/main.go
+ls -la ./bin/arfa-test
+ls -la services/cli/cmd/arfa/main.go
 
 # Rebuild if stale
-cd services/cli && go build -o ../../bin/ubik-test ./cmd/ubik
+cd services/cli && go build -o ../../bin/arfa-test ./cmd/arfa
 
 # Or rebuild everything
 make build
@@ -173,7 +173,7 @@ make test-integration
 make test
 
 # Manual verification
-./bin/ubik-test <command>
+./bin/arfa-test <command>
 ```
 
 ---
@@ -232,14 +232,14 @@ db = db.Unsafe() // Don't use in production
 
 ```bash
 # Enable query logging
-docker exec ubik-postgres psql -U ubik -d ubik -c "ALTER SYSTEM SET log_statement = 'all';"
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT pg_reload_conf();"
+docker exec arfa-postgres psql -U arfa -d arfa -c "ALTER SYSTEM SET log_statement = 'all';"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT pg_reload_conf();"
 
 # View logs
-docker logs ubik-postgres -f | grep "LOG:"
+docker logs arfa-postgres -f | grep "LOG:"
 
 # Disable after debugging
-docker exec ubik-postgres psql -U ubik -d ubik -c "ALTER SYSTEM SET log_statement = 'none';"
+docker exec arfa-postgres psql -U arfa -d arfa -c "ALTER SYSTEM SET log_statement = 'none';"
 ```
 
 ---
@@ -250,7 +250,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "ALTER SYSTEM SET log_statemen
 
 ```bash
 # In shell
-env | grep UBIK
+env | grep ARFA
 env | sort
 
 # In Go code
@@ -306,7 +306,7 @@ make db-reset
 make db-migrate
 
 # Verify seed data
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM organizations"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM organizations"
 ```
 
 ---
@@ -316,7 +316,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM organiza
 **Symptom:** Changes don't take effect, old data returned
 
 **Common Causes:**
-- Stale config files in `~/.ubik/`
+- Stale config files in `~/.arfa/`
 - Old tokens in cache
 - Browser cache (for web UI)
 - API response cache
@@ -324,11 +324,11 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM organiza
 **Solution:**
 ```bash
 # Clear all caches
-rm -rf ~/.ubik/
-docker restart ubik-redis  # If using Redis
+rm -rf ~/.arfa/
+docker restart arfa-redis  # If using Redis
 
 # Force refresh
-./bin/ubik-test sync --force
+./bin/arfa-test sync --force
 ```
 
 ---
@@ -350,10 +350,10 @@ make clean
 make build
 
 # Verify binary timestamp
-ls -la ./bin/ubik-test
+ls -la ./bin/arfa-test
 
 # Run with absolute path
-/Users/you/Projects/ubik-enterprise/bin/ubik-test <command>
+/Users/you/Projects/arfa/bin/arfa-test <command>
 ```
 
 ---
@@ -370,7 +370,7 @@ ls -la ./bin/ubik-test
 **Solution:**
 ```bash
 # Check org configs exist
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SELECT id, org_id, agent_id FROM org_agent_configs"
 
 # Create org config if missing
@@ -444,7 +444,7 @@ port := listener.Addr().(*net.TCPAddr).Port
 
 #### Authentication Failures
 
-**Problem:** `ubik login` fails or returns 401
+**Problem:** `arfa login` fails or returns 401
 
 **Debug steps:**
 ```bash
@@ -452,15 +452,15 @@ port := listener.Addr().(*net.TCPAddr).Port
 curl http://localhost:8080/health
 
 # Verify credentials
-cat ~/.ubik/config.json | jq .
+cat ~/.arfa/config.json | jq .
 
 # Check token expiration
 # Decode JWT token
 echo "<token>" | cut -d. -f2 | base64 -d | jq .
 
 # Clear auth and re-login
-rm ~/.ubik/config.json
-./bin/ubik-test login
+rm ~/.arfa/config.json
+./bin/arfa-test login
 ```
 
 ---
@@ -475,17 +475,17 @@ rm ~/.ubik/config.json
 docker ps
 
 # Check container logs
-docker logs ubik-<container> -f
+docker logs arfa-<container> -f
 
 # Check network
-docker network inspect ubik-network
+docker network inspect arfa-network
 
 # Recreate network
-docker network rm ubik-network
-docker network create ubik-network
+docker network rm arfa-network
+docker network create arfa-network
 
 # Remove stale containers
-docker rm -f $(docker ps -aq --filter "name=ubik-")
+docker rm -f $(docker ps -aq --filter "name=arfa-")
 ```
 
 ---
@@ -522,15 +522,15 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 **Debug steps:**
 ```bash
 # Check RLS is enabled
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SELECT schemaname, tablename, policyname FROM pg_policies WHERE tablename = 'employees'"
 
 # Test query as specific org
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SET app.current_org_id = '<org-uuid>'; SELECT * FROM employees"
 
 # Disable RLS temporarily for testing
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "ALTER TABLE employees DISABLE ROW LEVEL SECURITY"
 ```
 
@@ -544,15 +544,15 @@ docker exec ubik-postgres psql -U ubik -d ubik -c \
 
 ```bash
 # Check migrations table
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SELECT version, dirty FROM schema_migrations"
 
 # Check table exists
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "\dt"
 
 # Check table structure
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "\d employees"
 ```
 
@@ -564,7 +564,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c \
 
 ```bash
 # List all foreign keys
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name
    FROM information_schema.table_constraints AS tc
    JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
@@ -572,7 +572,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c \
    WHERE tc.constraint_type = 'FOREIGN KEY'"
 
 # Find orphaned records
-docker exec ubik-postgres psql -U ubik -d ubik -c \
+docker exec arfa-postgres psql -U arfa -d arfa -c \
   "SELECT * FROM employee_agent_configs eac
    WHERE NOT EXISTS (SELECT 1 FROM org_agent_configs oac WHERE oac.id = eac.org_agent_config_id)"
 ```
@@ -601,7 +601,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c \
 [DEBUG] Response: {"error": "agent_id violates foreign key constraint"}
 
 # 3. Check database
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM org_agent_configs"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM org_agent_configs"
 # Result: 0 rows (empty table!)
 
 # 4. Root cause
@@ -611,9 +611,9 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM org_agen
 
 # 5. Fix
 # - Create org_agent_config record
-# - Clear cache: rm -rf ~/.ubik/agents/
+# - Clear cache: rm -rf ~/.arfa/agents/
 # - Rebuild: make build
-# - Re-sync: ./bin/ubik-test sync
+# - Re-sync: ./bin/arfa-test sync
 
 # 6. Result
 ✅ Logs flowing successfully

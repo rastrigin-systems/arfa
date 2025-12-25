@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +31,8 @@ Authentication options:
   --auth-type basic     Use HTTP Basic authentication
 
 Examples:
-  ubik webhooks create --name "SIEM Export" --url https://siem.example.com/events
-  ubik webhooks create --name "Splunk" --url https://splunk.example.com/events \
+  arfa webhooks create --name "SIEM Export" --url https://siem.example.com/events
+  arfa webhooks create --name "Splunk" --url https://splunk.example.com/events \
     --auth-type bearer --bearer-token "sk-xxx" \
     --event-types tool_call,permission_denied`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -103,7 +103,7 @@ Examples:
 				fmt.Fprintf(out, "  Event Types: all\n")
 			}
 			fmt.Fprintln(out)
-			fmt.Fprintln(out, "Test the webhook with: ubik webhooks test "+webhook.ID)
+			fmt.Fprintln(out, "Test the webhook with: arfa webhooks test "+webhook.ID)
 
 			return nil
 		},

@@ -142,10 +142,10 @@ git checkout -b feature/your-feature-name
 
 ```bash
 # Create a new worktree in a separate directory
-git worktree add ../ubik-issue-<number> -b feature/your-feature-name
+git worktree add ../arfa-issue-<number> -b feature/your-feature-name
 
 # Move to the new worktree directory
-cd ../ubik-issue-<number>
+cd ../arfa-issue-<number>
 
 # Now you can work independently from the main repo
 # Multiple worktrees = Multiple agents working in parallel!
@@ -163,12 +163,12 @@ cd ../ubik-issue-<number>
 
 ```bash
 # Agent 1: Frontend work on Issue #13
-git worktree add ../ubik-issue-13 -b feature/agent-catalog-page
-# Frontend agent works in ../ubik-issue-13
+git worktree add ../arfa-issue-13 -b feature/agent-catalog-page
+# Frontend agent works in ../arfa-issue-13
 
 # Agent 2: Backend work on Issue #3
-git worktree add ../ubik-issue-3 -b fix/employee-integration-test
-# Backend agent works in ../ubik-issue-3
+git worktree add ../arfa-issue-3 -b fix/employee-integration-test
+# Backend agent works in ../arfa-issue-3
 
 # Both agents can commit, push, and create PRs independently!
 ```
@@ -177,10 +177,10 @@ git worktree add ../ubik-issue-3 -b fix/employee-integration-test
 
 ```bash
 # Return to main repo
-cd /path/to/ubik-enterprise
+cd /path/to/arfa
 
 # Remove worktree
-git worktree remove ../ubik-issue-13
+git worktree remove ../arfa-issue-13
 
 # Delete branch (if needed)
 git branch -d feature/agent-catalog-page
@@ -301,8 +301,8 @@ gh issue list --label="backend,status/ready"
 
 # 2. Create branch + workspace
 git checkout -b feature/123-feature-description
-git worktree add ../ubik-issue-123 feature/123-feature-description
-cd ../ubik-issue-123
+git worktree add ../arfa-issue-123 feature/123-feature-description
+cd ../arfa-issue-123
 
 # 3. Implement feature (TDD)
 # - Write failing tests

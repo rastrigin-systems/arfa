@@ -7,8 +7,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +22,8 @@ func NewListCommand(c *container.Container) *cobra.Command {
 		Long: `Display all configured webhook destinations for your organization.
 
 Examples:
-  ubik webhooks list           # List all webhooks
-  ubik webhooks list --json    # Output as JSON`,
+  arfa webhooks list           # List all webhooks
+  arfa webhooks list --json    # Output as JSON`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			ctx := context.Background()
@@ -52,7 +52,7 @@ Examples:
 			if len(resp.Destinations) == 0 {
 				fmt.Fprintln(out, "No webhook destinations configured.")
 				fmt.Fprintln(out)
-				fmt.Fprintln(out, "Create one with: ubik webhooks create --name <name> --url <url>")
+				fmt.Fprintln(out, "Create one with: arfa webhooks create --name <name> --url <url>")
 				return nil
 			}
 

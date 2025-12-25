@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Ubik Enterprise - AI Agent Management Platform"
+	@echo "Arfa Enterprise - AI Agent Management Platform"
 	@echo ""
 	@echo "Setup Commands:"
 	@echo "  make install-tools    Install code generation tools (tbls, oapi-codegen, sqlc, mockgen)"
@@ -38,13 +38,13 @@ help:
 	@echo "  make build-server    Build server binary only"
 	@echo "  make build-cli       Build CLI binary only"
 	@echo "  make build-web       Build Next.js production bundle"
-	@echo "  make install-cli     Install ubik CLI to /usr/local/bin (requires sudo)"
-	@echo "  make uninstall-cli   Uninstall ubik CLI from /usr/local/bin (requires sudo)"
-	@echo "  make rebuild-cli     Clean, rebuild and install CLI as 'ubik'"
+	@echo "  make install-cli     Install arfa CLI to /usr/local/bin (requires sudo)"
+	@echo "  make uninstall-cli   Uninstall arfa CLI from /usr/local/bin (requires sudo)"
+	@echo "  make rebuild-cli     Clean, rebuild and install CLI as 'arfa'"
 	@echo "  make clean           Clean generated files and build artifacts"
 
 # Configuration
-DATABASE_URL ?= postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
+DATABASE_URL ?= postgres://arfa:arfa_dev_password@localhost:5432/arfa?sslmode=disable
 SERVER_PORT ?= 8080
 GENERATED_DIR = generated
 DOCS_DIR = docs/database
@@ -77,7 +77,7 @@ db-up:
 	docker-compose up -d postgres
 	@echo "⏳ Waiting for PostgreSQL to be ready..."
 	@sleep 3
-	@docker-compose exec -T postgres pg_isready -U ubik || (echo "⚠️  PostgreSQL not ready yet, waiting..." && sleep 5)
+	@docker-compose exec -T postgres pg_isready -U arfa || (echo "⚠️  PostgreSQL not ready yet, waiting..." && sleep 5)
 	@echo "✅ PostgreSQL is ready"
 	@echo ""
 	@echo "Database connection:"
@@ -187,7 +187,7 @@ generate-setup:
 	@echo "📦 Setting up generated module..."
 	@mkdir -p $(GENERATED_DIR)
 	@if [ ! -f $(GENERATED_DIR)/go.mod ]; then \
-		echo 'module github.com/rastrigin-systems/ubik-enterprise/generated' > $(GENERATED_DIR)/go.mod; \
+		echo 'module github.com/rastrigin-systems/arfa/generated' > $(GENERATED_DIR)/go.mod; \
 		echo '' >> $(GENERATED_DIR)/go.mod; \
 		echo 'go 1.24.5' >> $(GENERATED_DIR)/go.mod; \
 		echo '' >> $(GENERATED_DIR)/go.mod; \
@@ -299,7 +299,7 @@ dev-all:
 	@echo "Press Ctrl+C to stop all services"
 	@echo ""
 	@trap 'kill 0' EXIT; \
-		(DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/ubik-server) & \
+		(DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/arfa-server) & \
 		(cd services/web && npm run dev)
 
 dev-api:
@@ -328,7 +328,7 @@ run-server: build-server
 	@echo ""
 	@echo "To use a different port: PORT=3002 make run-server"
 	@echo ""
-	DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/ubik-server
+	DATABASE_URL=$(DATABASE_URL) PORT=$(SERVER_PORT) ./bin/arfa-server
 
 # Build
 build: build-server build-cli build-web
@@ -344,15 +344,15 @@ build: build-server build-cli build-web
 build-server: generate-api generate-db
 	@echo "🔨 Building server binary..."
 	cd services/api && $(MAKE) build
-	@echo "✅ Server built: bin/ubik-server"
+	@echo "✅ Server built: bin/arfa-server"
 
 build-cli:
 	@echo "🔨 Building CLI binary..."
 	cd services/cli && $(MAKE) build
 	@echo ""
 	@echo "Try it out:"
-	@echo "  ./bin/ubik-cli --help"
-	@echo "  ./bin/ubik-cli --version"
+	@echo "  ./bin/arfa-cli --help"
+	@echo "  ./bin/arfa-cli --version"
 	@echo ""
 	@echo "To install system-wide:"
 	@echo "  make install-cli"
@@ -366,20 +366,20 @@ build-web:
 	@echo "  cd services/web && npm start"
 
 install-cli:
-	@echo "📦 Installing ubik CLI..."
+	@echo "📦 Installing arfa CLI..."
 	cd services/cli && $(MAKE) install
 
 uninstall-cli:
-	@echo "🗑️  Uninstalling ubik CLI..."
+	@echo "🗑️  Uninstalling arfa CLI..."
 	cd services/cli && $(MAKE) uninstall
 
 rebuild-cli:
-	@echo "🔄 Rebuilding ubik CLI..."
-	rm -f bin/ubik-cli
+	@echo "🔄 Rebuilding arfa CLI..."
+	rm -f bin/arfa-cli
 	cd services/cli && $(MAKE) build
-	sudo ln -sf $(PWD)/bin/ubik-cli /usr/local/bin/ubik
-	@echo "✅ ubik CLI rebuilt and installed"
-	@ubik version 2>/dev/null || true
+	sudo ln -sf $(PWD)/bin/arfa-cli /usr/local/bin/arfa
+	@echo "✅ arfa CLI rebuilt and installed"
+	@arfa version 2>/dev/null || true
 
 # Cleanup
 clean:

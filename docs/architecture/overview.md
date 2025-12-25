@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Ubik provides the missing security layer for AI coding agents. As enterprises adopt Claude Code, Cursor, and Copilot, security teams have zero visibility into what these agents actually do. Ubik captures every tool invocation, enforces policies, and forwards structured events to existing SIEM systems.
+Arfa provides the missing security layer for AI coding agents. As enterprises adopt Claude Code, Cursor, and Copilot, security teams have zero visibility into what these agents actually do. Arfa captures every tool invocation, enforces policies, and forwards structured events to existing SIEM systems.
 
 **One-liner**: "See and control every tool your AI agents use. Export to your existing SIEM."
 
@@ -43,7 +43,7 @@ Ubik provides the missing security layer for AI coding agents. As enterprises ad
                               │ OpenTelemetry / Webhook / Kafka
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                     UBIK SECURITY GATEWAY                       │
+│                     ARFA SECURITY GATEWAY                       │
 │                                                                 │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────────┐    │
 │  │    CAPTURE    │  │    ENFORCE    │  │     FORWARD       │    │
@@ -202,7 +202,7 @@ destinations:
   "resourceLogs": [{
     "resource": {
       "attributes": [
-        {"key": "service.name", "value": {"stringValue": "ubik-gateway"}},
+        {"key": "service.name", "value": {"stringValue": "arfa-gateway"}},
         {"key": "org.id", "value": {"stringValue": "8b58e482-..."}},
         {"key": "employee.id", "value": {"stringValue": "ae848cb1-..."}}
       ]
@@ -273,34 +273,34 @@ alerts:
 
 #### Current Commands
 ```bash
-ubik login/logout       # Authentication
-ubik sync              # Sync configs
-ubik logs view/stream  # View own logs
-ubik policies list     # View policies
+arfa login/logout       # Authentication
+arfa sync              # Sync configs
+arfa logs view/stream  # View own logs
+arfa policies list     # View policies
 ```
 
 #### Needed Commands (Permission-Based)
 ```bash
 # Webhook destinations (admin/manager only for write ops)
-ubik webhooks list
-ubik webhooks add -f webhook.yaml
-ubik webhooks test <name>
-ubik webhooks delete <name>
+arfa webhooks list
+arfa webhooks add -f webhook.yaml
+arfa webhooks test <name>
+arfa webhooks delete <name>
 
 # Policy management (admin/manager only for write ops)
-ubik policies list
-ubik policies create -f policy.yaml
-ubik policies test --dry-run
-ubik policies enable/disable <id>
+arfa policies list
+arfa policies create -f policy.yaml
+arfa policies test --dry-run
+arfa policies enable/disable <id>
 
 # Employee management (admin only)
-ubik employees list
-ubik employees logs <email>
-ubik employees revoke <email>
+arfa employees list
+arfa employees logs <email>
+arfa employees revoke <email>
 
 # Audit (admin/manager only)
-ubik audit export --since 30d --format csv
-ubik audit report --type compliance
+arfa audit export --since 30d --format csv
+arfa audit report --type compliance
 ```
 
 **Permission model:**
@@ -337,7 +337,7 @@ ubik audit report --type compliance
 
 ## Competitive Differentiation
 
-| Feature | Ubik | Datadog | Snyk | Lakera |
+| Feature | Arfa | Datadog | Snyk | Lakera |
 |---------|------|---------|------|--------|
 | AI tool-level visibility | ✅ | ❌ | ❌ | ❌ |
 | Real-time policy blocking | ✅ | ❌ | ❌ | 🟡 (input only) |
@@ -411,9 +411,9 @@ ubik audit report --type compliance
 **"Watch what happens when Claude tries to run a dangerous command"**
 
 1. Show Kibana dashboard (empty)
-2. Employee runs: `ubik` → asks Claude to "clean up temp files"
+2. Employee runs: `arfa` → asks Claude to "clean up temp files"
 3. Claude attempts: `rm -rf /tmp/*`
-4. Ubik blocks it, shows policy message to employee
+4. Arfa blocks it, shows policy message to employee
 5. Kibana dashboard updates in real-time:
    - Event: `tool_call:Bash BLOCKED`
    - Employee: `sarah.cto@acme.com`
@@ -493,11 +493,11 @@ Q4: Expand
 
 - AI Agent marketplace (curated, secure agents)
 - Industry compliance packs (HIPAA, PCI, FedRAMP)
-- Developer SDK (embed Ubik in custom agents)
+- Developer SDK (embed Arfa in custom agents)
 
 ### Year 3+: Platform Evolution
 
-- "Ubik Runtime" - Secure execution environment
+- "Arfa Runtime" - Secure execution environment
 - Multi-agent orchestration with guardrails
 - Expand beyond coding agents
 

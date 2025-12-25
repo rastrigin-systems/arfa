@@ -1,4 +1,4 @@
-# Ubik Enterprise — AI Agent Management Platform
+# Arfa Enterprise — AI Agent Management Platform
 
 **Multi-tenant SaaS platform for centralized AI agent configuration management**
 
@@ -172,7 +172,7 @@ Branch protection BLOCKS direct commits to `main`.
 When tests or operations fail unexpectedly:
 1. ✅ Add request/response logging FIRST
 2. ✅ Verify database state (foreign keys, seed data)
-3. ✅ Check for stale cache (`~/.ubik/`, binaries)
+3. ✅ Check for stale cache (`~/.arfa/`, binaries)
 4. ✅ Rebuild binaries
 
 **Common pitfalls:**
@@ -190,13 +190,13 @@ When tests or operations fail unexpectedly:
 
 ```bash
 # 1. Build image
-docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
+docker build -f services/api/Dockerfile.gcp -t arfa-api-test .
 
 # 2. Verify files in image
-docker run --rm ubik-api-test ls -la /app/platform/api-spec/
+docker run --rm arfa-api-test ls -la /app/platform/api-spec/
 
 # 3. Test container
-docker run --rm -p 8080:8080 ubik-api-test
+docker run --rm -p 8080:8080 arfa-api-test
 
 # 4. Verify endpoints
 curl http://localhost:8080/api/v1/health

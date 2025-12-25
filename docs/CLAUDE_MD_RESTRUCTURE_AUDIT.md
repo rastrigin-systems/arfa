@@ -157,7 +157,7 @@
 ### Proposed Outline (~8-10K tokens)
 
 ```markdown
-# Ubik Enterprise — AI Agent Management Platform
+# Arfa Enterprise — AI Agent Management Platform
 
 ## 📑 Table of Contents
 [Streamlined to 3 main sections]

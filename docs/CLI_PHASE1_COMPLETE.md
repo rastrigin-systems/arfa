@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 1 (Foundation) of the ubik CLI client has been successfully completed. The CLI now has a solid foundation with authentication, platform API integration, and configuration management.
+Phase 1 (Foundation) of the arfa CLI client has been successfully completed. The CLI now has a solid foundation with authentication, platform API integration, and configuration management.
 
 ---
 
@@ -18,18 +18,18 @@ Phase 1 (Foundation) of the ubik CLI client has been successfully completed. The
 - **Location:** `cmd/cli/main.go`
 - **Framework:** Cobra CLI
 - **Commands Implemented:**
-  - `ubik login` - Interactive and non-interactive authentication
-  - `ubik logout` - Clear stored credentials
-  - `ubik sync` - Fetch configs from platform
-  - `ubik config` - View local configuration
-  - `ubik status` - Show authentication and config status
-  - `ubik --version` - Display version
-  - `ubik --help` - Show help
+  - `arfa login` - Interactive and non-interactive authentication
+  - `arfa logout` - Clear stored credentials
+  - `arfa sync` - Fetch configs from platform
+  - `arfa config` - View local configuration
+  - `arfa status` - Show authentication and config status
+  - `arfa --version` - Display version
+  - `arfa --help` - Show help
 
 ### 2. Configuration Management ✅
 - **Location:** `internal/cli/config.go`
 - **Features:**
-  - Local config storage in `~/.ubik/config.json`
+  - Local config storage in `~/.arfa/config.json`
   - Save/Load configuration
   - Check authentication status
   - Clear configuration
@@ -66,7 +66,7 @@ Phase 1 (Foundation) of the ubik CLI client has been successfully completed. The
 - **Location:** `internal/cli/sync.go`
 - **Features:**
   - Fetch resolved configs from platform
-  - Save configs to `~/.ubik/agents/{agent-id}/`
+  - Save configs to `~/.arfa/agents/{agent-id}/`
   - Load local agent configs
   - Get specific agent config by ID or name
   - Update last sync timestamp
@@ -90,7 +90,7 @@ Phase 1 (Foundation) of the ubik CLI client has been successfully completed. The
 ## File Structure
 
 ```
-ubik-enterprise/
+arfa/
 ├── cmd/cli/
 │   └── main.go                   # CLI entry point with cobra commands
 │
@@ -104,7 +104,7 @@ ubik-enterprise/
 │   └── sync_test.go              # Sync tests (3 tests)
 │
 └── bin/
-    └── ubik-cli                  # Compiled binary
+    └── arfa-cli                  # Compiled binary
 ```
 
 ---
@@ -112,10 +112,10 @@ ubik-enterprise/
 ## Local Storage Structure
 
 ```
-~/.ubik/
+~/.arfa/
 ├── config.json                   # CLI configuration
 │   {
-│     "platform_url": "https://api.ubik.io",
+│     "platform_url": "https://api.arfa.io",
 │     "token": "eyJhbGc...",
 │     "employee_id": "uuid",
 │     "default_agent": "claude-code",
@@ -134,8 +134,8 @@ ubik-enterprise/
 
 ### 1. Interactive Login
 ```bash
-$ ./bin/ubik-cli login
-Platform URL [https://api.ubik.io]:
+$ ./bin/arfa-cli login
+Platform URL [https://api.arfa.io]:
 Email: alice@acme.com
 Password: ****
 
@@ -146,21 +146,21 @@ Authenticating...
 
 ### 2. Non-Interactive Login
 ```bash
-$ ./bin/ubik-cli login --email alice@acme.com --password secret123
+$ ./bin/arfa-cli login --email alice@acme.com --password secret123
 ✓ Authenticated successfully
 ```
 
 ### 3. Check Status
 ```bash
-$ ./bin/ubik-cli status
+$ ./bin/arfa-cli status
 Status: Not authenticated
 
-Run 'ubik login' to get started.
+Run 'arfa login' to get started.
 ```
 
 ### 4. Sync Configs
 ```bash
-$ ./bin/ubik-cli sync
+$ ./bin/arfa-cli sync
 ✓ Fetching configs from platform...
 ✓ Resolved configs for 2 agent(s)
   • Claude Code (claude-code)
@@ -170,23 +170,23 @@ $ ./bin/ubik-cli sync
 
 Next steps:
   1. Docker container management (coming soon)
-  2. Run 'ubik' to start your agent
+  2. Run 'arfa' to start your agent
 ```
 
 ### 5. View Config
 ```bash
-$ ./bin/ubik-cli config
-Platform URL:   https://api.ubik.io
+$ ./bin/arfa-cli config
+Platform URL:   https://api.arfa.io
 Employee ID:    550e8400-e29b-41d4-a716-446655440000
 Default Agent:  claude-code
 Last Sync:      2025-10-29 15:30:45
 
-Config Path:    /Users/alice/.ubik/config.json
+Config Path:    /Users/alice/.arfa/config.json
 ```
 
 ### 6. Logout
 ```bash
-$ ./bin/ubik-cli logout
+$ ./bin/arfa-cli logout
 ✓ Logged out successfully
 ```
 
@@ -225,7 +225,7 @@ $ go test ./internal/cli/... -v
 --- PASS: TestSyncService_GetLocalAgentConfigs_EmptyDirectory (0.00s)
 
 PASS
-ok  	github.com/rastrigin-systems/ubik-enterprise/internal/cli	0.463s
+ok  	github.com/rastrigin-systems/arfa/internal/cli	0.463s
 
 ✅ 13/13 tests passing
 ```
@@ -244,9 +244,9 @@ golang.org/x/term v0.36.0               // Password input masking
 ## Deliverables Checklist
 
 - ✅ Project setup (Go module, structure)
-- ✅ Authentication (`ubik login`)
+- ✅ Authentication (`arfa login`)
 - ✅ Platform API client
-- ✅ Config fetching (`ubik sync` - fetch only)
+- ✅ Config fetching (`arfa sync` - fetch only)
 - ✅ Unit tests (13 tests, 100% pass rate)
 - ✅ CLI commands with cobra
 - ✅ Local config storage
@@ -295,7 +295,7 @@ The following features are planned for future phases:
 1. Docker client integration
 2. Docker Compose generation
 3. Container lifecycle management
-4. Complete `ubik sync` (start containers)
+4. Complete `arfa sync` (start containers)
 5. Integration tests with Docker
 
 **See:** [docs/CLI_CLIENT.md](./CLI_CLIENT.md) for complete Phase 2 plan
@@ -306,8 +306,8 @@ The following features are planned for future phases:
 
 ### Build Binary
 ```bash
-cd ubik-enterprise
-go build -o bin/ubik-cli cmd/cli/main.go
+cd arfa
+go build -o bin/arfa-cli cmd/cli/main.go
 ```
 
 ### Run Tests
@@ -317,9 +317,9 @@ go test ./internal/cli/... -v
 
 ### Test CLI
 ```bash
-./bin/ubik-cli --help
-./bin/ubik-cli --version
-./bin/ubik-cli status
+./bin/arfa-cli --help
+./bin/arfa-cli --version
+./bin/arfa-cli status
 ```
 
 ---

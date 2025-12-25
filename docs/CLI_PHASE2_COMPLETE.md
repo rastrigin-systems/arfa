@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 2 (Docker Integration) of the ubik CLI client has been successfully completed. The CLI now fully integrates with Docker to manage containers for AI agents and MCP servers.
+Phase 2 (Docker Integration) of the arfa CLI client has been successfully completed. The CLI now fully integrates with Docker to manage containers for AI agents and MCP servers.
 
 ---
 
@@ -29,7 +29,7 @@ Phase 2 (Docker Integration) of the ubik CLI client has been successfully comple
 ### 2. Container Lifecycle Manager ✅
 - **Location:** `internal/cli/container.go`
 - **Features:**
-  - Network setup (ubik-network)
+  - Network setup (arfa-network)
   - MCP server container management
   - Agent container management
   - Volume mounting for workspaces
@@ -56,13 +56,13 @@ Phase 2 (Docker Integration) of the ubik CLI client has been successfully comple
 ### 4. Updated CLI Commands ✅
 - **Location:** `cmd/cli/main.go` (updated)
 - **Enhanced Commands:**
-  - `ubik sync --start-containers` - Sync and start containers
-  - `ubik sync --workspace <path>` - Specify workspace directory
-  - `ubik sync --api-key <key>` - Provide Anthropic API key
-  - `ubik status` - Now shows Docker container status
+  - `arfa sync --start-containers` - Sync and start containers
+  - `arfa sync --workspace <path>` - Specify workspace directory
+  - `arfa sync --api-key <key>` - Provide Anthropic API key
+  - `arfa status` - Now shows Docker container status
 - **New Commands:**
-  - `ubik start` - Start Docker containers for synced configs
-  - `ubik stop` - Stop all running containers
+  - `arfa start` - Start Docker containers for synced configs
+  - `arfa stop` - Stop all running containers
 
 ### 5. Integration Tests ✅
 - **Locations:**
@@ -80,7 +80,7 @@ Phase 2 (Docker Integration) of the ubik CLI client has been successfully comple
 ## File Structure
 
 ```
-ubik-enterprise/
+arfa/
 ├── cmd/cli/
 │   └── main.go                      # CLI with Docker commands
 │
@@ -98,7 +98,7 @@ ubik-enterprise/
 │   └── sync_test.go                 # Sync tests (5 tests)
 │
 └── bin/
-    └── ubik-cli                     # Compiled binary with Docker
+    └── arfa-cli                     # Compiled binary with Docker
 ```
 
 ---
@@ -116,7 +116,7 @@ github.com/docker/docker v28.5.1+incompatible    // Docker SDK
 
 ### 1. Sync and Start Containers
 ```bash
-$ ./bin/ubik-cli sync --start-containers --api-key sk-ant-...
+$ ./bin/arfa-cli sync --start-containers --api-key sk-ant-...
 
 ✓ Fetching configs from platform...
 ✓ Resolved configs for 2 agent(s)
@@ -128,32 +128,32 @@ $ ./bin/ubik-cli sync --start-containers --api-key sk-ant-...
 Checking Docker...
 ✓ Docker is running
 ✓ Docker version: 24.0.6
-✓ Network 'ubik-network' created
+✓ Network 'arfa-network' created
 
 ✓ Starting containers...
   Starting Filesystem (filesystem)...
-  Pulling ubik/mcp-filesystem:latest...
+  Pulling arfa/mcp-filesystem:latest...
   ✓ Filesystem started (container: abc123def456)
 
   Starting Claude Code (claude-code)...
-  Pulling ubik/claude-code:latest...
+  Pulling arfa/claude-code:latest...
   ✓ Claude Code started (container: 789ghi012jkl)
 
 ✓ Containers started successfully
 
 Next steps:
-  1. Run 'ubik status' to see container status
-  2. Run 'ubik stop' to stop containers
+  1. Run 'arfa status' to see container status
+  2. Run 'arfa stop' to stop containers
 ```
 
 ### 2. Start Containers (After Sync)
 ```bash
-$ ./bin/ubik-cli start --workspace /Users/alice/project
+$ ./bin/arfa-cli start --workspace /Users/alice/project
 
 Checking Docker...
 ✓ Docker is running
 ✓ Docker version: 24.0.6
-✓ Network 'ubik-network' already exists
+✓ Network 'arfa-network' already exists
 
 ✓ Starting containers...
   Starting Filesystem (filesystem)...
@@ -164,15 +164,15 @@ Checking Docker...
 
 ✓ Containers started successfully
 
-Run 'ubik status' to see container status
+Run 'arfa status' to see container status
 ```
 
 ### 3. Check Status with Containers
 ```bash
-$ ./bin/ubik-cli status
+$ ./bin/arfa-cli status
 
 Status: Authenticated
-Platform:       https://api.ubik.io
+Platform:       https://api.arfa.io
 Employee ID:    550e8400-e29b-41d4-a716-446655440000
 
 Agent Configs:  2
@@ -181,22 +181,22 @@ Agent Configs:  2
   • Aider (aider) - disabled
 
 Docker Containers: 3
-  🟢 ubik-mcp-fs-123 (ubik/mcp-filesystem:latest) - Up 5 minutes
-  🟢 ubik-mcp-git-456 (ubik/mcp-git:latest) - Up 5 minutes
-  🟢 ubik-agent-789 (ubik/claude-code:latest) - Up 5 minutes
+  🟢 arfa-mcp-fs-123 (arfa/mcp-filesystem:latest) - Up 5 minutes
+  🟢 arfa-mcp-git-456 (arfa/mcp-git:latest) - Up 5 minutes
+  🟢 arfa-agent-789 (arfa/claude-code:latest) - Up 5 minutes
 ```
 
 ### 4. Stop Containers
 ```bash
-$ ./bin/ubik-cli stop
+$ ./bin/arfa-cli stop
 
 Stopping 3 container(s)...
-  Stopping ubik-agent-789...
-  ✓ ubik-agent-789 stopped
-  Stopping ubik-mcp-fs-123...
-  ✓ ubik-mcp-fs-123 stopped
-  Stopping ubik-mcp-git-456...
-  ✓ ubik-mcp-git-456 stopped
+  Stopping arfa-agent-789...
+  ✓ arfa-agent-789 stopped
+  Stopping arfa-mcp-fs-123...
+  ✓ arfa-mcp-fs-123 stopped
+  Stopping arfa-mcp-git-456...
+  ✓ arfa-mcp-git-456 stopped
 
 ✓ All containers stopped
 ```
@@ -282,17 +282,17 @@ PASS
 │ Host Machine (Employee's Computer)                          │
 │                                                              │
 │  ┌────────────────────────────────────────────────────┐    │
-│  │ ubik CLI (Native Go Process)                       │    │
+│  │ arfa CLI (Native Go Process)                       │    │
 │  │  ✅ Manages Docker containers                       │    │
 │  │  ✅ Injects configs via environment variables       │    │
 │  │  ✅ Mounts workspace as /workspace                  │    │
 │  └────────────────────────────────────────────────────┘    │
 │                      ↕                                       │
 │  ┌────────────────────────────────────────────────────┐    │
-│  │ Docker Network: ubik-network                       │    │
+│  │ Docker Network: arfa-network                       │    │
 │  │                                                     │    │
 │  │  ┌──────────────────────────────────────────────┐ │    │
-│  │  │ Container: ubik-agent-{id}                   │ │    │
+│  │  │ Container: arfa-agent-{id}                   │ │    │
 │  │  │  • Claude Code CLI                           │ │    │
 │  │  │  • Config: AGENT_CONFIG env var             │ │    │
 │  │  │  • API Key: ANTHROPIC_API_KEY env var       │ │    │
@@ -301,7 +301,7 @@ PASS
 │  │  └──────────────────────────────────────────────┘ │    │
 │  │                      ↕ Network                     │    │
 │  │  ┌──────────────────────────────────────────────┐ │    │
-│  │  │ Container: ubik-mcp-{server-id}              │ │    │
+│  │  │ Container: arfa-mcp-{server-id}              │ │    │
 │  │  │  • MCP Server (filesystem/git/postgres)      │ │    │
 │  │  │  • Config: MCP_CONFIG env var                │ │    │
 │  │  │  • Workspace: /workspace (mounted)           │ │    │
@@ -319,7 +319,7 @@ Phase 2 Goals:
 - ✅ Docker client integration
 - ✅ Docker Compose generation (programmatic via SDK)
 - ✅ Container lifecycle management (start/stop/status)
-- ✅ Complete `ubik sync` (start containers)
+- ✅ Complete `arfa sync` (start containers)
 - ✅ Integration tests (9 tests)
 - ✅ Network setup and management
 - ✅ Volume mounting for workspaces
@@ -347,7 +347,7 @@ The following features are planned for future phases:
 ## Known Limitations
 
 1. **Docker Images Required**
-   - CLI expects images to exist: `ubik/claude-code:latest`, `ubik/mcp-filesystem:latest`, etc.
+   - CLI expects images to exist: `arfa/claude-code:latest`, `arfa/mcp-filesystem:latest`, etc.
    - Images must be built using the Dockerfiles in `docker/` directory
    - See [docker/README.md](../docker/README.md) for build instructions
 
@@ -406,10 +406,10 @@ go test ./internal/cli/... -v
 
 ### Test CLI
 ```bash
-./bin/ubik-cli --help
-./bin/ubik-cli sync --help
-./bin/ubik-cli start --help
-./bin/ubik-cli stop --help
+./bin/arfa-cli --help
+./bin/arfa-cli sync --help
+./bin/arfa-cli start --help
+./bin/arfa-cli stop --help
 ```
 
 ---

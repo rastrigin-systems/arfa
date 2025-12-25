@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/tests/testutil"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/services/api/internal/auth"
+	"github.com/rastrigin-systems/arfa/services/api/internal/handlers"
+	"github.com/rastrigin-systems/arfa/services/api/tests/testutil"
 )
 
 // TestLogin_Integration_Success tests the complete login flow with a REAL database

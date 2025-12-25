@@ -12,7 +12,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 // SetupTestDB creates a PostgreSQL testcontainer and returns a connection with db.Queries
@@ -31,9 +31,9 @@ func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 		Image:        "postgres:15-alpine",
 		ExposedPorts: []string{"5432/tcp"},
 		Env: map[string]string{
-			"POSTGRES_USER":     "ubik",
+			"POSTGRES_USER":     "arfa",
 			"POSTGRES_PASSWORD": "test_password",
-			"POSTGRES_DB":       "ubik_test",
+			"POSTGRES_DB":       "arfa_test",
 		},
 		Files: []testcontainers.ContainerFile{
 			{
@@ -68,7 +68,7 @@ func SetupTestDB(t *testing.T) (*pgx.Conn, *db.Queries) {
 	require.NoError(t, err)
 
 	// Build connection string
-	connStr := fmt.Sprintf("postgres://ubik:test_password@%s:%s/ubik_test?sslmode=disable",
+	connStr := fmt.Sprintf("postgres://arfa:test_password@%s:%s/arfa_test?sslmode=disable",
 		host, port.Port())
 
 	// Connect to database

@@ -10,9 +10,9 @@ import (
 )
 
 // DefaultPlatformURL is the default platform API URL.
-const DefaultPlatformURL = "https://api.ubik.io"
+const DefaultPlatformURL = "https://api.arfa.io"
 
-// Config represents the local CLI configuration stored in ~/.ubik/config.json.
+// Config represents the local CLI configuration stored in ~/.arfa/config.json.
 type Config struct {
 	PlatformURL  string    `json:"platform_url"`
 	Token        string    `json:"token"`
@@ -28,14 +28,14 @@ type Manager struct {
 	configPath string
 }
 
-// NewManager creates a new Manager with default path (~/.ubik/config.json).
+// NewManager creates a new Manager with default path (~/.arfa/config.json).
 func NewManager() (*Manager, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	configDir := filepath.Join(homeDir, ".ubik")
+	configDir := filepath.Join(homeDir, ".arfa")
 	configPath := filepath.Join(configDir, "config.json")
 
 	// Create config directory if it doesn't exist

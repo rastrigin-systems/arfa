@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
+	"github.com/rastrigin-systems/arfa/generated/mocks"
 )
 
 func TestRetentionPolicy_CleanupOldLogs(t *testing.T) {

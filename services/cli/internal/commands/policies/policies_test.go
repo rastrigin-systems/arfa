@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,7 +60,7 @@ func TestListCommand_NoPoliciesFile(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "No tool policies found")
-	assert.Contains(t, output, "ubik sync")
+	assert.Contains(t, output, "arfa sync")
 }
 
 func TestListCommand_EmptyPolicies(t *testing.T) {
@@ -70,9 +70,9 @@ func TestListCommand_EmptyPolicies(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create empty policies file
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
-	os.WriteFile(ubikDir+"/policies.json", []byte(`{"policies":[],"version":1,"synced_at":"2024-01-15T10:00:00Z"}`), 0600)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
+	os.WriteFile(arfaDir+"/policies.json", []byte(`{"policies":[],"version":1,"synced_at":"2024-01-15T10:00:00Z"}`), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -95,8 +95,8 @@ func TestListCommand_WithPolicies(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create policies file with some policies
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked", "scope": "organization"},
@@ -105,7 +105,7 @@ func TestListCommand_WithPolicies(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -133,8 +133,8 @@ func TestListCommand_WithAllFlag(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create policies file with both deny and audit policies
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
@@ -143,7 +143,7 @@ func TestListCommand_WithAllFlag(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)
@@ -169,8 +169,8 @@ func TestListCommand_JSONOutput(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 	cacheContent := `{
 		"policies": [
 			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"}
@@ -178,7 +178,7 @@ func TestListCommand_JSONOutput(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	c := container.New()
 	cmd := NewListCommand(c)

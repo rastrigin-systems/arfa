@@ -5,10 +5,10 @@ package container
 import (
 	gosync "sync"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/skill"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/auth"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/skill"
 )
 
 // Container manages dependencies for the CLI application.

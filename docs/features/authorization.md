@@ -1,6 +1,6 @@
 # Authorization Guide
 
-This document describes how role-based authorization works in the Ubik Enterprise API.
+This document describes how role-based authorization works in the Arfa Enterprise API.
 
 ## Overview
 

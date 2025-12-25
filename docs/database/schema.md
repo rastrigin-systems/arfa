@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-Complete guide to the Ubik Enterprise database schema, operations, and best practices.
+Complete guide to the Arfa Enterprise database schema, operations, and best practices.
 
 ---
 
@@ -89,10 +89,10 @@ open http://localhost:8080
 
 # Login credentials:
 # System: PostgreSQL
-# Server: ubik-postgres
-# Username: ubik
-# Password: ubik_dev_password
-# Database: ubik
+# Server: arfa-postgres
+# Username: arfa
+# Password: arfa_dev_password
+# Database: arfa
 ```
 
 ---
@@ -101,13 +101,13 @@ open http://localhost:8080
 
 ```bash
 # Connect to database
-docker exec -it ubik-postgres psql -U ubik -d ubik
+docker exec -it arfa-postgres psql -U arfa -d arfa
 
 # One-line query
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM employees"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM employees"
 
 # Execute SQL file
-docker exec -i ubik-postgres psql -U ubik -d ubik < platform/database/schema.sql
+docker exec -i arfa-postgres psql -U arfa -d arfa < platform/database/schema.sql
 ```
 
 ---
@@ -118,7 +118,7 @@ docker exec -i ubik-postgres psql -U ubik -d ubik < platform/database/schema.sql
 # Add PostgreSQL MCP server
 claude mcp add postgres \
   -- docker run -i --rm mcp/postgres \
-  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
+  postgresql://arfa:arfa_dev_password@host.docker.internal:5432/arfa
 
 # Use via Claude Code
 # MCP provides tools for queries, schema inspection, etc.
@@ -132,7 +132,7 @@ claude mcp add postgres \
 
 ```bash
 # Connection string
-postgres://ubik:ubik_dev_password@localhost:5432/ubik
+postgres://arfa:arfa_dev_password@localhost:5432/arfa
 
 # Use with any PostgreSQL client:
 # - DataGrip
@@ -171,22 +171,22 @@ make db-rollback
 
 ```bash
 # List all tables
-docker exec ubik-postgres psql -U ubik -d ubik -c "\dt"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\dt"
 
 # Describe table structure
-docker exec ubik-postgres psql -U ubik -d ubik -c "\d employees"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\d employees"
 
 # List all views
-docker exec ubik-postgres psql -U ubik -d ubik -c "\dv"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\dv"
 
 # List all functions
-docker exec ubik-postgres psql -U ubik -d ubik -c "\df"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\df"
 
 # List all indexes
-docker exec ubik-postgres psql -U ubik -d ubik -c "\di"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\di"
 
 # List all foreign keys
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT tc.table_name, kcu.column_name, ccu.table_name AS foreign_table_name
   FROM information_schema.table_constraints AS tc
   JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
@@ -201,23 +201,23 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # Count records in table
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM organizations"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM organizations"
 
 # View recent records
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT id, name, created_at FROM organizations
   ORDER BY created_at DESC
   LIMIT 10
 "
 
 # Search records
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT * FROM employees
   WHERE email LIKE '%@example.com'
 "
 
 # Join tables
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT e.email, o.name as org_name
   FROM employees e
   JOIN organizations o ON e.org_id = o.id
@@ -230,20 +230,20 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # Insert record
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   INSERT INTO organizations (id, name, email)
   VALUES (gen_random_uuid(), 'Test Org', 'test@example.com')
 "
 
 # Update record
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   UPDATE organizations
   SET name = 'Updated Org'
   WHERE email = 'test@example.com'
 "
 
 # Delete record
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   DELETE FROM organizations
   WHERE email = 'test@example.com'
 "
@@ -273,7 +273,7 @@ migrate create -ext sql -dir platform/database/migrations -seq add_user_table
 make db-migrate
 
 # Or manually
-migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" up
+migrate -path platform/database/migrations -database "postgres://arfa:arfa_dev_password@localhost:5432/arfa?sslmode=disable" up
 ```
 
 **Rollback migrations:**
@@ -283,7 +283,7 @@ migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_p
 make db-rollback
 
 # Or manually
-migrate -path platform/database/migrations -database "postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable" down 1
+migrate -path platform/database/migrations -database "postgres://arfa:arfa_dev_password@localhost:5432/arfa?sslmode=disable" down 1
 ```
 
 ---
@@ -339,14 +339,14 @@ employees, err := db.ListAllEmployees(ctx)
 
 ```bash
 # List RLS policies
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT schemaname, tablename, policyname
   FROM pg_policies
   WHERE tablename = 'employees'
 "
 
 # Check if RLS is enabled
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT tablename, rowsecurity
   FROM pg_tables
   WHERE schemaname = 'public'
@@ -357,7 +357,7 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # Set current org context
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SET app.current_org_id = '<org-uuid>';
   SELECT * FROM employees;
 "
@@ -369,12 +369,12 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # ⚠️ Only for debugging!
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   ALTER TABLE employees DISABLE ROW LEVEL SECURITY
 "
 
 # Re-enable after testing
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   ALTER TABLE employees ENABLE ROW LEVEL SECURITY
 "
 ```
@@ -400,7 +400,7 @@ CREATE INDEX idx_employees_email ON employees(email);
 
 ```bash
 # Explain query plan
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   EXPLAIN ANALYZE
   SELECT * FROM employees WHERE org_id = '<uuid>'
 "
@@ -430,7 +430,7 @@ COMMIT;
 
 ```bash
 # Find orphaned records
-docker exec ubik-postgres psql -U ubik -d ubik -c "
+docker exec arfa-postgres psql -U arfa -d arfa -c "
   SELECT * FROM employee_agent_configs eac
   WHERE NOT EXISTS (
     SELECT 1 FROM org_agent_configs oac
@@ -447,20 +447,20 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "
 
 ```bash
 # Backup to file
-docker exec ubik-postgres pg_dump -U ubik -d ubik > backup.sql
+docker exec arfa-postgres pg_dump -U arfa -d arfa > backup.sql
 
 # Backup with custom format (smaller, faster restore)
-docker exec ubik-postgres pg_dump -U ubik -d ubik -Fc > backup.dump
+docker exec arfa-postgres pg_dump -U arfa -d arfa -Fc > backup.dump
 ```
 
 **Restore database:**
 
 ```bash
 # Restore from SQL file
-docker exec -i ubik-postgres psql -U ubik -d ubik < backup.sql
+docker exec -i arfa-postgres psql -U arfa -d arfa < backup.sql
 
 # Restore from custom format
-docker exec -i ubik-postgres pg_restore -U ubik -d ubik backup.dump
+docker exec -i arfa-postgres pg_restore -U arfa -d arfa backup.dump
 ```
 
 ---

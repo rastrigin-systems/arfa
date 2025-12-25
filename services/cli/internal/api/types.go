@@ -1,4 +1,4 @@
-// Package api contains API request/response types for the Ubik platform.
+// Package api contains API request/response types for the Arfa platform.
 package api
 
 import "time"

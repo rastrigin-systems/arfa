@@ -17,7 +17,7 @@
 
 ```bash
 # Build the Docker image locally
-docker build -f services/api/Dockerfile.gcp -t ubik-api-test .
+docker build -f services/api/Dockerfile.gcp -t arfa-api-test .
 
 # Verify build succeeded
 echo $?  # Should be 0
@@ -29,14 +29,14 @@ echo $?  # Should be 0
 
 ```bash
 # Verify required files are in the image
-docker run --rm ubik-api-test ls -la /app/
+docker run --rm arfa-api-test ls -la /app/
 
 # Check for specific files
-docker run --rm ubik-api-test ls -la /app/platform/api-spec/spec.yaml
-docker run --rm ubik-api-test ls -la /app/server
+docker run --rm arfa-api-test ls -la /app/platform/api-spec/spec.yaml
+docker run --rm arfa-api-test ls -la /app/server
 
 # Verify environment variables
-docker run --rm ubik-api-test env | grep -E "PROJECT_ROOT|PORT"
+docker run --rm arfa-api-test env | grep -E "PROJECT_ROOT|PORT"
 ```
 
 **✅ All required files must be present**
@@ -50,8 +50,8 @@ make db-up
 
 # Run the container locally
 docker run --rm -p 8080:8080 \
-  -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
-  ubik-api-test
+  -e DATABASE_URL="postgres://arfa:arfa_dev_password@host.docker.internal:5432/arfa?sslmode=disable" \
+  arfa-api-test
 
 # In another terminal, test endpoints
 curl http://localhost:8080/api/v1/health
@@ -67,11 +67,11 @@ curl http://localhost:8080/api/docs/spec.yaml
 
 ```bash
 # Test locally (non-Docker)
-make build-server && ./bin/ubik-server &
+make build-server && ./bin/arfa-server &
 curl http://localhost:3001/api/docs/
 
 # Test Docker
-docker run -p 8080:8080 ubik-api-test &
+docker run -p 8080:8080 arfa-api-test &
 curl http://localhost:8080/api/docs/
 
 # Results should be identical
@@ -111,8 +111,8 @@ grep -A 5 "docker build" cloudbuild-api.yaml
 ```bash
 # Run all checks before committing
 make build-server     # Local build works
-docker build -f services/api/Dockerfile.gcp -t ubik-api-test .  # Docker build works
-docker run --rm ubik-api-test ls -la /app/  # Files present
+docker build -f services/api/Dockerfile.gcp -t arfa-api-test .  # Docker build works
+docker run --rm arfa-api-test ls -la /app/  # Files present
 make test             # Tests pass
 ```
 
@@ -150,7 +150,7 @@ make test             # Tests pass
 ```bash
 # Quick Docker test (copy-paste)
 docker build -f services/api/Dockerfile.gcp -t test . && \
-docker run --rm -p 8080:8080 -e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" test &
+docker run --rm -p 8080:8080 -e DATABASE_URL="postgres://arfa:arfa_dev_password@host.docker.internal:5432/arfa?sslmode=disable" test &
 sleep 3 && curl http://localhost:8080/api/v1/health && \
 curl -I http://localhost:8080/api/docs/
 ```
@@ -203,7 +203,7 @@ git revert HEAD
 git push
 
 # Or roll back in Cloud Run console
-# Cloud Run > ubik-api > Revisions > Select previous > Manage Traffic
+# Cloud Run > arfa-api > Revisions > Select previous > Manage Traffic
 ```
 
 ---

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,11 +62,11 @@ func TestNewLogger(t *testing.T) {
 	}
 }
 
-// TestLoggerDisabledViaEnv tests UBIK_NO_LOGGING environment variable
+// TestLoggerDisabledViaEnv tests ARFA_NO_LOGGING environment variable
 func TestLoggerDisabledViaEnv(t *testing.T) {
 	// Set environment variable
-	os.Setenv("UBIK_NO_LOGGING", "1")
-	defer os.Unsetenv("UBIK_NO_LOGGING")
+	os.Setenv("ARFA_NO_LOGGING", "1")
+	defer os.Unsetenv("ARFA_NO_LOGGING")
 
 	config := &Config{
 		Enabled:       true, // explicitly enabled in config
@@ -76,7 +76,7 @@ func TestLoggerDisabledViaEnv(t *testing.T) {
 	}
 
 	logger, err := NewLogger(config, nil)
-	assert.Nil(t, logger, "logger should be nil when UBIK_NO_LOGGING=1")
+	assert.Nil(t, logger, "logger should be nil when ARFA_NO_LOGGING=1")
 	assert.NoError(t, err)
 }
 

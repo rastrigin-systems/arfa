@@ -13,7 +13,7 @@ type Role = {
 };
 
 export const metadata = {
-  title: 'Roles | Ubik Enterprise',
+  title: 'Roles | Arfa Enterprise',
   description: 'Manage organizational roles and permissions',
 };
 

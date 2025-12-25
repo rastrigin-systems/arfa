@@ -15,11 +15,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
-	authmiddleware "github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/services/api/internal/auth"
+	authmiddleware "github.com/rastrigin-systems/arfa/services/api/internal/middleware"
+	"github.com/rastrigin-systems/arfa/services/api/internal/service"
 )
 
 // InvitationHandler handles invitation-related requests

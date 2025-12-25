@@ -36,20 +36,20 @@ Add the following section to **BOTH** agent configuration files:
 
 ```bash
 # Create worktree for Issue #13 (in separate directory)
-git worktree add ../ubik-issue-13 -b feature/agent-catalog-page
+git worktree add ../arfa-issue-13 -b feature/agent-catalog-page
 
 # Create worktree for Issue #14 (in another separate directory)
-git worktree add ../ubik-issue-14 -b feature/org-agent-config
+git worktree add ../arfa-issue-14 -b feature/org-agent-config
 
 # Now you can work in both directories independently:
-# - Terminal 1: cd ../ubik-issue-13 (frontend work)
-# - Terminal 2: cd ../ubik-issue-14 (backend work)
+# - Terminal 1: cd ../arfa-issue-13 (frontend work)
+# - Terminal 2: cd ../arfa-issue-14 (backend work)
 
 # List all worktrees
 git worktree list
 
 # Remove worktree after PR is merged
-git worktree remove ../ubik-issue-13
+git worktree remove ../arfa-issue-13
 ```
 
 **Benefits of Worktrees:**
@@ -94,8 +94,8 @@ git worktree remove ../ubik-issue-13
    git checkout -b <type>/<short-description>
 
    # Option B: Worktree (parallel tasks)
-   git worktree add ../ubik-<issue-number> -b <type>/<short-description>
-   cd ../ubik-<issue-number>
+   git worktree add ../arfa-<issue-number> -b <type>/<short-description>
+   cd ../arfa-<issue-number>
    ```
 
 3. ✅ Verify project status was updated (double-check)
@@ -215,7 +215,7 @@ git worktree remove ../ubik-issue-13
     ```bash
     # After PR is merged, cleanup the worktree
     cd /path/to/main/repo
-    git worktree remove ../ubik-<issue-number>
+    git worktree remove ../arfa-<issue-number>
     git branch -d <branch-name>  # Delete local branch
     git push origin --delete <branch-name>  # Delete remote (if needed)
     ```
@@ -240,7 +240,7 @@ git worktree remove ../ubik-issue-13
 
 ```bash
 # Get project and field IDs (one-time lookup)
-gh api graphql -f query='{ repository(owner: "sergei-rastrigin", name: "ubik-enterprise") { projectsV2(first: 5) { nodes { id title } } } }'
+gh api graphql -f query='{ repository(owner: "sergei-rastrigin", name: "arfa") { projectsV2(first: 5) { nodes { id title } } } }'
 
 # Update status (replace IDs with actual values)
 ./scripts/update-project-status.sh --issue <issue-number> --status "In Progress"

@@ -81,7 +81,7 @@ input_json_delta chunks (accumulated):
   sers/serg
   eirastrig
   in/Projec
-  ts/ubik... ORDER BY crea
+  ts/arfa... ORDER BY crea
   ted_at DESC L
   IMIT
    3;\"
@@ -94,7 +94,7 @@ input_json_delta chunks (accumulated):
   ext"}
 
 Final input (reconstructed):
-  {"command": "cd /Users/.../ubik... ORDER BY created_at DESC LIMIT 3;",
+  {"command": "cd /Users/.../arfa... ORDER BY created_at DESC LIMIT 3;",
    "description": "Extract tool_use block context"}
 ```
 
@@ -337,7 +337,7 @@ VALUES (
 4. Agent sends `tool_result` back to API
 5. API continues conversation
 
-**Ubik Proxy intercepts step 2** - we modify the response before the agent sees it.
+**Arfa Proxy intercepts step 2** - we modify the response before the agent sees it.
 
 ### Stream Modification
 
@@ -375,11 +375,11 @@ Reason: Shell commands are restricted by your organization's security policy.
 This restriction is set by your company administrator. To see all tool
 restrictions for your account, run:
 
-  ubik policies list
+  arfa policies list
 
 Or view the cached policies at:
 
-  ~/.ubik/policies.json
+  ~/.arfa/policies.json
 
 If you believe this is an error, contact your administrator.
 ```
@@ -398,7 +398,7 @@ but this specific usage pattern is blocked.
 
 To see all tool restrictions for your account, run:
 
-  ubik policies list
+  arfa policies list
 
 If you believe this is an error, contact your administrator.
 ```
@@ -415,11 +415,11 @@ Reason: %s
 This restriction is set by your company administrator. To see all tool
 restrictions for your account, run:
 
-  ubik policies list
+  arfa policies list
 
 Or view the cached policies at:
 
-  ~/.ubik/policies.json
+  ~/.arfa/policies.json
 
 If you believe this is an error, contact your administrator.`, toolName, reason)
 
@@ -447,7 +447,7 @@ If you believe this is an error, contact your administrator.`, toolName, reason)
 ```mermaid
 sequenceDiagram
     participant API as Anthropic API
-    participant Proxy as Ubik Proxy
+    participant Proxy as Arfa Proxy
     participant Agent as Claude Code
     participant User
 
@@ -464,13 +464,13 @@ sequenceDiagram
 
     Note over Agent: Parse error message<br/>Inform user
 
-    Agent->>User: "I tried to run a shell command, but<br/>your organization has blocked Bash.<br/>Run 'ubik policies list' for details."
+    Agent->>User: "I tried to run a shell command, but<br/>your organization has blocked Bash.<br/>Run 'arfa policies list' for details."
 ```
 
-### CLI Command: `ubik policies list`
+### CLI Command: `arfa policies list`
 
 ```
-$ ubik policies list
+$ arfa policies list
 
 Tool Policies for john@acme.com
 Organization: Acme Corp
@@ -491,7 +491,7 @@ MCP RESTRICTIONS
 • mcp__gcloud__*     - All gcloud commands blocked
 • mcp__playwright__* - Browser automation disabled
 
-Run 'ubik policies sync' to refresh from server.
+Run 'arfa policies sync' to refresh from server.
 ```
 
 ### Multiple Tool Calls Handling
@@ -635,7 +635,7 @@ Policy evaluation is a well-established problem. AWS IAM is the industry standar
 | **GCP IAM** | No access | Deny policies exist | Union (additive) |
 | **Azure RBAC** | Deny | Deny assignments win | RBAC + Policy combined |
 
-### Ubik Policy Model (AWS-Aligned)
+### Arfa Policy Model (AWS-Aligned)
 
 ```
 Evaluation Order:
@@ -709,15 +709,15 @@ ON tool_policies (org_id, team_id, employee_id, tool_name);
 
 | When | Trigger |
 |------|---------|
-| Login | `ubik login` fetches resolved policies |
-| Manual sync | `ubik sync` refreshes policies |
+| Login | `arfa login` fetches resolved policies |
+| Manual sync | `arfa sync` refreshes policies |
 | CLI startup | Load from disk cache, background refresh if stale |
 | Background | Optional periodic refresh (e.g., every 5 min while proxy running) |
 
 ### Local Storage
 
 ```
-~/.ubik/
+~/.arfa/
 ├── config.json          # Auth, API URL
 ├── policies.json        # Cached resolved policies
 └── policies_meta.json   # Last sync timestamp, version
@@ -780,7 +780,7 @@ func (c *PolicyCache) LoadFromDisk(path string) error {
 ```mermaid
 flowchart LR
     subgraph Startup["CLI Startup"]
-        LOAD["Load ~/.ubik/policies.json"]
+        LOAD["Load ~/.arfa/policies.json"]
         MEM["Build in-memory cache"]
         LOAD --> MEM
     end
@@ -956,7 +956,7 @@ func (h *PolicyHandler) HandleStreamEvent(ctx *HandlerContext, event SSEEvent) B
     if h.cache.IsExpired() && !h.cache.CanRefresh() {
         return BlockDecision{
             Block:  true,
-            Reason: "Policy cache expired. Run 'ubik policies sync' to refresh.",
+            Reason: "Policy cache expired. Run 'arfa policies sync' to refresh.",
         }
     }
     // ... normal evaluation
@@ -972,7 +972,7 @@ This may be due to network issues or server unavailability.
 
 To resolve, run:
 
-  ubik policies sync
+  arfa policies sync
 
 If the problem persists, contact your administrator.
 ```

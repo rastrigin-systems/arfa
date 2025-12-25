@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document captures the **current development configuration** used to build Ubik Enterprise before implementing major orchestration changes. This setup has proven highly effective and may inform future Ubik features.
+This document captures the **current development configuration** used to build Arfa Enterprise before implementing major orchestration changes. This setup has proven highly effective and may inform future Arfa features.
 
 ---
 
@@ -64,13 +64,13 @@ This document captures the **current development configuration** used to build U
 **Parallel Development via Git Worktrees:**
 ```bash
 # Agent 1 works in:
-/Users/rastrigin-systems/Projects/ubik-enterprise (main branch)
+/Users/rastrigin-systems/Projects/arfa (main branch)
 
 # Agent 2 works in:
-/Users/rastrigin-systems/Projects/ubik-issue-123 (issue-123 branch)
+/Users/rastrigin-systems/Projects/arfa-issue-123 (issue-123 branch)
 
 # Agent 3 works in:
-/Users/rastrigin-systems/Projects/ubik-issue-234 (issue-234 branch)
+/Users/rastrigin-systems/Projects/arfa-issue-234 (issue-234 branch)
 ```
 
 **GitHub Projects Integration:**
@@ -106,7 +106,7 @@ This document captures the **current development configuration** used to build U
 
 ### 2. Git Worktree Usage
 - One worktree per issue
-- Format: `../ubik-issue-<NUM>`
+- Format: `../arfa-issue-<NUM>`
 - Branch format: `issue-<NUM>-<description>`
 - Enables true parallel development
 
@@ -154,7 +154,7 @@ This document captures the **current development configuration** used to build U
 
 ---
 
-## Comparison: Dev Setup vs. Ubik Product
+## Comparison: Dev Setup vs. Arfa Product
 
 ### Dev Setup (Layer 3) - What We Have
 - 5 specialized agents with workflows
@@ -165,8 +165,8 @@ This document captures the **current development configuration** used to build U
 - Qdrant knowledge base
 - Multi-agent parallelism
 
-### Ubik Product (Layer 2) - What Users Get
-- Agent config sync (`ubik sync`)
+### Arfa Product (Layer 2) - What Users Get
+- Agent config sync (`arfa sync`)
 - Docker container management
 - Interactive agent sessions
 - Basic agent management commands
@@ -178,12 +178,12 @@ This document captures the **current development configuration** used to build U
 ## Strategic Decision Point
 
 ### Option A: Keep Separate
-- **Dev setup** = Internal tool for building Ubik
-- **Ubik product** = Simple config sync for end users
+- **Dev setup** = Internal tool for building Arfa
+- **Arfa product** = Simple config sync for end users
 - **Rationale:** Enterprises may not need full orchestration
 
-### Option B: Merge into Product (Ubik Pro)
-- Extract dev setup into **Ubik Advanced Features**
+### Option B: Merge into Product (Arfa Pro)
+- Extract dev setup into **Arfa Advanced Features**
 - Offer as premium tier for enterprises
 - **Features:**
   - Multi-agent orchestration
@@ -193,9 +193,9 @@ This document captures the **current development configuration** used to build U
 - **Rationale:** Dev setup IS what enterprises want!
 
 ### Option C: Hybrid Approach
-- **Ubik Basic:** Config sync + Docker (current)
-- **Ubik Workflows:** Agent orchestration (dev setup features)
-- **Ubik Enterprise:** + Multi-tenant + Team management
+- **Arfa Basic:** Config sync + Docker (current)
+- **Arfa Workflows:** Agent orchestration (dev setup features)
+- **Arfa Enterprise:** + Multi-tenant + Team management
 - **Rationale:** Tiered product for different customer segments
 
 ---
@@ -237,15 +237,15 @@ tar -xzf ~/claude-code-dev-setup-backup-20251101-195047.tar.gz
 
 ### Current Development Setup
 - **Location:** `~/.claude/agents/`
-- **Purpose:** Build Ubik platform
+- **Purpose:** Build Arfa platform
 - **Scope:** Personal development environment
 - **Version:** Custom, evolving
 
-### Ubik Product Configuration (Future)
-- **Location:** `~/.ubik/configs/` (synced from platform)
+### Arfa Product Configuration (Future)
+- **Location:** `~/.arfa/configs/` (synced from platform)
 - **Purpose:** End-user agent configurations
 - **Scope:** Organization-managed
-- **Version:** Controlled by Ubik platform
+- **Version:** Controlled by Arfa platform
 
 **Note:** These are intentionally separate! Dev setup is meta-tooling.
 
@@ -253,9 +253,9 @@ tar -xzf ~/claude-code-dev-setup-backup-20251101-195047.tar.gz
 
 ## Lessons Learned
 
-1. **Dog-fooding reveals product gaps:** Building Ubik with Claude Code revealed what advanced users need
+1. **Dog-fooding reveals product gaps:** Building Arfa with Claude Code revealed what advanced users need
 2. **Meta-tooling often surpasses product:** Development environments naturally evolve faster
-3. **Reference implementations are valuable:** This setup can guide Ubik's roadmap
+3. **Reference implementations are valuable:** This setup can guide Arfa's roadmap
 4. **Separation is important:** Don't conflate dev tooling with product features
 5. **Documentation prevents loss:** Capturing this setup preserves institutional knowledge
 
@@ -263,13 +263,13 @@ tar -xzf ~/claude-code-dev-setup-backup-20251101-195047.tar.gz
 
 ## References
 
-- [CLAUDE.md](../CLAUDE.md) - Complete Ubik system documentation
-- [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Ubik feature roadmap
-- [MARKETING.md](../MARKETING.md) - Ubik product strategy
-- [docs/CLI_CLIENT.md](./CLI_CLIENT.md) - Ubik CLI architecture
+- [CLAUDE.md](../CLAUDE.md) - Complete Arfa system documentation
+- [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Arfa feature roadmap
+- [MARKETING.md](../MARKETING.md) - Arfa product strategy
+- [docs/CLI_CLIENT.md](./CLI_CLIENT.md) - Arfa CLI architecture
 
 ---
 
 **Preserved:** 2025-11-01
 **Status:** Active Development Setup
-**Decision Pending:** Whether to integrate into Ubik product
+**Decision Pending:** Whether to integrate into Arfa product

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 // RetentionPolicy defines the retention policy for logs

@@ -4,32 +4,32 @@
 build:
 	@echo "🔨 Building CLI binary..."
 	mkdir -p ../../bin
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/ubik-cli ./cmd/ubik/main.go
-	@echo "✅ CLI built: bin/ubik-cli"
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin/arfa-cli ./cmd/arfa/main.go
+	@echo "✅ CLI built: bin/arfa-cli"
 
 # Install CLI to system
 install: build
-	@echo "📦 Installing ubik CLI to /usr/local/bin..."
+	@echo "📦 Installing arfa CLI to /usr/local/bin..."
 	@if [ -w /usr/local/bin ]; then \
-		cp ../../bin/ubik-cli /usr/local/bin/ubik; \
-		chmod +x /usr/local/bin/ubik; \
+		cp ../../bin/arfa-cli /usr/local/bin/arfa; \
+		chmod +x /usr/local/bin/arfa; \
 	else \
-		sudo cp ../../bin/ubik-cli /usr/local/bin/ubik; \
-		sudo chmod +x /usr/local/bin/ubik; \
+		sudo cp ../../bin/arfa-cli /usr/local/bin/arfa; \
+		sudo chmod +x /usr/local/bin/arfa; \
 	fi
 	@echo "✅ Installation complete!"
 	@echo ""
 	@echo "Try it out:"
-	@echo "  ubik --version"
-	@echo "  ubik --help"
+	@echo "  arfa --version"
+	@echo "  arfa --help"
 
 # Uninstall CLI from system
 uninstall:
-	@echo "🗑️  Uninstalling ubik CLI..."
+	@echo "🗑️  Uninstalling arfa CLI..."
 	@if [ -w /usr/local/bin ]; then \
-		rm -f /usr/local/bin/ubik; \
+		rm -f /usr/local/bin/arfa; \
 	else \
-		sudo rm -f /usr/local/bin/ubik; \
+		sudo rm -f /usr/local/bin/arfa; \
 	fi
 	@echo "✅ Uninstalled successfully"
 
@@ -67,7 +67,7 @@ coverage:
 # Clean build artifacts
 clean:
 	@echo "🧹 Cleaning CLI build artifacts..."
-	rm -f ../../bin/ubik-cli
+	rm -f ../../bin/arfa-cli
 	rm -f ../../coverage-cli-*.out
 
 # Generate mocks for testing

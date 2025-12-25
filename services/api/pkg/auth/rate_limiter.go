@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 // ErrRateLimitExceeded is returned when the password reset rate limit is exceeded

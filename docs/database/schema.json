@@ -1,5 +1,5 @@
 {
-  "name": "ubik",
+  "name": "arfa",
   "tables": [
     {
       "name": "public.organizations",
@@ -3324,7 +3324,7 @@
     "meta": {
       "current_schema": "public",
       "search_paths": [
-        "ubik",
+        "arfa",
         "public"
       ],
       "dict": {

@@ -288,7 +288,7 @@ func TestFormatBlockError(t *testing.T) {
 	assert.Contains(t, msg, "TOOL BLOCKED BY ORGANIZATION POLICY")
 	assert.Contains(t, msg, "Tool: Bash")
 	assert.Contains(t, msg, "Reason: Shell access denied")
-	assert.Contains(t, msg, "ubik policies list")
+	assert.Contains(t, msg, "arfa policies list")
 }
 
 func TestWriteBlockedEvent(t *testing.T) {
@@ -314,8 +314,8 @@ func TestPolicyHandler_LoadFromCache(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create a policies.json file
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -325,7 +325,7 @@ func TestPolicyHandler_LoadFromCache(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	// Create handler - should load from cache
 	h := NewPolicyHandler()
@@ -352,8 +352,8 @@ func TestPolicyHandler_GlobPattern(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create a policies.json file with a glob pattern
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -362,7 +362,7 @@ func TestPolicyHandler_GlobPattern(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	// Create handler - should load from cache
 	h := NewPolicyHandler()
@@ -392,8 +392,8 @@ func TestPolicyHandler_SkipsAuditPolicies(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create a policies.json file with both deny and audit policies
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -403,7 +403,7 @@ func TestPolicyHandler_SkipsAuditPolicies(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	// Create handler - should only load deny policies
 	h := NewPolicyHandler()
@@ -424,8 +424,8 @@ func TestPolicyHandler_CaseInsensitive(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	// Create a policies.json file
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -434,7 +434,7 @@ func TestPolicyHandler_CaseInsensitive(t *testing.T) {
 		"version": 12345,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -455,8 +455,8 @@ func TestPolicyHandler_ConditionalPolicy_HasConditions(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	// Policy with conditions - block Bash only when command contains "rm -rf"
 	cacheContent := `{
@@ -473,7 +473,7 @@ func TestPolicyHandler_ConditionalPolicy_HasConditions(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -492,8 +492,8 @@ func TestPolicyHandler_EvaluateConditions_RegexMatch(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -509,7 +509,7 @@ func TestPolicyHandler_EvaluateConditions_RegexMatch(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -529,8 +529,8 @@ func TestPolicyHandler_EvaluateConditions_ContainsOperator(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -546,7 +546,7 @@ func TestPolicyHandler_EvaluateConditions_ContainsOperator(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -566,8 +566,8 @@ func TestPolicyHandler_EvaluateConditions_EqualsOperator(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -583,7 +583,7 @@ func TestPolicyHandler_EvaluateConditions_EqualsOperator(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -603,8 +603,8 @@ func TestPolicyHandler_EvaluateConditions_MultipleConditions(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	// Policy requires ALL conditions to match
 	cacheContent := `{
@@ -622,7 +622,7 @@ func TestPolicyHandler_EvaluateConditions_MultipleConditions(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -645,8 +645,8 @@ func TestPolicyHandler_ProcessSSEStream_ConditionalBlock(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -662,7 +662,7 @@ func TestPolicyHandler_ProcessSSEStream_ConditionalBlock(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -707,8 +707,8 @@ func TestPolicyHandler_ProcessSSEStream_ConditionalAllow(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -724,7 +724,7 @@ func TestPolicyHandler_ProcessSSEStream_ConditionalAllow(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -769,8 +769,8 @@ func TestPolicyHandler_MixedUnconditionalAndConditional(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	// One unconditional block, one conditional
 	cacheContent := `{
@@ -792,7 +792,7 @@ func TestPolicyHandler_MixedUnconditionalAndConditional(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -839,8 +839,8 @@ func TestPolicyHandler_EvaluateConditions_InvalidJSON(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -854,7 +854,7 @@ func TestPolicyHandler_EvaluateConditions_InvalidJSON(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 
@@ -869,8 +869,8 @@ func TestPolicyHandler_EvaluateConditions_MissingParam(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", originalHome)
 
-	ubikDir := tempDir + "/.ubik"
-	os.MkdirAll(ubikDir, 0700)
+	arfaDir := tempDir + "/.arfa"
+	os.MkdirAll(arfaDir, 0700)
 
 	cacheContent := `{
 		"policies": [
@@ -884,7 +884,7 @@ func TestPolicyHandler_EvaluateConditions_MissingParam(t *testing.T) {
 		"version": 1,
 		"synced_at": "2024-01-15T10:00:00Z"
 	}`
-	os.WriteFile(ubikDir+"/policies.json", []byte(cacheContent), 0600)
+	os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
 
 	h := NewPolicyHandler()
 

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
+	"github.com/rastrigin-systems/arfa/services/api/internal/auth"
 )
 
 func TestGenerateJWT_ValidClaims(t *testing.T) {

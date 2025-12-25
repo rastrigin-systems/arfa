@@ -15,14 +15,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 )
 
 // PolicyHandler blocks tool calls based on policies loaded from cache.
-// Policies are synced via `ubik sync` and stored in ~/.ubik/policies.json.
+// Policies are synced via `arfa sync` and stored in ~/.arfa/policies.json.
 type PolicyHandler struct {
 	// denyList contains tool names that should be blocked unconditionally.
-	// Built from policies loaded from ~/.ubik/policies.json
+	// Built from policies loaded from ~/.arfa/policies.json
 	denyList map[string]string // tool name -> reason
 
 	// globPatterns contains tool name patterns that end with %
@@ -85,14 +85,14 @@ func NewPolicyHandlerWithPolicies(policies []api.ToolPolicy) *PolicyHandler {
 	return h
 }
 
-// loadFromCache loads policies from ~/.ubik/policies.json
+// loadFromCache loads policies from ~/.arfa/policies.json
 func (h *PolicyHandler) loadFromCache() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return // Silently fail - no policies blocked
 	}
 
-	policiesPath := filepath.Join(homeDir, ".ubik", "policies.json")
+	policiesPath := filepath.Join(homeDir, ".arfa", "policies.json")
 	data, err := os.ReadFile(policiesPath)
 	if err != nil {
 		return // File doesn't exist or can't be read - no policies blocked
@@ -584,5 +584,5 @@ func (h *PolicyHandler) formatBlockError(toolName, reason string) string {
 		"Tool: " + toolName + "\n" +
 		"Reason: " + reason + "\n\n" +
 		"This restriction is set by your company administrator.\n" +
-		"To see all tool restrictions, run: ubik policies list\n\n"
+		"To see all tool restrictions, run: arfa policies list\n\n"
 }

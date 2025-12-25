@@ -53,7 +53,7 @@ flowchart TB
 
     subgraph External["External"]
         LLM[LLM APIs]
-        Platform[Ubik Platform API]
+        Platform[Arfa Platform API]
     end
 
     %% Traffic Flow
@@ -206,7 +206,7 @@ flowchart TB
     end
 
     subgraph Sources["Configuration Sources"]
-        Local[Local Config<br/>~/.ubik/config.json]
+        Local[Local Config<br/>~/.arfa/config.json]
         Remote[Platform API<br/>/api/v1/config]
         Env[Environment<br/>Variables]
     end

@@ -71,7 +71,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 	loggerHandler := NewLoggerHandler(queue)
 	pipeline.Register(loggerHandler)
 
-	// Register policy handler (loads policies from ~/.ubik/policies.json)
+	// Register policy handler (loads policies from ~/.arfa/policies.json)
 	policyHandler := NewPolicyHandler()
 	policyHandler.SetQueue(queue) // Enable logging of blocked tools
 	pipeline.Register(policyHandler)

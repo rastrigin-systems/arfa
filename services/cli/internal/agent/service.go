@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
 )
 
 // Service handles agent management operations
@@ -82,7 +82,7 @@ func (s *Service) RequestAgent(ctx context.Context, employeeID, agentID string) 
 
 // CheckForUpdates checks if there are config updates available
 func (s *Service) CheckForUpdates(ctx context.Context, employeeID string) (bool, error) {
-	// Get local configs from ~/.ubik/agents/
+	// Get local configs from ~/.arfa/agents/
 	localConfigs, err := s.getLocalAgentConfigsInternal()
 	if err != nil {
 		return false, fmt.Errorf("failed to read local configs: %w", err)
@@ -122,14 +122,14 @@ func (s *Service) GetLocalAgents() ([]api.AgentConfig, error) {
 	return s.getLocalAgentConfigsInternal()
 }
 
-// getLocalAgentConfigsInternal reads agent configs from ~/.ubik/config/agents/ directory
+// getLocalAgentConfigsInternal reads agent configs from ~/.arfa/config/agents/ directory
 func (s *Service) getLocalAgentConfigsInternal() ([]api.AgentConfig, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	agentsDir := filepath.Join(homeDir, ".ubik", "config", "agents")
+	agentsDir := filepath.Join(homeDir, ".arfa", "config", "agents")
 
 	// Check if agents directory exists
 	if _, err := os.Stat(agentsDir); os.IsNotExist(err) {

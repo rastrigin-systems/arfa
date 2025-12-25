@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 )
 
 // loggerImpl implements the Logger interface
@@ -37,7 +37,7 @@ type loggerImpl struct {
 // NewLogger creates a new logger instance
 func NewLogger(config *Config, api APIClient) (Logger, error) {
 	// Check for opt-out via environment variable
-	if os.Getenv("UBIK_NO_LOGGING") != "" {
+	if os.Getenv("ARFA_NO_LOGGING") != "" {
 		return nil, nil
 	}
 
@@ -52,7 +52,7 @@ func NewLogger(config *Config, api APIClient) (Logger, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get home directory: %w", err)
 		}
-		config.QueueDir = filepath.Join(home, ".ubik", "log_queue")
+		config.QueueDir = filepath.Join(home, ".arfa", "log_queue")
 	}
 
 	if err := os.MkdirAll(config.QueueDir, 0755); err != nil {

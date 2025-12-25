@@ -1,16 +1,16 @@
 package commands
 
 import (
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/config"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/logs"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/policies"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/proxy"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/setup"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/skills"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/status"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/webhooks"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/auth"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/logs"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/policies"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/proxy"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/setup"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/skills"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/status"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/webhooks"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -18,22 +18,22 @@ import (
 // The container parameter provides dependency injection for all subcommands.
 func NewRootCommand(version string, c *container.Container) *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "ubik",
-		Short: "ubik - AI Agent Security Proxy",
-		Long: `ubik CLI provides security monitoring and control for AI coding agents.
+		Use:   "arfa",
+		Short: "arfa - AI Agent Security Proxy",
+		Long: `arfa CLI provides security monitoring and control for AI coding agents.
 It runs as an HTTPS proxy that intercepts LLM API traffic, enabling:
 - Real-time visibility into AI agent tool usage
 - Policy enforcement (block/audit dangerous operations)
 - Activity logging for compliance and debugging
 - Webhook integration with SIEM systems
 
-When run without subcommands, ubik starts the proxy server.
+When run without subcommands, arfa starts the proxy server.
 
 Examples:
-  ubik                    Start the proxy (default)
-  ubik login              Authenticate with the platform
-  ubik logs stream        Monitor AI agent activity
-  ubik policies list      View active security policies`,
+  arfa                    Start the proxy (default)
+  arfa login              Authenticate with the platform
+  arfa logs stream        Monitor AI agent activity
+  arfa policies list      View active security policies`,
 		Version: version,
 		// Default action: start proxy
 		RunE: proxy.RunProxyStart,
