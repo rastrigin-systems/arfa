@@ -67,7 +67,7 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 		capturedOrgID = orgIDVal
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	// Wrap handler with middleware

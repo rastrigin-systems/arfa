@@ -181,7 +181,7 @@ func TestListEmployees_FilterByStatus(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response api.ListEmployeesResponse
-	json.Unmarshal(rec.Body.Bytes(), &response)
+	_ = json.Unmarshal(rec.Body.Bytes(), &response)
 
 	require.Len(t, response.Employees, 1)
 	assert.Equal(t, "active", string(response.Employees[0].Status))
@@ -223,7 +223,7 @@ func TestListEmployees_Pagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response api.ListEmployeesResponse
-	json.Unmarshal(rec.Body.Bytes(), &response)
+	_ = json.Unmarshal(rec.Body.Bytes(), &response)
 
 	assert.Equal(t, 10, response.Limit)
 	assert.Equal(t, 20, response.Offset)
@@ -259,7 +259,7 @@ func TestListEmployees_EmptyResult(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response api.ListEmployeesResponse
-	json.Unmarshal(rec.Body.Bytes(), &response)
+	_ = json.Unmarshal(rec.Body.Bytes(), &response)
 
 	// Should return empty array, not null
 	require.NotNil(t, response.Employees)

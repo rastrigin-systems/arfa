@@ -32,7 +32,7 @@ func TestForgotPassword_Integration_Success(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -92,7 +92,7 @@ func TestForgotPassword_Integration_NonExistentEmail(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	// Setup HTTP router
 	router := chi.NewRouter()
@@ -132,7 +132,7 @@ func TestForgotPassword_Integration_RateLimited(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -200,7 +200,7 @@ func TestVerifyResetToken_Integration_ValidToken(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -255,7 +255,7 @@ func TestVerifyResetToken_Integration_ExpiredToken(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -310,7 +310,7 @@ func TestVerifyResetToken_Integration_UsedToken(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -369,7 +369,7 @@ func TestVerifyResetToken_Integration_InvalidToken(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	// Setup HTTP router
 	router := chi.NewRouter()
@@ -404,7 +404,7 @@ func TestResetPassword_Integration_Success(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -477,7 +477,7 @@ func TestResetPassword_Integration_WeakPassword(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -540,7 +540,7 @@ func TestResetPassword_Integration_InvalidToken(t *testing.T) {
 
 	// Setup database
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 
 	// Setup HTTP router
 	router := chi.NewRouter()

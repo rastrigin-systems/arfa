@@ -26,7 +26,7 @@ import (
 
 func TestListTeams_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -90,7 +90,7 @@ func TestListTeams_Integration_Success(t *testing.T) {
 
 func TestListTeams_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations
@@ -145,7 +145,7 @@ func TestListTeams_Integration_OrgIsolation(t *testing.T) {
 
 func TestListTeams_Integration_EmptyResult(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization with no teams
@@ -196,7 +196,7 @@ func TestListTeams_Integration_EmptyResult(t *testing.T) {
 
 func TestCreateTeam_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -255,7 +255,7 @@ func TestCreateTeam_Integration_Success(t *testing.T) {
 
 func TestCreateTeam_Integration_WithoutDescription(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -312,7 +312,7 @@ func TestCreateTeam_Integration_WithoutDescription(t *testing.T) {
 
 func TestGetTeam_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -363,7 +363,7 @@ func TestGetTeam_Integration_Success(t *testing.T) {
 
 func TestGetTeam_Integration_NotFound(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -404,7 +404,7 @@ func TestGetTeam_Integration_NotFound(t *testing.T) {
 
 func TestGetTeam_Integration_OrgIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two organizations
@@ -453,7 +453,7 @@ func TestGetTeam_Integration_OrgIsolation(t *testing.T) {
 
 func TestUpdateTeam_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -517,7 +517,7 @@ func TestUpdateTeam_Integration_Success(t *testing.T) {
 
 func TestDeleteTeam_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization

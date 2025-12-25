@@ -57,7 +57,7 @@ func (h *OrganizationsHandler) GetCurrentOrganization(w http.ResponseWriter, r *
 	apiOrg := dbOrganizationToAPI(org)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiOrg)
+	_ = json.NewEncoder(w).Encode(apiOrg)
 }
 
 // UpdateCurrentOrganization handles PATCH /organizations/current
@@ -122,7 +122,7 @@ func (h *OrganizationsHandler) UpdateCurrentOrganization(w http.ResponseWriter, 
 	apiOrg := dbOrganizationToAPI(org)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiOrg)
+	_ = json.NewEncoder(w).Encode(apiOrg)
 }
 
 // dbOrganizationToAPI converts a database organization to an API organization
@@ -130,7 +130,7 @@ func dbOrganizationToAPI(org db.Organization) api.Organization {
 	// Parse settings JSON
 	var settings map[string]interface{}
 	if len(org.Settings) > 0 {
-		json.Unmarshal(org.Settings, &settings)
+		_ = json.Unmarshal(org.Settings, &settings)
 	}
 
 	// Convert UUIDs

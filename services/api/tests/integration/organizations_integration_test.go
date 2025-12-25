@@ -27,7 +27,7 @@ import (
 // Tests complete flow: authentication, org retrieval
 func TestGetCurrentOrganization_Integration_Success(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -105,7 +105,7 @@ func TestGetCurrentOrganization_Integration_Unauthorized(t *testing.T) {
 // TDD Lesson: Integration test for full update (all fields)
 func TestUpdateCurrentOrganization_Integration_FullUpdate(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -179,7 +179,7 @@ func TestUpdateCurrentOrganization_Integration_FullUpdate(t *testing.T) {
 // This is CRITICAL - tests that NULLIF is working correctly in production
 func TestUpdateCurrentOrganization_Integration_PartialUpdate(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization with specific initial values
@@ -257,7 +257,7 @@ func TestUpdateCurrentOrganization_Integration_PartialUpdate(t *testing.T) {
 // TDD Lesson: Integration test for settings-only update
 func TestUpdateCurrentOrganization_Integration_SettingsOnly(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization
@@ -339,7 +339,7 @@ func TestUpdateCurrentOrganization_Integration_SettingsOnly(t *testing.T) {
 // Ensures employees can only see/update their own organization
 func TestOrganizations_Integration_MultiTenancyIsolation(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create two different organizations
@@ -392,7 +392,7 @@ func TestOrganizations_Integration_MultiTenancyIsolation(t *testing.T) {
 // TDD Lesson: Integration test for invalid JSON
 func TestUpdateCurrentOrganization_Integration_InvalidJSON(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization

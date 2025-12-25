@@ -475,7 +475,7 @@ func TestCancelInvitation_Success(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
 	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
+	req = req.WithContext(context.WithValue(req.Context(), invitationIDKey, invitationID))
 	w := httptest.NewRecorder()
 
 	// Execute
@@ -512,7 +512,7 @@ func TestCancelInvitation_AlreadyAccepted(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodDelete, "/invitations/"+invitationID.String(), nil)
 	req = req.WithContext(authmiddleware.WithTestAuth(req.Context(), uuid.New(), orgID))
-	req = req.WithContext(context.WithValue(req.Context(), "invitation_id", invitationID))
+	req = req.WithContext(context.WithValue(req.Context(), invitationIDKey, invitationID))
 	w := httptest.NewRecorder()
 
 	// Execute

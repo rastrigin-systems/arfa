@@ -131,7 +131,7 @@ func (h *EmployeesHandler) ListEmployees(w http.ResponseWriter, r *http.Request)
 	// Write JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // GetEmployee handles GET /employees/{id}
@@ -178,7 +178,7 @@ func (h *EmployeesHandler) GetEmployee(w http.ResponseWriter, r *http.Request) {
 	apiEmployee := dbGetEmployeeRowToAPI(employee)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiEmployee)
+	_ = json.NewEncoder(w).Encode(apiEmployee)
 }
 
 // CreateEmployee handles POST /employees
@@ -285,7 +285,7 @@ func (h *EmployeesHandler) CreateEmployee(w http.ResponseWriter, r *http.Request
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // generateTempPassword generates a cryptographically secure random password
@@ -404,7 +404,7 @@ func (h *EmployeesHandler) UpdateEmployee(w http.ResponseWriter, r *http.Request
 	apiEmployee := dbEmployeeToAPI(updatedEmployee)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(apiEmployee)
+	_ = json.NewEncoder(w).Encode(apiEmployee)
 }
 
 // DeleteEmployee handles DELETE /employees/{id}

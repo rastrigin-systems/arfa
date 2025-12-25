@@ -1,4 +1,4 @@
-.PHONY: help install-tools install-cli uninstall-cli db-up db-down db-reset generate-erd generate-api generate-db generate-mocks generate test test-unit test-integration test-cli test-web dev dev-down dev-logs dev-rebuild dev-api dev-web run-server build build-cli build-server build-web docker-build docker-test docker-run lint format clean
+.PHONY: help install-tools install-cli uninstall-cli db-up db-down db-reset generate-erd generate-api generate-db generate-mocks generate test test-unit test-integration test-cli test-web dev dev-down dev-logs dev-rebuild dev-api dev-web run-server build build-cli build-server build-web docker-build docker-test docker-run lint lint-api lint-cli format clean
 
 # Default target
 help:
@@ -47,7 +47,9 @@ help:
 	@echo "  make docker-run       Run API in Docker locally"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  make lint             Run linters (golangci-lint)"
+	@echo "  make lint             Run all linters (API + CLI)"
+	@echo "  make lint-api         Run linters on API"
+	@echo "  make lint-cli         Run linters on CLI"
 	@echo "  make format           Format Go code (gofmt, goimports)"
 	@echo "  make clean            Remove generated files and build artifacts"
 
@@ -243,9 +245,14 @@ docker-run: docker-build
 # Code Quality
 # =============================================================================
 
-lint:
-	@echo "Running linters..."
+lint: lint-api lint-cli
+
+lint-api:
+	@echo "Linting API..."
 	cd services/api && golangci-lint run ./...
+
+lint-cli:
+	@echo "Linting CLI..."
 	cd services/cli && golangci-lint run ./...
 
 format:

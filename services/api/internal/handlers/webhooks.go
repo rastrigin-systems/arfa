@@ -57,7 +57,7 @@ func (h *WebhooksHandler) ListWebhookDestinations(w http.ResponseWriter, r *http
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // CreateWebhookDestination handles POST /webhooks
@@ -175,7 +175,7 @@ func (h *WebhooksHandler) CreateWebhookDestination(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // GetWebhookDestination handles GET /webhooks/{webhookId}
@@ -207,7 +207,7 @@ func (h *WebhooksHandler) GetWebhookDestination(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // UpdateWebhookDestination handles PATCH /webhooks/{webhookId}
@@ -287,7 +287,7 @@ func (h *WebhooksHandler) UpdateWebhookDestination(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // DeleteWebhookDestination handles DELETE /webhooks/{webhookId}
@@ -362,7 +362,7 @@ func (h *WebhooksHandler) TestWebhookDestination(w http.ResponseWriter, r *http.
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ListWebhookDeliveries handles GET /webhooks/{webhookId}/deliveries
@@ -438,7 +438,7 @@ func (h *WebhooksHandler) ListWebhookDeliveries(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // Helper functions

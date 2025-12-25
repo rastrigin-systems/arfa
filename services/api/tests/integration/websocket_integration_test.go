@@ -27,7 +27,7 @@ import (
 
 func TestWebSocketIntegration(t *testing.T) {
 	conn, queries := testutil.SetupTestDB(t)
-	defer conn.Close(testutil.GetContext(t))
+	defer func() { _ = conn.Close(testutil.GetContext(t)) }()
 	ctx := testutil.GetContext(t)
 
 	// Create test organization, role, and employee
@@ -91,7 +91,7 @@ func TestWebSocketIntegration(t *testing.T) {
 		conn, resp, err := websocket.DefaultDialer.Dial(wsURL, headers)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Connection successful
 		assert.NotNil(t, conn)
@@ -105,7 +105,7 @@ func TestWebSocketIntegration(t *testing.T) {
 		conn, resp, err := websocket.DefaultDialer.Dial(wsURLWithToken, nil)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Connection successful
 		assert.NotNil(t, conn)
@@ -121,7 +121,7 @@ func TestWebSocketIntegration(t *testing.T) {
 		conn, resp, err := websocket.DefaultDialer.Dial(wsURLWithToken, headers)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		assert.NotNil(t, conn)
 	})
@@ -151,7 +151,7 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		conn, _, err := websocket.DefaultDialer.Dial(wsURLWithFilter, headers)
 		require.NoError(t, err)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Channel to receive messages
 		received := make(chan ws.LogMessage, 1)
@@ -206,7 +206,7 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		conn, _, err := websocket.DefaultDialer.Dial(wsURLWithFilter, headers)
 		require.NoError(t, err)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		received := make(chan bool, 1)
 		go func() {
@@ -264,7 +264,7 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		conn, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 		require.NoError(t, err)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		received := make(chan bool, 1)
 		go func() {
