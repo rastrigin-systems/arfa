@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/proxy"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/logging"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/proxy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

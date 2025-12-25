@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { apiClient } from './api/client';
 
-const TOKEN_COOKIE_NAME = 'ubik_token';
+const TOKEN_COOKIE_NAME = 'arfa_token';
 
 /**
  * Server-side: Get token from cookies

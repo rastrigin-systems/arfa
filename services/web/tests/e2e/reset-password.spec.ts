@@ -21,7 +21,7 @@ test.describe('Reset Password Flow', () => {
     await page.goto(`/reset-password/${VALID_TOKEN}`);
 
     // Should show reset password form
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible();
     await expect(page.getByLabel('New Password')).toBeVisible();
     await expect(page.getByLabel('Confirm Password')).toBeVisible();

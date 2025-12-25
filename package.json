@@ -1,5 +1,5 @@
 {
-  "name": "ubik-enterprise",
+  "name": "arfa",
   "private": true,
   "version": "1.0.0",
   "description": "**Multi-tenant SaaS for centralized AI agent and MCP configuration management**",
@@ -13,13 +13,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rastrigin-org/ubik-enterprise.git"
+    "url": "git+https://github.com/rastrigin-org/arfa.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/rastrigin-org/ubik-enterprise/issues"
+    "url": "https://github.com/rastrigin-org/arfa/issues"
   },
-  "homepage": "https://github.com/rastrigin-org/ubik-enterprise#readme"
+  "homepage": "https://github.com/rastrigin-org/arfa#readme"
 }

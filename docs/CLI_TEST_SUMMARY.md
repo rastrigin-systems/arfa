@@ -8,7 +8,7 @@
 
 ## Overview
 
-Comprehensive test coverage for the ubik CLI with both unit tests (fast, no Docker) and integration tests (requires Docker daemon).
+Comprehensive test coverage for the arfa CLI with both unit tests (fast, no Docker) and integration tests (requires Docker daemon).
 
 ---
 
@@ -322,7 +322,7 @@ $ make test-cli
 [22 more tests]
 ...
 PASS
-ok  	github.com/rastrigin-systems/ubik-enterprise/internal/cli	0.329s
+ok  	github.com/rastrigin-systems/arfa/internal/cli	0.329s
 
 ✅ 24/24 unit tests passing
 ⏭️  18 integration tests skipped (run without -short to include)

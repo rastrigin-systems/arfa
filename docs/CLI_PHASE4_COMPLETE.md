@@ -12,18 +12,18 @@
 ### Core Features Implemented
 
 ✅ **Agent Management Commands**
-- `ubik agents list` - List available agents from platform catalog
-- `ubik agents list --local` - Show locally configured agents
-- `ubik agents info <agent-id>` - Get detailed agent information
-- `ubik agents request <agent-id>` - Request access to an agent
+- `arfa agents list` - List available agents from platform catalog
+- `arfa agents list --local` - Show locally configured agents
+- `arfa agents info <agent-id>` - Get detailed agent information
+- `arfa agents request <agent-id>` - Request access to an agent
 
 ✅ **Configuration Management**
-- `ubik update` - Check for configuration updates
-- `ubik update --sync` - Auto-sync updates if available
+- `arfa update` - Check for configuration updates
+- `arfa update --sync` - Auto-sync updates if available
 
 ✅ **Cleanup & Maintenance**
-- `ubik cleanup --remove-containers` - Stop and remove all containers
-- `ubik cleanup --remove-config` - Reset local configuration
+- `arfa cleanup --remove-containers` - Stop and remove all containers
+- `arfa cleanup --remove-config` - Reset local configuration
 
 ✅ **Critical Bug Fixes**
 - TTY raw mode for interactive input (inputs now reach Claude Code!)
@@ -62,7 +62,7 @@ Coverage (full):      ~70% (with Docker tests)
 
 ## 🚀 New Commands
 
-### 1. `ubik agents`
+### 1. `arfa agents`
 
 Parent command for all agent management operations.
 
@@ -75,7 +75,7 @@ Parent command for all agent management operations.
 
 ```bash
 # List all available agents from platform
-$ ubik agents list
+$ arfa agents list
 
 Available Agents (5):
 
@@ -92,7 +92,7 @@ Available Agents (5):
 
 ```bash
 # List locally configured agents
-$ ubik agents list --local
+$ arfa agents list --local
 
 Configured Agents (2):
 
@@ -102,7 +102,7 @@ Configured Agents (2):
 
 ```bash
 # Get detailed information
-$ ubik agents info a1111111-1111-1111-1111-111111111111
+$ arfa agents info a1111111-1111-1111-1111-111111111111
 
 Agent: Claude Code
 Provider: anthropic
@@ -117,18 +117,18 @@ Updated: 2025-10-29
 
 ```bash
 # Request access to an agent
-$ ubik agents request a2222222-2222-2222-2222-222222222222
+$ arfa agents request a2222222-2222-2222-2222-222222222222
 
 ✓ Agent access requested successfully
 
 Next steps:
-  1. Run 'ubik sync' to pull the new agent configuration
-  2. Run 'ubik agents list --local' to see your configured agents
+  1. Run 'arfa sync' to pull the new agent configuration
+  2. Run 'arfa agents list --local' to see your configured agents
 ```
 
 ---
 
-### 2. `ubik update`
+### 2. `arfa update`
 
 Check for configuration updates from the platform and optionally sync them.
 
@@ -139,17 +139,17 @@ Check for configuration updates from the platform and optionally sync them.
 
 ```bash
 # Check for updates
-$ ubik update
+$ arfa update
 Checking for updates...
 
 ⚠ Updates available!
 
-Run 'ubik sync' to apply updates
+Run 'arfa sync' to apply updates
 ```
 
 ```bash
 # Auto-sync updates
-$ ubik update --sync
+$ arfa update --sync
 Checking for updates...
 
 ⚠ Updates available!
@@ -161,7 +161,7 @@ Syncing updates...
 
 ```bash
 # No updates available
-$ ubik update
+$ arfa update
 Checking for updates...
 
 ✓ Your configuration is up to date
@@ -169,32 +169,32 @@ Checking for updates...
 
 ---
 
-### 3. `ubik cleanup`
+### 3. `arfa cleanup`
 
 Clean up Docker containers and local configuration.
 
 **Flags:**
-- `--remove-containers` - Stop and remove all ubik-managed containers
+- `--remove-containers` - Stop and remove all arfa-managed containers
 - `--remove-config` - Remove local configuration file
 
 **Example Usage:**
 
 ```bash
 # Remove containers
-$ ubik cleanup --remove-containers
+$ arfa cleanup --remove-containers
 Stopping and removing containers...
 ✓ Containers stopped
 ```
 
 ```bash
 # Reset configuration
-$ ubik cleanup --remove-config
+$ arfa cleanup --remove-config
 ✓ Local configuration removed
 ```
 
 ```bash
 # Full cleanup
-$ ubik cleanup --remove-containers --remove-config
+$ arfa cleanup --remove-containers --remove-config
 Stopping and removing containers...
 ✓ Containers stopped
 ✓ Local configuration removed
@@ -202,7 +202,7 @@ Stopping and removing containers...
 
 ```bash
 # Without flags (shows help)
-$ ubik cleanup
+$ arfa cleanup
 Nothing to clean up. Use --remove-containers or --remove-config
 ```
 
@@ -250,7 +250,7 @@ io.Copy(options.Stdout, resp.Reader)
 ```go
 // In StartAgent()
 func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (string, error) {
-    containerName := fmt.Sprintf("ubik-agent-%s", spec.AgentID)
+    containerName := fmt.Sprintf("arfa-agent-%s", spec.AgentID)
 
     // Remove existing container if present
     if err := cm.dockerClient.RemoveContainerByName(containerName); err != nil {
@@ -281,7 +281,7 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 - `GetLocalAgents()` - Read locally configured agents
 
 **Storage:**
-- Agents stored in `~/.ubik/agents/{agent-id}/config.json`
+- Agents stored in `~/.arfa/agents/{agent-id}/config.json`
 - Each agent has its own directory
 - Config includes agent metadata, settings, and MCP servers
 
@@ -359,13 +359,13 @@ func (cm *ContainerManager) StartAgent(spec AgentSpec, workspacePath string) (st
 
 ```bash
 # 1. Employee logs in
-$ ubik login
+$ arfa login
 Email: alice@acme.com
 Password: ********
 ✓ Authenticated successfully
 
 # 2. Browse available agents
-$ ubik agents list
+$ arfa agents list
 Available Agents (5):
   • Claude Code (anthropic)
   • Cursor (cursor)
@@ -373,22 +373,22 @@ Available Agents (5):
   ...
 
 # 3. Request access to an agent
-$ ubik agents request a2222222-2222-2222-2222-222222222222
+$ arfa agents request a2222222-2222-2222-2222-222222222222
 ✓ Agent access requested successfully
 
 # 4. Sync configurations
-$ ubik sync
+$ arfa sync
 ✓ Synced 2 agent configurations
 ✓ Synced 3 MCP server configurations
 
 # 5. Check local agents
-$ ubik agents list --local
+$ arfa agents list --local
 Configured Agents (2):
   • Claude Code (ide_assistant) - ✓ enabled
   • Cursor (ai-editor) - ✓ enabled
 
 # 6. Start interactive session
-$ ubik
+$ arfa
 ✓ Agent: Claude Code (ide_assistant)
 ✓ Workspace: /Users/alice/project (10.2 MB, 523 files)
 
@@ -400,12 +400,12 @@ $ ubik
 [Agent responds immediately!] ✅
 
 # 7. Check for updates later
-$ ubik update
+$ arfa update
 Checking for updates...
 ✓ Your configuration is up to date
 
 # 8. Cleanup when done (optional)
-$ ubik cleanup --remove-containers
+$ arfa cleanup --remove-containers
 Stopping and removing containers...
 ✓ Containers stopped
 ```

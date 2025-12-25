@@ -55,7 +55,7 @@ function AcceptInviteContent() {
       });
 
       // Store session token
-      localStorage.setItem('ubik_session_token', response.token);
+      localStorage.setItem('arfa_session_token', response.token);
 
       // Redirect to dashboard
       router.push('/dashboard');
@@ -250,7 +250,7 @@ function AcceptInviteContent() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Ubik Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
           <CardDescription className="text-center text-lg">You&apos;ve Been Invited!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -265,7 +265,7 @@ function AcceptInviteContent() {
                 <Building2 className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium">{invitation.organization.name}</p>
-                  <p className="text-sm text-muted-foreground">https://{invitation.organization.slug}.ubik.io</p>
+                  <p className="text-sm text-muted-foreground">https://{invitation.organization.slug}.arfa.io</p>
                 </div>
               </div>
             </div>

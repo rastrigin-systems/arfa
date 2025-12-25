@@ -85,7 +85,7 @@ func (s *MockEmailService) SendInvitation(email InvitationEmail) error {
 	s.sentEmails = append(s.sentEmails, email)
 
 	// Generate invitation URL (use default base URL for mock)
-	baseURL := "https://app.ubik.com"
+	baseURL := "https://app.arfa.com"
 	invitationURL := email.GenerateInvitationURL(baseURL)
 
 	// Log email details to console in a clear, readable format

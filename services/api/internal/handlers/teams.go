@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 // TeamsHandler handles team management requests

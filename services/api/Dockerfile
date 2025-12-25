@@ -23,10 +23,10 @@ RUN mkdir -p generated
 
 # Build the server
 WORKDIR /app/services/api
-RUN go build -v -o /app/bin/ubik-server cmd/server/main.go
+RUN go build -v -o /app/bin/arfa-server cmd/server/main.go
 
 # Expose port
 EXPOSE 8080
 
 # Start server
-CMD ["/app/bin/ubik-server"]
+CMD ["/app/bin/arfa-server"]

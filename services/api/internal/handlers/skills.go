@@ -8,9 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/services/api/internal/middleware"
 )
 
 // SkillsHandler handles skill-related requests

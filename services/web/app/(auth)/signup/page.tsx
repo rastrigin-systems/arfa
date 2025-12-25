@@ -36,7 +36,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Ubik Enterprise</CardTitle>
+          <CardTitle className="text-center text-3xl">Arfa Enterprise</CardTitle>
           <CardDescription className="text-center">
             Create Your Organization Account
           </CardDescription>

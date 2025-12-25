@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/middleware"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/tests/testutil"
+	"github.com/rastrigin-systems/arfa/services/api/internal/auth"
+	"github.com/rastrigin-systems/arfa/services/api/internal/middleware"
+	"github.com/rastrigin-systems/arfa/services/api/tests/testutil"
 )
 
 // TestAuthMiddleware_Integration_ProtectedRoute tests middleware with real database

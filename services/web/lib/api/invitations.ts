@@ -200,7 +200,7 @@ export async function createInvitation(
     id: 'mock-' + Date.now(),
     email: params.email,
     token: 'mock-token',
-    invitation_url: 'https://app.ubik.io/accept-invite?token=mock-token',
+    invitation_url: 'https://app.arfa.io/accept-invite?token=mock-token',
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
 }

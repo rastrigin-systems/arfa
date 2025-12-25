@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Ubik Enterprise - AI Agent Management Platform
+  title: Arfa Enterprise - AI Agent Management Platform
   description: |
     Centralized platform for managing employee AI agent and MCP configurations.
     
@@ -13,7 +13,7 @@ info:
   version: 1.0.0
   contact:
     name: API Support
-    email: support@ubik-enterprise.com
+    email: support@arfa.com
 
 servers:
   - url: /api/v1
@@ -786,7 +786,7 @@ components:
           maxLength: 255
           nullable: true
           description: "Docker image reference for the agent container (e.g., ghcr.io/anthropics/claude-code:v1.2.3)"
-          example: "ubik/claude-code:latest"
+          example: "arfa/claude-code:latest"
         default_config:
           type: object
           additionalProperties: true
@@ -947,7 +947,7 @@ components:
           type: string
           nullable: true
           description: "Docker image reference for the agent container"
-          example: "ubik/claude-code:latest"
+          example: "arfa/claude-code:latest"
         config:
           type: object
           additionalProperties: true

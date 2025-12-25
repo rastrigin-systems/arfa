@@ -3,7 +3,7 @@ package ui
 import (
 	"context"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
 )
 
 // ConfigManagerInterface defines what the log streamer needs from config management

@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/db"
 )
 
 // WebhookForwarder processes activity logs and forwards them to webhook destinations
@@ -204,14 +204,14 @@ func (wf *WebhookForwarder) processDelivery(ctx context.Context, delivery db.Get
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Ubik-Webhook/1.0")
-	req.Header.Set("X-Ubik-Event-Type", logEntry.EventType)
-	req.Header.Set("X-Ubik-Delivery-ID", delivery.ID.String())
+	req.Header.Set("User-Agent", "Arfa-Webhook/1.0")
+	req.Header.Set("X-Arfa-Event-Type", logEntry.EventType)
+	req.Header.Set("X-Arfa-Delivery-ID", delivery.ID.String())
 
 	// Add HMAC signature if signing secret is configured
 	if dest.SigningSecret != nil && *dest.SigningSecret != "" {
 		signature := wf.computeSignature(payloadBytes, *dest.SigningSecret)
-		req.Header.Set("X-Ubik-Signature", signature)
+		req.Header.Set("X-Arfa-Signature", signature)
 	}
 
 	// Add authentication

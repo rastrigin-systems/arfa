@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-05
 
-This guide covers all Model Context Protocol (MCP) servers used in the Ubik Enterprise project.
+This guide covers all Model Context Protocol (MCP) servers used in the Arfa Enterprise project.
 
 ---
 
@@ -394,12 +394,12 @@ gcloud monitoring dashboards list
 # Add PostgreSQL MCP server to Claude Code config
 claude mcp add postgres \
   -- docker run -i --rm mcp/postgres \
-  postgresql://host.docker.internal:5432/ubik
+  postgresql://host.docker.internal:5432/arfa
 
-# For Ubik development database
+# For Arfa development database
 claude mcp add postgres \
   -- docker run -i --rm mcp/postgres \
-  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
+  postgresql://arfa:arfa_dev_password@host.docker.internal:5432/arfa
 ```
 
 **Configuration in ~/.claude.json:**
@@ -414,7 +414,7 @@ claude mcp add postgres \
         "-i",
         "--rm",
         "mcp/postgres",
-        "postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik"
+        "postgresql://arfa:arfa_dev_password@host.docker.internal:5432/arfa"
       ]
     }
   }
@@ -429,10 +429,10 @@ claude mcp list | grep postgres
 
 # If not running, add it (container auto-starts when needed)
 claude mcp add postgres -- docker run -i --rm mcp/postgres \
-  postgresql://ubik:ubik_dev_password@host.docker.internal:5432/ubik
+  postgresql://arfa:arfa_dev_password@host.docker.internal:5432/arfa
 
 # Check database is accessible
-docker ps | grep ubik-postgres
+docker ps | grep arfa-postgres
 
 # If database not running, start it
 make db-up

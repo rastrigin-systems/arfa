@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +22,8 @@ func NewTestCommand(c *container.Container) *cobra.Command {
 This sends a test payload to the configured URL and reports the result.
 
 Examples:
-  ubik webhooks test abc123-def456
-  ubik webhooks test abc123-def456 --json`,
+  arfa webhooks test abc123-def456
+  arfa webhooks test abc123-def456 --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()

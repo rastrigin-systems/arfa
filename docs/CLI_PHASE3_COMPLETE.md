@@ -30,7 +30,7 @@
 - Duration formatting (human-readable)
 
 ✅ **Interactive Mode Command**
-- `ubik` command (without subcommand) launches interactive mode
+- `arfa` command (without subcommand) launches interactive mode
 - Agent selection (--agent flag or default)
 - Workspace selection (--workspace flag or interactive prompt)
 - Automatic container startup if not running
@@ -78,7 +78,7 @@ Coverage (full):     ~65-75% (with Docker tests)
 
 ```bash
 # Interactive mode (prompts for workspace)
-$ ubik
+$ arfa
 ✓ Agent: claude-code (ai-agent)
 ✓ MCP Servers: 2
 Workspace [/Users/alice/projects/myapp]: ↵
@@ -109,7 +109,7 @@ Session:
 
 ```bash
 # Specify workspace and agent
-$ ubik --workspace /path/to/project --agent cursor
+$ arfa --workspace /path/to/project --agent cursor
 ✓ Agent: cursor (ai-agent)
 ✓ Workspace: /path/to/project (5.1 GB, 3,456 files)
 ...
@@ -161,7 +161,7 @@ $ ubik --workspace /path/to/project --agent cursor
 ### Data Flow
 
 ```
-User Types "ubik" ↓
+User Types "arfa" ↓
     ↓
 1. Authenticate (RequireAuth)
 2. Load agent configs (GetLocalAgentConfigs)
@@ -329,7 +329,7 @@ User Types "ubik" ↓
 
 **Decision:** Match containers by name pattern
 **Rationale:**
-- Names are predictable: `ubik-agent-{agent-id}`
+- Names are predictable: `arfa-agent-{agent-id}`
 - No need to inspect labels
 - Faster than label inspection
 
@@ -408,7 +408,7 @@ go test ./internal/cli/... -v
 **Not Started:**
 - Agent request/approval workflow
 - Multi-agent management UI
-- Agent listing commands (`ubik agents`)
+- Agent listing commands (`arfa agents`)
 - Config update mechanism
 - Cleanup commands
 
@@ -433,7 +433,7 @@ Test Count:        42 tests (24 unit + 18 integration)
 ### After Phase 3
 
 ```
-Commands:          8 (+ ubik interactive mode)
+Commands:          8 (+ arfa interactive mode)
 Interactive Mode:  ✅ Yes (full bidirectional I/O)
 Workspace Select:  ✅ Yes (interactive + flag)
 I/O Proxy:         ✅ Yes (Docker attach)

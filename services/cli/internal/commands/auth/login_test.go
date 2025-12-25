@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/commands/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/auth"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

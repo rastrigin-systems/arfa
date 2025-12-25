@@ -1,4 +1,4 @@
--- Seed Data for Ubik Enterprise - Security Proxy Mode
+-- Seed Data for Arfa Enterprise - Security Proxy Mode
 -- Version: 3.0.0 - Matches actual schema
 
 -- =============================================================================
@@ -122,7 +122,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO webhook_destinations (id, org_id, name, url, auth_type, auth_config, event_types, enabled, signing_secret) VALUES
     ('f1111111-1111-1111-1111-111111111111', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     'Security SIEM', 'https://siem.acme.com/webhooks/ubik', 'bearer',
+     'Security SIEM', 'https://siem.acme.com/webhooks/arfa', 'bearer',
      '{"token": "siem-bearer-token-123"}', ARRAY['tool_blocked', 'policy_violation'], true, 'acme-webhook-signing-secret'),
     ('f2222222-2222-2222-2222-222222222222', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
      'Audit Log Export', 'https://audit.acme.com/logs', 'header',

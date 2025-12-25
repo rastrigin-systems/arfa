@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/services/api/internal/handlers"
 )
 
 // setupTestRouter creates a router with all handlers wired up for testing
@@ -83,7 +83,7 @@ func setupTestRouter(queries *db.Queries) chi.Router {
 func setupTestDB(t *testing.T) (*pgxpool.Pool, *db.Queries, func()) {
 	// Use the same test database setup as integration tests
 	ctx := context.Background()
-	dbURL := "postgres://ubik:ubik_dev_password@localhost:5432/ubik_test?sslmode=disable"
+	dbURL := "postgres://arfa:arfa_dev_password@localhost:5432/arfa_test?sslmode=disable"
 
 	pool, err := pgxpool.New(ctx, dbURL)
 	require.NoError(t, err, "Failed to connect to test database")

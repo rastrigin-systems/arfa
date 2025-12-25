@@ -47,7 +47,7 @@ func (s *MockEmailService) SendPasswordResetEmail(email, token string) error {
 	}
 
 	// Log to console (useful for development)
-	resetURL := fmt.Sprintf("https://app.ubik.cloud/reset-password/%s", token)
+	resetURL := fmt.Sprintf("https://app.arfa.cloud/reset-password/%s", token)
 	log.Printf("📧 Mock Email Service: Password Reset Email\n")
 	log.Printf("   To: %s\n", email)
 	log.Printf("   Reset URL: %s\n", resetURL)

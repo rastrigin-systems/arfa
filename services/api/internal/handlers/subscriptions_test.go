@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/mocks"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/handlers"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/generated/mocks"
+	"github.com/rastrigin-systems/arfa/services/api/internal/handlers"
 )
 
 // ============================================================================

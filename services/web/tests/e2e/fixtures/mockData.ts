@@ -409,21 +409,21 @@ export const mockMcpServers = [
     name: 'Filesystem',
     category: 'file_system',
     description: 'Access local files and directories',
-    docker_image: 'ubik/mcp-filesystem:latest',
+    docker_image: 'arfa/mcp-filesystem:latest',
   },
   {
     id: 'mcp-git-uuid',
     name: 'Git',
     category: 'version_control',
     description: 'Git repository operations',
-    docker_image: 'ubik/mcp-git:latest',
+    docker_image: 'arfa/mcp-git:latest',
   },
   {
     id: 'mcp-postgres-uuid',
     name: 'PostgreSQL',
     category: 'database',
     description: 'PostgreSQL database operations',
-    docker_image: 'ubik/mcp-postgres:latest',
+    docker_image: 'arfa/mcp-postgres:latest',
   },
 ];
 

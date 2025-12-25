@@ -10,10 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
-	"github.com/rastrigin-systems/ubik-enterprise/generated/api"
-	"github.com/rastrigin-systems/ubik-enterprise/generated/db"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/service"
-	"github.com/rastrigin-systems/ubik-enterprise/services/api/internal/websocket"
+	"github.com/rastrigin-systems/arfa/generated/api"
+	"github.com/rastrigin-systems/arfa/generated/db"
+	"github.com/rastrigin-systems/arfa/services/api/internal/service"
+	"github.com/rastrigin-systems/arfa/services/api/internal/websocket"
 )
 
 // LogsHandler handles logging API requests

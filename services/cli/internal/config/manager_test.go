@@ -138,11 +138,11 @@ func TestNewManager(t *testing.T) {
 	m, err := NewManager()
 	require.NoError(t, err)
 	assert.NotNil(t, m)
-	assert.Contains(t, m.configPath, ".ubik")
+	assert.Contains(t, m.configPath, ".arfa")
 	assert.Contains(t, m.configPath, "config.json")
 
 	// Verify config directory was created
-	configDir := filepath.Join(tempDir, ".ubik")
+	configDir := filepath.Join(tempDir, ".arfa")
 	info, err := os.Stat(configDir)
 	require.NoError(t, err)
 	assert.True(t, info.IsDir())

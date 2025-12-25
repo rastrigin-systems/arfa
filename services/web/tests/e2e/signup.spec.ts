@@ -6,7 +6,7 @@ test.describe('Signup Page', () => {
   });
 
   test('should display signup form with all fields', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
     await expect(page.getByText('Create Your Organization Account')).toBeVisible();
 
     // Check all form fields are present
@@ -59,7 +59,7 @@ test.describe('Signup Page', () => {
     // Set to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
 
     // All form fields should be visible
     await expect(page.getByLabel('Full Name')).toBeVisible();
@@ -75,7 +75,7 @@ test.describe('Signup Page', () => {
     // Set to tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
 
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
 
     // All form fields should be visible
     await expect(page.getByLabel('Full Name')).toBeVisible();
@@ -91,7 +91,7 @@ test.describe('Signup Page', () => {
     // Set to desktop viewport
     await page.setViewportSize({ width: 1920, height: 1080 });
 
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
 
     // All form fields should be visible
     await expect(page.getByLabel('Full Name')).toBeVisible();

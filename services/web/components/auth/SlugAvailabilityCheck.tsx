@@ -66,7 +66,7 @@ export function SlugAvailabilityCheck({ slug, onAvailabilityChange }: SlugAvaila
       {checkState === 'available' && (
         <>
           <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
-          <span className="text-green-600">{slug}.ubik.com is available</span>
+          <span className="text-green-600">{slug}.arfa.com is available</span>
         </>
       )}
 

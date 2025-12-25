@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logparser"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/logging"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/logparser"
 	"github.com/spf13/cobra"
 )
 
@@ -32,9 +32,9 @@ Displays logs categorized as:
   - ERROR: Any errors that occurred
 
 Examples:
-  ubik logs view                    # View logs in pretty format
-  ubik logs view --format=json      # View logs as JSON
-  ubik logs view --no-emoji         # Disable emoji icons`,
+  arfa logs view                    # View logs in pretty format
+  arfa logs view --format=json      # View logs as JSON
+  arfa logs view --no-emoji         # Disable emoji icons`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configManager, err := c.ConfigManager()
 			if err != nil {
@@ -49,7 +49,7 @@ Examples:
 
 			if len(logs) == 0 {
 				fmt.Println("No classified logs found.")
-				fmt.Println("Tip: Run 'ubik sync' to start a session and generate logs.")
+				fmt.Println("Tip: Run 'arfa sync' to start a session and generate logs.")
 				return nil
 			}
 

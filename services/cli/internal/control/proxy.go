@@ -141,13 +141,13 @@ func (p *ControlledProxy) setupCA() error {
 		return err
 	}
 
-	certDir := filepath.Join(home, ".ubik", "certs")
+	certDir := filepath.Join(home, ".arfa", "certs")
 	if err := os.MkdirAll(certDir, 0700); err != nil {
 		return err
 	}
 
-	p.certPath = filepath.Join(certDir, "ubik-ca.pem")
-	p.keyPath = filepath.Join(certDir, "ubik-ca-key.pem")
+	p.certPath = filepath.Join(certDir, "arfa-ca.pem")
+	p.keyPath = filepath.Join(certDir, "arfa-ca-key.pem")
 
 	// Check if certs exist
 	if _, err := os.Stat(p.certPath); err == nil {
@@ -176,8 +176,8 @@ func (p *ControlledProxy) generateCA() error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			Organization: []string{"Ubik Enterprise Proxy CA"},
-			CommonName:   "ubik-proxy-ca",
+			Organization: []string{"Arfa Enterprise Proxy CA"},
+			CommonName:   "arfa-proxy-ca",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),

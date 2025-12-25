@@ -518,7 +518,7 @@ export async function mockUserSession(
   // Set auth cookie (must match middleware TOKEN_COOKIE_NAME)
   await page.context().addCookies([
     {
-      name: 'ubik_token',
+      name: 'arfa_token',
       value: 'mock-jwt-token-12345',
       domain: 'localhost',
       path: '/',

@@ -249,15 +249,15 @@ func TestInvitationEmail_GenerateInvitationURL(t *testing.T) {
 	}{
 		{
 			name:     "generates URL with trailing slash",
-			baseURL:  "https://app.ubik.com/",
+			baseURL:  "https://app.arfa.com/",
 			token:    "abc123",
-			expected: "https://app.ubik.com/accept-invitation?token=abc123",
+			expected: "https://app.arfa.com/accept-invitation?token=abc123",
 		},
 		{
 			name:     "generates URL without trailing slash",
-			baseURL:  "https://app.ubik.com",
+			baseURL:  "https://app.arfa.com",
 			token:    "abc123",
-			expected: "https://app.ubik.com/accept-invitation?token=abc123",
+			expected: "https://app.arfa.com/accept-invitation?token=abc123",
 		},
 	}
 

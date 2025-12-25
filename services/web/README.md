@@ -1,6 +1,6 @@
-# Ubik Web UI
+# Arfa Web UI
 
-Next.js 14 admin panel for the Ubik Enterprise platform.
+Next.js 14 admin panel for the Arfa Enterprise platform.
 
 ## Overview
 
@@ -68,7 +68,7 @@ npm run build
 npm start
 
 # Docker build (from project root)
-docker build -f services/web/build/Dockerfile -t ubik-web .
+docker build -f services/web/build/Dockerfile -t arfa-web .
 ```
 
 ## Project Structure
@@ -277,12 +277,12 @@ npm start
 **From project root:**
 ```bash
 # Build Docker image
-docker build -f services/web/build/Dockerfile -t ubik-web .
+docker build -f services/web/build/Dockerfile -t arfa-web .
 
 # Run container (port 8080)
 docker run -p 8080:8080 \
   -e NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1 \
-  ubik-web
+  arfa-web
 ```
 
 **Dockerfile details:**
@@ -301,8 +301,8 @@ See `../../docs/GCP_DEPLOYMENT_GUIDE.md` for deployment instructions.
 gcloud builds submit --config=cloudbuild-web.yaml
 
 # Deploy to Cloud Run
-gcloud run deploy ubik-web \
-  --image=us-central1-docker.pkg.dev/$PROJECT_ID/ubik-images/web:latest \
+gcloud run deploy arfa-web \
+  --image=us-central1-docker.pkg.dev/$PROJECT_ID/arfa-images/web:latest \
   --region=us-central1 \
   --allow-unauthenticated
 ```
@@ -313,7 +313,7 @@ gcloud run deploy ubik-web \
 
 ```bash
 # Start API backend (terminal 1)
-cd /path/to/ubik-enterprise
+cd /path/to/arfa
 make dev-api
 
 # Start web UI (terminal 2)
@@ -395,7 +395,7 @@ npm run build
 **E2E tests require API backend:**
 ```bash
 # Terminal 1: Start API
-cd /path/to/ubik-enterprise
+cd /path/to/arfa
 make dev-api
 
 # Terminal 2: Run E2E tests

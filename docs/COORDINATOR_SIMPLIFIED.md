@@ -130,7 +130,7 @@ while true; do
 
     # Invoke agent via Task tool
     # (User would do this in Claude Code)
-    echo "Task: Work on issue #$issue" > ~/.ubik/agent-queue.txt
+    echo "Task: Work on issue #$issue" > ~/.arfa/agent-queue.txt
   done
 
   # 2. Check for PRs ready to review
@@ -139,7 +139,7 @@ while true; do
     # Check CI status
     CHECKS=$(gh pr checks $pr --json state | jq -r '.[] | select(.state != "SUCCESS") | .state')
     if [ -z "$CHECKS" ]; then
-      echo "PR #$pr ready for review" > ~/.ubik/pr-queue.txt
+      echo "PR #$pr ready for review" > ~/.arfa/pr-queue.txt
     fi
   done
 

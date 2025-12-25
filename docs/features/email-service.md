@@ -28,7 +28,7 @@ The `MockEmailService` logs emails to console instead of sending them. This is u
   To: user@example.com
   From: John Doe (Acme Corp)
   Subject: You're invited to join Acme Corp!
-  Invitation Link: https://app.ubik.com/accept-invitation?token=abc123...
+  Invitation Link: https://app.arfa.com/accept-invitation?token=abc123...
   Token: abc123...
   Expires At: 2025-11-14T16:09:17Z
   Sent At: 2025-11-07T16:09:17Z
@@ -89,14 +89,14 @@ This approach ensures:
 EMAIL_PROVIDER=mock
 
 # Base URL for invitation links
-BASE_URL=https://app.ubik.com
+BASE_URL=https://app.arfa.com
 
 # SendGrid API key (when using sendgrid provider)
 SENDGRID_API_KEY=SG.xxx...
 
 # AWS SES configuration (when using ses provider)
 AWS_SES_REGION=us-east-1
-AWS_SES_FROM_EMAIL=noreply@ubik.com
+AWS_SES_FROM_EMAIL=noreply@arfa.com
 ```
 
 ## Future Enhancements

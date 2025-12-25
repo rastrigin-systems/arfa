@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -238,7 +238,7 @@ func TestCAGenerationAndLoading(t *testing.T) {
 	assert.Contains(t, string(certData), "-----END CERTIFICATE-----")
 
 	// Verify key file also exists
-	keyPath := filepath.Join(filepath.Dir(certPath), "ubik-ca-key.pem")
+	keyPath := filepath.Join(filepath.Dir(certPath), "arfa-ca-key.pem")
 	assert.FileExists(t, keyPath)
 
 	keyData, err := os.ReadFile(keyPath)

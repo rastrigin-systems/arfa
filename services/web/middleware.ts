@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const TOKEN_COOKIE_NAME = 'ubik_token';
+const TOKEN_COOKIE_NAME = 'arfa_token';
 
 // Public routes that don't require authentication
 // These routes will handle their own auth logic (e.g., redirect after login)

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/types"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
 )
 
 // GetClassifiedLogs retrieves classified logs from the API using the provided api.Client.
@@ -55,7 +55,7 @@ func GetClassifiedLogsWithConfig(configManager *config.Manager, sessionID string
 	}
 
 	if cfg.Token == "" {
-		return nil, fmt.Errorf("not authenticated - please run 'ubik login' first")
+		return nil, fmt.Errorf("not authenticated - please run 'arfa login' first")
 	}
 
 	// Create api.Client with config

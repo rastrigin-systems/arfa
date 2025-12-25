@@ -3,7 +3,7 @@ package status
 import (
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func NewStatusCommand(c *container.Container) *cobra.Command {
 
 			if !authenticated {
 				fmt.Println("Status: Not authenticated")
-				fmt.Println("\nRun 'ubik login' to get started.")
+				fmt.Println("\nRun 'arfa login' to get started.")
 				return nil
 			}
 
@@ -45,7 +45,7 @@ func NewStatusCommand(c *container.Container) *cobra.Command {
 			fmt.Printf("Platform:       %s\n", config.PlatformURL)
 			fmt.Printf("Employee ID:    %s\n", config.EmployeeID)
 
-			fmt.Println("\nRun 'ubik proxy start' to start the security proxy.")
+			fmt.Println("\nRun 'arfa proxy start' to start the security proxy.")
 
 			return nil
 		},

@@ -261,7 +261,7 @@ func TestClient_GetClaudeCodeConfig(t *testing.T) {
 					Provider:    "playwright",
 					Version:     "1.0.0",
 					Description: "Browser automation",
-					DockerImage: "ubik/mcp-playwright:latest",
+					DockerImage: "arfa/mcp-playwright:latest",
 					Config: map[string]any{
 						"port": 8001,
 					},
@@ -274,7 +274,7 @@ func TestClient_GetClaudeCodeConfig(t *testing.T) {
 					Provider:    "github",
 					Version:     "1.0.0",
 					Description: "GitHub integration",
-					DockerImage: "ubik/mcp-github:latest",
+					DockerImage: "arfa/mcp-github:latest",
 					Config: map[string]any{
 						"port": 8002,
 					},
@@ -315,7 +315,7 @@ func TestClient_GetClaudeCodeConfig(t *testing.T) {
 
 	assert.Len(t, config.MCPServers, 2)
 	assert.Equal(t, "playwright", config.MCPServers[0].Name)
-	assert.Equal(t, "ubik/mcp-playwright:latest", config.MCPServers[0].DockerImage)
+	assert.Equal(t, "arfa/mcp-playwright:latest", config.MCPServers[0].DockerImage)
 	assert.Equal(t, float64(8001), config.MCPServers[0].Config["port"])
 	assert.Contains(t, config.MCPServers[0].RequiredEnvVars, "PLAYWRIGHT_TOKEN")
 	assert.True(t, config.MCPServers[0].IsEnabled)

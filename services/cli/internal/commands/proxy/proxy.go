@@ -9,11 +9,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/auth"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/control"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/auth"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/control"
 	"github.com/spf13/cobra"
 )
 
@@ -26,10 +26,10 @@ func NewProxyCommand(c *container.Container) *cobra.Command {
 AI agent traffic for logging and policy enforcement.
 
 Examples:
-  ubik proxy start       Start the proxy server
-  ubik proxy stop        Stop the proxy server
-  ubik proxy status      Show proxy status
-  ubik proxy health      Check proxy health`,
+  arfa proxy start       Start the proxy server
+  arfa proxy stop        Stop the proxy server
+  arfa proxy status      Show proxy status
+  arfa proxy health      Check proxy health`,
 	}
 
 	cmd.AddCommand(newStartCommand(c))
@@ -41,7 +41,7 @@ Examples:
 	return cmd
 }
 
-// RunProxyStart is the default action when ubik is run without subcommands
+// RunProxyStart is the default action when arfa is run without subcommands
 func RunProxyStart(cmd *cobra.Command, args []string) error {
 	return runStart(cmd, args)
 }
@@ -60,10 +60,10 @@ The proxy will:
 
 To use the proxy with AI agents:
   export HTTPS_PROXY=http://localhost:8082
-  export NODE_EXTRA_CA_CERTS=~/.ubik/certs/ca.pem
+  export NODE_EXTRA_CA_CERTS=~/.arfa/certs/ca.pem
   claude  # Now proxied
 
-Or run 'ubik setup' to auto-configure your AI tools.`,
+Or run 'arfa setup' to auto-configure your AI tools.`,
 		RunE: runStart,
 	}
 }
@@ -88,7 +88,7 @@ func newStatusCommand(c *container.Container) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: Check if proxy is running via PID file
 			fmt.Println("Proxy status: Not implemented yet")
-			fmt.Println("Run 'ubik proxy start' to start the proxy")
+			fmt.Println("Run 'arfa proxy start' to start the proxy")
 			return nil
 		},
 	}
@@ -115,14 +115,14 @@ func newEnvCommand(c *container.Container) *cobra.Command {
 		Long: `Output shell export statements for configuring the proxy.
 
 Use with eval to set environment variables in your shell:
-  eval $(ubik proxy env)
+  eval $(arfa proxy env)
 
 For CI pipelines:
   # GitHub Actions
-  ubik proxy env >> $GITHUB_ENV
+  arfa proxy env >> $GITHUB_ENV
 
   # GitLab CI / generic
-  eval $(ubik proxy env)
+  eval $(arfa proxy env)
 
 Formats:
   shell   - Shell export statements (default)
@@ -144,7 +144,7 @@ func runEnv(format string) error {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	certPath := filepath.Join(home, ".ubik", "certs", "ubik-ca.pem")
+	certPath := filepath.Join(home, ".arfa", "certs", "arfa-ca.pem")
 
 	// Default proxy URL - assumes proxy is running on default port
 	// TODO: Could check PID file or try to detect running proxy port
@@ -196,11 +196,11 @@ func runStart(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
-	queueDir := filepath.Join(home, ".ubik", "log_queue")
+	queueDir := filepath.Join(home, ".arfa", "log_queue")
 
 	// Create uploader for sending logs to API
 	var uploader control.Uploader
-	if os.Getenv("UBIK_NO_LOGGING") == "" {
+	if os.Getenv("ARFA_NO_LOGGING") == "" {
 		cliAPIClient := control.NewCLIAPIClient(apiClient)
 		uploader = control.NewAPIUploader(cliAPIClient, employeeID, "")
 	}
@@ -247,7 +247,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  export HTTPS_PROXY=http://localhost:%d\n", port)
 	fmt.Printf("  export NODE_EXTRA_CA_CERTS=%s\n", certPath)
 	fmt.Println()
-	fmt.Println("Or run 'ubik setup' to auto-configure your AI tools.")
+	fmt.Println("Or run 'arfa setup' to auto-configure your AI tools.")
 	fmt.Println()
 	fmt.Println("Press Ctrl+C to stop")
 

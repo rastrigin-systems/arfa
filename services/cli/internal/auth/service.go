@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/config"
 	"golang.org/x/term"
 )
 
@@ -173,7 +173,7 @@ func (s *Service) RequireAuth() (*config.Config, error) {
 	}
 
 	if !authenticated {
-		return nil, fmt.Errorf("not authenticated. Please run 'ubik login' first")
+		return nil, fmt.Errorf("not authenticated. Please run 'arfa login' first")
 	}
 
 	// Check if token is still valid (not expired)
@@ -183,7 +183,7 @@ func (s *Service) RequireAuth() (*config.Config, error) {
 	}
 
 	if !tokenValid {
-		return nil, fmt.Errorf("authentication token has expired. Please run 'ubik login' again")
+		return nil, fmt.Errorf("authentication token has expired. Please run 'arfa login' again")
 	}
 
 	cfg, err := s.GetConfig()

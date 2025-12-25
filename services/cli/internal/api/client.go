@@ -439,7 +439,7 @@ func getDockerImage(api AgentConfigAPIResponse) string {
 	if api.DockerImage != nil && *api.DockerImage != "" {
 		return *api.DockerImage
 	}
-	return fmt.Sprintf("ubik/%s:latest", api.AgentType)
+	return fmt.Sprintf("arfa/%s:latest", api.AgentType)
 }
 
 // DoRequest is a helper method to perform HTTP requests.

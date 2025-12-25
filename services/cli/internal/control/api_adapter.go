@@ -3,7 +3,7 @@ package control
 import (
 	"context"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 )
 
 // CLIAPIClient wraps the CLI api.Client to implement the control.APIClient interface.

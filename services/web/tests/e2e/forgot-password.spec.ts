@@ -7,7 +7,7 @@ test.describe('Forgot Password Flow', () => {
 
   test('should display forgot password form', async ({ page }) => {
     // Check page titles
-    await expect(page.getByRole('heading', { name: 'Ubik Enterprise' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Arfa Enterprise' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Forgot Password' })).toBeVisible();
 
     // Check description text

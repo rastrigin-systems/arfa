@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ func NewConfigCommand(c *container.Container) *cobra.Command {
 			}
 
 			if config.Token == "" {
-				fmt.Println("Not authenticated. Run 'ubik login' first.")
+				fmt.Println("Not authenticated. Run 'arfa login' first.")
 				return nil
 			}
 

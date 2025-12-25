@@ -26,8 +26,8 @@ Quick reference for common commands, operations, and configurations.
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/ubik-enterprise.git
-cd ubik-enterprise
+git clone https://github.com/yourusername/arfa.git
+cd arfa
 
 # Start database
 make db-up
@@ -76,16 +76,16 @@ make db-rollback
 
 ```bash
 # PostgreSQL connection string
-postgres://ubik:ubik_dev_password@localhost:5432/ubik
+postgres://arfa:arfa_dev_password@localhost:5432/arfa
 
 # Adminer web UI
 open http://localhost:8080
 
 # psql CLI
-docker exec -it ubik-postgres psql -U ubik -d ubik
+docker exec -it arfa-postgres psql -U arfa -d arfa
 
 # Direct SQL query
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM employees"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM employees"
 ```
 
 ---
@@ -94,19 +94,19 @@ docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM employee
 
 ```bash
 # List all tables
-docker exec ubik-postgres psql -U ubik -d ubik -c "\dt"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\dt"
 
 # Describe table structure
-docker exec ubik-postgres psql -U ubik -d ubik -c "\d employees"
+docker exec arfa-postgres psql -U arfa -d arfa -c "\d employees"
 
 # Count records in table
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT COUNT(*) FROM organizations"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM organizations"
 
 # View all organizations
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT id, name, created_at FROM organizations"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT id, name, created_at FROM organizations"
 
 # Check migrations status
-docker exec ubik-postgres psql -U ubik -d ubik -c "SELECT version, dirty FROM schema_migrations"
+docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT version, dirty FROM schema_migrations"
 ```
 
 **See:** [DATABASE.md](./DATABASE.md) for complete database guide.
@@ -219,13 +219,13 @@ go test -run TestCreateEmployee ./services/api/internal/handlers/...
 make build
 
 # Build API server
-cd services/api && go build -o ../../bin/ubik-api ./cmd/server
+cd services/api && go build -o ../../bin/arfa-api ./cmd/server
 
 # Build CLI
-cd services/cli && go build -o ../../bin/ubik ./cmd/ubik-cli
+cd services/cli && go build -o ../../bin/arfa ./cmd/arfa-cli
 
 # Build with specific tags
-go build -tags integration -o bin/ubik-test ./services/cli/cmd/ubik-cli
+go build -tags integration -o bin/arfa-test ./services/cli/cmd/arfa-cli
 ```
 
 ---
@@ -237,10 +237,10 @@ go build -tags integration -o bin/ubik-test ./services/cli/cmd/ubik-cli
 make dev
 
 # Run API server manually
-./bin/ubik-api
+./bin/arfa-api
 
 # Run CLI manually
-./bin/ubik-cli <command>
+./bin/arfa-cli <command>
 ```
 
 ---
@@ -288,11 +288,11 @@ go work sync
 tail -f logs/api.log
 
 # CLI logs
-tail -f ~/.ubik/logs/cli.log
+tail -f ~/.arfa/logs/cli.log
 
 # Docker container logs
-docker logs ubik-postgres -f
-docker logs ubik-api -f
+docker logs arfa-postgres -f
+docker logs arfa-api -f
 ```
 
 ---
@@ -301,13 +301,13 @@ docker logs ubik-api -f
 
 ```bash
 # View all env vars
-env | grep UBIK
+env | grep ARFA
 
 # Set env var for session
-export UBIK_API_URL=http://localhost:8080
+export ARFA_API_URL=http://localhost:8080
 
 # Set env var permanently (add to ~/.zshrc or ~/.bashrc)
-echo 'export UBIK_API_URL=http://localhost:8080' >> ~/.zshrc
+echo 'export ARFA_API_URL=http://localhost:8080' >> ~/.zshrc
 source ~/.zshrc
 ```
 

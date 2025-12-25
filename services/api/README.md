@@ -1,6 +1,6 @@
-# Ubik API Server
+# Arfa API Server
 
-Multi-tenant REST API for the Ubik Enterprise platform.
+Multi-tenant REST API for the Arfa Enterprise platform.
 
 ## Overview
 
@@ -30,7 +30,7 @@ make generate       # Generate code from schema and OpenAPI spec
 # Build and run
 cd services/api
 make build          # Build server binary
-../../bin/ubik-server
+../../bin/arfa-server
 ```
 
 ### Development
@@ -207,7 +207,7 @@ make docker-run
 # Or with custom config
 docker run -p 8080:8080 \
   -e DATABASE_URL="postgres://user:pass@host:5432/dbname" \
-  ubik-api:latest
+  arfa-api:latest
 ```
 
 ## Development Workflow
@@ -324,8 +324,8 @@ cd ../.. && make generate
 **Tools:**
 - OpenAPI Spec: http://localhost:8080/api/docs
 - Adminer (DB UI): http://localhost:8081
-- Database: `postgres://ubik:ubik_dev_password@localhost:5432/ubik`
+- Database: `postgres://arfa:arfa_dev_password@localhost:5432/arfa`
 
 ## License
 
-Proprietary - Ubik Enterprise Platform
+Proprietary - Arfa Enterprise Platform

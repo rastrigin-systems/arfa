@@ -1,6 +1,6 @@
 # Monorepo Structure Documentation
 
-**Ubik Enterprise Platform - Architecture Guide**
+**Arfa Enterprise Platform - Architecture Guide**
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Ubik Enterprise uses a **Go workspace monorepo** architecture with **self-contained services** and **shared platform resources**.
+Arfa Enterprise uses a **Go workspace monorepo** architecture with **self-contained services** and **shared platform resources**.
 
 ### Key Principles
 
@@ -32,7 +32,7 @@ Ubik Enterprise uses a **Go workspace monorepo** architecture with **self-contai
 ### Architecture Diagram
 
 ```
-ubik-enterprise/                       # Monorepo Root
+arfa/                       # Monorepo Root
 │
 ├── services/                          # Self-Contained Services
 │   ├── api/                           # API Server (Go)
@@ -43,7 +43,7 @@ ubik-enterprise/                       # Monorepo Root
 │   │   └── go.mod                     # Independent module
 │   │
 │   ├── cli/                           # CLI Client (Go)
-│   │   ├── cmd/ubik/                  # Main entrypoint
+│   │   ├── cmd/arfa/                  # Main entrypoint
 │   │   ├── internal/                  # Private implementation
 │   │   ├── tests/                     # Service tests
 │   │   └── go.mod                     # Independent module
@@ -179,7 +179,7 @@ Comprehensive documentation:
 - ❌ NO dependency on database packages
 
 **Key Files**:
-- `cmd/ubik/main.go` - Entrypoint
+- `cmd/arfa/main.go` - Entrypoint
 - `internal/commands/` - CLI commands
 - `internal/auth.go` - Authentication
 - `internal/sync.go` - Configuration sync
@@ -344,7 +344,7 @@ make generate-db
 
 **Adding a new CLI command**:
 1. Add command to `services/cli/internal/commands/`
-2. Update `services/cli/cmd/ubik/main.go`
+2. Update `services/cli/cmd/arfa/main.go`
 3. Write tests in `services/cli/tests/integration/`
 
 **Adding a new UI page**:
@@ -401,7 +401,7 @@ make generate-db
 
 **Structure**:
 ```
-ubik-enterprise/
+arfa/
 ├── cmd/server/           # API server
 ├── internal/             # Shared code (handlers, auth, etc.)
 ├── tests/                # All tests

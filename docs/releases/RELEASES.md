@@ -1,4 +1,4 @@
-# Ubik Enterprise - Release History
+# Arfa Enterprise - Release History
 
 Complete history of all releases with links to GitHub Releases and detailed changelogs.
 
@@ -28,8 +28,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Docker containerized Next.js web UI with hot reload
 - Skills API endpoints (CRUD operations)
 - MCP server catalog and configuration
-- Enhanced `ubik sync` with Claude Code support
-- `ubik skills` command group (list/show/my)
+- Enhanced `arfa sync` with Claude Code support
+- `arfa skills` command group (list/show/my)
 
 **Statistics:**
 - 11 issues closed in milestone
@@ -38,8 +38,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Skills + MCP management fully implemented
 
 **Links:**
-- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.4.0)
-- [Compare with v0.3.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.3.0...v0.4.0)
+- [Git Tag](https://github.com/rastrigin-org/arfa/releases/tag/v0.4.0)
+- [Compare with v0.3.0](https://github.com/rastrigin-org/arfa/compare/v0.3.0...v0.4.0)
 
 ---
 
@@ -61,8 +61,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - 3 new GitHub workflow skills
 
 **Links:**
-- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.3.0)
-- [Compare with v0.2.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.2.0...v0.3.0)
+- [Git Tag](https://github.com/rastrigin-org/arfa/releases/tag/v0.3.0)
+- [Compare with v0.2.0](https://github.com/rastrigin-org/arfa/compare/v0.2.0...v0.3.0)
 
 **Note:** v0.3.0 tag originally pointed to monorepo migration, but was intended for Web UI milestone completion.
 
@@ -80,11 +80,11 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Session tracking and cleanup
 
 **Components:**
-- `ubik login` / `ubik logout` - Authentication
-- `ubik sync` - Configuration synchronization
-- `ubik agents` - Agent management
-- `ubik start` / `ubik stop` - Container control
-- Interactive `ubik` mode - Agent sessions
+- `arfa login` / `arfa logout` - Authentication
+- `arfa sync` - Configuration synchronization
+- `arfa agents` - Agent management
+- `arfa start` / `arfa stop` - Container control
+- Interactive `arfa` mode - Agent sessions
 
 **Statistics:**
 - 79 tests passing (unit + integration)
@@ -92,8 +92,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - Docker SDK integration complete
 
 **Links:**
-- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.2.0)
-- [Compare with v0.1.0](https://github.com/rastrigin-org/ubik-enterprise/compare/v0.1.0...v0.2.0)
+- [Git Tag](https://github.com/rastrigin-org/arfa/releases/tag/v0.2.0)
+- [Compare with v0.1.0](https://github.com/rastrigin-org/arfa/compare/v0.1.0...v0.2.0)
 
 ---
 
@@ -124,8 +124,8 @@ Complete history of all releases with links to GitHub Releases and detailed chan
 - JWT authentication with sessions
 
 **Links:**
-- [Git Tag](https://github.com/rastrigin-org/ubik-enterprise/releases/tag/v0.1.0)
-- [Release Notes](https://github.com/rastrigin-org/ubik-enterprise/blob/main/docs/MILESTONE_v0.1.md)
+- [Git Tag](https://github.com/rastrigin-org/arfa/releases/tag/v0.1.0)
+- [Release Notes](https://github.com/rastrigin-org/arfa/blob/main/docs/MILESTONE_v0.1.md)
 
 ---
 
@@ -143,7 +143,7 @@ Project initialization with:
 
 ## Versioning Strategy
 
-Ubik Enterprise follows [Semantic Versioning 2.0.0](https://semver.org/):
+Arfa Enterprise follows [Semantic Versioning 2.0.0](https://semver.org/):
 
 - **v0.x.y** (Pre-1.0): Rapid development, breaking changes allowed
   - **0.x.0**: New milestone features
@@ -202,7 +202,7 @@ See [Release Manager Skill](../.claude/skills/release-manager/SKILL.md) for comp
 
 ## GitHub Releases
 
-All releases are also published as [GitHub Releases](https://github.com/rastrigin-org/ubik-enterprise/releases) with:
+All releases are also published as [GitHub Releases](https://github.com/rastrigin-org/arfa/releases) with:
 - Detailed changelogs
 - Downloadable binaries (future)
 - Release notes
@@ -215,7 +215,7 @@ All releases are also published as [GitHub Releases](https://github.com/rastrigi
 - [CLAUDE.md](../CLAUDE.md) - Project overview and current status
 - [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Feature roadmap
 - [Release Manager Skill](../.claude/skills/release-manager/SKILL.md) - Release workflow
-- [GitHub Milestones](https://github.com/rastrigin-org/ubik-enterprise/milestones) - Track progress
+- [GitHub Milestones](https://github.com/rastrigin-org/arfa/milestones) - Track progress
 
 ---
 

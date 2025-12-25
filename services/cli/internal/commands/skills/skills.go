@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +49,7 @@ func NewListCommand(c *container.Container) *cobra.Command {
 
 				if len(localSkills) == 0 {
 					fmt.Println("No local skills found in .claude/skills/")
-					fmt.Println("\nRun 'ubik sync' to fetch skills from the platform.")
+					fmt.Println("\nRun 'arfa sync' to fetch skills from the platform.")
 					return nil
 				}
 
@@ -74,7 +74,7 @@ func NewListCommand(c *container.Container) *cobra.Command {
 
 				w.Flush()
 				fmt.Println()
-				fmt.Println("💡 Tip: Use 'ubik skills show <name>' to see details for a specific skill")
+				fmt.Println("💡 Tip: Use 'arfa skills show <name>' to see details for a specific skill")
 				fmt.Println()
 
 				return nil
@@ -123,8 +123,8 @@ func NewListCommand(c *container.Container) *cobra.Command {
 
 			w.Flush()
 			fmt.Println()
-			fmt.Println("💡 Tip: Use 'ubik skills show <name>' to see skill details")
-			fmt.Println("        Use 'ubik skills my' to see your assigned skills")
+			fmt.Println("💡 Tip: Use 'arfa skills show <name>' to see skill details")
+			fmt.Println("        Use 'arfa skills my' to see your assigned skills")
 			fmt.Println()
 
 			return nil
@@ -340,8 +340,8 @@ func NewMyCommand(c *container.Container) *cobra.Command {
 
 				w.Flush()
 				fmt.Println()
-				fmt.Println("💡 Tip: Use 'ubik skills show <name>' to see skill details")
-				fmt.Println("        Use 'ubik sync' to install assigned skills locally")
+				fmt.Println("💡 Tip: Use 'arfa skills show <name>' to see skill details")
+				fmt.Println("        Use 'arfa sync' to install assigned skills locally")
 				fmt.Println()
 			}
 

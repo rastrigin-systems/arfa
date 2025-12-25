@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
+	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -27,9 +27,9 @@ func NewSetupCommand(c *container.Container) *cobra.Command {
 		Long: `Setup commands configure your system for transparent AI agent proxying.
 
 Available commands:
-  ubik setup system    Install system-wide proxy configuration
-  ubik setup status    Check current setup status
-  ubik setup uninstall Remove system configuration`,
+  arfa setup system    Install system-wide proxy configuration
+  arfa setup status    Check current setup status
+  arfa setup uninstall Remove system configuration`,
 	}
 
 	cmd.AddCommand(newSystemCommand(c))
@@ -45,7 +45,7 @@ func newSystemCommand(c *container.Container) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "system",
 		Short: "Install system-wide proxy configuration",
-		Long: `Configure the system to route AI agent traffic through the ubik proxy.
+		Long: `Configure the system to route AI agent traffic through the arfa proxy.
 
 This command will:
 1. Generate a PAC (Proxy Auto-Config) file that routes only LLM API traffic
@@ -87,7 +87,7 @@ func newUninstallCommand(c *container.Container) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Remove system configuration",
-		Long: `Remove ubik system configuration.
+		Long: `Remove arfa system configuration.
 
 This will:
 - Remove the PAC file
@@ -110,11 +110,11 @@ func runSystemSetup(dryRun bool) error {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	ubikDir := filepath.Join(home, ".ubik")
-	certPath := filepath.Join(ubikDir, "certs", "ubik-ca.pem")
-	pacPath := filepath.Join(ubikDir, "proxy.pac")
+	arfaDir := filepath.Join(home, ".arfa")
+	certPath := filepath.Join(arfaDir, "certs", "arfa-ca.pem")
+	pacPath := filepath.Join(arfaDir, "proxy.pac")
 
-	fmt.Println("Ubik System Setup")
+	fmt.Println("Arfa System Setup")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Println()
 
@@ -134,7 +134,7 @@ func runSystemSetup(dryRun bool) error {
 		}
 		fmt.Println("     ...")
 	} else {
-		if err := os.MkdirAll(ubikDir, 0755); err != nil {
+		if err := os.MkdirAll(arfaDir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory: %w", err)
 		}
 		if err := os.WriteFile(pacPath, []byte(pacContent), 0644); err != nil {
@@ -148,7 +148,7 @@ func runSystemSetup(dryRun bool) error {
 	fmt.Println("2. Installing CA certificate to system trust store...")
 	if _, err := os.Stat(certPath); os.IsNotExist(err) {
 		fmt.Printf("   ⚠ Certificate not found at %s\n", certPath)
-		fmt.Println("   Run 'ubik proxy start' first to generate the certificate.")
+		fmt.Println("   Run 'arfa proxy start' first to generate the certificate.")
 	} else {
 		if dryRun {
 			fmt.Printf("   Would install: %s\n", certPath)
@@ -184,7 +184,7 @@ func runSystemSetup(dryRun bool) error {
 	} else {
 		if err := setupAutoStart(); err != nil {
 			fmt.Printf("   ⚠ Auto-start setup failed: %v\n", err)
-			fmt.Println("   You'll need to run 'ubik proxy start' manually.")
+			fmt.Println("   You'll need to run 'arfa proxy start' manually.")
 		} else {
 			fmt.Println("   ✓ Auto-start configured")
 		}
@@ -204,8 +204,8 @@ func runSystemSetup(dryRun bool) error {
 		fmt.Println()
 		fmt.Println("All other traffic goes direct (no performance impact).")
 		fmt.Println()
-		fmt.Println("To verify: ubik setup status")
-		fmt.Println("To remove: sudo ubik setup uninstall")
+		fmt.Println("To verify: arfa setup status")
+		fmt.Println("To remove: sudo arfa setup uninstall")
 	}
 
 	return nil
@@ -217,11 +217,11 @@ func runSetupStatus() error {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	ubikDir := filepath.Join(home, ".ubik")
-	certPath := filepath.Join(ubikDir, "certs", "ubik-ca.pem")
-	pacPath := filepath.Join(ubikDir, "proxy.pac")
+	arfaDir := filepath.Join(home, ".arfa")
+	certPath := filepath.Join(arfaDir, "certs", "arfa-ca.pem")
+	pacPath := filepath.Join(arfaDir, "proxy.pac")
 
-	fmt.Println("Ubik Setup Status")
+	fmt.Println("Arfa Setup Status")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Println()
 
@@ -271,10 +271,10 @@ func runUninstall(dryRun bool) error {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	ubikDir := filepath.Join(home, ".ubik")
-	pacPath := filepath.Join(ubikDir, "proxy.pac")
+	arfaDir := filepath.Join(home, ".arfa")
+	pacPath := filepath.Join(arfaDir, "proxy.pac")
 
-	fmt.Println("Ubik Uninstall")
+	fmt.Println("Arfa Uninstall")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Println()
 
@@ -340,12 +340,12 @@ func generatePACFile() string {
 		conditions = append(conditions, fmt.Sprintf(`host == "%s"`, domain))
 	}
 
-	return fmt.Sprintf(`// Ubik Proxy Auto-Config (PAC) file
-// Routes only AI API traffic through the ubik proxy
-// Generated by: ubik setup system
+	return fmt.Sprintf(`// Arfa Proxy Auto-Config (PAC) file
+// Routes only AI API traffic through the arfa proxy
+// Generated by: arfa setup system
 
 function FindProxyForURL(url, host) {
-    // Route AI API domains through ubik proxy
+    // Route AI API domains through arfa proxy
     if (%s) {
         return "PROXY 127.0.0.1:8082";
     }
@@ -367,7 +367,7 @@ func installCACert(certPath string) error {
 		return cmd.Run()
 	case "linux":
 		// Linux: Copy to ca-certificates and update
-		destPath := "/usr/local/share/ca-certificates/ubik-ca.crt"
+		destPath := "/usr/local/share/ca-certificates/arfa-ca.crt"
 		if err := copyFile(certPath, destPath); err != nil {
 			return err
 		}
@@ -416,12 +416,12 @@ func setupAutoStart() error {
 
 func setupLaunchd() error {
 	home, _ := os.UserHomeDir()
-	plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.ubik.proxy.plist")
+	plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.arfa.proxy.plist")
 
-	// Find ubik binary path
-	ubikPath, err := os.Executable()
+	// Find arfa binary path
+	arfaPath, err := os.Executable()
 	if err != nil {
-		ubikPath = "/usr/local/bin/ubik"
+		arfaPath = "/usr/local/bin/arfa"
 	}
 
 	plistContent := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
@@ -429,7 +429,7 @@ func setupLaunchd() error {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.ubik.proxy</string>
+    <string>com.arfa.proxy</string>
     <key>ProgramArguments</key>
     <array>
         <string>%s</string>
@@ -441,12 +441,12 @@ func setupLaunchd() error {
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>%s/.ubik/logs/proxy.log</string>
+    <string>%s/.arfa/logs/proxy.log</string>
     <key>StandardErrorPath</key>
-    <string>%s/.ubik/logs/proxy.err</string>
+    <string>%s/.arfa/logs/proxy.err</string>
 </dict>
 </plist>
-`, ubikPath, home, home)
+`, arfaPath, home, home)
 
 	// Create LaunchAgents directory if needed
 	if err := os.MkdirAll(filepath.Dir(plistPath), 0755); err != nil {
@@ -454,7 +454,7 @@ func setupLaunchd() error {
 	}
 
 	// Create logs directory
-	if err := os.MkdirAll(filepath.Join(home, ".ubik", "logs"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(home, ".arfa", "logs"), 0755); err != nil {
 		return err
 	}
 
@@ -470,16 +470,16 @@ func setupLaunchd() error {
 func setupSystemd() error {
 	home, _ := os.UserHomeDir()
 	serviceDir := filepath.Join(home, ".config", "systemd", "user")
-	servicePath := filepath.Join(serviceDir, "ubik-proxy.service")
+	servicePath := filepath.Join(serviceDir, "arfa-proxy.service")
 
-	// Find ubik binary path
-	ubikPath, err := os.Executable()
+	// Find arfa binary path
+	arfaPath, err := os.Executable()
 	if err != nil {
-		ubikPath = "/usr/local/bin/ubik"
+		arfaPath = "/usr/local/bin/arfa"
 	}
 
 	serviceContent := fmt.Sprintf(`[Unit]
-Description=Ubik AI Agent Security Proxy
+Description=Arfa AI Agent Security Proxy
 After=network.target
 
 [Service]
@@ -490,7 +490,7 @@ RestartSec=5
 
 [Install]
 WantedBy=default.target
-`, ubikPath)
+`, arfaPath)
 
 	if err := os.MkdirAll(serviceDir, 0755); err != nil {
 		return err
@@ -502,7 +502,7 @@ WantedBy=default.target
 
 	// Reload and enable
 	exec.Command("systemctl", "--user", "daemon-reload").Run()
-	cmd := exec.Command("systemctl", "--user", "enable", "--now", "ubik-proxy")
+	cmd := exec.Command("systemctl", "--user", "enable", "--now", "arfa-proxy")
 	return cmd.Run()
 }
 
@@ -527,12 +527,12 @@ func removeAutoStart() error {
 
 	switch runtime.GOOS {
 	case "darwin":
-		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.ubik.proxy.plist")
+		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.arfa.proxy.plist")
 		exec.Command("launchctl", "unload", plistPath).Run()
 		return os.Remove(plistPath)
 	case "linux":
-		exec.Command("systemctl", "--user", "disable", "--now", "ubik-proxy").Run()
-		servicePath := filepath.Join(home, ".config", "systemd", "user", "ubik-proxy.service")
+		exec.Command("systemctl", "--user", "disable", "--now", "arfa-proxy").Run()
+		servicePath := filepath.Join(home, ".config", "systemd", "user", "arfa-proxy.service")
 		return os.Remove(servicePath)
 	default:
 		return nil
@@ -543,7 +543,7 @@ func isCertTrusted(certPath string) bool {
 	// Simplified check - in reality would verify against trust store
 	switch runtime.GOOS {
 	case "darwin":
-		cmd := exec.Command("security", "find-certificate", "-c", "ubik-proxy-ca")
+		cmd := exec.Command("security", "find-certificate", "-c", "arfa-proxy-ca")
 		return cmd.Run() == nil
 	default:
 		return false
@@ -558,7 +558,7 @@ func isSystemProxyConfigured() bool {
 		if err != nil {
 			return false
 		}
-		return strings.Contains(string(out), "ubik")
+		return strings.Contains(string(out), "arfa")
 	default:
 		return false
 	}
@@ -569,11 +569,11 @@ func isAutoStartConfigured() bool {
 
 	switch runtime.GOOS {
 	case "darwin":
-		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.ubik.proxy.plist")
+		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.arfa.proxy.plist")
 		_, err := os.Stat(plistPath)
 		return err == nil
 	case "linux":
-		servicePath := filepath.Join(home, ".config", "systemd", "user", "ubik-proxy.service")
+		servicePath := filepath.Join(home, ".config", "systemd", "user", "arfa-proxy.service")
 		_, err := os.Stat(servicePath)
 		return err == nil
 	default:

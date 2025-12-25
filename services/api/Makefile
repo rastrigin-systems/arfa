@@ -4,7 +4,7 @@
 build:
 	@echo "🔨 Building API server..."
 	mkdir -p ../../bin
-	go build -v -o ../../bin/ubik-server ./cmd/server
+	go build -v -o ../../bin/arfa-server ./cmd/server
 
 # Run all tests
 test: test-unit test-integration
@@ -32,14 +32,14 @@ coverage:
 # Build Docker image
 docker-build:
 	@echo "🐳 Building Docker image..."
-	cd ../.. && docker build -f services/api/build/Dockerfile.gcp -t ubik-api:latest .
+	cd ../.. && docker build -f services/api/build/Dockerfile.gcp -t arfa-api:latest .
 
 # Test Docker image locally
 docker-test: docker-build
 	@echo "🧪 Testing Docker image..."
 	@echo "Verifying files in container..."
-	docker run --rm ubik-api:latest ls -la /app/
-	docker run --rm ubik-api:latest ls -la /app/platform/api-spec/
+	docker run --rm arfa-api:latest ls -la /app/
+	docker run --rm arfa-api:latest ls -la /app/platform/api-spec/
 	@echo "✅ Docker image structure verified"
 
 # Run Docker container locally
@@ -47,8 +47,8 @@ docker-run: docker-build
 	@echo "🚀 Running Docker container locally..."
 	@echo "API will be available at http://localhost:8080"
 	docker run --rm -p 8080:8080 \
-		-e DATABASE_URL="postgres://ubik:ubik_dev_password@host.docker.internal:5432/ubik?sslmode=disable" \
-		ubik-api:latest
+		-e DATABASE_URL="postgres://arfa:arfa_dev_password@host.docker.internal:5432/arfa?sslmode=disable" \
+		arfa-api:latest
 
 # Deploy to GCP Cloud Run
 deploy:
@@ -58,7 +58,7 @@ deploy:
 # Clean build artifacts
 clean:
 	@echo "🧹 Cleaning build artifacts..."
-	rm -f ../../bin/ubik-server
+	rm -f ../../bin/arfa-server
 	rm -f ../../coverage-*.out
 
 # Show help

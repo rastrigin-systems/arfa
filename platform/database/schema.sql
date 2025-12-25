@@ -1,4 +1,4 @@
--- Ubik Enterprise - PostgreSQL Schema (Proxy Pivot)
+-- Arfa Enterprise - PostgreSQL Schema (Proxy Pivot)
 -- Version: 3.0.0 - Security Proxy Focus
 -- Description: Multi-tenant system for AI agent security monitoring and policy enforcement
 
@@ -212,7 +212,7 @@ CREATE TABLE webhook_destinations (
     retry_backoff_ms INT NOT NULL DEFAULT 1000 CHECK (retry_backoff_ms >= 100),
 
     -- Security
-    signing_secret VARCHAR(255),  -- For X-Ubik-Signature header (HMAC)
+    signing_secret VARCHAR(255),  -- For X-Arfa-Signature header (HMAC)
 
     -- Metadata
     created_by UUID REFERENCES employees(id) ON DELETE SET NULL,

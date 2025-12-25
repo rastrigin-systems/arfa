@@ -32,9 +32,9 @@ A reproducible system for building software with AI agents that:
 ### Step 1: Copy Agent Configurations
 
 ```bash
-# Clone Ubik repository (or download agent configs)
-git clone https://github.com/rastrigin-org/ubik-enterprise.git
-cd ubik-enterprise
+# Clone Arfa repository (or download agent configs)
+git clone https://github.com/rastrigin-org/arfa.git
+cd arfa
 
 # Copy agent configs to your Claude Code setup
 mkdir -p ~/.claude/agents
@@ -74,7 +74,7 @@ gh label create "epic" --color "3e4b9e"
 
 ```bash
 # Start Qdrant for knowledge retention
-docker run -d --name ubik-qdrant -p 6333:6333 qdrant/qdrant:latest
+docker run -d --name arfa-qdrant -p 6333:6333 qdrant/qdrant:latest
 
 # Configure Qdrant MCP in Claude Code
 # (See Qdrant MCP setup docs)
@@ -261,7 +261,7 @@ gh issue create \
 
 ### View Coordinator Logs
 ```bash
-tail -f ~/.ubik/coordinator.log
+tail -f ~/.arfa/coordinator.log
 ```
 
 **Example output:**
@@ -381,12 +381,12 @@ Each agent config is in `~/.claude/agents/<name>.md`.
 # Project A
 cd ~/projects/my-saas-app
 gh repo clone my-saas-app
-ubik init  # (future CLI command)
+arfa init  # (future CLI command)
 
 # Project B
 cd ~/projects/client-project
 gh repo clone client-project
-ubik init
+arfa init
 
 # Coordinator manages both!
 ```
@@ -489,7 +489,7 @@ docker run -d --name team -v /path/to/project:/project ai-dev-team
 - [Development Setup Snapshot](./DEV_SETUP_SNAPSHOT.md) - Your current config
 - [Coordinator Agent Spec](./COORDINATOR_AGENT_SPEC.md) - Full architecture
 - [Product Direction Decision](./PRODUCT_DIRECTION_DECISION.md) - Strategic context
-- [Ubik Repository](https://github.com/rastrigin-org/ubik-enterprise) - Source code
+- [Arfa Repository](https://github.com/rastrigin-org/arfa) - Source code
 
 ---
 

@@ -1,11 +1,11 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: ubik-postgres
+    container_name: arfa-postgres
     environment:
-      POSTGRES_DB: ubik
-      POSTGRES_USER: ubik
-      POSTGRES_PASSWORD: ubik_dev_password
+      POSTGRES_DB: arfa
+      POSTGRES_USER: arfa
+      POSTGRES_PASSWORD: arfa_dev_password
     ports:
       - "5432:5432"
     volumes:
@@ -13,14 +13,14 @@ services:
       - ./platform/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./platform/database/seeds:/docker-entrypoint-initdb.d/seeds
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ubik"]
+      test: ["CMD-SHELL", "pg_isready -U arfa"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   adminer:
     image: adminer:latest
-    container_name: ubik-adminer
+    container_name: arfa-adminer
     ports:
       - "8081:8080"
     environment:
@@ -34,11 +34,11 @@ services:
       context: .
       dockerfile: services/api/Dockerfile
       target: development
-    container_name: ubik-api
+    container_name: arfa-api
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://ubik:ubik_dev_password@postgres:5432/ubik?sslmode=disable
+      DATABASE_URL: postgres://arfa:arfa_dev_password@postgres:5432/arfa?sslmode=disable
       JWT_SECRET: dev_secret_change_in_production
       PORT: 8080
     depends_on:
@@ -51,12 +51,12 @@ services:
       context: ./services/web
       dockerfile: Dockerfile
       target: development
-    container_name: ubik-web
+    container_name: arfa-web
     ports:
       - "3000:3000"
     environment:
       # Server-side API URL (uses Docker network hostname)
-      API_URL: http://ubik-api:8080/api/v1
+      API_URL: http://arfa-api:8080/api/v1
       # Client-side API URL (uses host localhost)
       NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
       NODE_ENV: development

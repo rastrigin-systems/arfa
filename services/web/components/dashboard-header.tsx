@@ -22,7 +22,7 @@ export function DashboardHeader({ employee }: { employee: Employee }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <span className="text-sm font-bold text-primary-foreground">U</span>
             </div>
-            <h1 className="text-xl font-bold">Ubik Enterprise</h1>
+            <h1 className="text-xl font-bold">Arfa Enterprise</h1>
           </Link>
         </div>
 
