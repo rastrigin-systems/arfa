@@ -20,22 +20,6 @@ python3 scripts/generate-erd-overview.py
 
 ---
 
-## Development & Testing
-
-**`create-test-users.sh`** - Create test organizations and users for local development
-
-Seeds test data into local PostgreSQL database.
-
-```bash
-# Requires running PostgreSQL (via docker-compose)
-./scripts/create-test-users.sh
-
-# Creates test organization with employees
-# Password for all test accounts: password123
-```
-
----
-
 ## Service-Specific Scripts
 
 Service-specific scripts belong in their respective service directories:
@@ -46,14 +30,18 @@ Service-specific scripts belong in their respective service directories:
 
 ---
 
+## Test Data
+
+Test data is automatically seeded when you start the database with `docker compose up`.
+
+See `platform/database/seeds/001_seed.sql` for:
+- 2 test organizations (Acme Corporation, TechStart Inc)
+- 3 test employees with password: `admin123`
+- Sample teams, roles, and policies
+
+---
+
 ## Prerequisites
 
 - **Python 3.x** - For Python scripts
 - **Bash 4.x+** - For shell scripts
-- **PostgreSQL client** - For database scripts (`psql`)
-- **Go 1.24+** - For test user creation (bcrypt hashing)
-
-## Environment Variables
-
-Database scripts use:
-- `DATABASE_URL` - PostgreSQL connection (default: `postgres://ubik:ubik_dev_password@localhost:5432/ubik`)
