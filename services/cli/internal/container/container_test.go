@@ -108,25 +108,6 @@ func TestContainer_AuthService(t *testing.T) {
 	assert.Same(t, as, as2)
 }
 
-func TestContainer_SkillsService(t *testing.T) {
-	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.json")
-
-	c := New(
-		WithConfigPath(configPath),
-		WithPlatformURL("https://test.example.com"),
-	)
-
-	ss, err := c.SkillsService()
-	require.NoError(t, err)
-	assert.NotNil(t, ss)
-
-	// Second call should return same instance
-	ss2, err := c.SkillsService()
-	require.NoError(t, err)
-	assert.Same(t, ss, ss2)
-}
-
 func TestContainer_Close(t *testing.T) {
 	c := New()
 

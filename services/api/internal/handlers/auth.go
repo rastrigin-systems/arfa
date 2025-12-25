@@ -710,7 +710,6 @@ func mapOrganizationToAPI(org db.Organization) api.Organization {
 		Id:        &orgID,
 		Name:      org.Name,
 		Slug:      org.Slug,
-		Plan:      api.OrganizationPlan(org.Plan),
 		CreatedAt: &createdAt,
 		UpdatedAt: &updatedAt,
 	}

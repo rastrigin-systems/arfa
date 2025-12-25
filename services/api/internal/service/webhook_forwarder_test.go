@@ -132,7 +132,6 @@ func TestBuildPayload_MinimalLog(t *testing.T) {
 	assert.Equal(t, "agent_activity", payload.EventCategory)
 	assert.Nil(t, payload.EmployeeID)
 	assert.Nil(t, payload.SessionID)
-	assert.Nil(t, payload.AgentID)
 	assert.Empty(t, payload.Content)
 }
 
@@ -143,7 +142,6 @@ func TestBuildPayload_FullLog(t *testing.T) {
 	logID := uuid.New()
 	empID := uuid.New()
 	sessionID := uuid.New()
-	agentID := uuid.New()
 	content := "Test content"
 
 	log := db.ActivityLog{
@@ -151,7 +149,6 @@ func TestBuildPayload_FullLog(t *testing.T) {
 		OrgID:         orgID,
 		EmployeeID:    pgtype.UUID{Bytes: empID, Valid: true},
 		SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-		AgentID:       pgtype.UUID{Bytes: agentID, Valid: true},
 		EventType:     "permission_denied",
 		EventCategory: "security",
 		Content:       &content,
@@ -169,8 +166,6 @@ func TestBuildPayload_FullLog(t *testing.T) {
 	assert.Equal(t, empID, *payload.EmployeeID)
 	assert.NotNil(t, payload.SessionID)
 	assert.Equal(t, sessionID, *payload.SessionID)
-	assert.NotNil(t, payload.AgentID)
-	assert.Equal(t, agentID, *payload.AgentID)
 	assert.Equal(t, "Test content", payload.Content)
 	assert.NotNil(t, payload.Payload)
 	assert.Equal(t, true, payload.Payload["blocked"])

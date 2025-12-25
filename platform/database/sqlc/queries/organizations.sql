@@ -23,7 +23,6 @@ SET
     name = COALESCE(NULLIF(sqlc.arg(name), ''), name),
     settings = COALESCE(sqlc.narg(settings), settings),
     max_employees = COALESCE(NULLIF(sqlc.arg(max_employees), 0), max_employees),
-    max_agents_per_employee = COALESCE(NULLIF(sqlc.arg(max_agents_per_employee), 0), max_agents_per_employee),
     updated_at = NOW()
 WHERE id = sqlc.arg(id)
 RETURNING *;

@@ -62,12 +62,7 @@ func main() {
 	teamsHandler := handlers.NewTeamsHandler(queries)
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
 	logsHandler := handlers.NewLogsHandler(queries, wsHub)
-	subscriptionsHandler := handlers.NewSubscriptionsHandler(queries)
 	wsHandler := websocket.NewHandler(wsHub)
-	usageStatsHandler := handlers.NewUsageStatsHandler(queries)
-	agentRequestsHandler := handlers.NewAgentRequestsHandler(queries)
-	claudeTokensHandler := handlers.NewClaudeTokensHandler(queries)
-	skillsHandler := handlers.NewSkillsHandler(queries)
 	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
 	webhooksHandler := handlers.NewWebhooksHandler(queries)
 
@@ -139,18 +134,6 @@ func main() {
 			r.Use(authmiddleware.JWTAuth(queries))
 
 			// =================================================================
-			// CLI Routes (any authenticated employee)
-			// These are self-service endpoints for employees using the CLI
-			// =================================================================
-			r.Route("/employees/me", func(r chi.Router) {
-				// Claude token management
-				r.Put("/claude-token", claudeTokensHandler.SetEmployeeClaudeToken)
-				r.Delete("/claude-token", claudeTokensHandler.DeleteEmployeeClaudeToken)
-				r.Get("/claude-token/status", claudeTokensHandler.GetClaudeTokenStatus)
-				r.Get("/claude-token/effective", claudeTokensHandler.GetEffectiveClaudeToken)
-			})
-
-			// =================================================================
 			// Admin Routes (admin only)
 			// These are high-privilege endpoints for organization admins
 			// =================================================================
@@ -207,22 +190,6 @@ func main() {
 			r.Route("/organizations/current", func(r chi.Router) {
 				r.Get("/", organizationsHandler.GetCurrentOrganization)
 				r.Patch("/", organizationsHandler.UpdateCurrentOrganization)
-
-				// Organization Claude token (hybrid auth)
-				r.Put("/claude-token", claudeTokensHandler.SetOrganizationClaudeToken)
-				r.Delete("/claude-token", claudeTokensHandler.DeleteOrganizationClaudeToken)
-			})
-
-			// Skills catalog routes
-			r.Route("/skills", func(r chi.Router) {
-				r.Get("/", skillsHandler.ListSkills)
-				r.Get("/{skill_id}", skillsHandler.GetSkill)
-			})
-
-			// Employee skills routes
-			r.Route("/employees/me/skills", func(r chi.Router) {
-				r.Get("/", skillsHandler.ListEmployeeSkills)
-				r.Get("/{skill_id}", skillsHandler.GetEmployeeSkill)
 			})
 
 			// Employee tool policies routes
@@ -271,27 +238,6 @@ func main() {
 					r.Post("/test", webhooksHandler.TestWebhookDestination)
 					r.Get("/deliveries", webhooksHandler.ListWebhookDeliveries)
 				})
-			})
-
-			// Subscription routes
-			r.Route("/organizations/current/subscription", func(r chi.Router) {
-				r.Get("/", subscriptionsHandler.GetCurrentSubscription)
-			})
-
-			// Usage stats routes
-			r.Route("/usage-stats", func(r chi.Router) {
-				r.Get("/org", usageStatsHandler.GetOrgUsageStats)
-				r.Get("/me", usageStatsHandler.GetCurrentEmployeeUsageStats)
-			})
-
-			r.Route("/employees/{employee_id}/usage-stats", func(r chi.Router) {
-				r.Get("/", usageStatsHandler.GetEmployeeUsageStats)
-			})
-
-			// Agent requests routes (keeping for future access request workflow)
-			r.Route("/agent-requests", func(r chi.Router) {
-				r.Get("/", agentRequestsHandler.ListAgentRequests)
-				r.Get("/pending/count", agentRequestsHandler.GetPendingCount)
 			})
 		})
 	})

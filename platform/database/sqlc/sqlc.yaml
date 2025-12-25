@@ -2,7 +2,6 @@ version: "2"
 sql:
   - schema:
       - "../schema.sql"
-      - "../migrations/001_skills_and_mcp.sql"
     queries: "./queries"
     engine: "postgresql"
     gen:

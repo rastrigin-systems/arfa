@@ -35,15 +35,13 @@ func TestGetCurrentOrganization_Success(t *testing.T) {
 	settings := []byte(`{"features":["sso","audit_logs"]}`)
 
 	org := db.Organization{
-		ID:                   orgID,
-		Name:                 "Acme Corporation",
-		Slug:                 "acme-corp",
-		Plan:                 "enterprise",
-		Settings:             settings,
-		MaxEmployees:         500,
-		MaxAgentsPerEmployee: 10,
-		CreatedAt:            pgtype.Timestamp{Valid: true},
-		UpdatedAt:            pgtype.Timestamp{Valid: true},
+		ID:           orgID,
+		Name:         "Acme Corporation",
+		Slug:         "acme-corp",
+		Settings:     settings,
+		MaxEmployees: 500,
+		CreatedAt:    pgtype.Timestamp{Valid: true},
+		UpdatedAt:    pgtype.Timestamp{Valid: true},
 	}
 
 	mockDB.EXPECT().
@@ -65,9 +63,7 @@ func TestGetCurrentOrganization_Success(t *testing.T) {
 	assert.Equal(t, orgID.String(), response.Id.String())
 	assert.Equal(t, "Acme Corporation", response.Name)
 	assert.Equal(t, "acme-corp", response.Slug)
-	assert.Equal(t, api.OrganizationPlan("enterprise"), response.Plan)
 	assert.Equal(t, 500, *response.MaxEmployees)
-	assert.Equal(t, 10, *response.MaxAgentsPerEmployee)
 }
 
 func TestGetCurrentOrganization_Unauthorized(t *testing.T) {
@@ -122,16 +118,14 @@ func TestUpdateCurrentOrganization_Success(t *testing.T) {
 	orgID := uuid.New()
 	newName := "Acme Corp Updated"
 	newMaxEmployees := int32(1000)
-	newMaxAgents := int32(15)
 	newSettings := map[string]interface{}{
 		"features": []string{"sso", "audit_logs", "saml"},
 	}
 
 	reqBody := handlers.UpdateOrganizationRequest{
-		Name:                 &newName,
-		MaxEmployees:         &newMaxEmployees,
-		MaxAgentsPerEmployee: &newMaxAgents,
-		Settings:             &newSettings,
+		Name:         &newName,
+		MaxEmployees: &newMaxEmployees,
+		Settings:     &newSettings,
 	}
 	bodyBytes, _ := json.Marshal(reqBody)
 
@@ -141,17 +135,14 @@ func TestUpdateCurrentOrganization_Success(t *testing.T) {
 			assert.Equal(t, orgID, params.ID)
 			assert.Equal(t, newName, params.Name)
 			assert.Equal(t, newMaxEmployees, params.MaxEmployees)
-			assert.Equal(t, newMaxAgents, params.MaxAgentsPerEmployee)
 			return db.Organization{
-				ID:                   orgID,
-				Name:                 params.Name.(string),
-				Slug:                 "acme-corp",
-				Plan:                 "enterprise",
-				Settings:             params.Settings,
-				MaxEmployees:         params.MaxEmployees.(int32),
-				MaxAgentsPerEmployee: params.MaxAgentsPerEmployee.(int32),
-				CreatedAt:            pgtype.Timestamp{Valid: true},
-				UpdatedAt:            pgtype.Timestamp{Valid: true},
+				ID:           orgID,
+				Name:         params.Name.(string),
+				Slug:         "acme-corp",
+				Settings:     params.Settings,
+				MaxEmployees: params.MaxEmployees.(int32),
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
 			}, nil
 		})
 
@@ -170,7 +161,6 @@ func TestUpdateCurrentOrganization_Success(t *testing.T) {
 
 	assert.Equal(t, newName, response.Name)
 	assert.Equal(t, int(newMaxEmployees), *response.MaxEmployees)
-	assert.Equal(t, int(newMaxAgents), *response.MaxAgentsPerEmployee)
 }
 
 func TestUpdateCurrentOrganization_Unauthorized(t *testing.T) {
@@ -264,15 +254,13 @@ func TestUpdateCurrentOrganization_PartialUpdate(t *testing.T) {
 			assert.Equal(t, orgID, params.ID)
 			assert.Equal(t, newName, params.Name)
 			return db.Organization{
-				ID:                   orgID,
-				Name:                 newName,
-				Slug:                 "acme-corp",
-				Plan:                 "enterprise",
-				Settings:             []byte(`{}`),
-				MaxEmployees:         500, // unchanged
-				MaxAgentsPerEmployee: 10,  // unchanged
-				CreatedAt:            pgtype.Timestamp{Valid: true},
-				UpdatedAt:            pgtype.Timestamp{Valid: true},
+				ID:           orgID,
+				Name:         newName,
+				Slug:         "acme-corp",
+				Settings:     []byte(`{}`),
+				MaxEmployees: 500, // unchanged
+				CreatedAt:    pgtype.Timestamp{Valid: true},
+				UpdatedAt:    pgtype.Timestamp{Valid: true},
 			}, nil
 		})
 
@@ -291,5 +279,4 @@ func TestUpdateCurrentOrganization_PartialUpdate(t *testing.T) {
 
 	assert.Equal(t, newName, response.Name)
 	assert.Equal(t, 500, *response.MaxEmployees)
-	assert.Equal(t, 10, *response.MaxAgentsPerEmployee)
 }

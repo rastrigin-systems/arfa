@@ -152,7 +152,6 @@ func dbOrganizationToAPI(org db.Organization) api.Organization {
 		Id:           &orgIDUUID,
 		Name:         org.Name,
 		Slug:         org.Slug,
-		Plan:         api.OrganizationPlan(org.Plan),
 		Settings:     &settings,
 		MaxEmployees: &maxEmployees,
 		CreatedAt:    createdAt,

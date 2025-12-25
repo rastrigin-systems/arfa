@@ -33,12 +33,10 @@ func TestCreateLog_Success(t *testing.T) {
 	orgID := uuid.New()
 	employeeID := uuid.New()
 	sessionID := uuid.New()
-	agentID := uuid.New()
 
 	// Test request payload
 	requestBody := api.CreateLogRequest{
 		SessionId:     &sessionID,
-		AgentId:       &agentID,
 		EventType:     "input",
 		EventCategory: "io",
 		Content:       stringPtr("User typed: write a test"),
@@ -63,7 +61,6 @@ func TestCreateLog_Success(t *testing.T) {
 				OrgID:         orgID,
 				EmployeeID:    pgtype.UUID{Bytes: employeeID, Valid: true},
 				SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-				AgentID:       pgtype.UUID{Bytes: agentID, Valid: true},
 				EventType:     params.EventType,
 				EventCategory: params.EventCategory,
 				Content:       params.Content,

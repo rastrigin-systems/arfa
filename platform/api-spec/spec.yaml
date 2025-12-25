@@ -568,7 +568,6 @@ components:
         - id
         - name
         - slug
-        - plan
       properties:
         id:
           type: string
@@ -581,10 +580,6 @@ components:
           type: string
           maxLength: 100
           pattern: '^[a-z0-9-]+$'
-        plan:
-          type: string
-          enum: [starter, professional, enterprise]
-          default: starter
         settings:
           type: object
           additionalProperties: true
@@ -592,14 +587,6 @@ components:
           type: integer
           minimum: 1
           default: 10
-        max_agents_per_employee:
-          type: integer
-          minimum: 1
-          default: 3
-        has_claude_token:
-          type: boolean
-          description: Whether organization has a Claude API token configured
-          readOnly: true
         created_at:
           type: string
           format: date-time
