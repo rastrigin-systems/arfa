@@ -4,8 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"sync"
 )
+
+// getAppBaseURL returns the base URL for the web application.
+// Can be overridden via ARFA_APP_URL environment variable.
+func getAppBaseURL() string {
+	if url := os.Getenv("ARFA_APP_URL"); url != "" {
+		return strings.TrimSuffix(url, "/")
+	}
+	return "http://localhost:3000"
+}
 
 // EmailService defines the interface for sending emails
 type EmailService interface {
@@ -47,7 +58,7 @@ func (s *MockEmailService) SendPasswordResetEmail(email, token string) error {
 	}
 
 	// Log to console (useful for development)
-	resetURL := fmt.Sprintf("https://app.arfa.cloud/reset-password/%s", token)
+	resetURL := fmt.Sprintf("%s/reset-password/%s", getAppBaseURL(), token)
 	log.Printf("📧 Mock Email Service: Password Reset Email\n")
 	log.Printf("   To: %s\n", email)
 	log.Printf("   Reset URL: %s\n", resetURL)

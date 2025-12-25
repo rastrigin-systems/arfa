@@ -1,4 +1,4 @@
-module github.com/rastrigin-systems/ubik-enterprise/services/cli
+module github.com/rastrigin-systems/arfa/services/cli
 
 go 1.24.5
 

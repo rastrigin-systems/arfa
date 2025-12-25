@@ -3,10 +3,20 @@ package service
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
 )
+
+// getAppBaseURL returns the base URL for the web application.
+// Can be overridden via ARFA_APP_URL environment variable.
+func getAppBaseURL() string {
+	if url := os.Getenv("ARFA_APP_URL"); url != "" {
+		return strings.TrimSuffix(url, "/")
+	}
+	return "http://localhost:3000"
+}
 
 // EmailService defines the interface for sending emails
 // This interface can be implemented by different providers (e.g., SendGrid, AWS SES, etc.)
@@ -84,9 +94,8 @@ func (s *MockEmailService) SendInvitation(email InvitationEmail) error {
 	// Add to history
 	s.sentEmails = append(s.sentEmails, email)
 
-	// Generate invitation URL (use default base URL for mock)
-	baseURL := "https://app.arfa.com"
-	invitationURL := email.GenerateInvitationURL(baseURL)
+	// Generate invitation URL
+	invitationURL := email.GenerateInvitationURL(getAppBaseURL())
 
 	// Log email details to console in a clear, readable format
 	log.Printf("[EMAIL] Invitation Email Sent\n"+
