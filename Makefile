@@ -47,7 +47,7 @@ help:
 DATABASE_URL ?= postgres://ubik:ubik_dev_password@localhost:5432/ubik?sslmode=disable
 SERVER_PORT ?= 8080
 GENERATED_DIR = generated
-DOCS_DIR = docs
+DOCS_DIR = docs/database
 
 # Install code generation tools
 install-tools:
@@ -172,16 +172,14 @@ db-seed:
 
 # Code generation
 generate-erd:
-	@echo "📊 Generating ERD from database schema..."
+	@echo "📊 Generating database documentation from schema..."
 	@mkdir -p $(DOCS_DIR)
 	tbls doc $(DATABASE_URL) $(DOCS_DIR) --force --er-format svg
 	tbls doc $(DATABASE_URL) $(DOCS_DIR) --force --er-format mermaid
-	@echo "🔧 Generating ERD overview (ERD.md)..."
-	python3 scripts/generate-erd-overview.py
 	@echo ""
-	@echo "✅ ERD generation complete:"
-	@echo "   - Overview:  $(DOCS_DIR)/ERD.md (auto-generated Mermaid)"
-	@echo "   - Per-table: $(DOCS_DIR)/public.*.md (27 files)"
+	@echo "✅ Database documentation generated:"
+	@echo "   - Reference: $(DOCS_DIR)/schema-reference.md (Mermaid ERD + tables)"
+	@echo "   - Per-table: $(DOCS_DIR)/tables/*.md (70 files)"
 	@echo "   - SVG:       $(DOCS_DIR)/schema.svg"
 	@echo "   - JSON:      $(DOCS_DIR)/schema.json"
 

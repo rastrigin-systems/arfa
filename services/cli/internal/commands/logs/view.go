@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/container"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logging"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/logparser"

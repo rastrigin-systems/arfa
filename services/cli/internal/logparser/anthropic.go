@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
 )
 
 // AnthropicParser parses Anthropic API request/response JSON

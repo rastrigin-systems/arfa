@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rastrigin-systems/ubik-enterprise/pkg/types"
+	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/types"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/api"
 	"github.com/rastrigin-systems/ubik-enterprise/services/cli/internal/config"
 )

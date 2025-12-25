@@ -52,3 +52,19 @@ temp/
 # Qdrant vector database storage
 .qdrant/
 credentials/github-actions-key.json
+
+# Claude Code local settings (personal configs, not for repo)
+.claude/
+
+# Node modules (package manager artifacts)
+node_modules/
+
+# GitHub project automation config (local only)
+.github/project-config.json
+
+# Claude context files (local development only)
+CLAUDE.md
+services/*/CLAUDE.md
+
+# Personal planning files
+final-plan.md
