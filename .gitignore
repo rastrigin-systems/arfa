@@ -61,3 +61,7 @@ node_modules/
 
 # GitHub project automation config (local only)
 .github/project-config.json
+
+# Claude context files (local development only)
+CLAUDE.md
+services/*/CLAUDE.md
