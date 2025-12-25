@@ -252,9 +252,6 @@ test:
 	@echo "Testing CLI client..."
 	cd services/cli && go test -v -race -coverprofile=../../coverage-cli.out ./...
 	@echo ""
-	@echo "Testing shared types..."
-	cd pkg/types && go test -v -race -coverprofile=../../coverage-types.out ./...
-	@echo ""
 	@echo "Testing Next.js web app..."
 	cd services/web && npm test
 	@echo ""

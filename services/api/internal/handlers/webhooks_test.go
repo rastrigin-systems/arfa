@@ -75,7 +75,7 @@ func TestListWebhookDestinations_Success(t *testing.T) {
 	assert.Len(t, response.Destinations, 1)
 	assert.Equal(t, "SIEM Export", response.Destinations[0].Name)
 	assert.Equal(t, "https://siem.example.com/events", response.Destinations[0].Url)
-	assert.Equal(t, api.WebhookDestinationAuthTypeBearer, response.Destinations[0].AuthType)
+	assert.Equal(t, api.Bearer, response.Destinations[0].AuthType)
 	assert.True(t, response.Destinations[0].Enabled)
 }
 
@@ -216,7 +216,7 @@ func TestCreateWebhookDestination_Success(t *testing.T) {
 
 	assert.Equal(t, "SIEM Export", response.Name)
 	assert.Equal(t, "https://siem.example.com/events", response.Url)
-	assert.Equal(t, api.WebhookDestinationAuthTypeBearer, response.AuthType)
+	assert.Equal(t, api.Bearer, response.AuthType)
 }
 
 func TestCreateWebhookDestination_MissingName(t *testing.T) {
