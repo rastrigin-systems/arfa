@@ -226,6 +226,28 @@ func runStart(cmd *cobra.Command, args []string) error {
 	defer cancel()
 	go controlSvc.Start(ctx)
 
+	// Enable real-time policy updates via WebSocket
+	cfg, _ := configManager.Load()
+	if cfg != nil && cfg.Token != "" && cfg.PlatformURL != "" {
+		fmt.Println("Connecting to policy server...")
+		if err := controlSvc.EnableRealtimePolicies(ctx, cfg.PlatformURL, cfg.Token); err != nil {
+			fmt.Printf("Warning: Failed to enable real-time policies: %v\n", err)
+			fmt.Println("Falling back to cached policies")
+		} else {
+			// Wait for initial policies (with 10 second timeout)
+			waitCtx, waitCancel := context.WithTimeout(ctx, 10*time.Second)
+			if err := controlSvc.WaitForPolicies(waitCtx, 10*time.Second); err != nil {
+				fmt.Printf("Warning: Timeout waiting for policies: %v\n", err)
+				fmt.Println("Using cached policies, real-time updates will continue in background")
+			} else {
+				if pc := controlSvc.PolicyClient(); pc != nil {
+					fmt.Printf("✓ Connected to policy server (%d policies loaded)\n", pc.PolicyCount())
+				}
+			}
+			waitCancel()
+		}
+	}
+
 	// Start controlled proxy
 	controlProxy := control.NewControlledProxy(controlSvc)
 	if err := controlProxy.Start(); err != nil {

@@ -359,6 +359,62 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================================
+-- REAL-TIME POLICY NOTIFICATIONS
+-- ============================================================================
+
+-- Notify on policy changes (for real-time WebSocket delivery to proxies)
+CREATE OR REPLACE FUNCTION notify_policy_change()
+RETURNS TRIGGER AS $$
+DECLARE
+    payload JSON;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        payload := json_build_object(
+            'action', 'delete',
+            'policy_id', OLD.id,
+            'org_id', OLD.org_id,
+            'team_id', OLD.team_id,
+            'employee_id', OLD.employee_id
+        );
+    ELSE
+        payload := json_build_object(
+            'action', LOWER(TG_OP),
+            'policy', row_to_json(NEW),
+            'org_id', NEW.org_id,
+            'team_id', NEW.team_id,
+            'employee_id', NEW.employee_id
+        );
+    END IF;
+
+    PERFORM pg_notify('policy_change', payload::text);
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER policy_change_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON tool_policies
+    FOR EACH ROW EXECUTE FUNCTION notify_policy_change();
+
+-- Notify when employee is deactivated (for immediate proxy revocation)
+CREATE OR REPLACE FUNCTION notify_employee_revoke()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status != 'active' AND OLD.status = 'active' THEN
+        PERFORM pg_notify('policy_change', json_build_object(
+            'action', 'revoke',
+            'employee_id', NEW.id,
+            'org_id', NEW.org_id
+        )::text);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER employee_revoke_trigger
+    AFTER UPDATE ON employees
+    FOR EACH ROW EXECUTE FUNCTION notify_employee_revoke();
+
+-- ============================================================================
 -- SEED DATA
 -- ============================================================================
 
