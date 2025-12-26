@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -73,12 +75,65 @@ func newStopCommand(c *container.Container) *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the proxy server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Stopping proxy...")
-			// TODO: Implement daemon stop via PID file or IPC
-			fmt.Println("Note: Use Ctrl+C to stop a foreground proxy, or implement daemon mode")
-			return nil
+			return runStop()
 		},
 	}
+}
+
+func runStop() error {
+	pidFile := getPidFilePath()
+
+	// Read PID file
+	data, err := os.ReadFile(pidFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("No proxy running (PID file not found)")
+			return nil
+		}
+		return fmt.Errorf("failed to read PID file: %w", err)
+	}
+
+	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		// Clean up invalid PID file
+		_ = os.Remove(pidFile)
+		return fmt.Errorf("invalid PID file: %w", err)
+	}
+
+	// Check if process exists
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		_ = os.Remove(pidFile)
+		fmt.Println("No proxy running (process not found)")
+		return nil
+	}
+
+	// Send SIGTERM for graceful shutdown
+	fmt.Printf("Stopping proxy (PID %d)...\n", pid)
+	if err := process.Signal(syscall.SIGTERM); err != nil {
+		// Process might already be dead
+		_ = os.Remove(pidFile)
+		fmt.Println("Proxy already stopped")
+		return nil
+	}
+
+	// Wait briefly for graceful shutdown
+	time.Sleep(500 * time.Millisecond)
+
+	// Check if still running, force kill if needed
+	if err := process.Signal(syscall.Signal(0)); err == nil {
+		fmt.Println("Force stopping...")
+		_ = process.Signal(syscall.SIGKILL)
+	}
+
+	_ = os.Remove(pidFile)
+	fmt.Println("✓ Proxy stopped")
+	return nil
+}
+
+func getPidFilePath() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".arfa", "proxy.pid")
 }
 
 func newStatusCommand(c *container.Container) *cobra.Command {
@@ -253,7 +308,17 @@ func runStart(cmd *cobra.Command, args []string) error {
 	if err := controlProxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
-	defer func() { _ = controlProxy.Stop() }()
+
+	// Write PID file for proxy stop command
+	pidFile := getPidFilePath()
+	if err := os.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0644); err != nil {
+		fmt.Printf("Warning: Failed to write PID file: %v\n", err)
+	}
+
+	defer func() {
+		_ = controlProxy.Stop()
+		_ = os.Remove(pidFile) // Clean up PID file on exit
+	}()
 
 	port := controlProxy.GetPort()
 	certPath := controlProxy.GetCertPath()

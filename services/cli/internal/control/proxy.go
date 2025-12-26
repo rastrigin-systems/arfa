@@ -84,10 +84,13 @@ func (p *ControlledProxy) tryStart(port int) error {
 	}
 	_ = listener.Close()
 
-	// Start server
+	// Start server with timeouts to prevent connection accumulation
 	p.server = &http.Server{
-		Addr:    addr,
-		Handler: p.goproxy,
+		Addr:         addr,
+		Handler:      p.goproxy,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	errCh := make(chan error, 1)
