@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
+	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -205,13 +205,8 @@ data: {"type":"message_stop"}
 }
 
 func TestPolicyHandler_EmptyDenyList(t *testing.T) {
-	// Override HOME to temp dir to ensure no policies are loaded from cache
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	h := NewPolicyHandler() // Should have empty deny list (no cache file)
+	// Empty policy handler (no policies loaded)
+	h := NewPolicyHandler()
 	ctx := NewHandlerContext("emp-1", "org-1", "sess-1")
 
 	sseStream := `event: content_block_start
@@ -307,28 +302,14 @@ func TestWriteBlockedEvent(t *testing.T) {
 	assert.Contains(t, output, "TOOL BLOCKED")
 }
 
-func TestPolicyHandler_LoadFromCache(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	// Create a policies.json file
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
-			{"tool_name": "Write", "action": "deny", "reason": "Writes blocked"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	// Create handler - should load from cache
-	h := NewPolicyHandler()
+func TestPolicyHandler_WithPolicies(t *testing.T) {
+	reason1 := "Shell blocked"
+	reason2 := "Writes blocked"
+	policies := []api.ToolPolicy{
+		{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason1},
+		{ToolName: "Write", Action: api.ToolPolicyActionDeny, Reason: &reason2},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Test that Bash is blocked
 	reason, blocked := h.isBlocked("Bash")
@@ -346,31 +327,17 @@ func TestPolicyHandler_LoadFromCache(t *testing.T) {
 }
 
 func TestPolicyHandler_GlobPattern(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	// Create a policies.json file with a glob pattern
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "mcp__gcloud__%", "action": "deny", "reason": "GCloud MCP blocked"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	// Create handler - should load from cache
-	h := NewPolicyHandler()
+	// Create handler with a glob pattern policy
+	reason := "GCloud MCP blocked"
+	policies := []api.ToolPolicy{
+		{ToolName: "mcp__gcloud__%", Action: api.ToolPolicyActionDeny, Reason: &reason},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Test that mcp__gcloud__run_gcloud_command is blocked (matches pattern)
-	reason, blocked := h.isBlocked("mcp__gcloud__run_gcloud_command")
+	actualReason, blocked := h.isBlocked("mcp__gcloud__run_gcloud_command")
 	assert.True(t, blocked)
-	assert.Equal(t, "GCloud MCP blocked", reason)
+	assert.Equal(t, "GCloud MCP blocked", actualReason)
 
 	// Test that mcp__gcloud__list_instances is also blocked
 	_, blocked = h.isBlocked("mcp__gcloud__list_instances")
@@ -386,27 +353,14 @@ func TestPolicyHandler_GlobPattern(t *testing.T) {
 }
 
 func TestPolicyHandler_SkipsAuditPolicies(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	// Create a policies.json file with both deny and audit policies
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
-			{"tool_name": "Write", "action": "audit", "reason": "Writes audited"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	// Create handler - should only load deny policies
-	h := NewPolicyHandler()
+	// Create handler with both deny and audit policies
+	reason1 := "Shell blocked"
+	reason2 := "Writes audited"
+	policies := []api.ToolPolicy{
+		{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason1},
+		{ToolName: "Write", Action: api.ToolPolicyActionAudit, Reason: &reason2},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Bash should be blocked (deny)
 	_, blocked := h.isBlocked("Bash")
@@ -418,25 +372,12 @@ func TestPolicyHandler_SkipsAuditPolicies(t *testing.T) {
 }
 
 func TestPolicyHandler_CaseInsensitive(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	// Create a policies.json file
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	// Create handler with a policy
+	reason := "Shell blocked"
+	policies := []api.ToolPolicy{
+		{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Test case variations
 	_, blocked := h.isBlocked("Bash")
@@ -450,32 +391,17 @@ func TestPolicyHandler_CaseInsensitive(t *testing.T) {
 }
 
 func TestPolicyHandler_ConditionalPolicy_HasConditions(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
 	// Policy with conditions - block Bash only when command contains "rm -rf"
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Destructive commands blocked",
-				"conditions": {
-					"command": "rm\\s+-rf"
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Destructive commands blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": `rm\s+-rf`},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Bash should NOT be unconditionally blocked
 	_, blocked := h.isBlocked("Bash")
@@ -487,36 +413,21 @@ func TestPolicyHandler_ConditionalPolicy_HasConditions(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_RegexMatch(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Destructive commands blocked",
-				"conditions": {
-					"command": "rm\\s+-rf"
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Destructive commands blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": `rm\s+-rf`},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Should block when condition matches
-	reason, blocked := h.evaluateConditions("Bash", `{"command": "rm -rf /"}`)
+	actualReason, blocked := h.evaluateConditions("Bash", `{"command": "rm -rf /"}`)
 	assert.True(t, blocked)
-	assert.Equal(t, "Destructive commands blocked", reason)
+	assert.Equal(t, "Destructive commands blocked", actualReason)
 
 	// Should allow when condition doesn't match
 	_, blocked = h.evaluateConditions("Bash", `{"command": "ls -la"}`)
@@ -524,36 +435,21 @@ func TestPolicyHandler_EvaluateConditions_RegexMatch(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_ContainsOperator(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Password access blocked",
-				"conditions": {
-					"command": {"contains": "/etc/passwd"}
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Password access blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": map[string]interface{}{"contains": "/etc/passwd"}},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Should block when contains matches
-	reason, blocked := h.evaluateConditions("Bash", `{"command": "cat /etc/passwd"}`)
+	actualReason, blocked := h.evaluateConditions("Bash", `{"command": "cat /etc/passwd"}`)
 	assert.True(t, blocked)
-	assert.Equal(t, "Password access blocked", reason)
+	assert.Equal(t, "Password access blocked", actualReason)
 
 	// Should allow when doesn't contain
 	_, blocked = h.evaluateConditions("Bash", `{"command": "cat /etc/hosts"}`)
@@ -561,36 +457,21 @@ func TestPolicyHandler_EvaluateConditions_ContainsOperator(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_EqualsOperator(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Write",
-				"action": "deny",
-				"reason": "Cannot write to .env",
-				"conditions": {
-					"file_path": {"equals": ".env"}
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Cannot write to .env"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Write",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"file_path": map[string]interface{}{"equals": ".env"}},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Should block exact match
-	reason, blocked := h.evaluateConditions("Write", `{"file_path": ".env"}`)
+	actualReason, blocked := h.evaluateConditions("Write", `{"file_path": ".env"}`)
 	assert.True(t, blocked)
-	assert.Equal(t, "Cannot write to .env", reason)
+	assert.Equal(t, "Cannot write to .env", actualReason)
 
 	// Should allow non-match
 	_, blocked = h.evaluateConditions("Write", `{"file_path": ".env.example"}`)
@@ -598,38 +479,25 @@ func TestPolicyHandler_EvaluateConditions_EqualsOperator(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_MultipleConditions(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
 	// Policy requires ALL conditions to match
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Root access with force flag blocked",
-				"conditions": {
-					"command": {"contains": "sudo"},
-					"dangerouslyDisableSandbox": {"equals": "true"}
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Root access with force flag blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName: "Bash",
+			Action:   api.ToolPolicyActionDeny,
+			Reason:   &reason,
+			Conditions: map[string]interface{}{
+				"command":                   map[string]interface{}{"contains": "sudo"},
+				"dangerouslyDisableSandbox": map[string]interface{}{"equals": "true"},
+			},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Should block when ALL conditions match
-	reason, blocked := h.evaluateConditions("Bash", `{"command": "sudo rm -rf /", "dangerouslyDisableSandbox": "true"}`)
+	actualReason, blocked := h.evaluateConditions("Bash", `{"command": "sudo rm -rf /", "dangerouslyDisableSandbox": "true"}`)
 	assert.True(t, blocked)
-	assert.Equal(t, "Root access with force flag blocked", reason)
+	assert.Equal(t, "Root access with force flag blocked", actualReason)
 
 	// Should allow when only one condition matches
 	_, blocked = h.evaluateConditions("Bash", `{"command": "sudo rm -rf /", "dangerouslyDisableSandbox": "false"}`)
@@ -640,31 +508,16 @@ func TestPolicyHandler_EvaluateConditions_MultipleConditions(t *testing.T) {
 }
 
 func TestPolicyHandler_ProcessSSEStream_ConditionalBlock(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Dangerous command",
-				"conditions": {
-					"command": "rm\\s+-rf"
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Dangerous command"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": `rm\s+-rf`},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// SSE stream with Bash tool using dangerous command
 	sseStream := `event: message_start
@@ -702,31 +555,16 @@ data: {"type":"message_stop"}
 }
 
 func TestPolicyHandler_ProcessSSEStream_ConditionalAllow(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Dangerous command",
-				"conditions": {
-					"command": "rm\\s+-rf"
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Dangerous command"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": `rm\s+-rf`},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// SSE stream with Bash tool using safe command
 	sseStream := `event: message_start
@@ -764,42 +602,24 @@ data: {"type":"message_stop"}
 }
 
 func TestPolicyHandler_MixedUnconditionalAndConditional(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
 	// One unconditional block, one conditional
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Write",
-				"action": "deny",
-				"reason": "Write blocked unconditionally"
-			},
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Dangerous command",
-				"conditions": {
-					"command": "rm\\s+-rf"
-				}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason1 := "Write blocked unconditionally"
+	reason2 := "Dangerous command"
+	policies := []api.ToolPolicy{
+		{ToolName: "Write", Action: api.ToolPolicyActionDeny, Reason: &reason1},
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason2,
+			Conditions: map[string]interface{}{"command": `rm\s+-rf`},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Write should be unconditionally blocked
-	reason, blocked := h.isBlocked("Write")
+	actualReason, blocked := h.isBlocked("Write")
 	assert.True(t, blocked)
-	assert.Equal(t, "Write blocked unconditionally", reason)
+	assert.Equal(t, "Write blocked unconditionally", actualReason)
 
 	// Bash should NOT be unconditionally blocked
 	_, blocked = h.isBlocked("Bash")
@@ -834,29 +654,16 @@ func TestPolicyHandler_MatchesPattern_InvalidRegex(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_InvalidJSON(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Blocked",
-				"conditions": {"command": ".*"}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName:   "Bash",
+			Action:     api.ToolPolicyActionDeny,
+			Reason:     &reason,
+			Conditions: map[string]interface{}{"command": ".*"},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Invalid JSON should fail open (not block)
 	_, blocked := h.evaluateConditions("Bash", "not valid json")
@@ -864,29 +671,19 @@ func TestPolicyHandler_EvaluateConditions_InvalidJSON(t *testing.T) {
 }
 
 func TestPolicyHandler_EvaluateConditions_MissingParam(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-
-	cacheContent := `{
-		"policies": [
-			{
-				"tool_name": "Bash",
-				"action": "deny",
-				"reason": "Blocked",
-				"conditions": {"command": ".*", "other_param": "value"}
-			}
-		],
-		"version": 1,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	h := NewPolicyHandler()
+	reason := "Blocked"
+	policies := []api.ToolPolicy{
+		{
+			ToolName: "Bash",
+			Action:   api.ToolPolicyActionDeny,
+			Reason:   &reason,
+			Conditions: map[string]interface{}{
+				"command":     ".*",
+				"other_param": "value",
+			},
+		},
+	}
+	h := NewPolicyHandlerWithPolicies(policies)
 
 	// Missing required param should not match (all conditions must match)
 	_, blocked := h.evaluateConditions("Bash", `{"command": "ls"}`)

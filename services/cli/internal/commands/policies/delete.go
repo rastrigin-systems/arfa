@@ -77,8 +77,6 @@ Examples:
 			}
 
 			_, _ = fmt.Fprintln(out, "Policy deleted successfully!")
-			_, _ = fmt.Fprintln(out)
-			_, _ = fmt.Fprintln(out, "Run 'arfa policies sync' to update local cache.")
 
 			return nil
 		},

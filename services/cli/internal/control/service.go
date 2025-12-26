@@ -77,7 +77,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 	loggerHandler := NewLoggerHandler(queue)
 	pipeline.Register(loggerHandler)
 
-	// Register policy handler (loads policies from ~/.arfa/policies.json by default)
+	// Register policy handler (policies loaded via WebSocket when EnableRealtimePolicies is called)
 	policyHandler := NewPolicyHandler()
 	policyHandler.SetQueue(queue) // Enable logging of blocked tools
 	pipeline.Register(policyHandler)

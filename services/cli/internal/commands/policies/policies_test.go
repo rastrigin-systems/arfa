@@ -2,7 +2,9 @@ package policies
 
 import (
 	"bytes"
-	"os"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
@@ -41,40 +43,23 @@ func TestNewListCommand(t *testing.T) {
 	assert.Equal(t, "false", jsonFlag.DefValue)
 }
 
-func TestListCommand_NoPoliciesFile(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
-
-	c := container.New()
-	cmd := NewListCommand(c)
-
-	// Capture output
-	var buf bytes.Buffer
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
-
-	err := cmd.Execute()
-	require.NoError(t, err)
-
-	output := buf.String()
-	assert.Contains(t, output, "No tool policies found")
-	assert.Contains(t, output, "arfa sync")
-}
-
 func TestListCommand_EmptyPolicies(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
+	// Create mock server returning empty policies
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/employees/me/tool-policies" {
+			resp := api.EmployeeToolPoliciesResponse{Policies: []api.ToolPolicy{}}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
 
-	// Create empty policies file
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(`{"policies":[],"version":1,"synced_at":"2024-01-15T10:00:00Z"}`), 0600)
-
-	c := container.New()
+	// Create container with mock API client
+	client := api.NewClient(server.URL)
+	client.SetToken("test-token")
+	c := container.NewTestContainer(container.WithMockAPIClient(client))
 	cmd := NewListCommand(c)
 
 	var buf bytes.Buffer
@@ -89,25 +74,27 @@ func TestListCommand_EmptyPolicies(t *testing.T) {
 }
 
 func TestListCommand_WithPolicies(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
+	reason := "Shell blocked"
+	// Create mock server returning policies
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/employees/me/tool-policies" {
+			resp := api.EmployeeToolPoliciesResponse{
+				Policies: []api.ToolPolicy{
+					{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason, Scope: "organization"},
+					{ToolName: "Write", Action: api.ToolPolicyActionAudit},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
 
-	// Create policies file with some policies
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked", "scope": "organization"},
-			{"tool_name": "Write", "action": "audit", "reason": "Audited"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	c := container.New()
+	client := api.NewClient(server.URL)
+	client.SetToken("test-token")
+	c := container.NewTestContainer(container.WithMockAPIClient(client))
 	cmd := NewListCommand(c)
 
 	var buf bytes.Buffer
@@ -127,25 +114,27 @@ func TestListCommand_WithPolicies(t *testing.T) {
 }
 
 func TestListCommand_WithAllFlag(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
+	reason1 := "Shell blocked"
+	reason2 := "Writes audited"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/employees/me/tool-policies" {
+			resp := api.EmployeeToolPoliciesResponse{
+				Policies: []api.ToolPolicy{
+					{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason1},
+					{ToolName: "Write", Action: api.ToolPolicyActionAudit, Reason: &reason2},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
 
-	// Create policies file with both deny and audit policies
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"},
-			{"tool_name": "Write", "action": "audit", "reason": "Writes audited"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	c := container.New()
+	client := api.NewClient(server.URL)
+	client.SetToken("test-token")
+	c := container.NewTestContainer(container.WithMockAPIClient(client))
 	cmd := NewListCommand(c)
 	cmd.SetArgs([]string{"--all"})
 
@@ -164,23 +153,25 @@ func TestListCommand_WithAllFlag(t *testing.T) {
 }
 
 func TestListCommand_JSONOutput(t *testing.T) {
-	tempDir := t.TempDir()
-	originalHome := os.Getenv("HOME")
-	_ = os.Setenv("HOME", tempDir)
-	defer func() { _ = os.Setenv("HOME", originalHome) }()
+	reason := "Shell blocked"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/employees/me/tool-policies" {
+			resp := api.EmployeeToolPoliciesResponse{
+				Policies: []api.ToolPolicy{
+					{ToolName: "Bash", Action: api.ToolPolicyActionDeny, Reason: &reason},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
 
-	arfaDir := tempDir + "/.arfa"
-	_ = os.MkdirAll(arfaDir, 0700)
-	cacheContent := `{
-		"policies": [
-			{"tool_name": "Bash", "action": "deny", "reason": "Shell blocked"}
-		],
-		"version": 12345,
-		"synced_at": "2024-01-15T10:00:00Z"
-	}`
-	_ = os.WriteFile(arfaDir+"/policies.json", []byte(cacheContent), 0600)
-
-	c := container.New()
+	client := api.NewClient(server.URL)
+	client.SetToken("test-token")
+	c := container.NewTestContainer(container.WithMockAPIClient(client))
 	cmd := NewListCommand(c)
 	cmd.SetArgs([]string{"--json"})
 
@@ -195,7 +186,28 @@ func TestListCommand_JSONOutput(t *testing.T) {
 	// Should be valid JSON
 	assert.Contains(t, output, `"tool_name": "Bash"`)
 	assert.Contains(t, output, `"action": "deny"`)
-	assert.Contains(t, output, `"version": 12345`)
+}
+
+func TestListCommand_APIError(t *testing.T) {
+	// Create mock server that returns 401
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"Unauthorized"}`))
+	}))
+	defer server.Close()
+
+	client := api.NewClient(server.URL)
+	// No token set
+	c := container.NewTestContainer(container.WithMockAPIClient(client))
+	cmd := NewListCommand(c)
+
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to fetch policies")
 }
 
 func TestFilterDenyPolicies(t *testing.T) {

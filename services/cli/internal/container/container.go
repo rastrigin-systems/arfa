@@ -106,6 +106,7 @@ func (c *Container) ConfigManager() (*config.Manager, error) {
 }
 
 // APIClient returns the api.Client, creating it if necessary.
+// It loads the platform URL and token from config if available.
 func (c *Container) APIClient() (*api.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -114,12 +115,51 @@ func (c *Container) APIClient() (*api.Client, error) {
 		return c.apiClient, nil
 	}
 
-	platformURL := c.platformURL
+	// Get or create config manager
+	if c.configManager == nil {
+		if c.configPath != "" {
+			c.configManager = config.NewManagerWithPath(c.configPath)
+		} else {
+			var err error
+			c.configManager, err = config.NewManager()
+			if err != nil {
+				// Fall back to default URL if we can't create config manager
+				platformURL := c.platformURL
+				if platformURL == "" {
+					platformURL = config.DefaultPlatformURL()
+				}
+				c.apiClient = api.NewClient(platformURL)
+				return c.apiClient, nil
+			}
+		}
+	}
+
+	// Load config to get platform URL and token
+	cfg, err := c.configManager.Load()
+	if err != nil {
+		// Config doesn't exist yet, use defaults
+		platformURL := c.platformURL
+		if platformURL == "" {
+			platformURL = config.DefaultPlatformURL()
+		}
+		c.apiClient = api.NewClient(platformURL)
+		return c.apiClient, nil
+	}
+
+	// Use config values
+	platformURL := cfg.PlatformURL
+	if platformURL == "" {
+		platformURL = c.platformURL
+	}
 	if platformURL == "" {
 		platformURL = config.DefaultPlatformURL()
 	}
 
 	c.apiClient = api.NewClient(platformURL)
+	if cfg.Token != "" {
+		c.apiClient.SetToken(cfg.Token)
+	}
+
 	return c.apiClient, nil
 }
 
