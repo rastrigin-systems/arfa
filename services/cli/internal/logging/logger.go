@@ -124,15 +124,6 @@ func (l *loggerImpl) EndSession() {
 
 // LogEvent logs a custom event
 func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[string]interface{}) {
-	// Use session_id from metadata if provided (e.g., from proxy requests)
-	// This allows the daemon logger to log events with the correct session ID
-	sessionID := l.sessionID.String()
-	if metadata != nil {
-		if sid, ok := metadata["session_id"].(string); ok && sid != "" {
-			sessionID = sid
-		}
-	}
-
 	// Use client info from metadata if provided
 	clientName := l.clientName
 	clientVersion := l.clientVersion
@@ -146,7 +137,6 @@ func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[
 	}
 
 	entry := LogEntry{
-		SessionID:     sessionID,
 		ClientName:    clientName,
 		ClientVersion: clientVersion,
 		EventType:     eventType,
@@ -169,10 +159,7 @@ func (l *loggerImpl) LogEvent(eventType, category, content string, metadata map[
 
 // LogClassified logs a classified log entry (parsed from API requests/responses)
 func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
-	// Ensure entry has session ID and timestamp
-	if entry.SessionID == "" {
-		entry.SessionID = l.sessionID.String()
-	}
+	// Ensure entry has timestamp and ID
 	if entry.Timestamp.IsZero() {
 		entry.Timestamp = time.Now()
 	}
@@ -192,9 +179,8 @@ func (l *loggerImpl) LogClassified(entry types.ClassifiedLogEntry) {
 		"model":          entry.Model,
 		"tokens_input":   entry.TokensInput,
 		"tokens_output":  entry.TokensOutput,
-		"session_id":     entry.SessionID,     // Pass session_id to LogEvent for proper tracking
-		"client_name":    entry.ClientName,    // Pass client info to LogEvent for proper tracking
-		"client_version": entry.ClientVersion, // Pass client info to LogEvent for proper tracking
+		"client_name":    entry.ClientName,
+		"client_version": entry.ClientVersion,
 	}
 
 	if entry.ToolName != "" {

@@ -68,7 +68,6 @@ func TestLoggerHandler_HandleRequest_LogsEntry(t *testing.T) {
 	entry := entries[0]
 	assert.Equal(t, "emp-123", entry.EmployeeID)
 	assert.Equal(t, "org-456", entry.OrgID)
-	assert.Equal(t, "sess-789", entry.SessionID)
 	// ClientName/ClientVersion are empty since we didn't call SetClient
 	assert.Empty(t, entry.ClientName)
 	assert.Empty(t, entry.ClientVersion)
@@ -233,7 +232,6 @@ func TestLoggerHandler_HandleResponse_LogsEntry(t *testing.T) {
 	entry := entries[0]
 	assert.Equal(t, "emp-123", entry.EmployeeID)
 	assert.Equal(t, "org-456", entry.OrgID)
-	assert.Equal(t, "sess-789", entry.SessionID)
 	// ClientName/ClientVersion are empty since we didn't call SetClient
 	assert.Empty(t, entry.ClientName)
 	assert.Empty(t, entry.ClientVersion)

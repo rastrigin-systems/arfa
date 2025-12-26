@@ -19,7 +19,6 @@ func NewAPIClientAdapter(client *api.Client) APIClient {
 // CreateLog sends a single log entry to the API
 func (a *APIClientAdapter) CreateLog(ctx context.Context, entry LogEntry) error {
 	apiEntry := api.LogEntry{
-		SessionID:     entry.SessionID,
 		ClientName:    entry.ClientName,
 		ClientVersion: entry.ClientVersion,
 		EventType:     entry.EventType,
@@ -36,7 +35,6 @@ func (a *APIClientAdapter) CreateLogBatch(ctx context.Context, entries []LogEntr
 	apiEntries := make([]api.LogEntry, len(entries))
 	for i, entry := range entries {
 		apiEntries[i] = api.LogEntry{
-			SessionID:     entry.SessionID,
 			ClientName:    entry.ClientName,
 			ClientVersion: entry.ClientVersion,
 			EventType:     entry.EventType,

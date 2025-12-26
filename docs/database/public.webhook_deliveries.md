@@ -84,7 +84,7 @@ erDiagram
   uuid id
   uuid org_id FK
   uuid employee_id FK
-  uuid session_id
+  uuid proxy_session_id
   varchar_100_ client_name
   varchar_50_ client_version
   varchar_100_ event_type

@@ -176,7 +176,6 @@ func (h *ToolCallLoggerHandler) logToolCall(ctx *HandlerContext, call *pendingTo
 	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
-		SessionID:     ctx.SessionID,
 		ClientName:    ctx.ClientName,
 		ClientVersion: ctx.ClientVersion,
 		EventType:     "tool_call",
@@ -203,7 +202,6 @@ func (h *ToolCallLoggerHandler) LogBlockedToolCall(ctx *HandlerContext, toolName
 	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
-		SessionID:     ctx.SessionID,
 		ClientName:    ctx.ClientName,
 		ClientVersion: ctx.ClientVersion,
 		EventType:     "tool_call",

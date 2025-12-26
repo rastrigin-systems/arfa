@@ -77,10 +77,6 @@ func TestLoggingEndToEnd(t *testing.T) {
 	foundError := false
 
 	for _, log := range logs {
-		if log.SessionID != sessionID.String() {
-			t.Errorf("Expected session_id %s, got %s", sessionID, log.SessionID)
-		}
-
 		if log.ClientName != clientName {
 			t.Errorf("Expected client_name %s, got %s", clientName, log.ClientName)
 		}

@@ -54,7 +54,7 @@ func TestSetSession(t *testing.T) {
 	p := New(nil)
 	p.SetSession("session-123", "claude-code", "1.0.25")
 
-	assert.Equal(t, "session-123", p.sessionID)
+	assert.Equal(t, "session-123", p.proxySessionID)
 	assert.Equal(t, "claude-code", p.clientName)
 	assert.Equal(t, "1.0.25", p.clientVersion)
 }
@@ -463,7 +463,7 @@ func TestProxyWithSessionMetadata(t *testing.T) {
 	defer func() { _ = p.Stop() }()
 
 	// Verify session is set
-	assert.Equal(t, sessionID, p.sessionID)
+	assert.Equal(t, sessionID, p.proxySessionID)
 	assert.Equal(t, clientName, p.clientName)
 	assert.Equal(t, clientVersion, p.clientVersion)
 }

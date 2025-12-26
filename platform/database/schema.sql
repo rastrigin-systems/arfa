@@ -140,7 +140,7 @@ CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
-    session_id UUID, -- CLI session tracking
+    proxy_session_id UUID, -- Arfa proxy instance session (for tracking proxy lifecycle)
 
     -- Client detection
     client_name VARCHAR(100),      -- e.g., "claude-code", "cursor", "continue"
@@ -150,7 +150,7 @@ CREATE TABLE activity_logs (
     event_type VARCHAR(100) NOT NULL, -- tool_call, policy_violation, session_start, session_end
     event_category VARCHAR(50) NOT NULL, -- classified, raw, auth, admin
     content TEXT, -- Actual I/O text for input/output/error events
-    payload JSONB NOT NULL DEFAULT '{}', -- Metadata: tool_name, tool_input, blocked, etc.
+    payload JSONB NOT NULL DEFAULT '{}', -- Metadata: tool_name, tool_input, session_id, model, etc.
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -268,12 +268,13 @@ CREATE INDEX idx_tool_policies_lookup ON tool_policies(org_id, team_id, employee
 -- Activity Logs
 CREATE INDEX idx_activity_logs_org_id ON activity_logs(org_id);
 CREATE INDEX idx_activity_logs_employee_id ON activity_logs(employee_id);
-CREATE INDEX idx_activity_logs_session_id ON activity_logs(session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX idx_activity_logs_proxy_session_id ON activity_logs(proxy_session_id) WHERE proxy_session_id IS NOT NULL;
 CREATE INDEX idx_activity_logs_client ON activity_logs(client_name);
 CREATE INDEX idx_activity_logs_client_version ON activity_logs(client_name, client_version);
 CREATE INDEX idx_activity_logs_event_type ON activity_logs(event_type);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at DESC);
-CREATE INDEX idx_activity_logs_session_created ON activity_logs(session_id, created_at) WHERE session_id IS NOT NULL;
+CREATE INDEX idx_activity_logs_proxy_session_created ON activity_logs(proxy_session_id, created_at) WHERE proxy_session_id IS NOT NULL;
+CREATE INDEX idx_activity_logs_payload_gin ON activity_logs USING GIN (payload); -- For fast JSONB queries (session_id, model, etc.)
 
 -- Invitations
 CREATE INDEX idx_invitations_org_id ON invitations(org_id);

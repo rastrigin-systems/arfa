@@ -19,7 +19,6 @@ func NewCLIAPIClient(client *api.Client) *CLIAPIClient {
 // CreateLog sends a single log entry to the API.
 func (c *CLIAPIClient) CreateLog(ctx context.Context, entry APILogEntry) error {
 	apiEntry := api.LogEntry{
-		SessionID:     entry.SessionID,
 		ClientName:    entry.ClientName,
 		ClientVersion: entry.ClientVersion,
 		EventType:     entry.EventType,

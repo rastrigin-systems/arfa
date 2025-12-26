@@ -192,9 +192,20 @@ func main() {
 				r.Patch("/", organizationsHandler.UpdateCurrentOrganization)
 			})
 
-			// Employee tool policies routes
+			// Employee tool policies routes (read-only for current user)
 			r.Route("/employees/me/tool-policies", func(r chi.Router) {
 				r.Get("/", toolPoliciesHandler.GetEmployeeToolPolicies)
+			})
+
+			// Tool policies CRUD routes (admin/manager)
+			r.Route("/policies", func(r chi.Router) {
+				r.Get("/", toolPoliciesHandler.ListToolPolicies)
+				r.Post("/", toolPoliciesHandler.CreateToolPolicy)
+				r.Route("/{policy_id}", func(r chi.Router) {
+					r.Get("/", toolPoliciesHandler.GetToolPolicy)
+					r.Patch("/", toolPoliciesHandler.UpdateToolPolicy)
+					r.Delete("/", toolPoliciesHandler.DeleteToolPolicy)
+				})
 			})
 
 			// Activity logs routes (for web UI dashboard)
@@ -321,12 +332,6 @@ func extractListLogsParams(r *http.Request) api.ListLogsParams {
 	}
 
 	// Parse UUID parameters
-	if sessionID := query.Get("session_id"); sessionID != "" {
-		if uid, err := uuid.Parse(sessionID); err == nil {
-			apiUUID := openapi_types.UUID(uid)
-			params.SessionId = &apiUUID
-		}
-	}
 	if employeeID := query.Get("employee_id"); employeeID != "" {
 		if uid, err := uuid.Parse(employeeID); err == nil {
 			apiUUID := openapi_types.UUID(uid)

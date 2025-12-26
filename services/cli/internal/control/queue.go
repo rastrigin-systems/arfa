@@ -16,7 +16,6 @@ type LogEntry struct {
 	// Ownership fields
 	EmployeeID string `json:"employee_id"`
 	OrgID      string `json:"org_id"`
-	SessionID  string `json:"session_id"`
 
 	// Client detection (from User-Agent)
 	ClientName    string `json:"client_name,omitempty"`

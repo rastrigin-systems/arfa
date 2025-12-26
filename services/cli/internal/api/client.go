@@ -264,6 +264,53 @@ func (c *Client) GetMyToolPolicies(ctx context.Context) (*EmployeeToolPoliciesRe
 	return &resp, nil
 }
 
+// ListPolicies fetches all tool policies for the organization.
+func (c *Client) ListPolicies(ctx context.Context) (*ListToolPoliciesResponse, error) {
+	var resp ListToolPoliciesResponse
+	if err := c.DoRequest(ctx, "GET", "/policies", nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to list policies: %w", err)
+	}
+	return &resp, nil
+}
+
+// CreatePolicy creates a new tool policy.
+func (c *Client) CreatePolicy(ctx context.Context, req CreateToolPolicyRequest) (*ToolPolicy, error) {
+	var resp ToolPolicy
+	if err := c.DoRequest(ctx, "POST", "/policies", req, &resp); err != nil {
+		return nil, fmt.Errorf("failed to create policy: %w", err)
+	}
+	return &resp, nil
+}
+
+// GetPolicy fetches a specific tool policy by ID.
+func (c *Client) GetPolicy(ctx context.Context, id string) (*ToolPolicy, error) {
+	var resp ToolPolicy
+	endpoint := fmt.Sprintf("/policies/%s", id)
+	if err := c.DoRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+		return nil, fmt.Errorf("failed to get policy: %w", err)
+	}
+	return &resp, nil
+}
+
+// UpdatePolicy updates an existing tool policy.
+func (c *Client) UpdatePolicy(ctx context.Context, id string, req UpdateToolPolicyRequest) (*ToolPolicy, error) {
+	var resp ToolPolicy
+	endpoint := fmt.Sprintf("/policies/%s", id)
+	if err := c.DoRequest(ctx, "PATCH", endpoint, req, &resp); err != nil {
+		return nil, fmt.Errorf("failed to update policy: %w", err)
+	}
+	return &resp, nil
+}
+
+// DeletePolicy deletes a tool policy by ID.
+func (c *Client) DeletePolicy(ctx context.Context, id string) error {
+	endpoint := fmt.Sprintf("/policies/%s", id)
+	if err := c.DoRequest(ctx, "DELETE", endpoint, nil, nil); err != nil {
+		return fmt.Errorf("failed to delete policy: %w", err)
+	}
+	return nil
+}
+
 // ============================================================================
 // Logging
 // ============================================================================
@@ -281,11 +328,6 @@ func (c *Client) CreateLog(ctx context.Context, entry LogEntry) error {
 		EventCategory: entry.EventCategory,
 	}
 
-	// Only include session_id if it's a valid UUID
-	// The API validates session_id as UUID format
-	if entry.SessionID != "" && isValidUUID(entry.SessionID) {
-		req.SessionID = &entry.SessionID
-	}
 	// Include client detection fields (strings, no UUID validation needed)
 	if entry.ClientName != "" {
 		req.ClientName = &entry.ClientName
@@ -319,7 +361,6 @@ func (c *Client) CreateLogBatch(ctx context.Context, entries []LogEntry) error {
 
 // GetLogsParams contains parameters for fetching logs.
 type GetLogsParams struct {
-	SessionID     string
 	EventCategory string
 	PerPage       int
 }
@@ -327,9 +368,6 @@ type GetLogsParams struct {
 // GetLogs fetches logs from the API with optional filters.
 func (c *Client) GetLogs(ctx context.Context, params GetLogsParams) (*LogsResponse, error) {
 	query := url.Values{}
-	if params.SessionID != "" {
-		query.Set("session_id", params.SessionID)
-	}
 	if params.EventCategory != "" {
 		query.Set("event_category", params.EventCategory)
 	}

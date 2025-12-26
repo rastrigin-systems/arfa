@@ -9,7 +9,7 @@
 | id | uuid | uuid_generate_v4() | false | [public.webhook_deliveries](public.webhook_deliveries.md) |  |  |
 | org_id | uuid |  | false |  | [public.organizations](public.organizations.md) |  |
 | employee_id | uuid |  | true |  | [public.employees](public.employees.md) |  |
-| session_id | uuid |  | true |  |  |  |
+| proxy_session_id | uuid |  | true |  |  |  |
 | client_name | varchar(100) |  | true |  |  |  |
 | client_version | varchar(50) |  | true |  |  |  |
 | event_type | varchar(100) |  | false |  |  |  |
@@ -33,12 +33,13 @@
 | activity_logs_pkey | CREATE UNIQUE INDEX activity_logs_pkey ON public.activity_logs USING btree (id) |
 | idx_activity_logs_org_id | CREATE INDEX idx_activity_logs_org_id ON public.activity_logs USING btree (org_id) |
 | idx_activity_logs_employee_id | CREATE INDEX idx_activity_logs_employee_id ON public.activity_logs USING btree (employee_id) |
-| idx_activity_logs_session_id | CREATE INDEX idx_activity_logs_session_id ON public.activity_logs USING btree (session_id) WHERE (session_id IS NOT NULL) |
+| idx_activity_logs_proxy_session_id | CREATE INDEX idx_activity_logs_proxy_session_id ON public.activity_logs USING btree (proxy_session_id) WHERE (proxy_session_id IS NOT NULL) |
 | idx_activity_logs_client | CREATE INDEX idx_activity_logs_client ON public.activity_logs USING btree (client_name) |
 | idx_activity_logs_client_version | CREATE INDEX idx_activity_logs_client_version ON public.activity_logs USING btree (client_name, client_version) |
 | idx_activity_logs_event_type | CREATE INDEX idx_activity_logs_event_type ON public.activity_logs USING btree (event_type) |
 | idx_activity_logs_created_at | CREATE INDEX idx_activity_logs_created_at ON public.activity_logs USING btree (created_at DESC) |
-| idx_activity_logs_session_created | CREATE INDEX idx_activity_logs_session_created ON public.activity_logs USING btree (session_id, created_at) WHERE (session_id IS NOT NULL) |
+| idx_activity_logs_proxy_session_created | CREATE INDEX idx_activity_logs_proxy_session_created ON public.activity_logs USING btree (proxy_session_id, created_at) WHERE (proxy_session_id IS NOT NULL) |
+| idx_activity_logs_payload_gin | CREATE INDEX idx_activity_logs_payload_gin ON public.activity_logs USING gin (payload) |
 
 ## Relations
 
@@ -53,7 +54,7 @@ erDiagram
   uuid id
   uuid org_id FK
   uuid employee_id FK
-  uuid session_id
+  uuid proxy_session_id
   varchar_100_ client_name
   varchar_50_ client_version
   varchar_100_ event_type

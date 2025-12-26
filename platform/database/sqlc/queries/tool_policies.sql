@@ -64,6 +64,23 @@ SELECT
 FROM tool_policies
 WHERE id = $1;
 
+-- name: GetToolPolicyByIdAndOrg :one
+-- Get a specific tool policy by ID with org_id check (for authorization)
+SELECT
+    id,
+    org_id,
+    team_id,
+    employee_id,
+    tool_name,
+    conditions,
+    action,
+    reason,
+    created_by,
+    created_at,
+    updated_at
+FROM tool_policies
+WHERE id = $1 AND org_id = $2;
+
 -- name: ListToolPoliciesByOrg :many
 -- List all tool policies for an organization (admin view)
 SELECT
@@ -82,6 +99,34 @@ FROM tool_policies
 WHERE org_id = $1
 ORDER BY created_at DESC;
 
+-- name: ListToolPoliciesFiltered :many
+-- List tool policies with optional filters
+SELECT
+    id,
+    org_id,
+    team_id,
+    employee_id,
+    tool_name,
+    conditions,
+    action,
+    reason,
+    created_by,
+    created_at,
+    updated_at
+FROM tool_policies
+WHERE org_id = sqlc.arg(org_id)
+    AND (sqlc.narg(team_id)::uuid IS NULL OR team_id = sqlc.narg(team_id))
+    AND (sqlc.narg(employee_id)::uuid IS NULL OR employee_id = sqlc.narg(employee_id))
+    AND (sqlc.narg(scope)::text IS NULL OR (
+        CASE
+            WHEN sqlc.narg(scope) = 'organization' THEN team_id IS NULL AND employee_id IS NULL
+            WHEN sqlc.narg(scope) = 'team' THEN team_id IS NOT NULL AND employee_id IS NULL
+            WHEN sqlc.narg(scope) = 'employee' THEN employee_id IS NOT NULL
+            ELSE TRUE
+        END
+    ))
+ORDER BY created_at DESC;
+
 -- name: UpdateToolPolicy :one
 -- Update an existing tool policy
 UPDATE tool_policies
@@ -94,10 +139,27 @@ SET
 WHERE id = $1
 RETURNING *;
 
+-- name: UpdateToolPolicyByOrg :one
+-- Update an existing tool policy with org_id check (for authorization)
+UPDATE tool_policies
+SET
+    tool_name = COALESCE(sqlc.narg(tool_name), tool_name),
+    conditions = COALESCE(sqlc.narg(conditions), conditions),
+    action = COALESCE(sqlc.narg(action), action),
+    reason = COALESCE(sqlc.narg(reason), reason),
+    updated_at = NOW()
+WHERE id = sqlc.arg(id) AND org_id = sqlc.arg(org_id)
+RETURNING *;
+
 -- name: DeleteToolPolicy :exec
 -- Delete a tool policy
 DELETE FROM tool_policies
 WHERE id = $1;
+
+-- name: DeleteToolPolicyByOrg :exec
+-- Delete a tool policy with org_id check (for authorization)
+DELETE FROM tool_policies
+WHERE id = $1 AND org_id = $2;
 
 -- name: CountToolPoliciesByOrg :one
 -- Count tool policies for an organization

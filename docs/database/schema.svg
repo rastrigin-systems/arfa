@@ -434,8 +434,8 @@
 <text text-anchor="start" x="1724.06" y="-1669" font-family="Arial" font-size="14.00">employee_id </text>
 <text text-anchor="start" x="1807.34" y="-1669" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
 <polygon fill="none" stroke="black" points="1717.06,-1626 1717.06,-1656.8 1998.03,-1656.8 1998.03,-1626 1717.06,-1626"/>
-<text text-anchor="start" x="1724.06" y="-1638.2" font-family="Arial" font-size="14.00">session_id </text>
-<text text-anchor="start" x="1794.1" y="-1638.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<text text-anchor="start" x="1724.06" y="-1638.2" font-family="Arial" font-size="14.00">proxy_session_id </text>
+<text text-anchor="start" x="1836.12" y="-1638.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
 <polygon fill="none" stroke="black" points="1717.06,-1595.2 1717.06,-1626 1998.03,-1626 1998.03,-1595.2 1717.06,-1595.2"/>
 <text text-anchor="start" x="1724.06" y="-1607.4" font-family="Arial" font-size="14.00">client_name </text>
 <text text-anchor="start" x="1803.44" y="-1607.4" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>

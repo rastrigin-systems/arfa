@@ -63,7 +63,6 @@ func (h *LoggerHandler) HandleRequest(ctx *HandlerContext, req *http.Request) Re
 	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
-		SessionID:     ctx.SessionID,
 		ClientName:    ctx.ClientName,
 		ClientVersion: ctx.ClientVersion,
 		EventType:     "api_request",
@@ -103,7 +102,6 @@ func (h *LoggerHandler) HandleResponse(ctx *HandlerContext, res *http.Response) 
 	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
-		SessionID:     ctx.SessionID,
 		ClientName:    ctx.ClientName,
 		ClientVersion: ctx.ClientVersion,
 		EventType:     "api_response",

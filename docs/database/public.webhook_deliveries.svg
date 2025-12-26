@@ -140,8 +140,8 @@
 <text text-anchor="start" x="695.37" y="-394.2" font-family="Arial" font-size="14.00">employee_id </text>
 <text text-anchor="start" x="778.64" y="-394.2" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
 <polygon fill="none" stroke="black" points="688.37,-351.2 688.37,-382 969.34,-382 969.34,-351.2 688.37,-351.2"/>
-<text text-anchor="start" x="695.37" y="-363.4" font-family="Arial" font-size="14.00">session_id </text>
-<text text-anchor="start" x="765.41" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
+<text text-anchor="start" x="695.37" y="-363.4" font-family="Arial" font-size="14.00">proxy_session_id </text>
+<text text-anchor="start" x="807.43" y="-363.4" font-family="Arial" font-size="14.00" fill="#666666">[uuid]</text>
 <polygon fill="none" stroke="black" points="688.37,-320.4 688.37,-351.2 969.34,-351.2 969.34,-320.4 688.37,-320.4"/>
 <text text-anchor="start" x="695.37" y="-332.6" font-family="Arial" font-size="14.00">client_name </text>
 <text text-anchor="start" x="774.75" y="-332.6" font-family="Arial" font-size="14.00" fill="#666666">[varchar(100)]</text>

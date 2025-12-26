@@ -4,7 +4,6 @@ import "time"
 
 // StreamLogEntry represents a log entry received from the WebSocket
 type StreamLogEntry struct {
-	SessionID     string                 `json:"session_id,omitempty"`
 	AgentID       string                 `json:"agent_id,omitempty"`
 	ClientName    string                 `json:"client_name,omitempty"`
 	ClientVersion string                 `json:"client_version,omitempty"`

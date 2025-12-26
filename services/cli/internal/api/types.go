@@ -238,7 +238,6 @@ type ListEmployeeSkillsResponse struct {
 
 // LogEntry represents a log entry to send to the API.
 type LogEntry struct {
-	SessionID     string                 `json:"session_id,omitempty"`
 	ClientName    string                 `json:"client_name,omitempty"`
 	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
@@ -249,7 +248,6 @@ type LogEntry struct {
 
 // CreateLogRequest represents a single log creation request.
 type CreateLogRequest struct {
-	SessionID     *string                 `json:"session_id,omitempty"`
 	ClientName    *string                 `json:"client_name,omitempty"`
 	ClientVersion *string                 `json:"client_version,omitempty"`
 	EventType     string                  `json:"event_type"`
@@ -261,7 +259,6 @@ type CreateLogRequest struct {
 // LogEntryResponse represents a log entry from the API response.
 type LogEntryResponse struct {
 	ID            string                 `json:"id"`
-	SessionID     string                 `json:"session_id"`
 	ClientName    string                 `json:"client_name,omitempty"`
 	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
@@ -303,11 +300,16 @@ const (
 // ToolPolicy represents a policy that controls tool access for an employee.
 type ToolPolicy struct {
 	ID         string                 `json:"id,omitempty"`
+	OrgID      string                 `json:"org_id,omitempty"`
+	TeamID     *string                `json:"team_id,omitempty"`
+	EmployeeID *string                `json:"employee_id,omitempty"`
 	ToolName   string                 `json:"tool_name"`
 	Action     ToolPolicyAction       `json:"action"`
 	Reason     *string                `json:"reason,omitempty"`
 	Conditions map[string]interface{} `json:"conditions,omitempty"`
-	Scope      *ToolPolicyScope       `json:"scope,omitempty"`
+	Scope      ToolPolicyScope        `json:"scope"`
+	CreatedAt  string                 `json:"created_at,omitempty"`
+	UpdatedAt  *string                `json:"updated_at,omitempty"`
 }
 
 // EmployeeToolPoliciesResponse represents the response from GET /employees/me/tool-policies.
@@ -315,6 +317,30 @@ type EmployeeToolPoliciesResponse struct {
 	Policies []ToolPolicy `json:"policies"`
 	Version  int          `json:"version"`
 	SyncedAt string       `json:"synced_at"`
+}
+
+// ListToolPoliciesResponse represents the response from GET /policies.
+type ListToolPoliciesResponse struct {
+	Policies []ToolPolicy `json:"policies"`
+	Total    int          `json:"total"`
+}
+
+// CreateToolPolicyRequest represents the request to create a tool policy.
+type CreateToolPolicyRequest struct {
+	ToolName   string                 `json:"tool_name"`
+	Action     ToolPolicyAction       `json:"action"`
+	Reason     *string                `json:"reason,omitempty"`
+	TeamID     *string                `json:"team_id,omitempty"`
+	EmployeeID *string                `json:"employee_id,omitempty"`
+	Conditions map[string]interface{} `json:"conditions,omitempty"`
+}
+
+// UpdateToolPolicyRequest represents the request to update a tool policy.
+type UpdateToolPolicyRequest struct {
+	ToolName   *string                `json:"tool_name,omitempty"`
+	Action     *ToolPolicyAction      `json:"action,omitempty"`
+	Reason     *string                `json:"reason,omitempty"`
+	Conditions map[string]interface{} `json:"conditions,omitempty"`
 }
 
 // ============================================================================

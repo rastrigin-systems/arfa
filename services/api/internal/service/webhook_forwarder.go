@@ -27,17 +27,17 @@ type WebhookForwarder struct {
 
 // WebhookPayload is the payload sent to webhook destinations
 type WebhookPayload struct {
-	ID            uuid.UUID              `json:"id"`
-	EventType     string                 `json:"event_type"`
-	EventCategory string                 `json:"event_category"`
-	Timestamp     time.Time              `json:"timestamp"`
-	OrgID         uuid.UUID              `json:"org_id"`
-	EmployeeID    *uuid.UUID             `json:"employee_id,omitempty"`
-	SessionID     *uuid.UUID             `json:"session_id,omitempty"`
-	ClientName    string                 `json:"client_name,omitempty"`
-	ClientVersion string                 `json:"client_version,omitempty"`
-	Content       string                 `json:"content"`
-	Payload       map[string]interface{} `json:"payload,omitempty"`
+	ID             uuid.UUID              `json:"id"`
+	EventType      string                 `json:"event_type"`
+	EventCategory  string                 `json:"event_category"`
+	Timestamp      time.Time              `json:"timestamp"`
+	OrgID          uuid.UUID              `json:"org_id"`
+	EmployeeID     *uuid.UUID             `json:"employee_id,omitempty"`
+	ProxySessionID *uuid.UUID             `json:"proxy_session_id,omitempty"`
+	ClientName     string                 `json:"client_name,omitempty"`
+	ClientVersion  string                 `json:"client_version,omitempty"`
+	Content        string                 `json:"content"`
+	Payload        map[string]interface{} `json:"payload,omitempty"`
 }
 
 // NewWebhookForwarder creates a new webhook forwarder
@@ -297,9 +297,9 @@ func (wf *WebhookForwarder) buildPayload(logEntry db.ActivityLog) WebhookPayload
 		id := logEntry.EmployeeID.Bytes
 		payload.EmployeeID = (*uuid.UUID)(&id)
 	}
-	if logEntry.SessionID.Valid {
-		id := logEntry.SessionID.Bytes
-		payload.SessionID = (*uuid.UUID)(&id)
+	if logEntry.ProxySessionID.Valid {
+		id := logEntry.ProxySessionID.Bytes
+		payload.ProxySessionID = (*uuid.UUID)(&id)
 	}
 	if logEntry.ClientName != nil {
 		payload.ClientName = *logEntry.ClientName

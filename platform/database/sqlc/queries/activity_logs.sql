@@ -4,7 +4,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -21,7 +21,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -39,7 +39,7 @@ LIMIT $2 OFFSET $3;
 INSERT INTO activity_logs (
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -61,7 +61,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -70,7 +70,7 @@ SELECT
     payload,
     created_at
 FROM activity_logs
-WHERE session_id = $1
+WHERE proxy_session_id = $1
 ORDER BY created_at ASC;
 
 -- name: GetLogsByEmployee :many
@@ -79,7 +79,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -106,7 +106,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,
@@ -117,7 +117,7 @@ SELECT
 FROM activity_logs
 WHERE org_id = sqlc.arg(org_id)
     AND (sqlc.narg(employee_id)::UUID IS NULL OR employee_id = sqlc.narg(employee_id))
-    AND (sqlc.narg(session_id)::UUID IS NULL OR session_id = sqlc.narg(session_id))
+    AND (sqlc.narg(proxy_session_id)::UUID IS NULL OR proxy_session_id = sqlc.narg(proxy_session_id))
     AND (sqlc.narg(client_name)::VARCHAR IS NULL OR client_name = sqlc.narg(client_name))
     AND (sqlc.narg(event_type)::VARCHAR IS NULL OR event_type = sqlc.narg(event_type))
     AND (sqlc.narg(event_category)::VARCHAR IS NULL OR event_category = sqlc.narg(event_category))
@@ -131,7 +131,7 @@ LIMIT sqlc.arg(query_limit) OFFSET sqlc.arg(query_offset);
 SELECT COUNT(*) FROM activity_logs
 WHERE org_id = sqlc.arg(org_id)
     AND (sqlc.narg(employee_id)::UUID IS NULL OR employee_id = sqlc.narg(employee_id))
-    AND (sqlc.narg(session_id)::UUID IS NULL OR session_id = sqlc.narg(session_id))
+    AND (sqlc.narg(proxy_session_id)::UUID IS NULL OR proxy_session_id = sqlc.narg(proxy_session_id))
     AND (sqlc.narg(client_name)::VARCHAR IS NULL OR client_name = sqlc.narg(client_name))
     AND (sqlc.narg(event_type)::VARCHAR IS NULL OR event_type = sqlc.narg(event_type))
     AND (sqlc.narg(event_category)::VARCHAR IS NULL OR event_category = sqlc.narg(event_category))
@@ -144,7 +144,7 @@ SELECT
     id,
     org_id,
     employee_id,
-    session_id,
+    proxy_session_id,
     client_name,
     client_version,
     event_type,

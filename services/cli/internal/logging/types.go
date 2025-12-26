@@ -31,9 +31,6 @@ type Config struct {
 
 // LogEntry represents a single log entry to send to the API
 type LogEntry struct {
-	// SessionID identifies the CLI session
-	SessionID string `json:"session_id,omitempty"`
-
 	// ClientName identifies the AI client (detected from User-Agent)
 	ClientName string `json:"client_name,omitempty"`
 
