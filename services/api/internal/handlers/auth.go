@@ -86,7 +86,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Step 5: Generate JWT token (TestLogin_Success requires this)
-	token, err := auth.GenerateJWT(employee.ID, employee.OrgID, 24*time.Hour)
+	token, err := auth.GenerateJWT(employee.ID, employee.OrgID, auth.TokenDuration)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
@@ -101,7 +101,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		TokenHash:  tokenHash,
 		IpAddress:  &ipAddress,
 		UserAgent:  &userAgent,
-		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(auth.TokenDuration), Valid: true},
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to create session")
@@ -415,7 +415,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Step 8: Generate JWT token (TestRegister_Success requires this)
-	token, err := auth.GenerateJWT(employee.ID, employee.OrgID, 24*time.Hour)
+	token, err := auth.GenerateJWT(employee.ID, employee.OrgID, auth.TokenDuration)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
@@ -430,7 +430,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		TokenHash:  tokenHash,
 		IpAddress:  &ipAddress,
 		UserAgent:  &userAgent,
-		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(auth.TokenDuration), Valid: true},
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to create session")

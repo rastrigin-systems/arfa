@@ -20,6 +20,11 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+const (
+	// TokenDuration is the validity period for JWT tokens (1 year for enterprise use)
+	TokenDuration = 365 * 24 * time.Hour
+)
+
 var (
 	// JWT secret key - in production, this should come from environment
 	jwtSecret = []byte(getEnvOrDefault("JWT_SECRET", "dev-secret-key-change-in-production"))

@@ -368,7 +368,7 @@ func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Step 8: Generate JWT token (TestAcceptInvitation_Success requires this)
-	jwtToken, err := auth.GenerateJWT(employee.ID, employee.OrgID, 24*time.Hour)
+	jwtToken, err := auth.GenerateJWT(employee.ID, employee.OrgID, auth.TokenDuration)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
@@ -383,7 +383,7 @@ func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Requ
 		TokenHash:  tokenHash,
 		IpAddress:  &ipAddress,
 		UserAgent:  &userAgent,
-		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+		ExpiresAt:  pgtype.Timestamp{Time: time.Now().Add(auth.TokenDuration), Valid: true},
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to create session")
