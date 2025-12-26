@@ -104,7 +104,6 @@ Examples:
 				_, _ = fmt.Fprintf(out, "  Reason: %s\n", *policy.Reason)
 			}
 			_, _ = fmt.Fprintln(out)
-			_, _ = fmt.Fprintln(out, "Run 'arfa policies sync' to update local cache.")
 
 			return nil
 		},

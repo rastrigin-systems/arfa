@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -19,12 +17,10 @@ import (
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 )
 
-// PolicyHandler blocks tool calls based on policies loaded from cache or PolicyClient.
-// In real-time mode, policies are received via WebSocket from PolicyClient.
-// In fallback mode, policies are synced via `arfa sync` and stored in ~/.arfa/policies.json.
+// PolicyHandler blocks tool calls based on policies received via WebSocket from PolicyClient.
+// Policies are streamed in real-time from the API server - no disk caching.
 type PolicyHandler struct {
 	// denyList contains tool names that should be blocked unconditionally.
-	// Built from policies loaded from ~/.arfa/policies.json or PolicyClient
 	denyList map[string]string // tool name -> reason
 
 	// globPatterns contains tool name patterns that end with %
@@ -39,7 +35,6 @@ type PolicyHandler struct {
 	queue LoggerQueue
 
 	// policyClient provides real-time policy updates via WebSocket
-	// If set, policies are sourced from here instead of file cache
 	policyClient *PolicyClient
 
 	// mu protects concurrent access to policy lists during updates
@@ -53,23 +48,14 @@ type conditionalPolicy struct {
 	Conditions map[string]interface{}
 }
 
-// policyCacheFile represents the cached policies structure.
-type policyCacheFile struct {
-	Policies []api.ToolPolicy `json:"policies"`
-	Version  int              `json:"version"`
-	SyncedAt string           `json:"synced_at"`
-}
-
-// NewPolicyHandler creates a new PolicyHandler that loads policies from cache.
-// If cache is unavailable or empty, no tools are blocked.
+// NewPolicyHandler creates a new PolicyHandler.
+// Policies are loaded via WebSocket when SetPolicyClient is called.
 func NewPolicyHandler() *PolicyHandler {
-	h := &PolicyHandler{
+	return &PolicyHandler{
 		denyList:            make(map[string]string),
 		globPatterns:        make(map[string]string),
 		conditionalPolicies: make(map[string][]conditionalPolicy),
 	}
-	h.loadFromCache()
-	return h
 }
 
 // NewPolicyHandlerWithDenyList creates a PolicyHandler with a custom deny list.
@@ -92,27 +78,6 @@ func NewPolicyHandlerWithPolicies(policies []api.ToolPolicy) *PolicyHandler {
 	}
 	h.buildDenyList(policies)
 	return h
-}
-
-// loadFromCache loads policies from ~/.arfa/policies.json
-func (h *PolicyHandler) loadFromCache() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return // Silently fail - no policies blocked
-	}
-
-	policiesPath := filepath.Join(homeDir, ".arfa", "policies.json")
-	data, err := os.ReadFile(policiesPath)
-	if err != nil {
-		return // File doesn't exist or can't be read - no policies blocked
-	}
-
-	var cache policyCacheFile
-	if err := json.Unmarshal(data, &cache); err != nil {
-		return // Invalid JSON - no policies blocked
-	}
-
-	h.buildDenyList(cache.Policies)
 }
 
 // buildDenyList converts policies to the internal deny list format.
@@ -313,16 +278,18 @@ func (h *PolicyHandler) SetQueue(queue LoggerQueue) {
 
 // SetPolicyClient sets the PolicyClient for real-time policy updates.
 // When set, policies are sourced from the client instead of file cache.
+// Note: We don't clear disk-cached policies until WebSocket delivers policies.
+// This ensures there's no gap in policy enforcement during connection.
 func (h *PolicyHandler) SetPolicyClient(client *PolicyClient) {
 	h.policyClient = client
 
-	// Subscribe to policy changes
+	// Subscribe to policy changes - this will be called when init message arrives
 	client.SetOnPoliciesChanged(func() {
 		h.rebuildFromClient()
 	})
 
-	// Initial load from client
-	h.rebuildFromClient()
+	// Don't call rebuildFromClient() here - wait for WebSocket to deliver policies.
+	// No policies are enforced until handleInit triggers onPoliciesChanged.
 }
 
 // rebuildFromClient rebuilds the deny lists from PolicyClient's policies.

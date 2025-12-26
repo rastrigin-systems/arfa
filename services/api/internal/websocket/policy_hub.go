@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"log"
 	"sync"
 	"time"
 
@@ -228,7 +229,7 @@ func (h *PolicyHub) handlePolicyChange(notification PolicyChangeNotification) {
 			affectedConns = h.byEmployee[*notification.EmployeeID]
 		}
 
-	case "create", "update", "delete":
+	case "insert", "update", "delete":
 		// Determine affected connections based on policy scope
 		if notification.EmployeeID != nil {
 			// Employee-scoped policy: only that employee
@@ -249,7 +250,7 @@ func (h *PolicyHub) handlePolicyChange(notification PolicyChangeNotification) {
 	// Build message based on action
 	var msg PolicyMessage
 	switch notification.Action {
-	case "create", "update":
+	case "insert", "update":
 		msg = PolicyMessage{
 			Type:   PolicyMessageTypeUpsert,
 			Policy: notification.Policy,
@@ -269,6 +270,7 @@ func (h *PolicyHub) handlePolicyChange(notification PolicyChangeNotification) {
 	// Serialize message
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
+		log.Printf("Failed to marshal message: %v", err)
 		return
 	}
 
@@ -277,7 +279,7 @@ func (h *PolicyHub) handlePolicyChange(notification PolicyChangeNotification) {
 		select {
 		case conn.send <- msgBytes:
 		default:
-			// Send channel full, skip
+			// Channel full, connection will get updates on next sync
 		}
 	}
 }

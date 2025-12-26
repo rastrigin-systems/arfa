@@ -1,23 +1,16 @@
 package policies
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"text/tabwriter"
+	"time"
 
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/container"
 	"github.com/spf13/cobra"
 )
-
-// policyCacheFile represents the cached policies structure.
-type policyCacheFile struct {
-	Policies []api.ToolPolicy `json:"policies"`
-	Version  int              `json:"version"`
-	SyncedAt string           `json:"synced_at"`
-}
 
 // NewPoliciesCommand creates the policies command group.
 func NewPoliciesCommand(c *container.Container) *cobra.Command {
@@ -30,18 +23,16 @@ Tool policies allow administrators to block or audit specific tools
 used by AI agents in your organization.
 
 Commands:
-  list    - List cached policies
+  list    - List policies from the platform
   create  - Create a new policy (admin/manager)
   update  - Update an existing policy (admin/manager)
-  delete  - Delete a policy (admin/manager)
-  sync    - Sync policies from platform to local cache`,
+  delete  - Delete a policy (admin/manager)`,
 	}
 
 	cmd.AddCommand(NewListCommand(c))
 	cmd.AddCommand(NewCreateCommand(c))
 	cmd.AddCommand(NewUpdateCommand(c))
 	cmd.AddCommand(NewDeleteCommand(c))
-	cmd.AddCommand(NewSyncCommand(c))
 
 	return cmd
 }
@@ -57,8 +48,7 @@ func NewListCommand(c *container.Container) *cobra.Command {
 		Long: `Display tool policies that are currently in effect for your account.
 
 These policies control which LLM tools can be used and are set by your
-organization administrator. Policies are synced from the platform when
-you run 'arfa sync'.
+organization administrator.
 
 Examples:
   arfa policies list           # Show deny policies (blocked tools)
@@ -67,21 +57,29 @@ Examples:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 
-			cache, err := loadPoliciesCache()
+			// Get API client
+			client, err := c.APIClient()
 			if err != nil {
-				_, _ = fmt.Fprintln(out, "No tool policies found.")
-				_, _ = fmt.Fprintln(out, "\nRun 'arfa sync' to fetch policies from the platform.")
-				return nil
+				return fmt.Errorf("not logged in. Run 'arfa login' first: %w", err)
 			}
 
-			if len(cache.Policies) == 0 {
+			// Fetch policies from API
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			resp, err := client.GetMyToolPolicies(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to fetch policies: %w", err)
+			}
+
+			if len(resp.Policies) == 0 {
 				_, _ = fmt.Fprintln(out, "No tool policies are configured for your account.")
 				_, _ = fmt.Fprintln(out, "\nThis means all LLM tools are allowed.")
 				return nil
 			}
 
 			// Filter policies if not showing all
-			policies := cache.Policies
+			policies := resp.Policies
 			if !showAll {
 				policies = filterDenyPolicies(policies)
 			}
@@ -96,12 +94,8 @@ Examples:
 			if showJSON {
 				output := struct {
 					Policies []api.ToolPolicy `json:"policies"`
-					Version  int              `json:"version"`
-					SyncedAt string           `json:"synced_at"`
 				}{
 					Policies: policies,
-					Version:  cache.Version,
-					SyncedAt: cache.SyncedAt,
 				}
 				data, _ := json.MarshalIndent(output, "", "  ")
 				_, _ = fmt.Fprintln(out, string(data))
@@ -116,10 +110,19 @@ Examples:
 			_, _ = fmt.Fprintf(out, "\n%s (%d):\n\n", title, len(policies))
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			_, _ = fmt.Fprintln(w, "TOOL\tACTION\tSCOPE\tREASON")
-			_, _ = fmt.Fprintln(w, "────\t──────\t─────\t──────")
+			_, _ = fmt.Fprintln(w, "ID\tTOOL\tACTION\tSCOPE\tCONDITIONS\tREASON")
+			_, _ = fmt.Fprintln(w, "────────\t────\t──────\t─────\t──────────\t──────")
 
 			for _, policy := range policies {
+				// Short ID (first 8 chars)
+				id := policy.ID
+				if len(id) > 8 {
+					id = id[:8]
+				}
+				if id == "" {
+					id = "-"
+				}
+
 				var action string
 				if policy.Action == api.ToolPolicyActionDeny {
 					action = "DENY"
@@ -132,22 +135,17 @@ Examples:
 					scope = string(policy.Scope)
 				}
 
+				conditions := formatConditions(policy.Conditions)
+
 				reason := "-"
 				if policy.Reason != nil && *policy.Reason != "" {
 					reason = *policy.Reason
-					if len(reason) > 40 {
-						reason = reason[:37] + "..."
-					}
 				}
 
-				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", policy.ToolName, action, scope, reason)
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", id, policy.ToolName, action, scope, conditions, reason)
 			}
 
 			_ = w.Flush()
-
-			_, _ = fmt.Fprintf(out, "\nSynced at: %s (version %d)\n", cache.SyncedAt, cache.Version)
-			_, _ = fmt.Fprintln(out)
-			_, _ = fmt.Fprintln(out, "Run 'arfa sync' to refresh policies from the platform.")
 			_, _ = fmt.Fprintln(out)
 
 			return nil
@@ -160,27 +158,6 @@ Examples:
 	return cmd
 }
 
-// loadPoliciesCache loads the policies from ~/.arfa/policies.json
-func loadPoliciesCache() (*policyCacheFile, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	policiesPath := filepath.Join(homeDir, ".arfa", "policies.json")
-	data, err := os.ReadFile(policiesPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read policies file: %w", err)
-	}
-
-	var cache policyCacheFile
-	if err := json.Unmarshal(data, &cache); err != nil {
-		return nil, fmt.Errorf("failed to parse policies file: %w", err)
-	}
-
-	return &cache, nil
-}
-
 // filterDenyPolicies returns only policies with action="deny"
 func filterDenyPolicies(policies []api.ToolPolicy) []api.ToolPolicy {
 	var result []api.ToolPolicy
@@ -190,4 +167,52 @@ func filterDenyPolicies(policies []api.ToolPolicy) []api.ToolPolicy {
 		}
 	}
 	return result
+}
+
+// formatConditions returns a human-readable summary of policy conditions
+func formatConditions(conditions map[string]interface{}) string {
+	if len(conditions) == 0 {
+		return "-"
+	}
+
+	var parts []string
+	for param, condition := range conditions {
+		var condStr string
+		switch v := condition.(type) {
+		case string:
+			// Regex pattern: param=~pattern
+			condStr = fmt.Sprintf("%s=~%s", param, truncate(v, 15))
+		case map[string]interface{}:
+			// Operator-based: {contains: x} or {equals: x}
+			for op, val := range v {
+				valStr := fmt.Sprintf("%v", val)
+				condStr = fmt.Sprintf("%s %s %s", param, op, truncate(valStr, 10))
+				break // Only show first operator
+			}
+		default:
+			condStr = fmt.Sprintf("%s=?", param)
+		}
+		parts = append(parts, condStr)
+	}
+
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += ", "
+		}
+		result += p
+	}
+
+	if len(result) > 25 {
+		return result[:22] + "..."
+	}
+	return result
+}
+
+// truncate shortens a string to maxLen characters
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
 }
