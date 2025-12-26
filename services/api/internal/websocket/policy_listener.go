@@ -158,7 +158,7 @@ func (l *PolicyListener) processNotification(payload string) {
 		}
 	}
 
-	// Parse optional policy object (for create/update)
+	// Parse optional policy object (for insert/update)
 	if len(raw.Policy) > 0 && string(raw.Policy) != "null" {
 		var policyData struct {
 			ID         string          `json:"id"`
@@ -169,11 +169,13 @@ func (l *PolicyListener) processNotification(payload string) {
 			Action     string          `json:"action"`
 			Reason     string          `json:"reason"`
 			Conditions json.RawMessage `json:"conditions"`
-			CreatedAt  *time.Time      `json:"created_at"`
-			UpdatedAt  *time.Time      `json:"updated_at"`
+			CreatedAt  string          `json:"created_at"`
+			UpdatedAt  string          `json:"updated_at"`
 		}
 
-		if err := json.Unmarshal(raw.Policy, &policyData); err == nil {
+		if err := json.Unmarshal(raw.Policy, &policyData); err != nil {
+			log.Printf("Failed to parse policy data: %v", err)
+		} else {
 			pd := PolicyData{
 				ToolName: policyData.ToolName,
 				Action:   policyData.Action,
@@ -215,18 +217,24 @@ func (l *PolicyListener) processNotification(payload string) {
 				pd.Scope = "organization"
 			}
 
-			if policyData.CreatedAt != nil {
-				pd.CreatedAt = *policyData.CreatedAt
+			// Parse timestamps (PostgreSQL format: 2025-12-26T18:16:05.564617)
+			if policyData.CreatedAt != "" {
+				if t, err := time.Parse("2006-01-02T15:04:05.999999", policyData.CreatedAt); err == nil {
+					pd.CreatedAt = t
+				}
 			}
-			pd.UpdatedAt = policyData.UpdatedAt
+			if policyData.UpdatedAt != "" {
+				if t, err := time.Parse("2006-01-02T15:04:05.999999", policyData.UpdatedAt); err == nil {
+					pd.UpdatedAt = &t
+				}
+			}
 
 			notification.Policy = &pd
 		}
 	}
 
-	log.Printf("Policy notification: action=%s org=%s team=%v employee=%v",
-		notification.Action, notification.OrgID,
-		notification.TeamID, notification.EmployeeID)
+	log.Printf("Policy notification: action=%s org=%s",
+		notification.Action, notification.OrgID)
 
 	// Forward to hub
 	l.hub.NotifyPolicyChange(notification)

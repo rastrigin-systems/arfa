@@ -107,8 +107,12 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Policy WebSocket connected: employee=%s org=%s", employeeID, orgID)
 
-	// Fetch and send initial policies
-	go h.sendInitialPolicies(r.Context(), policyConn)
+	// Fetch and send initial policies with timeout (r.Context() is cancelled after handler returns)
+	fetchCtx, fetchCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	go func() {
+		defer fetchCancel()
+		h.sendInitialPolicies(fetchCtx, policyConn)
+	}()
 
 	// Start read/write pumps
 	go h.writePump(policyConn)
