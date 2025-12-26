@@ -37,7 +37,6 @@ const (
 type ClassifiedLogEntry struct {
 	// Identity
 	ID            string    `json:"id"`
-	SessionID     string    `json:"session_id"`
 	ClientName    string    `json:"client_name,omitempty"`
 	ClientVersion string    `json:"client_version,omitempty"`
 	Timestamp     time.Time `json:"timestamp"`
@@ -70,8 +69,7 @@ type ClassifiedLogEntry struct {
 
 // SessionSummary provides aggregate statistics for a session
 type SessionSummary struct {
-	SessionID    string         `json:"session_id"`
-	StartTime    time.Time      `json:"start_time"`
+	StartTime time.Time `json:"start_time"`
 	EndTime      *time.Time     `json:"end_time,omitempty"`
 	Duration     time.Duration  `json:"duration,omitempty"`
 	Provider     LogProvider    `json:"provider"`

@@ -125,11 +125,9 @@ func TestSessionTracking(t *testing.T) {
 	for _, log := range mockAPI.logs {
 		if log.EventType == "session_start" {
 			foundStart = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 		}
 		if log.EventType == "session_end" {
 			foundEnd = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 		}
 	}
 
@@ -155,7 +153,7 @@ func TestLogEvent(t *testing.T) {
 	require.NotNil(t, logger)
 	defer func() { _ = logger.Close() }()
 
-	sessionID := logger.StartSession()
+	_ = logger.StartSession()
 
 	// Log a custom event
 	logger.LogEvent("api_request", "proxy", "POST https://api.anthropic.com", map[string]interface{}{
@@ -175,7 +173,6 @@ func TestLogEvent(t *testing.T) {
 	for _, log := range mockAPI.logs {
 		if log.EventType == "api_request" && log.EventCategory == "proxy" {
 			foundEvent = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 			assert.Equal(t, "POST https://api.anthropic.com", log.Content)
 		}
 	}
@@ -201,7 +198,7 @@ func TestBatchSending(t *testing.T) {
 	require.NotNil(t, logger)
 	defer func() { _ = logger.Close() }()
 
-	sessionID := logger.StartSession()
+	_ = logger.StartSession()
 
 	// Log exactly batch size entries
 	for i := 0; i < 5; i++ {
@@ -218,13 +215,8 @@ func TestBatchSending(t *testing.T) {
 	// Should have session_start + 5 events = 6 total
 	assert.GreaterOrEqual(t, logCount, 5, "should have sent batch")
 
-	// Verify session ID in all logs
+	// Verify logs were sent
 	mockAPI.mu.Lock()
-	for _, log := range mockAPI.logs {
-		if log.EventType == "test_event" {
-			assert.Equal(t, sessionID.String(), log.SessionID)
-		}
-	}
 	mockAPI.mu.Unlock()
 }
 
@@ -573,7 +565,7 @@ func TestLogClassified(t *testing.T) {
 	require.NotNil(t, logger)
 	defer func() { _ = logger.Close() }()
 
-	sessionID := logger.StartSession()
+	_ = logger.StartSession()
 	logger.SetClient("claude-code", "1.0.25")
 
 	// Log a classified entry
@@ -600,7 +592,6 @@ func TestLogClassified(t *testing.T) {
 	for _, log := range mockAPI.logs {
 		if log.EventType == string(types.LogTypeUserPrompt) && log.EventCategory == "classified" {
 			foundClassified = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 			assert.Equal(t, "claude-code", log.ClientName)
 			assert.Equal(t, "Hello, Claude!", log.Content)
 			// Check payload
@@ -774,8 +765,8 @@ func TestLogClassifiedWithError(t *testing.T) {
 	assert.True(t, foundError, "should capture error log entry")
 }
 
-// TestLogEventWithSessionOverride tests session ID override in metadata
-func TestLogEventWithSessionOverride(t *testing.T) {
+// TestLogEventWithClientOverride tests client info override in metadata
+func TestLogEventWithClientOverride(t *testing.T) {
 	config := &Config{
 		Enabled:       true,
 		BatchSize:     100,
@@ -792,12 +783,11 @@ func TestLogEventWithSessionOverride(t *testing.T) {
 	require.NotNil(t, logger)
 	defer func() { _ = logger.Close() }()
 
-	logger.StartSession() // This creates a session ID
+	logger.StartSession()
 	logger.SetClient("original-client", "1.0.0")
 
-	// Log event with overridden session and client info
+	// Log event with overridden client info
 	logger.LogEvent("test_event", "test", "content", map[string]interface{}{
-		"session_id":     "override-session-123",
 		"client_name":    "override-client",
 		"client_version": "2.0.0",
 	})
@@ -812,12 +802,11 @@ func TestLogEventWithSessionOverride(t *testing.T) {
 	for _, log := range mockAPI.logs {
 		if log.EventType == "test_event" {
 			found = true
-			assert.Equal(t, "override-session-123", log.SessionID)
 			assert.Equal(t, "override-client", log.ClientName)
 			assert.Equal(t, "2.0.0", log.ClientVersion)
 			break
 		}
 	}
 
-	assert.True(t, found, "should find event with overridden session")
+	assert.True(t, found, "should find event with overridden client")
 }

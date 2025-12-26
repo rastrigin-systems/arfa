@@ -105,7 +105,6 @@ data: {"type":"content_block_stop","index":0}
 	assert.Equal(t, "classified", entry.EventCategory)
 	assert.Equal(t, "emp-1", entry.EmployeeID)
 	assert.Equal(t, "org-1", entry.OrgID)
-	assert.Equal(t, "sess-1", entry.SessionID)
 	assert.Equal(t, "claude-code", entry.ClientName)
 	assert.Equal(t, "1.0.25", entry.ClientVersion)
 

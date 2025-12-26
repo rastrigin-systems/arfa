@@ -24,10 +24,24 @@ func NewPoliciesCommand(c *container.Container) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "policies",
 		Short: "Manage tool policies",
-		Long:  "View and manage tool policies that control LLM tool access.",
+		Long: `View and manage tool policies that control LLM tool access.
+
+Tool policies allow administrators to block or audit specific tools
+used by AI agents in your organization.
+
+Commands:
+  list    - List cached policies
+  create  - Create a new policy (admin/manager)
+  update  - Update an existing policy (admin/manager)
+  delete  - Delete a policy (admin/manager)
+  sync    - Sync policies from platform to local cache`,
 	}
 
 	cmd.AddCommand(NewListCommand(c))
+	cmd.AddCommand(NewCreateCommand(c))
+	cmd.AddCommand(NewUpdateCommand(c))
+	cmd.AddCommand(NewDeleteCommand(c))
+	cmd.AddCommand(NewSyncCommand(c))
 
 	return cmd
 }
@@ -114,8 +128,8 @@ Examples:
 				}
 
 				scope := "-"
-				if policy.Scope != nil {
-					scope = string(*policy.Scope)
+				if policy.Scope != "" {
+					scope = string(policy.Scope)
 				}
 
 				reason := "-"

@@ -42,20 +42,11 @@ ON CONFLICT (id) DO NOTHING;
 -- Password: admin123 (bcrypt hash with cost 10)
 -- Note: role_id uses subquery to look up roles created by schema.sql
 INSERT INTO employees (id, org_id, team_id, role_id, email, full_name, password_hash, status, preferences) VALUES
-    -- Acme Corporation employees
+    -- Acme Corporation admin
     ('6a41beee-cf2d-4c59-affd-80e3f58466d6', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
      'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', (SELECT id FROM roles WHERE name = 'admin'),
-     'admin@acme.com', 'Admin User',
-     '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}'),
-    ('7b52cfff-d03e-5d6a-bffe-91f4069577e7', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', (SELECT id FROM roles WHERE name = 'member'),
-     'dev@acme.com', 'Developer User',
-     '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}'),
-    -- TechStart employees
-    ('8c63d000-e04f-6e7b-c00f-a2050706880f', 'f6e21110-1a99-55c7-c424-78ffcccc2fa9',
-     'cccc3333-cccc-cccc-cccc-cccccccccccc', (SELECT id FROM roles WHERE name = 'admin'),
-     'admin@techstart.com', 'TechStart Admin',
-     '$2a$10$tvQL2A2wWAXissld8AyFUegJH5OYm5vRmhl1t/CPq0rbgmVoQKKV.', 'active', '{}')
+     's.rastrigin@gmail.com', 'Sergei Rastrigin',
+     '$2a$10$comqZ.l6LILELtqqjTe0Nu3sgSY1u/yTMTuyTxKVJ1B/JEDzj6lx6', 'active', '{}')
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
@@ -95,11 +86,7 @@ INSERT INTO employee_policies (id, employee_id, policy_id, overrides) VALUES
     ('e1111111-1111-1111-1111-111111111111', '6a41beee-cf2d-4c59-affd-80e3f58466d6',
      'c1111111-1111-1111-1111-111111111111', '{}'),
     ('e2222222-2222-2222-2222-222222222222', '6a41beee-cf2d-4c59-affd-80e3f58466d6',
-     'c2222222-2222-2222-2222-222222222222', '{}'),
-    ('e3333333-3333-3333-3333-333333333333', '7b52cfff-d03e-5d6a-bffe-91f4069577e7',
-     'c2222222-2222-2222-2222-222222222222', '{}'),
-    ('e4444444-4444-4444-4444-444444444444', '8c63d000-e04f-6e7b-c00f-a2050706880f',
-     'c1111111-1111-1111-1111-111111111111', '{}')
+     'c2222222-2222-2222-2222-222222222222', '{}')
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
@@ -119,7 +106,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Sample Activity Logs (for testing)
 -- =============================================================================
 
-INSERT INTO activity_logs (id, org_id, employee_id, session_id, client_name, client_version, event_type, event_category, content, payload, created_at) VALUES
+INSERT INTO activity_logs (id, org_id, employee_id, proxy_session_id, client_name, client_version, event_type, event_category, content, payload, created_at) VALUES
     ('a0a11111-1111-1111-1111-111111111111', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
      '6a41beee-cf2d-4c59-affd-80e3f58466d6', 'b0b11111-1111-1111-1111-111111111111',
      'claude-code', '1.0.25', 'tool_call', 'development',
@@ -127,9 +114,5 @@ INSERT INTO activity_logs (id, org_id, employee_id, session_id, client_name, cli
     ('a0a22222-2222-2222-2222-222222222222', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
      '6a41beee-cf2d-4c59-affd-80e3f58466d6', 'b0b11111-1111-1111-1111-111111111111',
      'claude-code', '1.0.25', 'tool_blocked', 'security',
-     'Blocked dangerous command: rm -rf /', '{"tool": "Bash", "command": "rm -rf /", "reason": "matches blocked pattern"}', NOW() - INTERVAL '30 minutes'),
-    ('a0a33333-3333-3333-3333-333333333333', 'e5d10009-0988-44b6-b313-67ffbbbb1ef8',
-     '7b52cfff-d03e-5d6a-bffe-91f4069577e7', 'b0b22222-2222-2222-2222-222222222222',
-     'cursor', '0.43.0', 'tool_call', 'development',
-     'Edit file src/index.ts', '{"tool": "Edit", "file": "src/index.ts", "status": "allowed"}', NOW() - INTERVAL '15 minutes')
+     'Blocked dangerous command: rm -rf /', '{"tool": "Bash", "command": "rm -rf /", "reason": "matches blocked pattern"}', NOW() - INTERVAL '30 minutes')
 ON CONFLICT (id) DO NOTHING;

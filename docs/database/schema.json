@@ -1226,7 +1226,7 @@
           "nullable": true
         },
         {
-          "name": "session_id",
+          "name": "proxy_session_id",
           "type": "uuid",
           "nullable": true
         },
@@ -1294,11 +1294,11 @@
           ]
         },
         {
-          "name": "idx_activity_logs_session_id",
-          "def": "CREATE INDEX idx_activity_logs_session_id ON public.activity_logs USING btree (session_id) WHERE (session_id IS NOT NULL)",
+          "name": "idx_activity_logs_proxy_session_id",
+          "def": "CREATE INDEX idx_activity_logs_proxy_session_id ON public.activity_logs USING btree (proxy_session_id) WHERE (proxy_session_id IS NOT NULL)",
           "table": "public.activity_logs",
           "columns": [
-            "session_id"
+            "proxy_session_id"
           ]
         },
         {
@@ -1335,12 +1335,20 @@
           ]
         },
         {
-          "name": "idx_activity_logs_session_created",
-          "def": "CREATE INDEX idx_activity_logs_session_created ON public.activity_logs USING btree (session_id, created_at) WHERE (session_id IS NOT NULL)",
+          "name": "idx_activity_logs_proxy_session_created",
+          "def": "CREATE INDEX idx_activity_logs_proxy_session_created ON public.activity_logs USING btree (proxy_session_id, created_at) WHERE (proxy_session_id IS NOT NULL)",
           "table": "public.activity_logs",
           "columns": [
-            "session_id",
+            "proxy_session_id",
             "created_at"
+          ]
+        },
+        {
+          "name": "idx_activity_logs_payload_gin",
+          "def": "CREATE INDEX idx_activity_logs_payload_gin ON public.activity_logs USING gin (payload)",
+          "table": "public.activity_logs",
+          "columns": [
+            "payload"
           ]
         }
       ],

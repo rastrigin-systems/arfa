@@ -101,11 +101,9 @@ func TestProxyWithLoggingIntegration(t *testing.T) {
 	for _, log := range logs {
 		if log.EventType == "session_start" {
 			foundStart = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 		}
 		if log.EventType == "session_end" {
 			foundEnd = true
-			assert.Equal(t, sessionID.String(), log.SessionID)
 		}
 	}
 
@@ -157,12 +155,11 @@ func TestProxyLoggingSessionPropagation(t *testing.T) {
 	logger.Flush()
 	time.Sleep(200 * time.Millisecond)
 
-	// Verify all events have correct session ID and agent ID
+	// Verify all events have correct client name
 	mockAPI.mu.Lock()
 	defer mockAPI.mu.Unlock()
 
 	for _, log := range mockAPI.logs {
-		assert.Equal(t, sessionID.String(), log.SessionID, "Log %s should have correct session ID", log.EventType)
 		assert.Equal(t, clientName, log.ClientName, "Log %s should have correct client name", log.EventType)
 	}
 }

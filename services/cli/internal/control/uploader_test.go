@@ -55,7 +55,6 @@ func TestAPIUploader_Upload_SingleEntry(t *testing.T) {
 		{
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
-			SessionID:     "sess-789",
 			ClientName:    "claude-code",
 			ClientVersion: "1.0.25",
 			EventType:     "api_request",
@@ -70,7 +69,6 @@ func TestAPIUploader_Upload_SingleEntry(t *testing.T) {
 	assert.Len(t, client.Entries(), 1)
 
 	uploaded := client.Entries()[0]
-	assert.Equal(t, "sess-789", uploaded.SessionID)
 	assert.Equal(t, "claude-code", uploaded.ClientName)
 	assert.Equal(t, "1.0.25", uploaded.ClientVersion)
 	assert.Equal(t, "api_request", uploaded.EventType)
@@ -85,9 +83,9 @@ func TestAPIUploader_Upload_MultipleEntries(t *testing.T) {
 	uploader := NewAPIUploader(client, "emp-123", "org-456")
 
 	entries := []LogEntry{
-		{SessionID: "sess-1", EventType: "api_request"},
-		{SessionID: "sess-2", EventType: "api_response"},
-		{SessionID: "sess-3", EventType: "api_request"},
+		{EventType: "api_request"},
+		{EventType: "api_response"},
+		{EventType: "api_request"},
 	}
 
 	err := uploader.Upload(entries)
@@ -101,7 +99,7 @@ func TestAPIUploader_Upload_Error(t *testing.T) {
 	uploader := NewAPIUploader(client, "emp-123", "org-456")
 
 	entries := []LogEntry{
-		{SessionID: "sess-1", EventType: "api_request"},
+		{EventType: "api_request"},
 	}
 
 	err := uploader.Upload(entries)
@@ -114,7 +112,7 @@ func TestAPIUploader_Upload_NilClient(t *testing.T) {
 	uploader := NewAPIUploader(nil, "emp-123", "org-456")
 
 	entries := []LogEntry{
-		{SessionID: "sess-1", EventType: "api_request"},
+		{EventType: "api_request"},
 	}
 
 	// Should not panic with nil client
@@ -138,7 +136,6 @@ func TestAPIUploader_Upload_PreservesPayload(t *testing.T) {
 
 	entries := []LogEntry{
 		{
-			SessionID: "sess-1",
 			EventType: "api_request",
 			Payload: map[string]interface{}{
 				"method":  "POST",

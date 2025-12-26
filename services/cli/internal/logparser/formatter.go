@@ -82,22 +82,21 @@ func (f *Formatter) Format(entry types.ClassifiedLogEntry) string {
 		sb.WriteString("\n")
 
 	case types.LogTypeSessionStart:
-		sb.WriteString(fmt.Sprintf("Session started: %s\n", entry.SessionID))
+		sb.WriteString("Session started\n")
 
 	case types.LogTypeSessionEnd:
-		sb.WriteString(fmt.Sprintf("Session ended: %s\n", entry.SessionID))
+		sb.WriteString("Session ended\n")
 	}
 
 	return sb.String()
 }
 
 // FormatSession formats all entries in a session with a header and summary
-func (f *Formatter) FormatSession(sessionID string, entries []types.ClassifiedLogEntry) string {
+func (f *Formatter) FormatSession(entries []types.ClassifiedLogEntry) string {
 	var sb strings.Builder
 
 	// Header
 	sb.WriteString("┌─────────────────────────────────────────────────────────────────────────────┐\n")
-	sb.WriteString(fmt.Sprintf("│ SESSION: %-67s │\n", truncateString(sessionID, 67)))
 
 	// Find metadata from first entry
 	if len(entries) > 0 {
@@ -126,7 +125,7 @@ func (f *Formatter) FormatSession(sessionID string, entries []types.ClassifiedLo
 	}
 
 	// Summary
-	summary := f.calculateSummary(sessionID, entries)
+	summary := f.calculateSummary(entries)
 	sb.WriteString("├─────────────────────────────────────────────────────────────────────────────┤\n")
 	sb.WriteString("│ SESSION SUMMARY                                                             │\n")
 	sb.WriteString(fmt.Sprintf("│ Tokens: %d input / %d output%-42s │\n",
@@ -204,9 +203,8 @@ func (f *Formatter) truncate(s string) string {
 }
 
 // calculateSummary computes aggregate statistics for a session
-func (f *Formatter) calculateSummary(sessionID string, entries []types.ClassifiedLogEntry) types.SessionSummary {
+func (f *Formatter) calculateSummary(entries []types.ClassifiedLogEntry) types.SessionSummary {
 	summary := types.SessionSummary{
-		SessionID:   sessionID,
 		ToolsByName: make(map[string]int),
 	}
 

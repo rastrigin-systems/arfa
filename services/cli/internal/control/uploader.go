@@ -14,7 +14,6 @@ type APIClient interface {
 // APILogEntry represents a log entry for the API.
 // This matches the format expected by the platform API.
 type APILogEntry struct {
-	SessionID     string                 `json:"session_id,omitempty"`
 	ClientName    string                 `json:"client_name,omitempty"`
 	ClientVersion string                 `json:"client_version,omitempty"`
 	EventType     string                 `json:"event_type"`
@@ -50,7 +49,6 @@ func (u *APIUploader) Upload(entries []LogEntry) error {
 	for _, entry := range entries {
 		// Convert control.LogEntry to APILogEntry
 		apiEntry := APILogEntry{
-			SessionID:     entry.SessionID,
 			ClientName:    entry.ClientName,
 			ClientVersion: entry.ClientVersion,
 			EventType:     entry.EventType,

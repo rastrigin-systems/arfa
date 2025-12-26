@@ -58,17 +58,18 @@ type Logger interface {
 
 // Proxy provides in-process HTTPS interception for LLM API logging.
 type Proxy struct {
-	goproxy       *goproxy.ProxyHttpServer
-	server        *http.Server
-	logger        Logger
-	parser        *logparser.AnthropicParser
-	port          int
-	certPath      string
-	keyPath       string
-	sessionID     string
-	clientName    string
-	clientVersion string
-	mu            sync.RWMutex // Protects sessionID, clientName, and clientVersion
+	goproxy        *goproxy.ProxyHttpServer
+	server         *http.Server
+	logger         Logger
+	parser         *logparser.AnthropicParser
+	port           int
+	certPath       string
+	keyPath        string
+	proxySessionID string
+	claudeSessionID string
+	clientName     string
+	clientVersion  string
+	mu             sync.RWMutex // Protects session IDs, clientName, and clientVersion
 }
 
 // New creates a new proxy instance.
@@ -80,13 +81,16 @@ func New(logger Logger) *Proxy {
 	}
 }
 
-// SetSession sets the session and client info for log entries.
-func (p *Proxy) SetSession(sessionID, clientName, clientVersion string) {
+// SetSession sets the proxy session and client info for log entries.
+func (p *Proxy) SetSession(proxySessionID, clientName, clientVersion string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.sessionID = sessionID
+	p.proxySessionID = proxySessionID
 	p.clientName = clientName
 	p.clientVersion = clientVersion
+
+	// Debug: Log session info
+	fmt.Fprintf(os.Stderr, "[PROXY] Proxy session configured: %s (client: %s %s)\n", proxySessionID, clientName, clientVersion)
 }
 
 // Start starts the proxy on an available port in the range [MinPort, MaxPort].
@@ -280,6 +284,9 @@ func (p *Proxy) configureGoproxyCA(caCert *tls.Certificate) {
 
 // configureRules sets up interception rules for LLM providers.
 func (p *Proxy) configureRules() {
+	// Debug: Show what we're intercepting
+	fmt.Fprintf(os.Stderr, "[PROXY] Intercepting traffic to: api.anthropic.com, generativelanguage.googleapis.com, api.openai.com\n")
+
 	// Intercept LLM API requests
 	p.goproxy.OnRequest(goproxy.ReqHostMatches(llmHostRegex)).DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -310,21 +317,27 @@ func (p *Proxy) logRequest(r *http.Request) {
 
 	// Get session info under read lock
 	p.mu.RLock()
-	sessionID := p.sessionID
+	proxySessionID := p.proxySessionID
 	clientName := p.clientName
 	clientVersion := p.clientVersion
 	p.mu.RUnlock()
+
+	// Debug: Log intercepted request to stdout
+	fmt.Fprintf(os.Stderr, "[PROXY] ➜ %s %s (proxy_session: %s, client: %s %s, body: %d bytes)\n",
+		r.Method, r.URL.String(), proxySessionID, clientName, clientVersion, len(bodyBytes))
 
 	// Parse and log classified entries for Anthropic
 	if strings.Contains(r.URL.Host, "anthropic.com") && len(bodyBytes) > 0 {
 		entries, err := p.parser.ParseRequest(bodyBytes)
 		if err == nil {
+			fmt.Fprintf(os.Stderr, "[PROXY]   → Parsed %d classified entries from request\n", len(entries))
 			for _, entry := range entries {
-				entry.SessionID = sessionID
 				entry.ClientName = clientName
 				entry.ClientVersion = clientVersion
 				p.logger.LogClassified(entry)
 			}
+		} else {
+			fmt.Fprintf(os.Stderr, "[PROXY]   ⚠ Failed to parse request: %v\n", err)
 		}
 	}
 
@@ -334,7 +347,6 @@ func (p *Proxy) logRequest(r *http.Request) {
 		"url":            r.URL.String(),
 		"headers":        redactHeaders(r.Header),
 		"body":           string(bodyBytes),
-		"session_id":     sessionID,
 		"client_name":    clientName,
 		"client_version": clientVersion,
 	}
@@ -367,40 +379,49 @@ func (p *Proxy) logResponse(resp *http.Response) {
 
 	// Get session info under read lock
 	p.mu.RLock()
-	sessionID := p.sessionID
+	proxySessionID := p.proxySessionID
 	clientName := p.clientName
 	clientVersion := p.clientVersion
 	p.mu.RUnlock()
+
+	// Debug: Log intercepted response to stdout
+	url := ""
+	if resp.Request != nil {
+		url = resp.Request.URL.String()
+	}
+	fmt.Fprintf(os.Stderr, "[PROXY] ✓ %d %s (proxy_session: %s, body: %d bytes, decoded: %d bytes)\n",
+		resp.StatusCode, url, proxySessionID, len(bodyBytes), len(decodedBody))
 
 	// Parse and log classified entries for Anthropic
 	if resp.Request != nil && strings.Contains(resp.Request.URL.Host, "anthropic.com") && len(decodedBody) > 0 {
 		entries, err := p.parser.ParseResponse(decodedBody)
 		if err == nil {
+			fmt.Fprintf(os.Stderr, "[PROXY]   → Parsed %d classified entries from response\n", len(entries))
 			for _, entry := range entries {
-				entry.SessionID = sessionID
 				entry.ClientName = clientName
 				entry.ClientVersion = clientVersion
 				p.logger.LogClassified(entry)
 			}
+		} else {
+			fmt.Fprintf(os.Stderr, "[PROXY]   ⚠ Failed to parse response: %v\n", err)
 		}
 	}
 
 	// Log raw response
-	url := ""
+	host := ""
 	if resp.Request != nil {
-		url = resp.Request.URL.Host
+		host = resp.Request.URL.Host
 	}
 
 	payload := map[string]interface{}{
 		"status":         resp.StatusCode,
 		"headers":        redactHeaders(resp.Header),
 		"body":           string(decodedBody),
-		"session_id":     sessionID,
 		"client_name":    clientName,
 		"client_version": clientVersion,
 	}
 
-	p.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, url), payload)
+	p.logger.LogEvent("api_response", "proxy", fmt.Sprintf("%d %s", resp.StatusCode, host), payload)
 }
 
 // redactHeaders redacts sensitive headers.

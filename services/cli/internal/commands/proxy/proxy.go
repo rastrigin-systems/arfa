@@ -221,9 +221,6 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize control service: %w", err)
 	}
 
-	sessionID := controlSvc.SessionID()
-	fmt.Printf("✓ Session: %s\n", sessionID)
-
 	// Start background worker for log uploads
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

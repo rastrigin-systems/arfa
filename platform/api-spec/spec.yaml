@@ -690,13 +690,31 @@ components:
     ToolPolicy:
       type: object
       required:
+        - id
+        - org_id
         - tool_name
         - action
+        - scope
+        - created_at
       properties:
         id:
           type: string
           format: uuid
           readOnly: true
+        org_id:
+          type: string
+          format: uuid
+          description: Organization this policy belongs to
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Team this policy applies to (null for org-level)
+        employee_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Employee this policy applies to (null for org/team-level)
         tool_name:
           type: string
           description: Tool name or pattern to match (e.g., "Bash", "mcp__playwright__%", "*")
@@ -721,6 +739,14 @@ components:
           enum: [organization, team, employee]
           description: Level at which this policy is defined
           example: "organization"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
 
     EmployeeToolPoliciesResponse:
       type: object
@@ -741,6 +767,80 @@ components:
           type: string
           format: date-time
           description: Server timestamp for cache freshness checking
+
+    # Policy CRUD schemas
+    CreateToolPolicyRequest:
+      type: object
+      required:
+        - tool_name
+        - action
+      properties:
+        tool_name:
+          type: string
+          description: Tool name or glob pattern to match (e.g., "Bash", "mcp__playwright__*", "*")
+          example: "Bash"
+          minLength: 1
+          maxLength: 255
+        action:
+          type: string
+          enum: [deny, audit]
+          description: Action to take when tool matches
+          example: "deny"
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason shown to agent
+          example: "Shell commands are blocked by organization policy"
+          maxLength: 500
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Apply policy to specific team (requires manager/admin role)
+        employee_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Apply policy to specific employee (requires manager/admin role)
+        conditions:
+          type: object
+          nullable: true
+          description: Optional conditions for param-based blocking (regex patterns)
+          example: {"any": [{"param_path": "command", "operator": "contains", "value": "rm -rf"}]}
+
+    UpdateToolPolicyRequest:
+      type: object
+      properties:
+        tool_name:
+          type: string
+          description: Tool name or glob pattern
+          minLength: 1
+          maxLength: 255
+        action:
+          type: string
+          enum: [deny, audit]
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+        conditions:
+          type: object
+          nullable: true
+
+    ListToolPoliciesResponse:
+      type: object
+      required:
+        - policies
+        - total
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolPolicy'
+        total:
+          type: integer
+          description: Total number of policies
+          example: 10
 
     # Pagination
     PaginationMeta:
@@ -786,11 +886,6 @@ components:
         - event_type
         - event_category
       properties:
-        session_id:
-          type: string
-          format: uuid
-          description: CLI session ID (optional, generated if not provided)
-          example: "550e8400-e29b-41d4-a716-446655440000"
         client_name:
           type: string
           description: AI client name (e.g., claude-code, cursor, continue)
@@ -866,11 +961,6 @@ components:
           format: uuid
           nullable: true
           example: "990e8400-e29b-41d4-a716-446655440000"
-        session_id:
-          type: string
-          format: uuid
-          nullable: true
-          example: "550e8400-e29b-41d4-a716-446655440000"
         client_name:
           type: string
           nullable: true
@@ -918,14 +1008,9 @@ components:
     SessionInfo:
       type: object
       required:
-        - session_id
         - start_time
         - event_count
       properties:
-        session_id:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
         agent_id:
           type: string
           format: uuid
@@ -1200,6 +1285,15 @@ components:
         type: string
         format: uuid
       description: Team UUID
+
+    PolicyId:
+      name: policy_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Policy UUID
 
     Page:
       name: page
@@ -2121,7 +2215,229 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  # Employee Tool Policies
+  # ============================================================================
+  # Tool Policies (Admin/Manager CRUD)
+  # ============================================================================
+  /policies:
+    get:
+      tags:
+        - policies
+      summary: List tool policies
+      description: |
+        List all tool policies for the organization.
+        Requires admin or manager role.
+        Returns organization, team, and employee-level policies.
+      operationId: listToolPolicies
+      parameters:
+        - name: team_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by team ID
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by employee ID
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [organization, team, employee]
+          description: Filter by policy scope
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolPoliciesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - requires admin or manager role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - policies
+      summary: Create tool policy
+      description: |
+        Create a new tool policy.
+        Requires admin role for organization-level policies.
+        Requires admin or manager role for team/employee-level policies.
+      operationId: createToolPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateToolPolicyRequest'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPolicy'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /policies/{policy_id}:
+    get:
+      tags:
+        - policies
+      summary: Get tool policy
+      description: Get a specific tool policy by ID
+      operationId: getToolPolicy
+      parameters:
+        - $ref: '#/components/parameters/PolicyId'
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPolicy'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - policies
+      summary: Update tool policy
+      description: |
+        Update an existing tool policy.
+        Requires admin role for organization-level policies.
+        Requires admin or manager role for team/employee-level policies.
+      operationId: updateToolPolicy
+      parameters:
+        - $ref: '#/components/parameters/PolicyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateToolPolicyRequest'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPolicy'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - policies
+      summary: Delete tool policy
+      description: |
+        Delete a tool policy.
+        Requires admin role for organization-level policies.
+        Requires admin or manager role for team/employee-level policies.
+      operationId: deleteToolPolicy
+      parameters:
+        - $ref: '#/components/parameters/PolicyId'
+      responses:
+        '204':
+          description: Policy deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Employee Tool Policies (read-only for current user)
   # ============================================================================
   /employees/me/tool-policies:
     get:
@@ -2206,7 +2522,6 @@ paths:
         List activity logs with pagination and filters.
 
         Supports filtering by:
-        - session_id: Get all logs for a specific CLI session
         - employee_id: Get logs for a specific employee
         - client_name: Get logs for a specific AI client (e.g., claude-code, cursor)
         - event_type: Filter by event type (input, output, error, etc.)
@@ -2215,12 +2530,6 @@ paths:
         - end_date: Logs created on or before this date
       operationId: listLogs
       parameters:
-        - name: session_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by CLI session ID
         - name: employee_id
           in: query
           schema:
@@ -2298,12 +2607,6 @@ paths:
             enum: [json, csv]
             default: json
           description: Export format
-        - name: session_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by CLI session ID
         - name: employee_id
           in: query
           schema:

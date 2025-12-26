@@ -42,7 +42,6 @@ func TestDiskQueue_Enqueue_CreatesFile(t *testing.T) {
 	entry := LogEntry{
 		EmployeeID:    "emp-123",
 		OrgID:         "org-456",
-		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
 		EventType:     "api_request",
@@ -85,7 +84,6 @@ func TestDiskQueue_Enqueue_MultipleEntries(t *testing.T) {
 		entry := LogEntry{
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
-			SessionID:     "sess-789",
 			ClientName:    "claude-code",
 			ClientVersion: "1.0.25",
 			EventType:     "api_request",
@@ -116,7 +114,6 @@ func TestDiskQueue_Pending_ReturnsQueuedEntries(t *testing.T) {
 		entry := LogEntry{
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
-			SessionID:     "sess-789",
 			ClientName:    "claude-code",
 			ClientVersion: "1.0.25",
 			EventType:     "api_request",
@@ -145,7 +142,6 @@ func TestDiskQueue_Remove_DeletesFile(t *testing.T) {
 	entry := LogEntry{
 		EmployeeID:    "emp-123",
 		OrgID:         "org-456",
-		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
 		EventType:     "api_request",
@@ -192,7 +188,6 @@ func TestDiskQueue_BackgroundWorker_UploadsEntries(t *testing.T) {
 		entry := LogEntry{
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
-			SessionID:     "sess-789",
 			ClientName:    "claude-code",
 			ClientVersion: "1.0.25",
 			EventType:     "api_request",
@@ -244,7 +239,6 @@ func TestDiskQueue_BackgroundWorker_RetriesOnError(t *testing.T) {
 	entry := LogEntry{
 		EmployeeID:    "emp-123",
 		OrgID:         "org-456",
-		SessionID:     "sess-789",
 		ClientName:    "claude-code",
 		ClientVersion: "1.0.25",
 		EventType:     "api_request",
@@ -296,7 +290,6 @@ func TestDiskQueue_BatchSize_LimitedToConfig(t *testing.T) {
 		entry := LogEntry{
 			EmployeeID:    "emp-123",
 			OrgID:         "org-456",
-			SessionID:     "sess-789",
 			ClientName:    "claude-code",
 			ClientVersion: "1.0.25",
 			EventType:     "api_request",

@@ -103,15 +103,15 @@ func (s *LoggingService) CreateLog(ctx context.Context, entry LogEntry) error {
 
 	// Create the log entry
 	_, err = s.db.CreateActivityLog(ctx, db.CreateActivityLogParams{
-		OrgID:         entry.OrgID,
-		EmployeeID:    employeeID,
-		SessionID:     sessionID,
-		ClientName:    clientName,
-		ClientVersion: clientVersion,
-		EventType:     entry.EventType,
-		EventCategory: entry.EventCategory,
-		Content:       content,
-		Payload:       payloadJSON,
+		OrgID:          entry.OrgID,
+		EmployeeID:     employeeID,
+		ProxySessionID: sessionID,
+		ClientName:     clientName,
+		ClientVersion:  clientVersion,
+		EventType:      entry.EventType,
+		EventCategory:  entry.EventCategory,
+		Content:        content,
+		Payload:        payloadJSON,
 	})
 
 	if err != nil {

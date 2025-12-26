@@ -72,9 +72,6 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add optional fields
-	if req.SessionId != nil {
-		entry.SessionID = *req.SessionId
-	}
 	if req.ClientName != nil {
 		entry.ClientName = *req.ClientName
 	}
@@ -111,9 +108,6 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 			Timestamp:     time.Now(),
 		}
 
-		if req.SessionId != nil {
-			wsMsg.SessionID = *req.SessionId
-		}
 		if req.ClientName != nil {
 			wsMsg.ClientName = *req.ClientName
 		}
@@ -141,9 +135,6 @@ func (h *LogsHandler) CreateLog(w http.ResponseWriter, r *http.Request) {
 	if employeeID != uuid.Nil {
 		empAPIID := openapi_types.UUID(employeeID)
 		response.EmployeeId = &empAPIID
-	}
-	if req.SessionId != nil {
-		response.SessionId = req.SessionId
 	}
 	if req.ClientName != nil {
 		response.ClientName = req.ClientName
@@ -196,9 +187,6 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 	if params.EmployeeId != nil {
 		filterParams.EmployeeID = pgtype.UUID{Bytes: uuid.UUID(*params.EmployeeId), Valid: true}
 	}
-	if params.SessionId != nil {
-		filterParams.SessionID = pgtype.UUID{Bytes: uuid.UUID(*params.SessionId), Valid: true}
-	}
 	if params.ClientName != nil {
 		clientName := string(*params.ClientName)
 		filterParams.ClientName = &clientName
@@ -227,14 +215,14 @@ func (h *LogsHandler) ListLogs(w http.ResponseWriter, r *http.Request, params ap
 
 	// Build count params (same filters, no pagination)
 	countParams := db.CountActivityLogsFilteredParams{
-		OrgID:         orgID,
-		EmployeeID:    filterParams.EmployeeID,
-		SessionID:     filterParams.SessionID,
-		ClientName:    filterParams.ClientName,
-		EventType:     filterParams.EventType,
-		EventCategory: filterParams.EventCategory,
-		StartDate:     filterParams.StartDate,
-		EndDate:       filterParams.EndDate,
+		OrgID:          orgID,
+		EmployeeID:     filterParams.EmployeeID,
+		ProxySessionID: filterParams.ProxySessionID,
+		ClientName:     filterParams.ClientName,
+		EventType:      filterParams.EventType,
+		EventCategory:  filterParams.EventCategory,
+		StartDate:      filterParams.StartDate,
+		EndDate:        filterParams.EndDate,
 	}
 
 	total, err := h.db.CountActivityLogsFiltered(ctx, countParams)
@@ -301,12 +289,6 @@ func dbLogToAPI(log db.ActivityLog) api.ActivityLog {
 		empID := uuid.UUID(log.EmployeeID.Bytes)
 		empAPIID := openapi_types.UUID(empID)
 		apiLog.EmployeeId = &empAPIID
-	}
-
-	if log.SessionID.Valid {
-		sessID := uuid.UUID(log.SessionID.Bytes)
-		sessAPIID := openapi_types.UUID(sessID)
-		apiLog.SessionId = &sessAPIID
 	}
 
 	if log.ClientName != nil {
