@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/elazarl/goproxy"
@@ -84,13 +85,10 @@ func (p *ControlledProxy) tryStart(port int) error {
 	}
 	_ = listener.Close()
 
-	// Start server with timeouts to prevent connection accumulation
+	// Start server
 	p.server = &http.Server{
-		Addr:         addr,
-		Handler:      p.goproxy,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		Addr:    addr,
+		Handler: p.goproxy,
 	}
 
 	errCh := make(chan error, 1)
@@ -285,7 +283,18 @@ func (p *ControlledProxy) handleResponse(resp *http.Response) *http.Response {
 		return resp
 	}
 
-	// Decompress gzip responses before passing to pipeline
+	// Skip body processing for streaming responses (SSE, chunked transfers)
+	// Reading the full body would block forever on these
+	contentType := resp.Header.Get("Content-Type")
+	isStreaming := strings.Contains(contentType, "text/event-stream") ||
+		(resp.ContentLength == -1 && resp.Header.Get("Transfer-Encoding") == "chunked")
+
+	if isStreaming {
+		// For streaming responses, just pass through without body inspection
+		return resp
+	}
+
+	// Decompress gzip responses before passing to pipeline (non-streaming only)
 	if resp.Header.Get("Content-Encoding") == "gzip" && resp.Body != nil {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err == nil {
