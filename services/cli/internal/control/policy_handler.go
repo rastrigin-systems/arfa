@@ -313,16 +313,18 @@ func (h *PolicyHandler) SetQueue(queue LoggerQueue) {
 
 // SetPolicyClient sets the PolicyClient for real-time policy updates.
 // When set, policies are sourced from the client instead of file cache.
+// Note: We don't clear disk-cached policies until WebSocket delivers policies.
+// This ensures there's no gap in policy enforcement during connection.
 func (h *PolicyHandler) SetPolicyClient(client *PolicyClient) {
 	h.policyClient = client
 
-	// Subscribe to policy changes
+	// Subscribe to policy changes - this will be called when init message arrives
 	client.SetOnPoliciesChanged(func() {
 		h.rebuildFromClient()
 	})
 
-	// Initial load from client
-	h.rebuildFromClient()
+	// Don't call rebuildFromClient() here - wait for WebSocket to deliver policies.
+	// Disk cache remains active until handleInit triggers onPoliciesChanged.
 }
 
 // rebuildFromClient rebuilds the deny lists from PolicyClient's policies.
