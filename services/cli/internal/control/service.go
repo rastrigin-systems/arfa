@@ -21,15 +21,21 @@ type ServiceConfig struct {
 
 	// Uploader for sending logs to API (optional, can be set later)
 	Uploader Uploader
+
+	// PolicyClient configuration (optional, for real-time policy updates)
+	APIURL string // API base URL for WebSocket connection
+	Token  string // JWT token for authentication
 }
 
 // Service is the main Control Service that orchestrates the pipeline.
 type Service struct {
-	config    ServiceConfig
-	sessionID string
-	ctx       *HandlerContext
-	pipeline  *Pipeline
-	queue     *DiskQueue
+	config        ServiceConfig
+	sessionID     string
+	ctx           *HandlerContext
+	pipeline      *Pipeline
+	queue         *DiskQueue
+	policyClient  *PolicyClient
+	policyHandler *PolicyHandler
 }
 
 // NewService creates a new Control Service.
@@ -71,7 +77,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 	loggerHandler := NewLoggerHandler(queue)
 	pipeline.Register(loggerHandler)
 
-	// Register policy handler (loads policies from ~/.arfa/policies.json)
+	// Register policy handler (loads policies from ~/.arfa/policies.json by default)
 	policyHandler := NewPolicyHandler()
 	policyHandler.SetQueue(queue) // Enable logging of blocked tools
 	pipeline.Register(policyHandler)
@@ -81,11 +87,12 @@ func NewService(config ServiceConfig) (*Service, error) {
 	pipeline.Register(toolCallLogger)
 
 	return &Service{
-		config:    config,
-		sessionID: sessionID,
-		ctx:       ctx,
-		pipeline:  pipeline,
-		queue:     queue,
+		config:        config,
+		sessionID:     sessionID,
+		ctx:           ctx,
+		pipeline:      pipeline,
+		queue:         queue,
+		policyHandler: policyHandler,
 	}, nil
 }
 
@@ -154,4 +161,49 @@ func (s *Service) SetUploader(uploader Uploader) {
 func (s *Service) EnablePolicyBlocking(denyList map[string]string) {
 	handler := NewPolicyHandlerWithDenyList(denyList)
 	s.pipeline.Register(handler)
+}
+
+// EnableRealtimePolicies connects to the API WebSocket for real-time policy updates.
+// This replaces file-based policy loading with live updates from the server.
+// Call this before Start() to enable real-time policy enforcement.
+func (s *Service) EnableRealtimePolicies(ctx context.Context, apiURL, token string) error {
+	clientConfig := PolicyClientConfig{
+		APIURL:           apiURL,
+		Token:            token,
+		GracePeriod:      5 * time.Minute,
+		ReconnectBackoff: 1 * time.Second,
+		MaxReconnectWait: 30 * time.Second,
+	}
+
+	s.policyClient = NewPolicyClient(clientConfig)
+	s.policyHandler.SetPolicyClient(s.policyClient)
+
+	// Start connection with retry in background
+	go s.policyClient.ConnectWithRetry(ctx)
+
+	return nil
+}
+
+// WaitForPolicies waits until initial policies are received or timeout.
+// Returns error if timeout expires before policies are loaded.
+func (s *Service) WaitForPolicies(ctx context.Context, timeout time.Duration) error {
+	if s.policyClient == nil {
+		return nil // Not using real-time policies
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	return s.policyClient.WaitReady(ctx)
+}
+
+// PolicyClient returns the policy client (for status checks).
+func (s *Service) PolicyClient() *PolicyClient {
+	return s.policyClient
+}
+
+// ShouldBlockAllRequests returns true if all requests should be blocked.
+// This happens when policy client is disconnected past grace period or revoked.
+func (s *Service) ShouldBlockAllRequests() (string, bool) {
+	return s.policyHandler.ShouldBlockAll()
 }

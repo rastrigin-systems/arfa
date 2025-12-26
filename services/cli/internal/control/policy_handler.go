@@ -13,16 +13,18 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rastrigin-systems/arfa/services/cli/internal/api"
 )
 
-// PolicyHandler blocks tool calls based on policies loaded from cache.
-// Policies are synced via `arfa sync` and stored in ~/.arfa/policies.json.
+// PolicyHandler blocks tool calls based on policies loaded from cache or PolicyClient.
+// In real-time mode, policies are received via WebSocket from PolicyClient.
+// In fallback mode, policies are synced via `arfa sync` and stored in ~/.arfa/policies.json.
 type PolicyHandler struct {
 	// denyList contains tool names that should be blocked unconditionally.
-	// Built from policies loaded from ~/.arfa/policies.json
+	// Built from policies loaded from ~/.arfa/policies.json or PolicyClient
 	denyList map[string]string // tool name -> reason
 
 	// globPatterns contains tool name patterns that end with %
@@ -35,6 +37,13 @@ type PolicyHandler struct {
 
 	// queue is optional - if set, blocked tools are logged as tool_call events
 	queue LoggerQueue
+
+	// policyClient provides real-time policy updates via WebSocket
+	// If set, policies are sourced from here instead of file cache
+	policyClient *PolicyClient
+
+	// mu protects concurrent access to policy lists during updates
+	mu sync.RWMutex
 }
 
 // conditionalPolicy represents a policy with conditions to evaluate against tool input.
@@ -110,6 +119,14 @@ func (h *PolicyHandler) loadFromCache() {
 // Only policies with action="deny" are added.
 // Policies with conditions are stored separately for parameter evaluation.
 func (h *PolicyHandler) buildDenyList(policies []api.ToolPolicy) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.buildDenyListLocked(policies)
+}
+
+// buildDenyListLocked converts policies to the internal deny list format.
+// Caller must hold h.mu.
+func (h *PolicyHandler) buildDenyListLocked(policies []api.ToolPolicy) {
 	for _, policy := range policies {
 		if policy.Action != api.ToolPolicyActionDeny {
 			continue // Skip audit-only policies
@@ -149,6 +166,9 @@ func (h *PolicyHandler) buildDenyList(policies []api.ToolPolicy) {
 
 // isBlocked checks if a tool should be blocked, returning the reason if so.
 func (h *PolicyHandler) isBlocked(toolName string) (string, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	// Check exact match first (case-sensitive)
 	if reason, ok := h.denyList[toolName]; ok {
 		return reason, true
@@ -183,6 +203,9 @@ type pendingBlock struct {
 
 // hasConditionalPolicies checks if a tool has policies with conditions.
 func (h *PolicyHandler) hasConditionalPolicies(toolName string) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	key := strings.ToLower(toolName)
 	policies, exists := h.conditionalPolicies[key]
 	return exists && len(policies) > 0
@@ -191,11 +214,17 @@ func (h *PolicyHandler) hasConditionalPolicies(toolName string) bool {
 // evaluateConditions checks if tool input matches any conditional policy.
 // Returns (reason, blocked) - if blocked is true, the tool should be denied.
 func (h *PolicyHandler) evaluateConditions(toolName string, input string) (string, bool) {
+	h.mu.RLock()
 	key := strings.ToLower(toolName)
 	policies, exists := h.conditionalPolicies[key]
 	if !exists {
+		h.mu.RUnlock()
 		return "", false
 	}
+	// Copy policies to avoid holding lock while processing
+	policiesCopy := make([]conditionalPolicy, len(policies))
+	copy(policiesCopy, policies)
+	h.mu.RUnlock()
 
 	// Parse the input JSON to extract parameter values
 	var inputMap map[string]interface{}
@@ -204,7 +233,7 @@ func (h *PolicyHandler) evaluateConditions(toolName string, input string) (strin
 		return "", false
 	}
 
-	for _, policy := range policies {
+	for _, policy := range policiesCopy {
 		if h.matchesConditions(inputMap, policy.Conditions) {
 			return policy.Reason, true
 		}
@@ -282,6 +311,63 @@ func (h *PolicyHandler) SetQueue(queue LoggerQueue) {
 	h.queue = queue
 }
 
+// SetPolicyClient sets the PolicyClient for real-time policy updates.
+// When set, policies are sourced from the client instead of file cache.
+func (h *PolicyHandler) SetPolicyClient(client *PolicyClient) {
+	h.policyClient = client
+
+	// Subscribe to policy changes
+	client.SetOnPoliciesChanged(func() {
+		h.rebuildFromClient()
+	})
+
+	// Initial load from client
+	h.rebuildFromClient()
+}
+
+// rebuildFromClient rebuilds the deny lists from PolicyClient's policies.
+func (h *PolicyHandler) rebuildFromClient() {
+	if h.policyClient == nil {
+		return
+	}
+
+	policies := h.policyClient.GetPolicies()
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	// Clear existing lists
+	h.denyList = make(map[string]string)
+	h.globPatterns = make(map[string]string)
+	h.conditionalPolicies = make(map[string][]conditionalPolicy)
+
+	// Rebuild from client policies
+	h.buildDenyListLocked(policies)
+}
+
+// ShouldBlockAll returns true if the PolicyClient indicates all requests should be blocked.
+func (h *PolicyHandler) ShouldBlockAll() (string, bool) {
+	if h.policyClient == nil {
+		return "", false
+	}
+
+	if h.policyClient.ShouldBlockAll() {
+		state := h.policyClient.GetState()
+		switch state {
+		case StateConnecting:
+			return "Waiting for policy server connection", true
+		case StateRevoked:
+			return "Employee access has been revoked", true
+		case StateDisconnected:
+			return "Connection to policy server lost. All requests blocked.", true
+		default:
+			return "Policy enforcement unavailable", true
+		}
+	}
+
+	return "", false
+}
+
 // logBlockedTool logs a blocked tool call if a queue is configured.
 func (h *PolicyHandler) logBlockedTool(ctx *HandlerContext, toolName, toolID, reason string, toolInput map[string]interface{}) {
 	if h.queue == nil {
@@ -291,13 +377,13 @@ func (h *PolicyHandler) logBlockedTool(ctx *HandlerContext, toolName, toolID, re
 	entry := LogEntry{
 		EmployeeID:    ctx.EmployeeID,
 		OrgID:         ctx.OrgID,
-		SessionID:     ctx.SessionID,
 		ClientName:    ctx.ClientName,
 		ClientVersion: ctx.ClientVersion,
 		EventType:     "tool_call",
 		EventCategory: "classified",
 		Timestamp:     time.Now(),
 		Payload: map[string]interface{}{
+			"session_id":   ctx.SessionID,
 			"tool_name":    toolName,
 			"tool_id":      toolID,
 			"tool_input":   toolInput,

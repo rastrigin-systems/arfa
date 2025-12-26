@@ -53,6 +53,14 @@ func main() {
 	wsHub := websocket.NewHub()
 	go wsHub.Run()
 
+	// Create PolicyHub for real-time policy updates to proxies
+	policyHub := websocket.NewPolicyHub()
+	go policyHub.Run()
+
+	// Start PostgreSQL LISTEN for policy changes
+	policyListener := websocket.NewPolicyListener(dbPool, policyHub)
+	policyListener.Start(ctx)
+
 	// Create handlers
 	healthHandler := handlers.NewHealthHandler()
 	authHandler := handlers.NewAuthHandler(queries)
@@ -63,6 +71,7 @@ func main() {
 	activityLogsHandler := handlers.NewActivityLogsHandler(queries)
 	logsHandler := handlers.NewLogsHandler(queries, wsHub)
 	wsHandler := websocket.NewHandler(wsHub)
+	policyWSHandler := websocket.NewPolicyHandler(policyHub, queries)
 	toolPoliciesHandler := handlers.NewToolPoliciesHandler(queries)
 	webhooksHandler := handlers.NewWebhooksHandler(queries)
 
@@ -238,6 +247,11 @@ func main() {
 				r.Get("/stream", wsHandler.ServeHTTP)
 			})
 
+			// WebSocket endpoint for real-time policy streaming to proxies
+			// Format: WS /api/v1/ws/policies
+			// Auth: JWT token required in Authorization header or query param
+			r.Get("/ws/policies", policyWSHandler.ServeHTTP)
+
 			// Webhook destination routes
 			r.Route("/webhooks", func(r chi.Router) {
 				r.Get("/", webhooksHandler.ListWebhookDestinations)
@@ -276,6 +290,7 @@ func main() {
 		log.Printf("   POST http://localhost:%s/api/v1/auth/login", port)
 		log.Printf("   POST http://localhost:%s/api/v1/auth/logout", port)
 		log.Printf("   GET  http://localhost:%s/api/v1/auth/me", port)
+		log.Printf("🔄 Policy WebSocket: ws://localhost:%s/api/v1/ws/policies", port)
 		log.Printf("🌐 Web UI available at http://localhost:3000 (Next.js app)")
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -289,6 +304,10 @@ func main() {
 	<-quit
 
 	log.Println("🛑 Shutting down server...")
+
+	// Stop policy listener
+	policyListener.Stop()
+	policyHub.Stop()
 
 	// Stop webhook forwarder
 	webhookForwarderCancel()
