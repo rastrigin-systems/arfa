@@ -186,9 +186,9 @@ func (h *PolicyHandler) readPump(conn *PolicyConn) {
 			continue
 		}
 
-		// Currently only handle pong messages
+		// Handle pong messages - reset read deadline
 		if msgType, ok := msg["type"].(string); ok && msgType == "pong" {
-			// Heartbeat acknowledged
+			_ = wsConn.SetReadDeadline(time.Now().Add(pongWait))
 		}
 	}
 }
