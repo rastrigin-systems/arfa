@@ -40,6 +40,12 @@
 | idx_tool_policies_employee_id | CREATE INDEX idx_tool_policies_employee_id ON public.tool_policies USING btree (employee_id) WHERE (employee_id IS NOT NULL) |
 | idx_tool_policies_lookup | CREATE INDEX idx_tool_policies_lookup ON public.tool_policies USING btree (org_id, team_id, employee_id, tool_name) |
 
+## Triggers
+
+| Name | Definition |
+| ---- | ---------- |
+| policy_change_trigger | CREATE TRIGGER policy_change_trigger AFTER INSERT OR DELETE OR UPDATE ON public.tool_policies FOR EACH ROW EXECUTE FUNCTION notify_policy_change() |
+
 ## Relations
 
 ```mermaid

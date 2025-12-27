@@ -72,6 +72,8 @@
 | public.update_updated_at_column | trigger |  | FUNCTION |
 | public.generate_invitation_token | trigger |  | FUNCTION |
 | public.expire_old_invitations | void |  | FUNCTION |
+| public.notify_policy_change | trigger |  | FUNCTION |
+| public.notify_employee_revoke | trigger |  | FUNCTION |
 
 ## Relations
 
