@@ -171,26 +171,25 @@ claude "list files in current directory"
 ## Documentation
 
 ### Getting Started
-- 📖 **[Quick Start Guide](docs/quickstart.md)** - Detailed setup instructions
-- 🏗️ **[Architecture Overview](docs/architecture/monorepo-structure.md)** - System design
-- 🗄️ **[Database Schema](docs/database/schema-reference.md)** - Visual ERD + table reference
+- [Getting Started](docs/development/getting-started.md) - Setup instructions
+- [Architecture Overview](docs/architecture/overview.md) - System design
+- [Database Schema](docs/database/schema-reference.md) - Visual ERD + table reference
 
 ### Development
-- 🔨 **[Development Workflow](docs/development/contributing.md)** - Code generation, TDD, best practices
-- 🧪 **[Testing Guide](docs/testing/strategy.md)** - Unit, integration, E2E testing
-- 🚀 **[Deployment](docs/deployment/)** - Docker, GCP Cloud Run
+- [Contributing](docs/development/contributing.md) - Code generation, TDD, best practices
+- [Testing Guide](docs/development/testing.md) - Unit, integration, E2E testing
+- [PR Workflow](docs/development/workflows.md) - Git workflow, branch naming
 
 ### Service Documentation
-- **[API Server](services/api/README.md)** - REST API, WebSocket, business logic
-- **[CLI Client](services/cli/README.md)** - Proxy, commands, setup
-- **[Web UI](services/web/README.md)** - Next.js admin panel
+- [API Server](services/api/README.md) - REST API, WebSocket, business logic
+- [CLI Client](services/cli/README.md) - Proxy, commands, setup
+- [Web UI](services/web/README.md) - Next.js admin panel
 
 ### API Reference
-- **[OpenAPI Spec](platform/api-spec/spec.yaml)** - Complete API contract
-- **[Postman Collection](docs/api/)** - Example requests
+- [OpenAPI Spec](platform/api-spec/spec.yaml) - Complete API contract
 
 ### Design Documents
-- **[Real-Time Policy Updates](docs/DESIGN_REALTIME_POLICIES.md)** - WebSocket-based policy sync architecture
+- [Real-Time Policy Updates](docs/architecture/realtime-policies.md) - WebSocket-based policy sync
 
 ---
 

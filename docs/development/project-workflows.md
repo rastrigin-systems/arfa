@@ -295,7 +295,7 @@ git push origin v0.X.0
 gh release create v0.X.0 --title "..." --notes "..."
 ```
 
-**Release History:** See [releases/RELEASES.md](../releases/RELEASES.md)
+**Release History:** See GitHub Releases page.
 
 ---
 
@@ -372,4 +372,3 @@ gh release create v0.X.0 --title "..." --notes "..."
 - [Release Manager Skill](../../.claude/skills/release-manager/SKILL.md) - Complete release workflow
 - [PR Workflow](./workflows.md) - Standard PR and Git workflow
 - [Testing](./testing.md) - Testing best practices
-- [Release History](../releases/RELEASES.md) - Release history

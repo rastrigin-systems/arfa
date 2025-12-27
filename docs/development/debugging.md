@@ -660,4 +660,3 @@ go func() {
 - [Testing](./testing.md) - Testing strategies
 - [Contributing](./contributing.md) - Development workflow
 - [Database](../database/README.md) - Database operations
-- [MCP Servers](../features/mcp-servers.md) - MCP server debugging

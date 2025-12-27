@@ -16,7 +16,6 @@ Quick reference for common commands, operations, and configurations.
 - [Git Workflow](#git-workflow)
 - [Docker Commands](#docker-commands)
 - [Database Access](#database-access)
-- [MCP Servers](#mcp-servers)
 
 ---
 
@@ -328,6 +327,5 @@ make <target> VERBOSE=1
 - [Contributing](./contributing.md) - Development workflow
 - [Testing](./testing.md) - Testing guide
 - [Database](../database/README.md) - Database operations
-- [MCP Servers](../features/mcp-servers.md) - MCP server setup
 - [PR Workflow](./workflows.md) - Git workflow
 - [Debugging](./debugging.md) - Debugging guide

@@ -18,33 +18,28 @@ Welcome to the Arfa documentation. This guide covers everything you need to deve
 ```
 docs/
 ├── README.md                    # This file - documentation index
-├── architecture/                # System architecture
+├── architecture/                # System architecture and features
 │   ├── overview.md              # High-level architecture and vision
 │   ├── control-service.md       # LLM traffic interception design
 │   ├── logging.md               # Logging and telemetry
-│   └── monorepo-structure.md    # Project organization
+│   ├── monorepo-structure.md    # Project organization
+│   ├── authorization.md         # Role-based access control
+│   ├── email-service.md         # Email notifications
+│   ├── tool-blocking.md         # Tool call policy enforcement
+│   ├── webhooks.md              # Webhook integrations
+│   └── realtime-policies.md     # Real-time policy updates design
 ├── database/                    # Database documentation (auto-generated)
 │   ├── README.md                # Database overview
 │   ├── schema-reference.md      # Complete schema reference
 │   └── public.*.md              # Per-table documentation
-├── design/                      # Design documents
-│   └── realtime-policies.md     # Real-time policy updates design
-├── development/                 # Development guides
-│   ├── getting-started.md       # Environment setup
-│   ├── contributing.md          # Contribution guidelines
-│   ├── workflows.md             # PR and Git workflow
-│   ├── project-workflows.md     # Milestone and release planning
-│   ├── testing.md               # Testing strategy and TDD
-│   ├── debugging.md             # Debugging techniques
-│   └── docker-testing.md        # Docker testing checklist
-├── features/                    # Feature documentation
-│   ├── authorization.md         # Role-based access control
-│   ├── email-service.md         # Email notifications
-│   ├── mcp-servers.md           # MCP server configuration
-│   ├── tool-blocking.md         # Tool call policy enforcement
-│   └── webhooks.md              # Webhook integrations
-└── releases/                    # Release information
-    └── RELEASES.md              # Version history and changelog
+└── development/                 # Development guides
+    ├── getting-started.md       # Environment setup
+    ├── contributing.md          # Contribution guidelines
+    ├── workflows.md             # PR and Git workflow
+    ├── project-workflows.md     # Milestone and release planning
+    ├── testing.md               # Testing strategy and TDD
+    ├── debugging.md             # Debugging techniques
+    └── docker-testing.md        # Docker testing checklist
 ```
 
 ## Architecture
@@ -154,17 +149,6 @@ To regenerate database docs after schema changes:
 ```bash
 make generate-erd
 ```
-
-## Features
-
-| Feature | Status | Documentation |
-|---------|--------|---------------|
-| Authentication | Implemented | [authorization.md](./features/authorization.md) |
-| Tool Blocking | Implemented | [tool-blocking.md](./features/tool-blocking.md) |
-| Webhooks | Implemented | [webhooks.md](./features/webhooks.md) |
-| MCP Servers | Implemented | [mcp-servers.md](./features/mcp-servers.md) |
-| Email Service | Implemented | [email-service.md](./features/email-service.md) |
-| Real-time Policies | Design | [realtime-policies.md](./design/realtime-policies.md) |
 
 ## License
 
