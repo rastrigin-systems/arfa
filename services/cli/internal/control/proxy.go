@@ -1,6 +1,8 @@
 package control
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -9,6 +11,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -228,10 +231,13 @@ func (p *ControlledProxy) generateCA() error {
 
 // configureGoproxyCA configures goproxy to use the CA certificate.
 func (p *ControlledProxy) configureGoproxyCA(caCert *tls.Certificate) {
+	p.goproxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	goproxy.GoproxyCa = *caCert
 	tlsConfig := goproxy.TLSConfigFromCA(caCert)
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: tlsConfig}
 	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: tlsConfig}
-	p.goproxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: tlsConfig}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: tlsConfig}
 }
 
 // configureRules sets up interception rules for LLM providers.
@@ -272,7 +278,43 @@ func (p *ControlledProxy) handleRequest(r *http.Request) (*http.Request, *http.R
 
 // handleResponse processes an intercepted response through the Control Service pipeline.
 func (p *ControlledProxy) handleResponse(resp *http.Response) *http.Response {
-	// Pass through all responses without processing to avoid blocking on streaming
-	// TODO: Re-enable response processing with proper streaming detection
+	if p.service == nil || resp == nil {
+		return resp
+	}
+
+	// Decompress gzip responses before passing to pipeline
+	if resp.Header.Get("Content-Encoding") == "gzip" && resp.Body != nil {
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err == nil {
+			reader, err := gzip.NewReader(bytes.NewBuffer(bodyBytes))
+			if err == nil {
+				decodedBody, err := io.ReadAll(reader)
+				_ = reader.Close()
+				if err == nil {
+					// Replace body with decompressed content
+					resp.Body = io.NopCloser(bytes.NewBuffer(decodedBody))
+					resp.Header.Del("Content-Encoding")
+					resp.ContentLength = int64(len(decodedBody))
+				} else {
+					// Restore original body if decompression fails
+					resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+				}
+			} else {
+				// Restore original body if gzip reader fails
+				resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			}
+		}
+	}
+
+	result := p.service.HandleResponse(resp)
+
+	// Response blocking is logged but not enforced (response already in flight)
+	// This is captured for policy analytics purposes
+
+	// Use modified response if provided
+	if result.ModifiedResponse != nil {
+		return result.ModifiedResponse
+	}
+
 	return resp
 }
