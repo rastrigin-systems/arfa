@@ -189,6 +189,9 @@ claude "list files in current directory"
 - **[OpenAPI Spec](platform/api-spec/spec.yaml)** - Complete API contract
 - **[Postman Collection](docs/api/)** - Example requests
 
+### Design Documents
+- **[Real-Time Policy Updates](docs/DESIGN_REALTIME_POLICIES.md)** - WebSocket-based policy sync architecture
+
 ---
 
 ## Project Structure
