@@ -621,8 +621,6 @@ docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT COUNT(*) FROM org_agen
 
 **Lesson:** Check database state BEFORE assuming code is wrong.
 
-**See:** `/tmp/CLI_LOGGING_FIX_COMPLETE.md` for complete details.
-
 ---
 
 ### Example 2: Flaky Integration Tests
@@ -659,8 +657,7 @@ go func() {
 
 ## See Also
 
-- [TESTING.md](./TESTING.md) - Testing strategies
-- [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
-- [DATABASE.md](./DATABASE.md) - Database operations
-- [MCP_SERVERS.md](./MCP_SERVERS.md) - MCP server debugging
-- [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Quick command reference
+- [Testing](./testing.md) - Testing strategies
+- [Contributing](./contributing.md) - Development workflow
+- [Database](../database/README.md) - Database operations
+- [MCP Servers](../features/mcp-servers.md) - MCP server debugging

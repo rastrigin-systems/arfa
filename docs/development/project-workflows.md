@@ -253,7 +253,7 @@ Task: Analytics Dashboard (size/xl)
 # 5. Update parent with checklist
 ```
 
-**See:** [github-task-manager skill documentation](./.claude/skills/github-task-manager/SKILL.md)
+**See:** [github-task-manager skill](../../.claude/skills/github-task-manager/SKILL.md)
 
 ---
 
@@ -261,7 +261,7 @@ Task: Analytics Dashboard (size/xl)
 
 ### Quick Reference
 
-**See [Release Manager Skill](./.claude/skills/release-manager/SKILL.md) for complete workflow.**
+**See [Release Manager Skill](../../.claude/skills/release-manager/SKILL.md) for complete workflow.**
 
 **Quick Release Checklist:**
 ```
@@ -295,7 +295,7 @@ git push origin v0.X.0
 gh release create v0.X.0 --title "..." --notes "..."
 ```
 
-**Release History:** See [docs/RELEASES.md](./RELEASES.md)
+**Release History:** See [releases/RELEASES.md](../releases/RELEASES.md)
 
 ---
 
@@ -369,8 +369,7 @@ gh release create v0.X.0 --title "..." --notes "..."
 
 ## See Also
 
-- [Release Manager Skill](./.claude/skills/release-manager/SKILL.md) - Complete release workflow
-- [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) - Standard development workflow
-- [DEVELOPMENT.md](./DEVELOPMENT.md) - Development best practices
-- [RELEASES.md](./RELEASES.md) - Release history
-- [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Current roadmap
+- [Release Manager Skill](../../.claude/skills/release-manager/SKILL.md) - Complete release workflow
+- [PR Workflow](./workflows.md) - Standard PR and Git workflow
+- [Testing](./testing.md) - Testing best practices
+- [Release History](../releases/RELEASES.md) - Release history

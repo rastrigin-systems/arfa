@@ -45,7 +45,7 @@ make test
 open docs/database/schema-reference.md
 ```
 
-**See:** [QUICKSTART.md](./QUICKSTART.md) for detailed setup guide.
+Run `make` to see all available commands.
 
 ---
 
@@ -109,7 +109,7 @@ docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT id, name, created_at F
 docker exec arfa-postgres psql -U arfa -d arfa -c "SELECT version, dirty FROM schema_migrations"
 ```
 
-**See:** [DATABASE.md](./DATABASE.md) for complete database guide.
+See [Database documentation](../database/README.md) for complete guide.
 
 ---
 
@@ -206,7 +206,7 @@ go test -cover ./services/api/internal/handlers/...
 go test -run TestCreateEmployee ./services/api/internal/handlers/...
 ```
 
-**See:** [TESTING.md](./TESTING.md) for complete testing guide.
+See [Testing guide](./testing.md) for complete guide.
 
 ---
 
@@ -261,7 +261,7 @@ go clean -cache
 docker rm -f $(docker ps -aq --filter "name=postgres")
 ```
 
-**See:** [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) for complete workflow.
+See [PR Workflow](./workflows.md) for complete workflow.
 
 ## Common Tasks
 
@@ -324,9 +324,10 @@ make <target> VERBOSE=1
 ---
 
 ## See Also
-- [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
-- [TESTING.md](./TESTING.md) - Testing guide
-- [DATABASE.md](./DATABASE.md) - Database operations
-- [MCP_SERVERS.md](./MCP_SERVERS.md) - MCP server setup
-- [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) - Git workflow
-- [DEBUGGING.md](./DEBUGGING.md) - Debugging guide
+
+- [Contributing](./contributing.md) - Development workflow
+- [Testing](./testing.md) - Testing guide
+- [Database](../database/README.md) - Database operations
+- [MCP Servers](../features/mcp-servers.md) - MCP server setup
+- [PR Workflow](./workflows.md) - Git workflow
+- [Debugging](./debugging.md) - Debugging guide

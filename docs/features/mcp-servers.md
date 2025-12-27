@@ -571,6 +571,6 @@ claude mcp add github \
 
 ## See Also
 
-- [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Command reference
-- [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
-- [DATABASE.md](./DATABASE.md) - Database operations
+- [Getting Started](../development/getting-started.md) - Development setup
+- [Contributing](../development/contributing.md) - Development workflow
+- [Database](../database/README.md) - Database operations

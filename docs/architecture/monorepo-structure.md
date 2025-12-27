@@ -427,22 +427,11 @@ arfa/
 - Independent versioning
 - Better modularity
 
-**Migration**: See [docs/MONOREPO_MIGRATION.md](../MONOREPO_MIGRATION.md) for detailed migration process.
-
----
-
 ## Related Documentation
 
-- **[CLAUDE.md](../../CLAUDE.md)** - Complete system documentation
-- **[DEVELOPMENT.md](../DEVELOPMENT.md)** - Development workflow
-- **[TESTING.md](../TESTING.md)** - Testing strategy
-- **[services/api/README.md](../../services/api/README.md)** - API service docs
-- **[services/cli/README.md](../../services/cli/README.md)** - CLI service docs
-- **[services/web/README.md](../../services/web/README.md)** - Web UI docs
-- **[docs/MONOREPO_MIGRATION.md](../MONOREPO_MIGRATION.md)** - Migration guide
-
----
-
-**Last Updated**: 2025-11-13
-**Version**: v0.3.0+
-**Maintained By**: Tech Lead
+- [CLAUDE.md](../../CLAUDE.md) - Project overview
+- [Getting Started](../development/getting-started.md) - Development setup
+- [Testing](../development/testing.md) - Testing strategy
+- [services/api/README.md](../../services/api/README.md) - API service docs
+- [services/cli/README.md](../../services/cli/README.md) - CLI service docs
+- [services/web/README.md](../../services/web/README.md) - Web UI docs

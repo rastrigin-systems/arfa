@@ -443,6 +443,5 @@ arfa/
 ---
 
 **See also:**
-- [docs/TESTING.md](./TESTING.md) - Complete testing guide
-- [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md) - Next endpoints to build
-- [docs/database/schema-reference.md](./schema-reference.md) - Database schema reference
+- [Testing Guide](./testing.md) - Complete testing guide
+- [Database Schema](../database/schema-reference.md) - Database schema reference

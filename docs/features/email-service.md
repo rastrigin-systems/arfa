@@ -220,6 +220,5 @@ When implementing real email provider:
 
 ## See Also
 
-- [User Onboarding Documentation](./USER_ONBOARDING.md)
-- [Testing Guide](./TESTING.md)
-- [API Documentation](./API.md)
+- [Testing Guide](../development/testing.md)
+- [Contributing](../development/contributing.md)

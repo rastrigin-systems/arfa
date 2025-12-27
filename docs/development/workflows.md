@@ -619,12 +619,11 @@ If changes affect multiple services:
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
-- **TDD Guide:** [docs/TESTING.md](./TESTING.md)
-- **Development Guide:** [docs/DEVELOPMENT.md](./DEVELOPMENT.md)
-- **Project Structure:** [CLAUDE.md](../CLAUDE.md)
-- **Roadmap:** [IMPLEMENTATION_ROADMAP.md](../IMPLEMENTATION_ROADMAP.md)
+- [Testing Guide](./testing.md) - TDD workflow and test patterns
+- [Contributing](./contributing.md) - Contribution guidelines
+- [Project Structure](../../CLAUDE.md) - Project overview
 
 ---
 
