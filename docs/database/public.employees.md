@@ -46,6 +46,7 @@
 | Name | Definition |
 | ---- | ---------- |
 | update_employees_updated_at | CREATE TRIGGER update_employees_updated_at BEFORE UPDATE ON public.employees FOR EACH ROW EXECUTE FUNCTION update_updated_at_column() |
+| employee_revoke_trigger | CREATE TRIGGER employee_revoke_trigger AFTER UPDATE ON public.employees FOR EACH ROW EXECUTE FUNCTION notify_employee_revoke() |
 
 ## Relations
 
