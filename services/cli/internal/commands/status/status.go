@@ -171,7 +171,7 @@ func printAPIStatus(c *container.Container) {
 	// Health check with timeout
 	client := &http.Client{Timeout: 5 * time.Second}
 	start := time.Now()
-	resp, err := client.Get(config.PlatformURL + "/health")
+	resp, err := client.Get(config.PlatformURL + "/api/v1/health")
 	latency := time.Since(start)
 
 	if err != nil {
