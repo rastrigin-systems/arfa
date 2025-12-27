@@ -80,7 +80,7 @@ Arfa's transparent proxy architecture lets you:
 5. **Logs uploaded** async to central platform for audit/analysis
 
 **Deployment modes:**
-- 🔧 **CI Pipelines** - Temporary proxy via `eval $(arfa proxy env)`
+- 🔧 **CI Pipelines** - Temporary proxy via `eval $(arfa env)`
 - 💻 **Local Development** - Per-session proxy in terminal
 - 🏢 **System-wide** - Permanent system-wide setup via PAC file + auto-start daemon
 
@@ -149,7 +149,7 @@ arfa version
 arfa login
 
 # Start proxy
-arfa proxy start
+arfa start
 ```
 
 Proxy runs at `http://localhost:8082`
@@ -158,7 +158,7 @@ Proxy runs at `http://localhost:8082`
 
 ```bash
 # In a new terminal, set environment variables
-eval $(arfa proxy env)
+eval $(arfa env)
 
 # Now run your AI client (e.g., Claude Code)
 claude "list files in current directory"

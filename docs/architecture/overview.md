@@ -274,9 +274,11 @@ alerts:
 #### Current Commands
 ```bash
 arfa login/logout       # Authentication
-arfa sync              # Sync configs
-arfa logs view/stream  # View own logs
-arfa policies list     # View policies
+arfa start/stop         # Proxy control
+arfa status             # Component status
+arfa logs view/stream   # View activity logs
+arfa policies list      # View policies
+arfa env                # Proxy environment variables
 ```
 
 #### Needed Commands (Permission-Based)
