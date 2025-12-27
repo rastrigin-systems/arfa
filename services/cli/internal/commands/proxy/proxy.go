@@ -209,14 +209,12 @@ func runEnv(format string) error {
 	case "github":
 		// GitHub Actions format: KEY=VALUE (one per line, append to $GITHUB_ENV)
 		fmt.Printf("HTTPS_PROXY=%s\n", proxyURL)
-		fmt.Printf("SSL_CERT_FILE=%s\n", certPath)
 		fmt.Printf("NODE_EXTRA_CA_CERTS=%s\n", certPath)
 	case "shell":
 		fallthrough
 	default:
 		// Shell export format
 		fmt.Printf("export HTTPS_PROXY=\"%s\"\n", proxyURL)
-		fmt.Printf("export SSL_CERT_FILE=\"%s\"\n", certPath)
 		fmt.Printf("export NODE_EXTRA_CA_CERTS=\"%s\"\n", certPath)
 	}
 
