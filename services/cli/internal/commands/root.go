@@ -5,7 +5,6 @@ import (
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/config"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/logs"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/policies"
-	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/proxy"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/setup"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/status"
 	"github.com/rastrigin-systems/arfa/services/cli/internal/commands/webhooks"
@@ -26,28 +25,31 @@ It runs as an HTTPS proxy that intercepts LLM API traffic, enabling:
 - Activity logging for compliance and debugging
 - Webhook integration with SIEM systems
 
-When run without subcommands, arfa starts the proxy server.
-
-Examples:
-  arfa                    Start the proxy (default)
-  arfa login              Authenticate with the platform
-  arfa logs stream        Monitor AI agent activity
-  arfa policies list      View active security policies`,
+Commands:
+  arfa start             Start the security proxy
+  arfa stop              Stop the security proxy
+  arfa status            Show status of all components
+  arfa login             Authenticate with the platform
+  arfa logs stream       Monitor AI agent activity
+  arfa policies list     View active security policies`,
 		Version: version,
-		// Default action: start proxy
-		RunE: proxy.RunProxyStart,
+		// No default action - just print help
 	}
+
+	// Register core commands (top level)
+	rootCmd.AddCommand(NewStartCommand(c))
+	rootCmd.AddCommand(NewStopCommand(c))
+	rootCmd.AddCommand(NewEnvCommand(c))
 
 	// Register auth commands
 	rootCmd.AddCommand(auth.NewLoginCommand(c))
 	rootCmd.AddCommand(auth.NewLogoutCommand(c))
 
-	// Register proxy commands
-	rootCmd.AddCommand(proxy.NewProxyCommand(c))
+	// Register status command
+	rootCmd.AddCommand(status.NewStatusCommand(c))
 
 	// Register config commands
 	rootCmd.AddCommand(config.NewConfigCommand(c))
-	rootCmd.AddCommand(status.NewStatusCommand(c))
 
 	// Register monitoring commands
 	rootCmd.AddCommand(logs.NewLogsCommand(c))
