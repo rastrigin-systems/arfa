@@ -169,6 +169,24 @@ func (q *DiskQueue) StartWorker(ctx context.Context) {
 	}
 }
 
+// QueueStats contains statistics about the queue.
+type QueueStats struct {
+	PendingCount int    `json:"pending_count"`
+	QueueDir     string `json:"queue_dir"`
+}
+
+// Stats returns current queue statistics.
+func (q *DiskQueue) Stats() QueueStats {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	files, _ := filepath.Glob(filepath.Join(q.config.QueueDir, "*.json"))
+	return QueueStats{
+		PendingCount: len(files),
+		QueueDir:     q.config.QueueDir,
+	}
+}
+
 // flush uploads pending entries in batches.
 func (q *DiskQueue) flush() {
 	if q.uploader == nil {
