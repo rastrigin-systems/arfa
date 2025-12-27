@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// messagesEndpointRegex matches only the actual AI conversation endpoints
+var messagesEndpointRegex = regexp.MustCompile(`/v1/messages`)
 
 // sensitiveHeaders are headers that should be redacted in logs.
 var sensitiveHeaders = map[string]bool{
@@ -49,6 +53,12 @@ func (h *LoggerHandler) Priority() int {
 
 // HandleRequest logs an outgoing API request.
 func (h *LoggerHandler) HandleRequest(ctx *HandlerContext, req *http.Request) Result {
+	// Only log actual AI conversation requests (/v1/messages)
+	// Skip polling endpoints like claude_code_grove, event_logging, oauth, etc.
+	if !messagesEndpointRegex.MatchString(req.URL.Path) {
+		return ContinueResult()
+	}
+
 	// Read and restore body
 	var bodyStr string
 	if req.Body != nil {
@@ -88,6 +98,11 @@ func (h *LoggerHandler) HandleRequest(ctx *HandlerContext, req *http.Request) Re
 
 // HandleResponse logs an incoming API response.
 func (h *LoggerHandler) HandleResponse(ctx *HandlerContext, res *http.Response) Result {
+	// Only log responses for actual AI conversation requests (/v1/messages)
+	if res.Request == nil || !messagesEndpointRegex.MatchString(res.Request.URL.Path) {
+		return ContinueResult()
+	}
+
 	// Read and restore body
 	var bodyStr string
 	if res.Body != nil {
