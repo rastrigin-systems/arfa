@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { getTeams, type Team } from './teams';
 
 // Mock fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+const mockFetch = mock(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('getTeams', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockFetch.mockClear();
   });
 
   it('should fetch teams list', async () => {
@@ -17,10 +17,12 @@ describe('getTeams', () => {
       { id: 'team-3', org_id: 'org-1', name: 'Design', description: 'Design team' },
     ];
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ teams: mockTeams }),
-    });
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ teams: mockTeams }),
+      } as Response)
+    );
 
     const result = await getTeams();
 
@@ -29,14 +31,14 @@ describe('getTeams', () => {
   });
 
   it('should throw error on API failure', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: () => Promise.resolve({}),
-    });
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({}),
+      } as Response)
+    );
 
-    await expect(getTeams())
-      .rejects
-      .toThrow('Failed to fetch teams');
+    await expect(getTeams()).rejects.toThrow('Failed to fetch teams');
   });
 });

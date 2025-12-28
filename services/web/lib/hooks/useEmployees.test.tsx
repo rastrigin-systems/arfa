@@ -1,14 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEmployees, useUpdateEmployee } from './useEmployees';
-import * as employeesApi from '../api/employees';
+import React from 'react';
 import type { Employee } from '../api/employees';
 
-// Mock API for updateEmployee which still uses the api client
-vi.mock('../api/employees', () => ({
-  updateEmployee: vi.fn(),
+// Create mock function
+const mockUpdateEmployee = mock(() => Promise.resolve({}));
+const mockFetch = mock(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+
+// Mock API before importing
+mock.module('../api/employees', () => ({
+  updateEmployee: mockUpdateEmployee,
 }));
+
+// Import after mocking
+import { useEmployees, useUpdateEmployee } from './useEmployees';
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
@@ -19,7 +25,6 @@ const createWrapper = () => {
     },
   });
 
-  // eslint-disable-next-line react/display-name
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
@@ -27,8 +32,8 @@ const createWrapper = () => {
 
 describe('useEmployees', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    global.fetch = vi.fn();
+    mockFetch.mockClear();
+    global.fetch = mockFetch as unknown as typeof fetch;
   });
 
   it('should fetch employees', async () => {
@@ -52,10 +57,12 @@ describe('useEmployees', () => {
       limit: 10,
     };
 
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as Response);
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response)
+    );
 
     const { result } = renderHook(
       () => useEmployees({ page: 1, limit: 10 }),
@@ -69,10 +76,12 @@ describe('useEmployees', () => {
   });
 
   it('should handle errors', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: false,
-      statusText: 'Server Error',
-    } as Response);
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        statusText: 'Server Error',
+      } as Response)
+    );
 
     const { result } = renderHook(
       () => useEmployees({ page: 1, limit: 10 }),
@@ -87,7 +96,7 @@ describe('useEmployees', () => {
 
 describe('useUpdateEmployee', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockUpdateEmployee.mockClear();
   });
 
   it('should update employee', async () => {
@@ -102,7 +111,7 @@ describe('useUpdateEmployee', () => {
       team_name: 'Sales',
     };
 
-    vi.mocked(employeesApi.updateEmployee).mockResolvedValue(updatedEmployee);
+    mockUpdateEmployee.mockImplementation(() => Promise.resolve(updatedEmployee));
 
     const { result } = renderHook(() => useUpdateEmployee(), {
       wrapper: createWrapper(),
@@ -116,8 +125,8 @@ describe('useUpdateEmployee', () => {
   });
 
   it('should handle update errors', async () => {
-    vi.mocked(employeesApi.updateEmployee).mockRejectedValue(
-      new Error('Failed to update employee')
+    mockUpdateEmployee.mockImplementation(() =>
+      Promise.reject(new Error('Failed to update employee'))
     );
 
     const { result } = renderHook(() => useUpdateEmployee(), {

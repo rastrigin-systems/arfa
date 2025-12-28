@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { getRoles, type Role } from './roles';
 
 // Mock fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+const mockFetch = mock(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('getRoles', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockFetch.mockClear();
   });
 
   it('should fetch roles list', async () => {
@@ -17,10 +17,12 @@ describe('getRoles', () => {
       { id: 'role-3', name: 'Administrator', description: 'Full access' },
     ];
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ roles: mockRoles }),
-    });
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ roles: mockRoles }),
+      } as Response)
+    );
 
     const result = await getRoles();
 
@@ -29,11 +31,13 @@ describe('getRoles', () => {
   });
 
   it('should throw error on API failure', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: () => Promise.resolve({}),
-    });
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({}),
+      } as Response)
+    );
 
     await expect(getRoles())
       .rejects

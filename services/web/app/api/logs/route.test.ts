@@ -1,25 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { NextRequest } from 'next/server';
-import { GET } from './route';
-import * as auth from '@/lib/auth';
-import { apiClient } from '@/lib/api/client';
+
+// Create mock functions
+const mockGetServerToken = mock(() => Promise.resolve('test-token'));
+const mockApiClientGET = mock(() => Promise.resolve({ data: { logs: [] }, error: undefined, response: new Response() }));
 
 // Mock dependencies
-vi.mock('@/lib/auth');
-vi.mock('@/lib/api/client', () => ({
+mock.module('@/lib/auth', () => ({
+  getServerToken: mockGetServerToken,
+}));
+
+mock.module('@/lib/api/client', () => ({
   apiClient: {
-    GET: vi.fn(),
+    GET: mockApiClientGET,
   },
 }));
 
+// Import after mocking
+import { GET } from './route';
+
 describe('GET /api/logs', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetServerToken.mockClear();
+    mockApiClientGET.mockClear();
   });
 
   it('returns 401 when no token is present', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue(null);
+    mockGetServerToken.mockImplementation(() => Promise.resolve(null));
     const request = new NextRequest('http://localhost:3000/api/logs');
 
     // Act
@@ -33,12 +41,14 @@ describe('GET /api/logs', () => {
 
   it('forwards all query parameters to backend API', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: [] },
-      error: undefined,
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('test-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: { logs: [] },
+        error: undefined,
+        response: new Response(),
+      })
+    );
 
     const url = new URL('http://localhost:3000/api/logs');
     url.searchParams.set('session_id', 'session-123');
@@ -57,7 +67,7 @@ describe('GET /api/logs', () => {
     await GET(request);
 
     // Assert
-    expect(apiClient.GET).toHaveBeenCalledWith('/logs', {
+    expect(mockApiClientGET).toHaveBeenCalledWith('/logs', {
       params: {
         query: {
           session_id: 'session-123',
@@ -79,12 +89,14 @@ describe('GET /api/logs', () => {
 
   it('adds Authorization header with token', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('my-secret-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: [] },
-      error: undefined,
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('my-secret-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: { logs: [] },
+        error: undefined,
+        response: new Response(),
+      })
+    );
 
     const request = new NextRequest('http://localhost:3000/api/logs');
 
@@ -92,7 +104,7 @@ describe('GET /api/logs', () => {
     await GET(request);
 
     // Assert
-    expect(apiClient.GET).toHaveBeenCalledWith(
+    expect(mockApiClientGET).toHaveBeenCalledWith(
       '/logs',
       expect.objectContaining({
         headers: {
@@ -122,12 +134,14 @@ describe('GET /api/logs', () => {
       total_pages: 5,
     };
 
-    vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: mockLogs, pagination: mockPagination },
-      error: undefined,
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('test-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: { logs: mockLogs, pagination: mockPagination },
+        error: undefined,
+        response: new Response(),
+      })
+    );
 
     const request = new NextRequest('http://localhost:3000/api/logs');
 
@@ -142,12 +156,14 @@ describe('GET /api/logs', () => {
 
   it('handles backend API errors', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: undefined,
-      error: { message: 'Internal server error' },
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('test-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: undefined,
+        error: { message: 'Internal server error' },
+        response: new Response(),
+      })
+    );
 
     const request = new NextRequest('http://localhost:3000/api/logs');
 
@@ -162,12 +178,14 @@ describe('GET /api/logs', () => {
 
   it('handles undefined query parameters with default pagination', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: [] },
-      error: undefined,
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('test-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: { logs: [] },
+        error: undefined,
+        response: new Response(),
+      })
+    );
 
     const request = new NextRequest('http://localhost:3000/api/logs');
 
@@ -175,7 +193,7 @@ describe('GET /api/logs', () => {
     await GET(request);
 
     // Assert
-    expect(apiClient.GET).toHaveBeenCalledWith('/logs', {
+    expect(mockApiClientGET).toHaveBeenCalledWith('/logs', {
       params: {
         query: {
           session_id: undefined,
@@ -197,12 +215,14 @@ describe('GET /api/logs', () => {
 
   it('converts string page and per_page to numbers', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('test-token');
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: { logs: [] },
-      error: undefined,
-      response: new Response(),
-    });
+    mockGetServerToken.mockImplementation(() => Promise.resolve('test-token'));
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: { logs: [] },
+        error: undefined,
+        response: new Response(),
+      })
+    );
 
     const url = new URL('http://localhost:3000/api/logs');
     url.searchParams.set('page', '3');
@@ -213,7 +233,7 @@ describe('GET /api/logs', () => {
     await GET(request);
 
     // Assert
-    expect(apiClient.GET).toHaveBeenCalledWith('/logs', {
+    expect(mockApiClientGET).toHaveBeenCalledWith('/logs', {
       params: {
         query: expect.objectContaining({
           page: 3,

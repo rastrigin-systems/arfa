@@ -1,18 +1,24 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from './route';
-import * as auth from '@/lib/auth';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
+
+// Create mock function
+const mockGetServerToken = mock(() => Promise.resolve('test-token'));
 
 // Mock dependencies
-vi.mock('@/lib/auth');
+mock.module('@/lib/auth', () => ({
+  getServerToken: mockGetServerToken,
+}));
+
+// Import after mocking
+import { GET } from './route';
 
 describe('GET /api/logs/ws-token', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetServerToken.mockClear();
   });
 
   it('returns 401 when no token is present', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue(null);
+    mockGetServerToken.mockImplementation(() => Promise.resolve(null));
 
     // Act
     const response = await GET();
@@ -25,7 +31,7 @@ describe('GET /api/logs/ws-token', () => {
 
   it('returns token when authenticated', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('my-secret-token');
+    mockGetServerToken.mockImplementation(() => Promise.resolve('my-secret-token'));
 
     // Act
     const response = await GET();
@@ -38,7 +44,7 @@ describe('GET /api/logs/ws-token', () => {
 
   it('does not expose token in plain text unnecessarily', async () => {
     // Arrange
-    vi.mocked(auth.getServerToken).mockResolvedValue('sensitive-token-123');
+    mockGetServerToken.mockImplementation(() => Promise.resolve('sensitive-token-123'));
 
     // Act
     const response = await GET();
