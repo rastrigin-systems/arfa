@@ -10,7 +10,6 @@
     "type-check": "bun tsc --noEmit",
     "test": "bun test app lib components",
     "test:watch": "bun test --watch app lib components",
-    "test:e2e": "bunx playwright test",
     "generate:api": "bun openapi-typescript ../../platform/api-spec/spec.yaml -o ./lib/api/schema.ts"
   },
   "dependencies": {
@@ -42,7 +41,6 @@
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^16.6.0",
-    "@playwright/test": "^1.48.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.0.0",
