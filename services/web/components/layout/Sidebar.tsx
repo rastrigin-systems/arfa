@@ -6,12 +6,10 @@ import {
   LayoutDashboard,
   Users,
   UsersRound,
-  Bot,
   History,
   Settings,
   ChevronRight,
   Building2,
-  FileStack,
   Shield,
   Bug,
 } from 'lucide-react';

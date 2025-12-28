@@ -1,0 +1,6 @@
+# Bun configuration
+# https://bun.sh/docs/runtime/bunfig
+
+[run]
+# Enable bun's runtime for scripts
+bun = true

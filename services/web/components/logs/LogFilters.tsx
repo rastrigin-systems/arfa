@@ -4,13 +4,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEmployees } from '@/lib/hooks/useEmployees';
-import { useAgents } from '@/lib/hooks/useAgents';
 
 interface LogFiltersProps {
   filters: {
     session_id?: string;
     employee_id?: string;
-    agent_id?: string;
     event_type?: string;
     event_category?: string;
     start_date?: string;
@@ -22,7 +20,6 @@ interface LogFiltersProps {
 
 export function LogFilters({ filters, onChange }: LogFiltersProps) {
   const { data: employeesData } = useEmployees({ page: 1, limit: 100 });
-  const { data: agentsData } = useAgents({ page: 1, limit: 100 });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,27 +71,6 @@ export function LogFilters({ filters, onChange }: LogFiltersProps) {
             {employeesData?.employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Agent */}
-      <div className="space-y-2">
-        <Label htmlFor="agent">Agent</Label>
-        <Select
-          value={filters.agent_id || 'all'}
-          onValueChange={(value) => onChange({ agent_id: value === 'all' ? undefined : value })}
-        >
-          <SelectTrigger id="agent">
-            <SelectValue placeholder="All agents" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All agents</SelectItem>
-            {agentsData?.agents.map((agent) => (
-              <SelectItem key={agent.id} value={agent.id}>
-                {agent.name}
               </SelectItem>
             ))}
           </SelectContent>

@@ -7,21 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
-import { ConfigurationHierarchy } from '@/components/employees/ConfigurationHierarchy';
-import type {
-  Employee,
-  EmployeeAgentConfig,
-  OrgAgentConfig,
-  TeamAgentConfig,
-  ResolvedAgentConfig,
-} from '@/lib/types';
+import type { Employee } from '@/lib/types';
 
 type EmployeeDetailClientProps = {
   employee: Employee;
-  agentConfigs: EmployeeAgentConfig[];
-  orgConfigs: OrgAgentConfig[];
-  teamConfigs: TeamAgentConfig[];
-  resolvedConfigs: ResolvedAgentConfig[];
 };
 
 function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' {
@@ -37,7 +26,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
   }
 }
 
-export function EmployeeDetailClient({ employee, agentConfigs, orgConfigs, teamConfigs, resolvedConfigs }: EmployeeDetailClientProps) {
+export function EmployeeDetailClient({ employee }: EmployeeDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -161,16 +150,6 @@ export function EmployeeDetailClient({ employee, agentConfigs, orgConfigs, teamC
           </div>
         </CardContent>
       </Card>
-
-      {/* Configuration Hierarchy */}
-      <ConfigurationHierarchy
-        orgConfigs={orgConfigs}
-        teamConfigs={teamConfigs}
-        employeeConfigs={agentConfigs}
-        resolvedConfigs={resolvedConfigs}
-        teamName={employee.team_name}
-        employeeName={employee.full_name.split(' ')[0]}
-      />
 
       {/* MCP Servers Card */}
       <Card>
