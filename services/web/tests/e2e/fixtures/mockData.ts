@@ -20,6 +20,7 @@ export const mockOrganization: Organization = {
   slug: 'acme',
   plan: 'professional',
   max_employees: 50,
+  max_agents_per_employee: 5,
   has_claude_token: true,
   settings: {
     theme: 'light',

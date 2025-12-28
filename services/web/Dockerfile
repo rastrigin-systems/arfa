@@ -1,8 +1,5 @@
 # Development Dockerfile for Web UI
-FROM node:20-alpine AS base
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM oven/bun:1 AS base
 
 WORKDIR /app
 
@@ -10,10 +7,10 @@ WORKDIR /app
 FROM base AS development
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json bun.lock* ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN bun install --frozen-lockfile || bun install
 
 # Copy source code (will be overridden by volume mount in dev)
 COPY . .
@@ -22,4 +19,4 @@ COPY . .
 EXPOSE 3000
 
 # Start development server
-CMD ["pnpm", "dev"]
+CMD ["bun", "run", "dev"]
