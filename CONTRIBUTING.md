@@ -100,7 +100,7 @@ We follow test-driven development (TDD). See [Testing Guide](docs/development/te
 
 ### Reporting Vulnerabilities
 
-Please report security vulnerabilities to **security@arfa.dev**. Do not open public issues for security concerns.
+Please report security vulnerabilities to **sergei@rastrigin.systems**. Do not open public issues for security concerns.
 
 ### Security Guidelines
 

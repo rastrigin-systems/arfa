@@ -273,7 +273,7 @@ We welcome contributions! Please see our [Contributing Guide](docs/development/c
 
 **DO NOT** open public GitHub issues for security vulnerabilities.
 
-Instead, email: **security@arfa.dev** (or contact maintainer directly)
+Instead, email: **sergei@rastrigin.systems**
 
 ### Security Features
 
