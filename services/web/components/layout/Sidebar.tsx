@@ -85,16 +85,6 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       label: 'Roles',
     },
     {
-      href: '/agents',
-      icon: <Bot className="h-4 w-4" />,
-      label: 'Agents',
-    },
-    {
-      href: '/configs',
-      icon: <FileStack className="h-4 w-4" />,
-      label: 'Configs',
-    },
-    {
       href: '/logs',
       icon: <History className="h-4 w-4" />,
       label: 'Activity Logs',

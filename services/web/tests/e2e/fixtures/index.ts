@@ -19,7 +19,6 @@ import {
   setupApiMocks,
   setupAuthMocks,
   setupEmployeeMocks,
-  setupAgentMocks,
   mockUserSession,
 } from './apiMocks';
 import { mockEmployees } from './mockData';
@@ -45,12 +44,6 @@ type Fixtures = {
    * Includes /auth/*, /employees/*, /teams/*, /roles/*
    */
   mockEmployees: Page;
-
-  /**
-   * Page with agent-related mocking
-   * Includes /auth/*, /agents/*, /agent-configs/*
-   */
-  mockAgents: Page;
 
   /**
    * Page with authenticated session
@@ -84,16 +77,6 @@ export const test = base.extend<Fixtures>({
    */
   mockEmployees: async ({ page }, use) => {
     await setupEmployeeMocks(page);
-    // Add authenticated session so tests don't redirect to login
-    await mockUserSession(page, mockEmployees[0]);
-    await use(page);
-  },
-
-  /**
-   * Agent feature mocking (with authentication)
-   */
-  mockAgents: async ({ page }, use) => {
-    await setupAgentMocks(page);
     // Add authenticated session so tests don't redirect to login
     await mockUserSession(page, mockEmployees[0]);
     await use(page);

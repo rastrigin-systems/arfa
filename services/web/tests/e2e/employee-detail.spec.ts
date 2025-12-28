@@ -32,17 +32,6 @@ test.describe('Employee Detail Page', () => {
     await expect(teamsSection).toBeVisible();
   });
 
-  test.skip('should display employee agent configurations', async ({ mockEmployees }) => {
-    await mockEmployees.goto('/employees/employee-id-123');
-
-    // Check agents section
-    await expect(mockEmployees.getByRole('heading', { name: /agents/i })).toBeVisible();
-
-    // Should show agent cards or "No agents" message
-    const agentsSection = mockEmployees.locator('[data-testid="employee-agents"]');
-    await expect(agentsSection).toBeVisible();
-  });
-
   test.skip('should display employee MCP configurations', async ({ mockEmployees }) => {
     await mockEmployees.goto('/employees/employee-id-123');
 

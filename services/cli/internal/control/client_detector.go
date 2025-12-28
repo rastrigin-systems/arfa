@@ -34,6 +34,9 @@ var clientPatterns = []struct {
 	// GitHub Copilot: "copilot/1.0.0" or "github-copilot/1.0.0"
 	{regexp.MustCompile(`(?i)(?:github[-_]?)?copilot[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "copilot"},
 
+	// OpenAI Codex CLI: "codex/1.0.0" or "openai-codex/1.0.0"
+	{regexp.MustCompile(`(?i)(?:openai[-_]?)?codex[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "codex"},
+
 	// Generic patterns for other clients
 	{regexp.MustCompile(`(?i)vscode[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "vscode"},
 	{regexp.MustCompile(`(?i)neovim[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "neovim"},
@@ -78,7 +81,7 @@ func isLikelyAIClient(name string) bool {
 	// Keywords that suggest AI/coding tools
 	keywords := []string{
 		"ai", "assistant", "code", "copilot", "llm",
-		"claude", "gpt", "chat", "agent", "dev",
+		"claude", "gpt", "chat", "agent", "dev", "codex",
 	}
 
 	name = strings.ToLower(name)

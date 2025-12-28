@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getCurrentEmployee } from '@/lib/auth';
-import { Bot, Users, Settings } from 'lucide-react';
+import { Users, Settings, History, Shield } from 'lucide-react';
 
 export default async function DashboardPage() {
   const employee = await getCurrentEmployee();
@@ -20,21 +20,6 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>Agent Configurations</CardTitle>
-            </div>
-            <CardDescription>Manage your AI agent settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/agents">
-              <Button variant="outline" size="sm">View Agents</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
               <CardTitle>Team Management</CardTitle>
             </div>
@@ -43,6 +28,36 @@ export default async function DashboardPage() {
           <CardContent>
             <Link href="/teams">
               <Button variant="outline" size="sm">View Teams</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Roles & Permissions</CardTitle>
+            </div>
+            <CardDescription>Configure access control</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/roles">
+              <Button variant="outline" size="sm">View Roles</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Activity Logs</CardTitle>
+            </div>
+            <CardDescription>Monitor Claude Code usage</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/logs">
+              <Button variant="outline" size="sm">View Logs</Button>
             </Link>
           </CardContent>
         </Card>

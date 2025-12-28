@@ -119,8 +119,8 @@ func TestLLMHostRegex(t *testing.T) {
 		matches bool
 	}{
 		{"api.anthropic.com", true},
-		{"api.openai.com", true},
-		{"generativelanguage.googleapis.com", true},
+		{"api.openai.com", false},       // Only support Anthropic
+		{"generativelanguage.googleapis.com", false}, // Only support Anthropic
 		{"example.com", false},
 		{"github.com", false},
 	}
@@ -418,18 +418,19 @@ func TestRedactHeadersComprehensive(t *testing.T) {
 }
 
 // TestLLMHostRegexComprehensive tests LLM host matching with various hosts
+// Currently only Anthropic (Claude Code) is supported
 func TestLLMHostRegexComprehensive(t *testing.T) {
 	tests := []struct {
 		host    string
 		matches bool
 		desc    string
 	}{
-		// Should match
+		// Should match - only Anthropic
 		{"api.anthropic.com", true, "Anthropic API"},
-		{"api.openai.com", true, "OpenAI API"},
-		{"generativelanguage.googleapis.com", true, "Google Gemini API"},
 
-		// Should NOT match
+		// Should NOT match - other providers not supported
+		{"api.openai.com", false, "OpenAI API (not supported)"},
+		{"generativelanguage.googleapis.com", false, "Google Gemini API (not supported)"},
 		{"example.com", false, "Generic domain"},
 		{"github.com", false, "GitHub"},
 		{"anthropic.com", false, "Anthropic main site (not API)"},

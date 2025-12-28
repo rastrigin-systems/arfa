@@ -11,11 +11,6 @@ import {
   mockEmployees,
   mockTeams,
   mockRoles,
-  mockAgents,
-  mockOrgAgentConfigs,
-  mockTeamAgentConfigs,
-  mockEmployeeAgentConfigs,
-  mockResolvedAgentConfigs,
   getMockEmployeeByEmail,
   filterEmployeesByStatus,
   searchEmployees,
@@ -41,12 +36,6 @@ export async function setupApiMocks(page: Page): Promise<void> {
 
   // Mock role endpoints
   await mockRoleEndpoints(page);
-
-  // Mock agent endpoints
-  await mockAgentEndpoints(page);
-
-  // Mock agent configuration endpoints
-  await mockAgentConfigEndpoints(page);
 }
 
 /**
@@ -343,7 +332,6 @@ async function mockTeamEndpoints(page: Page): Promise<void> {
       name: postData.name,
       description: postData.description || null,
       member_count: 0,
-      agent_config_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -373,118 +361,6 @@ async function mockRoleEndpoints(page: Page): Promise<void> {
 }
 
 /**
- * Mock agent catalog endpoints
- */
-async function mockAgentEndpoints(page: Page): Promise<void> {
-  // GET /agents - List available agents
-  await page.route(`${API_BASE}/agents`, async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        agents: mockAgents,
-        total: mockAgents.length,
-      }),
-    });
-  });
-}
-
-/**
- * Mock agent configuration endpoints
- */
-async function mockAgentConfigEndpoints(page: Page): Promise<void> {
-  // GET /organizations/current/agent-configs
-  await page.route(
-    `${API_BASE}/organizations/current/agent-configs`,
-    async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          configs: mockOrgAgentConfigs,
-          total: mockOrgAgentConfigs.length,
-        }),
-      });
-    }
-  );
-
-  // POST /organizations/current/agent-configs
-  await page.route(
-    `${API_BASE}/organizations/current/agent-configs`,
-    async (route: Route) => {
-      if (route.request().method() !== 'POST') return;
-
-      const postData = route.request().postDataJSON();
-      const agent = mockAgents.find((a) => a.id === postData.agent_id);
-
-      const newConfig = {
-        id: `org-config-new-${Date.now()}`,
-        org_id: mockOrganization.id,
-        agent_id: postData.agent_id,
-        agent_name: agent?.name || 'Unknown',
-        agent_type: agent?.type || 'unknown',
-        agent_provider: agent?.provider || 'unknown',
-        is_enabled: postData.is_enabled ?? true,
-        config: postData.config,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify(newConfig),
-      });
-    }
-  );
-
-  // GET /teams/:team_id/agent-configs
-  await page.route(
-    new RegExp(`${API_BASE}/teams/[a-f0-9-]+/agent-configs$`),
-    async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          configs: mockTeamAgentConfigs,
-          total: mockTeamAgentConfigs.length,
-        }),
-      });
-    }
-  );
-
-  // GET /employees/:employee_id/agent-configs
-  await page.route(
-    new RegExp(`${API_BASE}/employees/[a-f0-9-]+/agent-configs$`),
-    async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          configs: mockEmployeeAgentConfigs,
-          total: mockEmployeeAgentConfigs.length,
-        }),
-      });
-    }
-  );
-
-  // GET /employees/:employee_id/agent-configs/resolved
-  await page.route(
-    new RegExp(`${API_BASE}/employees/[a-f0-9-]+/agent-configs/resolved$`),
-    async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          configs: mockResolvedAgentConfigs,
-          total: mockResolvedAgentConfigs.length,
-        }),
-      });
-    }
-  );
-}
-
-/**
  * Set up minimal mocks for authentication only
  * Use this for tests that don't need full API mocking
  */
@@ -500,12 +376,6 @@ export async function setupEmployeeMocks(page: Page): Promise<void> {
   await mockEmployeeEndpoints(page);
   await mockTeamEndpoints(page);
   await mockRoleEndpoints(page);
-}
-
-export async function setupAgentMocks(page: Page): Promise<void> {
-  await mockAuthEndpoints(page);
-  await mockAgentEndpoints(page);
-  await mockAgentConfigEndpoints(page);
 }
 
 /**

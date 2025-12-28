@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun run --bun next dev -p 3000",
-    "build": "bun run --bun next build",
-    "start": "bun run --bun next start -p 3000",
-    "lint": "bun run --bun next lint",
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "bun test",
-    "test:ui": "bun test --ui",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "generate:api": "openapi-typescript ../../platform/api-spec/spec.yaml -o ./lib/api/schema.ts"
   },
   "dependencies": {
