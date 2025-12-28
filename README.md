@@ -94,8 +94,11 @@ cd arfa
 docker compose up -d
 
 # Database will auto-load schema and seed data
-# Default admin: admin@acme.com / password
 ```
+
+> ⚠️ **Development credentials** (local dev only, never use in production):
+> - Email: `admin@acme.com`
+> - Password: `password`
 
 ### 2. Generate Code
 

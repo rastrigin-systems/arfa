@@ -1,3 +1,7 @@
+# ============================================================================
+# DEVELOPMENT ONLY - Do not use these credentials in production!
+# ============================================================================
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -5,6 +9,7 @@ services:
     environment:
       POSTGRES_DB: arfa
       POSTGRES_USER: arfa
+      # ⚠️  DEVELOPMENT ONLY - Change in production!
       POSTGRES_PASSWORD: arfa_dev_password
     ports:
       - "5432:5432"
@@ -39,6 +44,8 @@ services:
       - "8080:8080"
     environment:
       DATABASE_URL: postgres://arfa:arfa_dev_password@postgres:5432/arfa?sslmode=disable
+      # ⚠️  DEVELOPMENT ONLY - Generate a secure secret for production!
+      # Use: openssl rand -base64 32
       JWT_SECRET: dev_secret_change_in_production
       PORT: 8080
     depends_on:

@@ -35,7 +35,10 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// TODO: Add proper origin checking in production
+		// SECURITY: In production, implement proper origin validation.
+		// This should check against allowed origins (e.g., your web app domain).
+		// Example: return r.Header.Get("Origin") == "https://app.yourdomain.com"
+		// For development, we allow all origins.
 		return true
 	},
 }
