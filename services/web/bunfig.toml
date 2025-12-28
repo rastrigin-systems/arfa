@@ -4,3 +4,7 @@
 [run]
 # Enable bun's runtime for scripts
 bun = true
+
+[test]
+# Use happy-dom for DOM testing
+preload = ["./tests/setup.ts"]

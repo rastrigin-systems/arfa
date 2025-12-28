@@ -1,48 +1,50 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
+
+// Create mock functions
+const mockGetCurrentEmployee = mock(() => Promise.resolve(null));
+const mockRedirect = mock(() => {});
 
 // Mock getCurrentEmployee before importing the component
-vi.mock('@/lib/auth', () => ({
-  getCurrentEmployee: vi.fn(),
+mock.module('@/lib/auth', () => ({
+  getCurrentEmployee: mockGetCurrentEmployee,
 }));
 
 // Mock redirect
-vi.mock('next/navigation', () => ({
-  redirect: vi.fn(),
+mock.module('next/navigation', () => ({
+  redirect: mockRedirect,
 }));
 
-import { redirect } from 'next/navigation';
-import { getCurrentEmployee } from '@/lib/auth';
+// Import after mocking
+import SettingsPage from './page';
 
 describe('SettingsPage redirect logic', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetCurrentEmployee.mockClear();
+    mockRedirect.mockClear();
   });
 
   it('should redirect to /login if no employee', async () => {
-    vi.mocked(getCurrentEmployee).mockResolvedValue(null);
+    mockGetCurrentEmployee.mockImplementation(() => Promise.resolve(null));
 
-    // Dynamically import the page to trigger redirect
-    const { default: SettingsPage } = await import('./page');
     await SettingsPage();
 
-    expect(redirect).toHaveBeenCalledWith('/login');
+    expect(mockRedirect).toHaveBeenCalledWith('/login');
   });
 
   it('should redirect to /settings/profile for authenticated users', async () => {
-    vi.mocked(getCurrentEmployee).mockResolvedValue({
-      id: '1',
-      email: 'user@test.com',
-      full_name: 'Test User',
-      org_id: 'org-1',
-      role_id: 'role-1',
-      status: 'active' as const,
-    });
+    mockGetCurrentEmployee.mockImplementation(() =>
+      Promise.resolve({
+        id: '1',
+        email: 'user@test.com',
+        full_name: 'Test User',
+        org_id: 'org-1',
+        role_id: 'role-1',
+        status: 'active' as const,
+      })
+    );
 
-    vi.resetModules();
-
-    const { default: SettingsPage } = await import('./page');
     await SettingsPage();
 
-    expect(redirect).toHaveBeenCalledWith('/settings/profile');
+    expect(mockRedirect).toHaveBeenCalledWith('/settings/profile');
   });
 });

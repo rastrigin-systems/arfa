@@ -1,29 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ExportMenu } from './ExportMenu';
-import { apiClient } from '@/lib/api/client';
 
-vi.mock('@/lib/api/client', () => ({
+// Create mock function
+const mockApiClientGET = mock(() => Promise.resolve({ data: '[]', error: undefined, response: {} }));
+
+mock.module('@/lib/api/client', () => ({
   apiClient: {
-    GET: vi.fn(),
+    GET: mockApiClientGET,
   },
 }));
 
+// Import after mocking
+import { ExportMenu } from './ExportMenu';
+
 describe.skip('ExportMenu', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockApiClientGET.mockClear();
 
     // Mock URL.createObjectURL and document methods
-    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-    global.URL.revokeObjectURL = vi.fn();
+    global.URL.createObjectURL = mock(() => 'blob:mock-url');
+    global.URL.revokeObjectURL = mock(() => {});
 
     // Mock link click
     const mockLink = document.createElement('a');
-    mockLink.click = vi.fn();
-    vi.spyOn(document, 'createElement').mockReturnValue(mockLink as unknown as HTMLElement);
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as Node);
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as Node);
+    mockLink.click = mock(() => {});
+    spyOn(document, 'createElement').mockReturnValue(mockLink as unknown as HTMLElement);
+    spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as Node);
+    spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as Node);
   });
 
   it('should render format selector and export button', () => {
@@ -50,11 +54,13 @@ describe.skip('ExportMenu', () => {
     const user = userEvent.setup();
     const mockData = JSON.stringify([{ id: '1', content: 'test' }]);
 
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: mockData,
-      error: undefined,
-      response: {} as Response,
-    });
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: mockData,
+        error: undefined,
+        response: {} as Response,
+      })
+    );
 
     render(<ExportMenu filters={{ employee_id: 'emp-1' }} />);
 
@@ -62,7 +68,7 @@ describe.skip('ExportMenu', () => {
     await user.click(exportButton);
 
     await waitFor(() => {
-      expect(apiClient.GET).toHaveBeenCalledWith('/logs/export', {
+      expect(mockApiClientGET).toHaveBeenCalledWith('/logs/export', {
         params: {
           query: {
             format: 'json',
@@ -76,7 +82,7 @@ describe.skip('ExportMenu', () => {
   it('should show loading state during export', async () => {
     const user = userEvent.setup();
 
-    vi.mocked(apiClient.GET).mockImplementation(
+    mockApiClientGET.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(() => resolve({ data: '[]', error: undefined, response: {} as Response }), 100)
@@ -101,17 +107,19 @@ describe.skip('ExportMenu', () => {
 
   it('should handle export errors', async () => {
     const user = userEvent.setup();
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const alertSpy = spyOn(window, 'alert').mockImplementation(() => {});
 
     interface ErrorType {
       message: string;
     }
 
-    vi.mocked(apiClient.GET).mockResolvedValue({
-      data: undefined,
-      error: { message: 'Export failed' } as ErrorType,
-      response: {} as Response,
-    });
+    mockApiClientGET.mockImplementation(() =>
+      Promise.resolve({
+        data: undefined,
+        error: { message: 'Export failed' } as ErrorType,
+        response: {} as Response,
+      })
+    );
 
     render(<ExportMenu filters={{}} />);
 
