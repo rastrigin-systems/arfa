@@ -31,7 +31,8 @@ const (
 )
 
 // llmHostRegex matches LLM provider hosts to intercept
-var llmHostRegex = regexp.MustCompile(`(api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.openai\.com)`)
+// Currently focused on Anthropic (Claude Code)
+var llmHostRegex = regexp.MustCompile(`api\.anthropic\.com`)
 
 // ControlledProxy provides in-process HTTPS interception integrated with the Control Service.
 // All intercepted requests/responses flow through the Control Service pipeline.
@@ -231,13 +232,21 @@ func (p *ControlledProxy) generateCA() error {
 
 // configureGoproxyCA configures goproxy to use the CA certificate.
 func (p *ControlledProxy) configureGoproxyCA(caCert *tls.Certificate) {
-	p.goproxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	goproxy.GoproxyCa = *caCert
 	tlsConfig := goproxy.TLSConfigFromCA(caCert)
 	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: tlsConfig}
 	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: tlsConfig}
 	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: tlsConfig}
 	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: tlsConfig}
+
+	// Only MITM LLM API hosts - let other traffic pass through directly
+	p.goproxy.OnRequest().HandleConnectFunc(func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+		if llmHostRegex.MatchString(host) {
+			return goproxy.MitmConnect, host
+		}
+		// Pass through without interception
+		return goproxy.OkConnect, host
+	})
 }
 
 // configureRules sets up interception rules for LLM providers.

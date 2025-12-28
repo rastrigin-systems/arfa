@@ -7,13 +7,6 @@
 
 import type { components } from '@/lib/api/schema';
 
-// Agent types
-export type Agent = components['schemas']['Agent'];
-export type OrgAgentConfig = components['schemas']['OrgAgentConfig'];
-export type TeamAgentConfig = components['schemas']['TeamAgentConfig'];
-export type EmployeeAgentConfig = components['schemas']['EmployeeAgentConfig'];
-export type ResolvedAgentConfig = components['schemas']['ResolvedAgentConfig'];
-
 // Employee types
 export type Employee = components['schemas']['Employee'];
 
@@ -25,6 +18,3 @@ export type Role = components['schemas']['Role'];
 
 // Organization types
 export type Organization = components['schemas']['Organization'];
-
-// Configuration types (flexible JSON-compatible types for agent configs)
-export type { AgentConfig, AgentConfigValue, EmployeePreferences } from './configs';

@@ -14,13 +14,13 @@ const API_BASE = 'http://localhost:8080/api/v1';
  *
  * @example
  * await withMockHandler(
- *   http.get(`${API_BASE}/agents`, async () => {
+ *   http.get(`${API_BASE}/employees`, async () => {
  *     await delay(2000); // Simulate slow network
- *     return HttpResponse.json({ agents: [] });
+ *     return HttpResponse.json({ employees: [] });
  *   }),
  *   async () => {
  *     // Test code runs here with the overridden handler
- *     await page.goto('/agents');
+ *     await page.goto('/employees');
  *   }
  * );
  */
@@ -65,7 +65,7 @@ export function createEmptyHandler(
 ) {
   const httpMethod = http[method];
   return httpMethod(path, () => {
-    return HttpResponse.json({ agents: [], employees: [], teams: [], configs: [], total: 0 });
+    return HttpResponse.json({ employees: [], teams: [], total: 0 });
   });
 }
 

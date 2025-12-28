@@ -14,16 +14,10 @@ import {
   mockEmployees,
   mockTeams,
   mockRoles,
-  mockAgents,
-  mockOrgAgentConfigs,
-  mockTeamAgentConfigs,
-  mockEmployeeAgentConfigs,
-  mockResolvedAgentConfigs,
   getMockEmployeeByEmail,
   filterEmployeesByStatus,
   searchEmployees,
 } from '../fixtures/mockData';
-import type { AgentConfig, EmployeePreferences } from '@/lib/types';
 
 const API_BASE = 'http://localhost:8080/api/v1';
 
@@ -135,7 +129,7 @@ export const handlers = [
       role_id: string;
       email: string;
       full_name: string;
-      preferences?: EmployeePreferences;
+      preferences?: Record<string, unknown>;
     };
 
     // Create new employee with mock data
@@ -254,7 +248,6 @@ export const handlers = [
       name: body.name,
       description: body.description || null,
       member_count: 0,
-      agent_config_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -270,80 +263,6 @@ export const handlers = [
   http.get(`${API_BASE}/roles`, () => {
     return HttpResponse.json({
       data: mockRoles,
-    });
-  }),
-
-  // ==========================================
-  // Agent Catalog Endpoints
-  // ==========================================
-
-  // GET /agents - List available agents
-  http.get(`${API_BASE}/agents`, () => {
-    return HttpResponse.json({
-      agents: mockAgents,
-      total: mockAgents.length,
-    });
-  }),
-
-  // ==========================================
-  // Agent Configuration Endpoints
-  // ==========================================
-
-  // GET /organizations/current/agent-configs
-  http.get(`${API_BASE}/organizations/current/agent-configs`, () => {
-    return HttpResponse.json({
-      configs: mockOrgAgentConfigs,
-      total: mockOrgAgentConfigs.length,
-    });
-  }),
-
-  // POST /organizations/current/agent-configs
-  http.post(`${API_BASE}/organizations/current/agent-configs`, async ({ request }) => {
-    const body = (await request.json()) as {
-      agent_id: string;
-      is_enabled?: boolean;
-      config: AgentConfig;
-    };
-
-    const agent = mockAgents.find((a) => a.id === body.agent_id);
-
-    const newConfig = {
-      id: `org-config-new-${Date.now()}`,
-      org_id: mockOrganization.id,
-      agent_id: body.agent_id,
-      agent_name: agent?.name || 'Unknown',
-      agent_type: agent?.type || 'unknown',
-      agent_provider: agent?.provider || 'unknown',
-      is_enabled: body.is_enabled ?? true,
-      config: body.config,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    return HttpResponse.json(newConfig, { status: 201 });
-  }),
-
-  // GET /teams/:team_id/agent-configs
-  http.get(`${API_BASE}/teams/:teamId/agent-configs`, () => {
-    return HttpResponse.json({
-      configs: mockTeamAgentConfigs,
-      total: mockTeamAgentConfigs.length,
-    });
-  }),
-
-  // GET /employees/:employee_id/agent-configs
-  http.get(`${API_BASE}/employees/:employeeId/agent-configs`, () => {
-    return HttpResponse.json({
-      configs: mockEmployeeAgentConfigs,
-      total: mockEmployeeAgentConfigs.length,
-    });
-  }),
-
-  // GET /employees/:employee_id/agent-configs/resolved
-  http.get(`${API_BASE}/employees/:employeeId/agent-configs/resolved`, () => {
-    return HttpResponse.json({
-      configs: mockResolvedAgentConfigs,
-      total: mockResolvedAgentConfigs.length,
     });
   }),
 ];
