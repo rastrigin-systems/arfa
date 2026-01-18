@@ -20,12 +20,12 @@ const (
 
 // PolicyMessage represents a message sent from server to proxy
 type PolicyMessage struct {
-	Type     string        `json:"type"`
-	Policies []PolicyData  `json:"policies,omitempty"` // For init
-	Policy   *PolicyData   `json:"policy,omitempty"`   // For upsert
-	PolicyID *uuid.UUID    `json:"policy_id,omitempty"` // For delete
-	Reason   string        `json:"reason,omitempty"`    // For revoke
-	Version  int64         `json:"version,omitempty"`   // For init
+	Type     string       `json:"type"`
+	Policies []PolicyData `json:"policies,omitempty"`  // For init
+	Policy   *PolicyData  `json:"policy,omitempty"`    // For upsert
+	PolicyID *uuid.UUID   `json:"policy_id,omitempty"` // For delete
+	Reason   string       `json:"reason,omitempty"`    // For revoke
+	Version  int64        `json:"version,omitempty"`   // For init
 }
 
 // PolicyData represents a policy in WebSocket messages

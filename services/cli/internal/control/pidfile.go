@@ -19,9 +19,9 @@ type ProxyInfo struct {
 
 // ProxyStatus represents the current status of the proxy.
 type ProxyStatus struct {
-	Running   bool
-	Info      *ProxyInfo
-	Uptime    time.Duration
+	Running bool
+	Info    *ProxyInfo
+	Uptime  time.Duration
 }
 
 // PIDFile manages the proxy PID file for status detection.

@@ -69,7 +69,7 @@ type ClassifiedLogEntry struct {
 
 // SessionSummary provides aggregate statistics for a session
 type SessionSummary struct {
-	StartTime time.Time `json:"start_time"`
+	StartTime    time.Time      `json:"start_time"`
 	EndTime      *time.Time     `json:"end_time,omitempty"`
 	Duration     time.Duration  `json:"duration,omitempty"`
 	Provider     LogProvider    `json:"provider"`

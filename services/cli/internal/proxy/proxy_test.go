@@ -119,7 +119,7 @@ func TestLLMHostRegex(t *testing.T) {
 		matches bool
 	}{
 		{"api.anthropic.com", true},
-		{"api.openai.com", false},       // Only support Anthropic
+		{"api.openai.com", false},                    // Only support Anthropic
 		{"generativelanguage.googleapis.com", false}, // Only support Anthropic
 		{"example.com", false},
 		{"github.com", false},
