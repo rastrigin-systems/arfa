@@ -12,9 +12,7 @@ import { useLogWebSocket } from '@/lib/hooks/useLogWebSocket';
 import { X, AlertCircle } from 'lucide-react';
 
 export interface LogFiltersState {
-  session_id?: string;
   employee_id?: string;
-  agent_id?: string;
   event_type?: string;
   event_category?: string;
   start_date?: string;

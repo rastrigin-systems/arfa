@@ -11,7 +11,7 @@ import {
   ChevronRight,
   Building2,
   Shield,
-  Bug,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -83,14 +83,14 @@ export function Sidebar({ teamCount, employeeCount }: SidebarProps) {
       label: 'Roles',
     },
     {
+      href: '/policies',
+      icon: <ShieldCheck className="h-4 w-4" />,
+      label: 'Policies',
+    },
+    {
       href: '/logs',
       icon: <History className="h-4 w-4" />,
       label: 'Activity Logs',
-    },
-    {
-      href: '/debug',
-      icon: <Bug className="h-4 w-4" />,
-      label: 'Debug Logs',
     },
   ];
 

@@ -27,20 +27,9 @@ interface LogListProps {
 }
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  input: 'bg-blue-500',
-  output: 'bg-green-500',
-  error: 'bg-red-500',
-  session_start: 'bg-purple-500',
-  session_end: 'bg-gray-500',
-  user_prompt: 'bg-blue-400',
-  ai_text: 'bg-green-400',
   tool_call: 'bg-orange-500',
-  tool_result: 'bg-orange-400',
   api_request: 'bg-indigo-500',
   api_response: 'bg-indigo-400',
-  'agent.installed': 'bg-teal-500',
-  'mcp.configured': 'bg-cyan-500',
-  'config.synced': 'bg-emerald-500',
 };
 
 export function LogList({ logs, pagination, onPageChange, newLogIds }: LogListProps) {
@@ -75,16 +64,14 @@ export function LogList({ logs, pagination, onPageChange, newLogIds }: LogListPr
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
+        <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10"></TableHead>
                 <TableHead className="w-44">Time</TableHead>
+                <TableHead className="w-28">Agent</TableHead>
                 <TableHead className="w-32">Event Type</TableHead>
                 <TableHead className="w-28">Category</TableHead>
-                <TableHead className="w-24">Session</TableHead>
-                <TableHead>Content</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -99,7 +86,6 @@ export function LogList({ logs, pagination, onPageChange, newLogIds }: LogListPr
               ))}
             </TableBody>
           </Table>
-        </div>
       </Card>
 
       {pagination && pagination.total_pages > 1 && (
@@ -157,6 +143,14 @@ function LogRow({ log, expanded, onToggle, isNew }: LogRowProps) {
         </TableCell>
 
         <TableCell>
+          {log.client_name ? (
+            <span className="text-sm text-muted-foreground">{log.client_name}</span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </TableCell>
+
+        <TableCell>
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${eventTypeColor}`} />
             <Badge variant="outline" className="text-xs">
@@ -172,29 +166,11 @@ function LogRow({ log, expanded, onToggle, isNew }: LogRowProps) {
             </Badge>
           )}
         </TableCell>
-
-        <TableCell>
-          {log.session_id ? (
-            <span className="font-mono text-xs text-muted-foreground">
-              {log.session_id.slice(0, 8)}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )}
-        </TableCell>
-
-        <TableCell className="max-w-md">
-          <p className="text-sm truncate">
-            {log.content || (
-              <span className="text-muted-foreground italic">No content</span>
-            )}
-          </p>
-        </TableCell>
       </TableRow>
 
       {expanded && hasExpandableContent && (
         <TableRow className="bg-muted/30 hover:bg-muted/30">
-          <TableCell colSpan={6} className="p-4">
+          <TableCell colSpan={5} className="p-4">
             <ExpandedLogContent log={log} />
           </TableCell>
         </TableRow>
@@ -241,7 +217,7 @@ function ExpandedLogContent({ log }: { log: ActivityLog }) {
       {log.payload && Object.keys(log.payload).length > 0 && (
         <div>
           <h4 className="text-sm font-medium mb-2">Payload</h4>
-          <pre className="text-xs bg-background p-3 rounded-md overflow-x-auto font-mono">
+          <pre className="text-xs bg-background p-3 rounded-md font-mono whitespace-pre-wrap break-all">
             {JSON.stringify(log.payload, null, 2)}
           </pre>
         </div>
@@ -249,8 +225,6 @@ function ExpandedLogContent({ log }: { log: ActivityLog }) {
 
       <div className="flex gap-4 text-xs text-muted-foreground">
         {log.employee_id && <span>Employee: {log.employee_id.slice(0, 8)}</span>}
-        {log.agent_id && <span>Agent: {log.agent_id.slice(0, 8)}</span>}
-        {log.session_id && <span>Session: {log.session_id}</span>}
       </div>
     </div>
   );

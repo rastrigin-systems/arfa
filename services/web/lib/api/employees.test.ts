@@ -1,9 +1,22 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import type { Employee } from './employees';
 
-// Create mock functions
-const mockGET = mock(() => Promise.resolve({ data: { employees: [], total: 0 }, error: undefined, response: { ok: true } }));
-const mockPATCH = mock(() => Promise.resolve({ data: {}, error: undefined, response: { ok: true } }));
+// Types for mock returns
+interface EmployeesApiResponse {
+  data: { employees: Employee[]; total: number } | undefined;
+  error: { message: string } | undefined;
+  response: Response;
+}
+
+interface PatchApiResponse {
+  data: Record<string, unknown> | undefined;
+  error: { message: string } | undefined;
+  response: Response;
+}
+
+// Create mock functions with proper types
+const mockGET = mock<() => Promise<EmployeesApiResponse>>(() => Promise.resolve({ data: { employees: [], total: 0 }, error: undefined, response: { ok: true } as Response }));
+const mockPATCH = mock<() => Promise<PatchApiResponse>>(() => Promise.resolve({ data: {}, error: undefined, response: { ok: true } as Response }));
 
 // Mock the API client module
 mock.module('./client', () => ({

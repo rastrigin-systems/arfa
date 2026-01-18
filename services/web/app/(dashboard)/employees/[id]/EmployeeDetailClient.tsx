@@ -122,12 +122,6 @@ export function EmployeeDetailClient({ employee }: EmployeeDetailClientProps) {
               <dt className="text-sm font-medium text-muted-foreground">Last Login</dt>
               <dd className="mt-1 text-sm">{formatDate(employee.last_login_at)}</dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Personal Claude Token</dt>
-              <dd className="mt-1 text-sm">
-                {employee.has_personal_claude_token ? 'Configured' : 'Not configured'}
-              </dd>
-            </div>
           </div>
         </CardContent>
       </Card>

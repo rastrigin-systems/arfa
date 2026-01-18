@@ -31,7 +31,11 @@ func (h *ClientDetectorHandler) HandleRequest(ctx *HandlerContext, req *http.Req
 	userAgent := req.Header.Get("User-Agent")
 	if userAgent != "" {
 		clientInfo := DetectClient(userAgent)
-		ctx.SetClient(clientInfo)
+		// Only update context if we detected a known client
+		// This prevents overwriting with empty values from unrecognized User-Agents
+		if clientInfo.Name != "" {
+			ctx.SetClient(clientInfo)
+		}
 	}
 
 	return ContinueResult()

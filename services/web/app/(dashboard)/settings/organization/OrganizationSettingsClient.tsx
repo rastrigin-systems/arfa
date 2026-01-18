@@ -88,17 +88,6 @@ export function OrganizationSettingsClient({ organization }: OrganizationSetting
     }
   };
 
-  const getPlanBadgeVariant = (plan: string) => {
-    switch (plan) {
-      case 'professional':
-        return 'default';
-      case 'team':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -213,21 +202,15 @@ export function OrganizationSettingsClient({ organization }: OrganizationSetting
             <div>
               <span className="text-sm text-muted-foreground">Current Plan</span>
               <div className="mt-1">
-                <Badge variant={getPlanBadgeVariant(organization?.plan || 'starter')}>
-                  {organization?.plan ? organization.plan.charAt(0).toUpperCase() + organization.plan.slice(1) : 'Starter'}
-                </Badge>
+                <Badge variant="default">Starter</Badge>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+          <div className="grid grid-cols-1 gap-4 pt-4 border-t">
             <div>
               <span className="text-sm text-muted-foreground">Max Employees</span>
               <p className="text-2xl font-semibold">{organization?.max_employees || 10}</p>
-            </div>
-            <div>
-              <span className="text-sm text-muted-foreground">Max Agents per Employee</span>
-              <p className="text-2xl font-semibold">{organization?.max_agents_per_employee || 3}</p>
             </div>
           </div>
 

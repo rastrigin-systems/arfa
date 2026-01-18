@@ -167,9 +167,8 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		// Create a log via POST /api/v1/logs
 		logReq := api.CreateLogRequest{
-			EventType:     "cli.start",
-			EventCategory: "cli",
-			SessionId:     &sessionID,
+			EventType:     "session_start",
+			EventCategory: "io",
 			Content:       stringPtr("Test log message"),
 		}
 		reqBody, _ := json.Marshal(logReq)
@@ -186,61 +185,15 @@ func TestWebSocketIntegration(t *testing.T) {
 		// Wait for WebSocket message
 		select {
 		case msg := <-received:
-			assert.Equal(t, "cli.start", msg.EventType)
-			assert.Equal(t, "cli", msg.EventCategory)
-			assert.Equal(t, sessionID, msg.SessionID)
+			assert.Equal(t, "session_start", msg.EventType)
+			assert.Equal(t, "io", msg.EventCategory)
 			assert.Equal(t, "Test log message", msg.Content)
 		case <-time.After(2 * time.Second):
 			t.Fatal("Did not receive log message via WebSocket")
 		}
 	})
 
-	t.Run("Filter by session ID works", func(t *testing.T) {
-		sessionID1 := uuid.New()
-		sessionID2 := uuid.New()
-
-		// Connect to WebSocket with session1 filter
-		headers := http.Header{}
-		headers.Set("Authorization", "Bearer "+token)
-		wsURLWithFilter := wsURL + "?session_id=" + sessionID1.String()
-
-		conn, _, err := websocket.DefaultDialer.Dial(wsURLWithFilter, headers)
-		require.NoError(t, err)
-		defer func() { _ = conn.Close() }()
-
-		received := make(chan bool, 1)
-		go func() {
-			_, _, err := conn.ReadMessage()
-			if err == nil {
-				received <- true
-			}
-		}()
-
-		// Create log for session2 (should NOT be received)
-		logReq := api.CreateLogRequest{
-			EventType:     "cli.output",
-			EventCategory: "cli",
-			SessionId:     &sessionID2,
-			Content:       stringPtr("Should not receive"),
-		}
-		reqBody, _ := json.Marshal(logReq)
-
-		req := httptest.NewRequest("POST", "/api/v1/logs", bytes.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-		require.Equal(t, http.StatusCreated, w.Code)
-
-		// Should NOT receive message (different session)
-		select {
-		case <-received:
-			t.Fatal("Received message for wrong session")
-		case <-time.After(500 * time.Millisecond):
-			// Expected - no message received
-		}
-	})
+	// NOTE: Session ID filtering test removed - session_id param no longer exists in API
 
 	t.Run("Multi-tenancy isolation", func(t *testing.T) {
 		// Create second organization
@@ -275,11 +228,9 @@ func TestWebSocketIntegration(t *testing.T) {
 		}()
 
 		// Create log for org1 (should NOT be received by org2 connection)
-		sessionID := uuid.New()
 		logReq := api.CreateLogRequest{
-			EventType:     "cli.start",
-			EventCategory: "cli",
-			SessionId:     &sessionID,
+			EventType:     "session_start",
+			EventCategory: "io",
 			Content:       stringPtr("Org 1 log"),
 		}
 		reqBody, _ := json.Marshal(logReq)

@@ -19,6 +19,10 @@ var clientPatterns = []struct {
 	// Claude Code: "claude-code/1.0.25" or "ClaudeCode/1.0.25"
 	{regexp.MustCompile(`(?i)claude[-_]?code[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "claude-code"},
 
+	// Claude CLI (part of Claude Code): "claude-cli/2.0.76 (external, cli)"
+	// Maps to claude-code since it's the same product
+	{regexp.MustCompile(`(?i)claude[-_]?cli[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "claude-code"},
+
 	// Cursor: "Cursor/0.43.0" or "cursor/0.43.0"
 	{regexp.MustCompile(`(?i)cursor[/\s]+v?(\d+\.\d+(?:\.\d+)?)`), "cursor"},
 

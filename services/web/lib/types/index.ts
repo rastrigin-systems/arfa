@@ -18,3 +18,8 @@ export type Role = components['schemas']['Role'];
 
 // Organization types
 export type Organization = components['schemas']['Organization'];
+
+// Tool Policy types
+export type ToolPolicy = components['schemas']['ToolPolicy'];
+export type CreateToolPolicyRequest = components['schemas']['CreateToolPolicyRequest'];
+export type UpdateToolPolicyRequest = components['schemas']['UpdateToolPolicyRequest'];

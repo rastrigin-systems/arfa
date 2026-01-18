@@ -35,12 +35,12 @@ type PolicyClientConfig struct {
 
 // PolicyMessage represents a message from the server
 type PolicyMessage struct {
-	Type     string        `json:"type"`
-	Policies []PolicyData  `json:"policies,omitempty"`
-	Policy   *PolicyData   `json:"policy,omitempty"`
-	PolicyID *string       `json:"policy_id,omitempty"`
-	Reason   string        `json:"reason,omitempty"`
-	Version  int64         `json:"version,omitempty"`
+	Type     string       `json:"type"`
+	Policies []PolicyData `json:"policies,omitempty"`
+	Policy   *PolicyData  `json:"policy,omitempty"`
+	PolicyID *string      `json:"policy_id,omitempty"`
+	Reason   string       `json:"reason,omitempty"`
+	Version  int64        `json:"version,omitempty"`
 }
 
 // PolicyData represents a policy in WebSocket messages
@@ -72,7 +72,7 @@ type PolicyClient struct {
 	disconnectedAt time.Time
 
 	// Callbacks
-	onStateChange func(ProxyState)
+	onStateChange     func(ProxyState)
 	onPoliciesChanged func()
 
 	// Control channels

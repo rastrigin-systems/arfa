@@ -36,7 +36,6 @@ func TestCreateLog_Success(t *testing.T) {
 
 	// Test request payload
 	requestBody := api.CreateLogRequest{
-		SessionId:     &sessionID,
 		EventType:     "input",
 		EventCategory: "io",
 		Content:       stringPtr("User typed: write a test"),
@@ -57,15 +56,15 @@ func TestCreateLog_Success(t *testing.T) {
 
 			// Return created log
 			return db.ActivityLog{
-				ID:            uuid.New(),
-				OrgID:         orgID,
-				EmployeeID:    pgtype.UUID{Bytes: employeeID, Valid: true},
-				SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-				EventType:     params.EventType,
-				EventCategory: params.EventCategory,
-				Content:       params.Content,
-				Payload:       params.Payload,
-				CreatedAt:     pgtype.Timestamp{Valid: true},
+				ID:             uuid.New(),
+				OrgID:          orgID,
+				EmployeeID:     pgtype.UUID{Bytes: employeeID, Valid: true},
+				ProxySessionID: pgtype.UUID{Bytes: sessionID, Valid: true},
+				EventType:      params.EventType,
+				EventCategory:  params.EventCategory,
+				Content:        params.Content,
+				Payload:        params.Payload,
+				CreatedAt:      pgtype.Timestamp{Valid: true},
 			}, nil
 		})
 
@@ -150,24 +149,24 @@ func TestListLogs_Success(t *testing.T) {
 	// Test logs
 	logs := []db.ActivityLog{
 		{
-			ID:            uuid.New(),
-			OrgID:         orgID,
-			EmployeeID:    pgtype.UUID{Bytes: employeeID, Valid: true},
-			SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-			EventType:     "input",
-			EventCategory: "io",
-			Payload:       []byte("{}"),
-			CreatedAt:     pgtype.Timestamp{Valid: true},
+			ID:             uuid.New(),
+			OrgID:          orgID,
+			EmployeeID:     pgtype.UUID{Bytes: employeeID, Valid: true},
+			ProxySessionID: pgtype.UUID{Bytes: sessionID, Valid: true},
+			EventType:      "input",
+			EventCategory:  "io",
+			Payload:        []byte("{}"),
+			CreatedAt:      pgtype.Timestamp{Valid: true},
 		},
 		{
-			ID:            uuid.New(),
-			OrgID:         orgID,
-			EmployeeID:    pgtype.UUID{Bytes: employeeID, Valid: true},
-			SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-			EventType:     "output",
-			EventCategory: "io",
-			Payload:       []byte("{}"),
-			CreatedAt:     pgtype.Timestamp{Valid: true},
+			ID:             uuid.New(),
+			OrgID:          orgID,
+			EmployeeID:     pgtype.UUID{Bytes: employeeID, Valid: true},
+			ProxySessionID: pgtype.UUID{Bytes: sessionID, Valid: true},
+			EventType:      "output",
+			EventCategory:  "io",
+			Payload:        []byte("{}"),
+			CreatedAt:      pgtype.Timestamp{Valid: true},
 		},
 	}
 
@@ -201,48 +200,6 @@ func TestListLogs_Success(t *testing.T) {
 
 	assert.Len(t, response.Logs, 2)
 	assert.NotNil(t, response.Pagination)
-}
-
-func TestListLogs_WithSessionFilter(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB := mocks.NewMockQuerier(ctrl)
-
-	orgID := uuid.New()
-	sessionID := uuid.New()
-
-	// Expect database query with session filter using filtered method
-	mockDB.EXPECT().
-		ListActivityLogsFiltered(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, params db.ListActivityLogsFilteredParams) ([]db.ActivityLog, error) {
-			// Verify session_id is set
-			assert.Equal(t, orgID, params.OrgID)
-			assert.True(t, params.SessionID.Valid)
-			assert.Equal(t, sessionID, uuid.UUID(params.SessionID.Bytes))
-			return []db.ActivityLog{}, nil
-		})
-
-	// Expect count query
-	mockDB.EXPECT().
-		CountActivityLogsFiltered(gomock.Any(), gomock.Any()).
-		Return(int64(0), nil)
-
-	handler := handlers.NewLogsHandler(mockDB, nil)
-
-	// Create request with session_id filter
-	req := httptest.NewRequest(http.MethodGet, "/logs?session_id="+sessionID.String(), nil)
-	req = req.WithContext(handlers.SetOrgIDInContext(req.Context(), orgID))
-
-	rec := httptest.NewRecorder()
-
-	// Call handler
-	handler.ListLogs(rec, req, api.ListLogsParams{
-		SessionId: &sessionID,
-	})
-
-	// Verify response
-	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestListLogs_WithEmployeeFilter(t *testing.T) {

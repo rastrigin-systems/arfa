@@ -59,18 +59,18 @@ type Logger interface {
 
 // Proxy provides in-process HTTPS interception for LLM API logging.
 type Proxy struct {
-	goproxy        *goproxy.ProxyHttpServer
-	server         *http.Server
-	logger         Logger
-	parser         *logparser.AnthropicParser
-	port           int
-	certPath       string
-	keyPath        string
-	proxySessionID string
+	goproxy         *goproxy.ProxyHttpServer
+	server          *http.Server
+	logger          Logger
+	parser          *logparser.AnthropicParser
+	port            int
+	certPath        string
+	keyPath         string
+	proxySessionID  string
 	claudeSessionID string
-	clientName     string
-	clientVersion  string
-	mu             sync.RWMutex // Protects session IDs, clientName, and clientVersion
+	clientName      string
+	clientVersion   string
+	mu              sync.RWMutex // Protects session IDs, clientName, and clientVersion
 }
 
 // New creates a new proxy instance.

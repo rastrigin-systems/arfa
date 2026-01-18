@@ -139,7 +139,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{team.agent_config_count ?? 0}</div>
+            <div className="text-2xl font-bold">-</div>
             <p className="text-xs text-muted-foreground">
               Team-level agent configurations
             </p>

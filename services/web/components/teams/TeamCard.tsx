@@ -15,7 +15,6 @@ interface TeamCardProps {
 
 export function TeamCard({ team }: TeamCardProps) {
   const memberCount = team.member_count ?? 0;
-  const configCount = team.agent_config_count ?? 0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -48,11 +47,6 @@ export function TeamCard({ team }: TeamCardProps) {
               <UsersRound className="h-3 w-3" />
               {memberCount} {memberCount === 1 ? 'member' : 'members'}
             </Badge>
-            {configCount > 0 && (
-              <Badge variant="outline" className="gap-1">
-                {configCount} agent {configCount === 1 ? 'config' : 'configs'}
-              </Badge>
-            )}
           </div>
           <Link href={`/teams/${team.id}`}>
             <Button variant="ghost" size="sm" className="gap-1">

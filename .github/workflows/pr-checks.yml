@@ -36,7 +36,7 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           go install go.uber.org/mock/mockgen@latest
 
@@ -83,7 +83,7 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
       - name: Generate code
@@ -101,8 +101,8 @@ jobs:
       - name: Build
         run: |
           cd services/cli && go build -v -o ../../bin/arfa ./cmd/arfa/main.go
-          chmod +x bin/arfa
-          ./bin/arfa --version
+          chmod +x ../../bin/arfa
+          ../../bin/arfa --version
 
       - name: Test
         working-directory: services/cli
@@ -119,38 +119,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: services/web/pnpm-lock.yaml
+          bun-version: latest
 
       - name: Install dependencies
         working-directory: services/web
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Generate API types
         working-directory: services/web
-        run: pnpm run generate:api
+        run: bun run generate:api
 
       - name: Type check
         working-directory: services/web
-        run: pnpm run type-check
+        run: bun run type-check
 
       - name: Lint
         working-directory: services/web
-        run: pnpm run lint
+        run: bun run lint
 
       - name: Build
         working-directory: services/web
-        run: pnpm run build
+        run: bun run build
 
       - name: Test
         working-directory: services/web
-        run: pnpm run test
+        run: bun run test

@@ -131,7 +131,7 @@ func TestBuildPayload_MinimalLog(t *testing.T) {
 	assert.Equal(t, "tool_call", payload.EventType)
 	assert.Equal(t, "agent_activity", payload.EventCategory)
 	assert.Nil(t, payload.EmployeeID)
-	assert.Nil(t, payload.SessionID)
+	assert.Nil(t, payload.ProxySessionID)
 	assert.Empty(t, payload.Content)
 }
 
@@ -145,15 +145,15 @@ func TestBuildPayload_FullLog(t *testing.T) {
 	content := "Test content"
 
 	log := db.ActivityLog{
-		ID:            logID,
-		OrgID:         orgID,
-		EmployeeID:    pgtype.UUID{Bytes: empID, Valid: true},
-		SessionID:     pgtype.UUID{Bytes: sessionID, Valid: true},
-		EventType:     "permission_denied",
-		EventCategory: "security",
-		Content:       &content,
-		Payload:       []byte(`{"tool":"Bash","blocked":true}`),
-		CreatedAt:     pgtype.Timestamp{Time: time.Now(), Valid: true},
+		ID:             logID,
+		OrgID:          orgID,
+		EmployeeID:     pgtype.UUID{Bytes: empID, Valid: true},
+		ProxySessionID: pgtype.UUID{Bytes: sessionID, Valid: true},
+		EventType:      "permission_denied",
+		EventCategory:  "security",
+		Content:        &content,
+		Payload:        []byte(`{"tool":"Bash","blocked":true}`),
+		CreatedAt:      pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
 
 	payload := wf.buildPayload(log)
@@ -164,8 +164,8 @@ func TestBuildPayload_FullLog(t *testing.T) {
 	assert.Equal(t, "security", payload.EventCategory)
 	assert.NotNil(t, payload.EmployeeID)
 	assert.Equal(t, empID, *payload.EmployeeID)
-	assert.NotNil(t, payload.SessionID)
-	assert.Equal(t, sessionID, *payload.SessionID)
+	assert.NotNil(t, payload.ProxySessionID)
+	assert.Equal(t, sessionID, *payload.ProxySessionID)
 	assert.Equal(t, "Test content", payload.Content)
 	assert.NotNil(t, payload.Payload)
 	assert.Equal(t, true, payload.Payload["blocked"])
