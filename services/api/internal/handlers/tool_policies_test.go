@@ -86,7 +86,7 @@ func TestGetEmployeeToolPolicies_Success(t *testing.T) {
 	assert.Equal(t, "Bash", response.Policies[0].ToolName)
 	assert.Equal(t, api.Deny, response.Policies[0].Action)
 	assert.Equal(t, "Shell commands are blocked", *response.Policies[0].Reason)
-	assert.Equal(t, api.ToolPolicyScopeOrganization, *response.Policies[0].Scope)
+	assert.Equal(t, api.ToolPolicyScopeOrganization, response.Policies[0].Scope)
 
 	// Verify version and synced_at
 	assert.Greater(t, response.Version, 0)
@@ -214,7 +214,7 @@ func TestGetEmployeeToolPolicies_MultipleScopeLevels(t *testing.T) {
 	// Check scopes are correctly identified
 	scopes := make(map[string]api.ToolPolicyScope)
 	for _, p := range response.Policies {
-		scopes[p.ToolName] = *p.Scope
+		scopes[p.ToolName] = p.Scope
 	}
 
 	assert.Equal(t, api.ToolPolicyScopeOrganization, scopes["Bash"])
