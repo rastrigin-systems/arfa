@@ -1,9 +1,26 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { NextRequest } from 'next/server';
 
-// Create mock functions
-const mockGetServerToken = mock(() => Promise.resolve('test-token'));
-const mockApiClientGET = mock(() => Promise.resolve({ data: { logs: [] }, error: undefined, response: new Response() }));
+// Types for mock returns
+interface LogsResponse {
+  logs: unknown[];
+  pagination?: {
+    total: number;
+    page: number;
+    per_page: number;
+    total_pages: number;
+  };
+}
+
+interface ApiResponse {
+  data: LogsResponse | undefined;
+  error: { message: string } | undefined;
+  response: Response;
+}
+
+// Create mock functions with proper types
+const mockGetServerToken = mock<() => Promise<string | null>>(() => Promise.resolve('test-token'));
+const mockApiClientGET = mock<() => Promise<ApiResponse>>(() => Promise.resolve({ data: { logs: [] }, error: undefined, response: new Response() }));
 
 // Mock dependencies
 mock.module('@/lib/auth', () => ({

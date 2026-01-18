@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
-// Create mock function
-const mockGetServerToken = mock(() => Promise.resolve('test-token'));
+// Create mock function with proper type
+const mockGetServerToken = mock<() => Promise<string | null>>(() => Promise.resolve('test-token'));
 
 // Mock dependencies
 mock.module('@/lib/auth', () => ({
