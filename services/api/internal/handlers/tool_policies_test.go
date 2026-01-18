@@ -84,7 +84,7 @@ func TestGetEmployeeToolPolicies_Success(t *testing.T) {
 	// Verify policies
 	require.Len(t, response.Policies, 1)
 	assert.Equal(t, "Bash", response.Policies[0].ToolName)
-	assert.Equal(t, api.Deny, response.Policies[0].Action)
+	assert.Equal(t, api.ToolPolicyActionDeny, response.Policies[0].Action)
 	assert.Equal(t, "Shell commands are blocked", *response.Policies[0].Reason)
 	assert.Equal(t, api.ToolPolicyScopeOrganization, response.Policies[0].Scope)
 

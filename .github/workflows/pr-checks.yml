@@ -101,8 +101,8 @@ jobs:
       - name: Build
         run: |
           cd services/cli && go build -v -o ../../bin/arfa ./cmd/arfa/main.go
-          chmod +x bin/arfa
-          ./bin/arfa --version
+          chmod +x ../../bin/arfa
+          ../../bin/arfa --version
 
       - name: Test
         working-directory: services/cli
